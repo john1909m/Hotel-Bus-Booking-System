@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * MapStruct mapper for User entity and DTOs.
  */
-@Mapper
+@Mapper(componentModel = "spring")
 public interface UserMapper {
 
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);

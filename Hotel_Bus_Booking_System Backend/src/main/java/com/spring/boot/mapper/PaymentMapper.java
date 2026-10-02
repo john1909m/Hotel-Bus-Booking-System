@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * MapStruct mapper for Payment entity and DTOs.
  */
-@Mapper
+@Mapper(componentModel = "spring")
 public interface PaymentMapper {
 
     PaymentMapper INSTANCE = Mappers.getMapper(PaymentMapper.class);

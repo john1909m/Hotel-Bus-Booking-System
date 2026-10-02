@@ -45,4 +45,9 @@ public class HotelBooking extends BaseEntity {
 
     @ManyToOne
     private Room room;
+
+
+    @ManyToOne
+    @JoinColumn(name = "hotel_id")
+    private Hotel hotel;
 }

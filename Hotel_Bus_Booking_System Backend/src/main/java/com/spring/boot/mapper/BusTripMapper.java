@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * MapStruct mapper for BusTrip entity and DTOs.
  */
-@Mapper
+@Mapper(componentModel = "spring")
 public interface BusTripMapper {
 
     BusTripMapper INSTANCE = Mappers.getMapper(BusTripMapper.class);

@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * MapStruct mapper for HotelBooking entity and DTOs.
  */
-@Mapper
+@Mapper(componentModel = "spring")
 public interface HotelBookingMapper {
 
     HotelBookingMapper INSTANCE = Mappers.getMapper(HotelBookingMapper.class);
