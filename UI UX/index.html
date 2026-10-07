@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      window["__codeletBootstrap__"] = JSON.parse(
+        '{"A":"A","B":"20261007-04-b4189fb","C":{"Abril Fatface":"YACgEZbkUVE,0","Alfa Slab One":"YACgEYS9sJU,0","Anton":"YACgEcYqQ-A,0","Archivo Black":"YACgEZulLoA,0","Archivo":"YAHO2-t-jNE,0","Arial":"YAGyDvJ_4Ts,0","Baloo 2":"YAHO2IcQUcM,0","Barlow Condensed":"YAFdJljEuFc,0","Bebas Neue":"YACgESME5ew,0","Bricolage Grotesque":"YAFyMcdwzpc,0","Canva Sans":"YAFdJjTk5UU,1","Caveat":"YALBs2ploWQ,0","Cinzel":"YACgEeV8bIQ,0","Cormorant Garamond":"YAFdJhX-538,0","Courier New":"YAGzXiGs0_8,0","Courier Prime":"YAD1aFjegN8,0","DM Sans":"YAD1aU3sLnI,0","DM Serif Display":"YAD1aYG82rc,0","Figtree":"YAHO2b-mV7A,0","Forum":"YACgEcnnqB4,0","Fraunces":"YAFdJpU7Kkk,0","Fredoka":"YACgEZml080,0","Georgia":"YAGzXkO0pEM,0","Hanken Grotesk":"YAHO2VB9G0I,0","Helvetica":"YAFcf7zkXN0,0","IBM Plex Mono":"YAFdJkmvhGI,0","IBM Plex Sans":"YAFdJgT0SHI,0","Impact":"YAFcfnjI7Vk,0","Instrument Serif":"YAHFeOnZNEk,0","Inter":"YAFdJvSyp_k,3","Italiana":"YAHO2Toik_w,0","Jacques Francois":"YAHO2a5g66Q,0","JetBrains Mono":"YAFdJksXcAk,0","Josefin Sans":"YAFdJjvw9Ps,0","Karla":"YAHO2V2NSXM,0","Lato":"YAFdJuFCnaw,0","Libre Baskerville":"YACgEUFdPdA,0","Lobster":"YAD8SnSjSFI,0","Lora":"YACgEXvxf8Q,0","Manrope":"YAHO2b2feC4,0","Merriweather":"YACgEXvHxxs,0","Montserrat":"YAFdtQi73Xs,0","Noto Sans JP":"YAFdJiHXlcI,0","Noto Sans KR":"YAGsojZj-RQ,0","Nunito Sans":"YAFdtQJYB9w,1","Nunito":"YAFdJoNRMmU,1","Oleo Script":"YACgEQQ14jI,0","Oswald":"YACgEQY10lw,0","Outfit":"YAHO2nVlg14,0","Pacifico":"YADLjORQ1u4,0","Playfair Display":"YAFdJhem5V8,1","Plus Jakarta Sans":"YAHO2gdhi18,0","Poppins":"YAFdJjbTu24,1","Press Start 2P":"YAFyGr-8pmQ,0","Quicksand":"YAFdJpYtCxE,1","Raleway":"YAFdJhmxbVQ,1","Roboto Slab":"YAFdJswIKAg,0","Rockwell":"YAFcfyVZnN0,0","Rye":"YACgEdQP21k,0","Sarabun":"YAFdJssSnME,0","Segoe UI":"YAHNdRD1Klw,0","Source Sans 3":"YAG4lO1Mj10,0","Space Grotesk":"YAHO2sjPCSM,0","Space Mono":"YADW1-vpsoc,0","Spectral":"YAHO2rVUHIM,0","Times New Roman":"YAGzXW3gftg,0","Trebuchet MS":"YAFcfrglpVA,0","Ubuntu":"YACgERDU--Q,0","Verdana":"YAGzXTctYtQ,0","Work Sans":"YAGXhLOKv44,0","Yellowtail":"YACgEYG4kG4,0"}}',
+      );
+    </script>
+    <script
+      src="/_sdk/6542d56fbfe7a3eb.telemetry_sdk.js"
+      integrity="sha512-ECdM0nK7EkwDuOqho2qxgyRQXyBHk9hZqRKMBr+Xsu6zjeHlt+qkO2N2YRiHN7Kg4e1fEHDhjIp4bGJYVypv1g=="
+    ></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wayfare — Hotel &amp; Bus Booking System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #14233c;
+        --cream: #fff7e8;
+        --coral: #ff654f;
+        --blue: #364de5;
+        --mint: #b9efcb;
+        --yellow: #ffd66d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        background: var(--cream);
+      }
+      h1,
+      h2,
+      h3,
+      .display {
+        font-family: "Fraunces", serif;
+        letter-spacing: -0.045em;
+      }
+      h1 {
+        line-height: 0.99;
+      }
+      h2 {
+        line-height: 1.05;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      :focus-visible {
+        outline: 3px solid var(--coral);
+        outline-offset: 3px;
+      }
+      .shell {
+        width: 100%;
+        overflow: hidden;
+      }
+      .wrap {
+        width: min(100% - 40px, 1260px);
+        margin: auto;
+      }
+      .pill {
+        border-radius: 999px;
+      }
+      .panel {
+        border: 2px solid var(--ink);
+        border-radius: 26px;
+        box-shadow: 7px 8px 0 var(--ink);
+      }
+      .btn {
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        padding: 12px 21px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .btn:hover:not(:disabled) {
+        transform: translate(-2px, -3px);
+        box-shadow: 4px 5px 0 var(--ink);
+      }
+      .btn-dark {
+        background: var(--ink);
+        color: white;
+      }
+      .btn-coral {
+        background: var(--coral);
+        color: var(--ink);
+      }
+      .btn-light {
+        background: white;
+        color: var(--ink);
+      }
+      .field {
+        width: 100%;
+        background: white;
+        border: 2px solid #aeb4c0;
+        border-radius: 15px;
+        padding: 12px 14px;
+        color: var(--ink);
+        min-width: 0;
+      }
+      .field:focus {
+        outline: 3px solid #ff654f55;
+        border-color: var(--ink);
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-weight: 800;
+        font-size: 12px;
+      }
+      .pattern {
+        background-image: radial-gradient(#14233c22 1.3px, transparent 1.3px);
+        background-size: 19px 19px;
+      }
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+      .hero {
+        background: linear-gradient(
+          128deg,
+          #ffd8b4 0%,
+          #fff1d8 43%,
+          #bce8d1 100%
+        );
+        position: relative;
+      }
+      .hero-title {
+        font-size: clamp(3.3rem, 8vw, 7.8rem);
+        max-width: 840px;
+      }
+      .hero-photo {
+        height: 420px;
+        object-fit: cover;
+        border-radius: 46% 46% 22px 22px;
+        border: 5px solid var(--ink);
+        box-shadow: 14px 14px 0 var(--coral);
+      }
+      .hotel-photo {
+        height: 235px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 19px;
+      }
+      .float {
+        animation: bob 4s ease-in-out infinite;
+      }
+      @keyframes bob {
+        50% {
+          transform: translateY(-9px);
+        }
+      }
+      .reveal {
+        animation: rise 0.65s both;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .nav-link {
+        font-weight: 800;
+        padding: 8px 11px;
+        border-radius: 999px;
+      }
+      .nav-link:hover,
+      .nav-link.current {
+        background: var(--yellow);
+      }
+      .seat {
+        width: 39px;
+        height: 39px;
+        border: 2px solid var(--ink);
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 800;
+        background: var(--mint);
+      }
+      .seat.selected {
+        background: var(--coral);
+      }
+      .seat.occupied {
+        background: #c3c7d0;
+        color: #525968;
+        cursor: not-allowed;
+      }
+      .seat.disabled-seat {
+        background: repeating-linear-gradient(
+          45deg,
+          #fff,
+          #fff 5px,
+          #e6e8ed 5px,
+          #e6e8ed 10px
+        );
+        cursor: not-allowed;
+      }
+      .seat-aisle {
+        width: 26px;
+        flex: none;
+      }
+      .status {
+        border: 1.5px solid currentColor;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .step {
+        border-radius: 18px;
+        padding: 11px 13px;
+        background: #fff;
+        border: 2px solid #d7d8d7;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .step.on {
+        background: var(--yellow);
+        border-color: var(--ink);
+      }
+      .step.done {
+        background: var(--mint);
+        border-color: var(--ink);
+      }
+      .admin-nav button {
+        width: 100%;
+        text-align: left;
+        padding: 10px 13px;
+        border-radius: 12px;
+        font-weight: 700;
+      }
+      .admin-nav button:hover,
+      .admin-nav button.on {
+        background: var(--yellow);
+        color: var(--ink);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: #14233cb8;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+      }
+      .modal-backdrop[hidden],
+      [hidden] {
+        display: none !important;
+      }
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 80;
+        background: var(--ink);
+        color: white;
+        border: 2px solid white;
+        border-radius: 16px;
+        padding: 14px 19px;
+        box-shadow: 5px 5px 0 var(--coral);
+        max-width: 360px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .data-table {
+        min-width: 650px;
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .data-table th {
+        text-align: left;
+        background: #edf0ff;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .data-table th,
+      .data-table td {
+        padding: 13px;
+        border-bottom: 1px solid #e2e4eb;
+      }
+      .data-table td:last-child {
+        white-space: nowrap;
+      }
+      @media (max-width: 850px) {
+        .desktop-nav {
+          display: none !important;
+        }
+        .mobile-toggle {
+          display: flex !important;
+        }
+        .hero-photo {
+          height: 310px;
+        }
+        .admin-layout {
+          display: block !important;
+        }
+        .admin-sidebar {
+          width: 100% !important;
+        }
+        .admin-nav {
+          display: flex;
+          overflow-x: auto;
+          gap: 5px;
+        }
+        .admin-nav button {
+          white-space: nowrap;
+        }
+        .step-scroll {
+          overflow-x: auto;
+        }
+        .wrap {
+          width: min(100% - 28px, 1260px);
+        }
+      }
+      @media (min-width: 851px) {
+        #mobile-menu {
+          display: none !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *:before,
+        *:after {
+          animation-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+    <script
+      src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"
+      type="text/javascript"
+    ></script>
+    <script
+      src="https://cdn.tailwindcss.com/3.4.17"
+      type="text/javascript"
+    ></script>
+    <script
+      src="/_sdk/6c2ecc939521f244.data_sdk.js"
+      type="text/javascript"
+      integrity="sha512-gRx8s+XsZDN6mSIQu2sivLZysbV0WHhb5kXNUWlgVb5lCMU1foJYukyMEDPv8Tnoocb8iwqB4XdRrWc7oEGzIQ=="
+    ></script>
+    <script
+      src="/_sdk/076b13200873adb1.editing_sdk.js"
+      type="text/javascript"
+      integrity="sha512-ZtNtm8+39bIBEM+BqVFLF2DGJcZDSJkgYAfQa13MND+siMeCmOpG2FoU1Iv6fGQyEH3Y1nIM5T9xiJG2Bq/ozw=="
+    ></script>
+    <script
+      src="/_sdk/ab4336f91e694f96.resizing_sdk.js"
+      type="text/javascript"
+      integrity="sha512-cxmeUrBrNlwwLr+tEu/iwM5F3boeK4qDMoH3QjUPqJptkO5NkaDVhQvyIHIn+3EflI5/uubWzkSA78B1tCswgA=="
+    ></script>
+  </head>
+  <body data-template-id="__page-root">
+    <div class="shell">
+      <header
+        data-template-id="site-header"
+        class="canva-header bg-[#fff7e8] border-b-2 border-[#14233c] relative z-20"
+      >
+        <div class="wrap flex items-center justify-between gap-4 py-4">
+          <button
+            type="button"
+            data-go="home"
+            class="flex items-center gap-2 font-black text-2xl"
+            aria-label="Wayfare home"
+          >
+            <span
+              class="bg-[#ff654f] border-2 border-[#14233c] rounded-xl w-10 h-10 grid place-items-center rotate-[-9deg]"
+              >W</span
+            ><span data-template-id="brand-name" class="canva-text"
+              >wayfare<span class="text-[#ff654f]">.</span></span
+            >
+          </button>
+          <nav
+            class="desktop-nav flex items-center gap-1"
+            aria-label="Main navigation"
+          >
+            <button
+              data-go="home"
+              class="nav-link"
+              data-template-id="nav-discover"
+            >
+              Discover
+            </button>
+            <button
+              data-go="hotels"
+              class="nav-link"
+              data-template-id="nav-hotels"
+            >
+              Hotels
+            </button>
+            <button
+              data-go="planner"
+              class="nav-link"
+              data-template-id="nav-plan"
+            >
+              Plan a trip
+            </button>
+            <button
+              data-go="dashboard"
+              class="nav-link"
+              data-template-id="nav-trips"
+            >
+              My trips
+            </button>
+            <button
+              data-go="admin"
+              class="btn btn-dark ml-3"
+              data-template-id="nav-admin"
+            >
+              Admin studio ↗
+            </button>
+          </nav>
+          <button
+            id="menu-toggle"
+            class="mobile-toggle hidden btn btn-light !p-2"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+          >
+            <i data-lucide="menu"></i>
+          </button>
+        </div>
+        <nav
+          id="mobile-menu"
+          hidden
+          class="wrap pb-4 grid gap-2"
+          aria-label="Mobile navigation"
+        >
+          <button class="nav-link text-left" data-go="home">Discover</button
+          ><button class="nav-link text-left" data-go="hotels">Hotels</button
+          ><button class="nav-link text-left" data-go="planner">
+            Plan a trip</button
+          ><button class="nav-link text-left" data-go="dashboard">
+            My trips</button
+          ><button class="nav-link text-left" data-go="admin">
+            Admin studio
+          </button>
+        </nav>
+      </header>
+      <main id="main">
+        <section id="home" class="view active">
+          <div class="hero pattern py-12 md:py-20">
+            <div
+              class="wrap grid lg:grid-cols-[1.1fr_.9fr] gap-12 items-center"
+            >
+              <div class="reveal">
+                <span
+                  data-template-id="hero-kicker"
+                  class="canva-tag eyebrow bg-[#ffd66d] border-2 border-[#14233c] px-4 py-2 rounded-full inline-block mb-7"
+                  >STAY SOMEWHERE. GO EVERYWHERE.</span
+                >
+                <h1
+                  data-template-id="hero-title"
+                  class="canva-text hero-title mb-6"
+                >
+                  Your stay. Your journey. One booking.
+                </h1>
+                <p
+                  data-template-id="hero-description"
+                  class="canva-text text-lg md:text-xl max-w-xl mb-8 leading-relaxed"
+                >
+                  Find a room worth the trip — then discover the bus that gets
+                  you there. All the good parts of travel, connected.
+                </p>
+                <button
+                  data-go="hotels"
+                  data-template-id="hero-button"
+                  class="canva-button btn btn-coral"
+                >
+                  Explore stays <span aria-hidden="true">↗</span>
+                </button>
+                <div class="mt-9 flex gap-5 items-center flex-wrap font-bold">
+                  <span class="text-3xl">✳</span
+                  ><span data-template-id="hero-route" class="canva-text"
+                    >HOTEL → NEARBY STOP → YOUR TRIP</span
+                  >
+                </div>
+              </div>
+              <div
+                class="relative px-3 pb-7 reveal"
+                style="animation-delay: 0.15s"
+              >
+                <img
+                  data-template-id="hero-image"
+                  class="canva-image hero-photo w-full"
+                  loading="lazy"
+                />
+                <div
+                  class="float absolute bottom-0 left-0 bg-white panel px-5 py-4 font-bold text-sm rotate-[-5deg]"
+                >
+                  <span class="block text-2xl">✦ 4.9</span
+                  ><span data-template-id="hero-photo-note" class="canva-text"
+                    >Good places, great journeys</span
+                  >
+                </div>
+                <div
+                  class="absolute top-6 right-0 bg-[#ffd66d] border-2 border-[#14233c] rounded-full h-24 w-24 grid place-items-center text-center font-black rotate-12 shadow-[5px_5px_0_#14233c]"
+                >
+                  GO<br />
+                  FAR ↗
+                </div>
+              </div>
+            </div>
+            <form
+              id="hero-search"
+              class="wrap mt-14 bg-white panel p-5 grid md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-3 items-end"
+            >
+              <div>
+                <label
+                  for="hero-destination"
+                  data-template-id="destination-label"
+                  class="canva-text eyebrow block mb-2"
+                  >Destination</label
+                ><input
+                  id="hero-destination"
+                  data-template-id="destination-placeholder"
+                  class="canva-input field"
+                  placeholder="City or hotel"
+                  autocomplete="off"
+                />
+              </div>
+              <div>
+                <label
+                  for="hero-in"
+                  data-template-id="checkin-label"
+                  class="canva-text eyebrow block mb-2"
+                  >Check-in</label
+                ><input id="hero-in" class="field" type="date" />
+              </div>
+              <div>
+                <label
+                  for="hero-out"
+                  data-template-id="checkout-label"
+                  class="canva-text eyebrow block mb-2"
+                  >Check-out</label
+                ><input id="hero-out" class="field" type="date" />
+              </div>
+              <div>
+                <label
+                  for="hero-guests"
+                  data-template-id="guests-label"
+                  class="canva-text eyebrow block mb-2"
+                  >Guests</label
+                ><input
+                  id="hero-guests"
+                  class="field"
+                  type="number"
+                  min="1"
+                  max="8"
+                  value="2"
+                />
+              </div>
+              <button
+                type="submit"
+                data-template-id="search-button"
+                class="canva-button btn btn-dark h-[49px]"
+              >
+                Search ↗
+              </button>
+            </form>
+          </div>
+          <div class="wrap py-20">
+            <div class="flex justify-between items-end gap-4 flex-wrap mb-9">
+              <div>
+                <span class="eyebrow text-[#364de5]">THE GOOD STUFF</span>
+                <h2
+                  data-template-id="featured-title"
+                  class="canva-text text-4xl md:text-6xl mt-2"
+                >
+                  Stays with a story.
+                </h2>
+              </div>
+              <button data-go="hotels" class="btn btn-light">
+                See all stays ↗
+              </button>
+            </div>
+            <div
+              id="featured-grid"
+              class="grid md:grid-cols-2 lg:grid-cols-3 gap-7"
+            ></div>
+          </div>
+          <div class="bg-[#14233c] text-white py-20 relative overflow-hidden">
+            <div class="wrap relative z-10">
+              <span class="eyebrow text-[#ffd66d]"
+                >A BETTER WAY TO GET AWAY</span
+              >
+              <h2
+                data-template-id="how-title"
+                class="canva-text text-4xl md:text-6xl max-w-3xl my-5"
+              >
+                The whole journey, beautifully connected.
+              </h2>
+              <div class="grid md:grid-cols-4 gap-5 mt-10" id="how-steps">
+                <div
+                  class="bg-[#ff654f] text-[#14233c] rounded-3xl p-6 rotate-[-2deg]"
+                >
+                  <span class="text-4xl">01 ✳</span>
+                  <h3 class="text-2xl mt-5">Find a hotel</h3>
+                  <p class="mt-2">Explore places that feel like you.</p>
+                </div>
+                <div
+                  class="bg-[#ffd66d] text-[#14233c] rounded-3xl p-6 rotate-[1deg]"
+                >
+                  <span class="text-4xl">02 ◈</span>
+                  <h3 class="text-2xl mt-5">Pick a room</h3>
+                  <p class="mt-2">Make the stay your own.</p>
+                </div>
+                <div
+                  class="bg-[#b9efcb] text-[#14233c] rounded-3xl p-6 rotate-[-1deg]"
+                >
+                  <span class="text-4xl">03 ↗</span>
+                  <h3 class="text-2xl mt-5">Match a bus</h3>
+                  <p class="mt-2">Find routes that fit your dates.</p>
+                </div>
+                <div
+                  class="bg-[#b7baff] text-[#14233c] rounded-3xl p-6 rotate-[2deg]"
+                >
+                  <span class="text-4xl">04 ★</span>
+                  <h3 class="text-2xl mt-5">Review the trip</h3>
+                  <p class="mt-2">See every detail together.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="wrap py-20 grid lg:grid-cols-2 gap-10 items-center">
+            <div class="bg-[#b9efcb] panel p-8 md:p-12 relative pattern">
+              <span class="eyebrow">THE CONNECTION</span>
+              <div class="mt-7 space-y-5">
+                <div
+                  class="bg-white rounded-2xl p-5 border-2 border-[#14233c] font-bold text-xl"
+                >
+                  ⌂ &nbsp; Your hotel
+                  <span class="float-right text-sm">CHECK-IN</span>
+                </div>
+                <div class="text-center text-4xl">↓</div>
+                <div
+                  class="bg-[#ffd66d] rounded-2xl p-5 border-2 border-[#14233c] font-bold text-xl"
+                >
+                  ◎ &nbsp; Nearby bus stop
+                  <span class="float-right text-sm">CLOSE BY</span>
+                </div>
+                <div class="text-center text-4xl">↓</div>
+                <div
+                  class="bg-[#ff654f] rounded-2xl p-5 border-2 border-[#14233c] font-bold text-xl"
+                >
+                  ➜ &nbsp; A trip that fits
+                  <span class="float-right text-sm">ON TIME</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <span class="eyebrow text-[#364de5]">NOT JUST A ROOM</span>
+              <h2
+                data-template-id="transport-title"
+                class="canva-text text-4xl md:text-6xl mt-3 mb-6"
+              >
+                The ride is part of the adventure.
+              </h2>
+              <p
+                data-template-id="transport-copy"
+                class="canva-text text-lg leading-relaxed mb-7"
+              >
+                Recommendations consider the hotel’s nearby stops, your stay
+                dates, arrival and departure times, and available seats. Add a
+                ride in either direction — or keep it hotel-only.
+              </p>
+              <button
+                data-go="planner"
+                data-template-id="transport-button"
+                class="canva-button btn btn-coral"
+              >
+                See how it works ↗
+              </button>
+            </div>
+          </div>
+          <div
+            class="wrap mb-20 bg-[#364de5] text-white rounded-[36px] overflow-hidden grid md:grid-cols-2"
+          >
+            <div class="p-8 md:p-14">
+              <span class="eyebrow text-[#ffd66d]">YOUR NEXT CHAPTER</span>
+              <h2
+                data-template-id="cta-title"
+                class="canva-text text-4xl md:text-6xl my-5"
+              >
+                Go somewhere wonderful.
+              </h2>
+              <p data-template-id="cta-copy" class="canva-text mb-7">
+                Start with the stay. We’ll help connect the dots.
+              </p>
+              <button
+                data-go="hotels"
+                data-template-id="cta-button"
+                class="canva-button btn btn-coral"
+              >
+                Find your place ↗
+              </button>
+            </div>
+            <img
+              data-template-id="cta-image"
+              loading="lazy"
+              class="canva-image w-full h-72 md:h-full object-cover"
+            />
+          </div>
+        </section>
+        <section id="hotels" class="view wrap py-12 md:py-16">
+          <span class="eyebrow text-[#364de5]">DISCOVER / STAYS</span>
+          <h1
+            data-template-id="listing-title"
+            class="canva-text text-5xl md:text-7xl my-4"
+          >
+            Find your kind of place.
+          </h1>
+          <p data-template-id="listing-copy" class="canva-text text-lg mb-9">
+            Colorful escapes and a smoother way to get there.
+          </p>
+          <form
+            id="listing-form"
+            class="panel bg-[#ffd66d] p-5 grid md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end"
+          >
+            <div>
+              <label for="hotel-query" class="eyebrow block mb-2"
+                >Destination or hotel</label
+              ><input
+                id="hotel-query"
+                class="field"
+                placeholder="Search sample stays"
+              />
+            </div>
+            <div>
+              <label for="hotel-sort" class="eyebrow block mb-2">Sort by</label
+              ><select id="hotel-sort" class="field">
+                <option value="featured">Featured</option>
+                <option value="low">Lowest price</option>
+                <option value="high">Highest rating</option>
+              </select>
+            </div>
+            <div>
+              <label for="hotel-filter" class="eyebrow block mb-2">Filter</label
+              ><select id="hotel-filter" class="field">
+                <option value="all">All stays</option>
+                <option value="pool">Pool</option>
+                <option value="wifi">Wi-Fi</option>
+                <option value="budget">Under $150</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-dark h-[49px]">
+              Show stays ↗
+            </button>
+          </form>
+          <p
+            id="result-count"
+            class="font-bold mt-9 mb-5"
+            aria-live="polite"
+          ></p>
+          <div
+            id="hotel-grid"
+            class="grid md:grid-cols-2 lg:grid-cols-3 gap-7"
+          ></div>
+          <div
+            id="hotel-empty"
+            hidden
+            class="panel bg-white p-12 text-center mt-7"
+          >
+            <div class="text-5xl mb-3">⌁</div>
+            <h2 class="text-3xl">No stays on this route.</h2>
+            <p class="mt-2">Try another destination or change your filters.</p>
+          </div>
+        </section>
+        <section id="detail" class="view wrap py-10 md:py-14">
+          <button data-go="hotels" class="font-bold mb-7 hover:underline">
+            ← All stays
+          </button>
+          <div class="grid lg:grid-cols-[1.5fr_1fr] gap-4">
+            <img
+              id="detail-main"
+              data-template-id="detail-main-image"
+              loading="lazy"
+              class="canva-image w-full h-72 lg:h-[460px] object-cover rounded-[30px] border-2 border-[#14233c]"
+            />
+            <div class="grid grid-cols-2 gap-4">
+              <img
+                data-template-id="detail-pool-image"
+                loading="lazy"
+                class="canva-image w-full h-32 lg:h-[222px] object-cover rounded-3xl"
+              /><img
+                data-template-id="detail-dining-image"
+                loading="lazy"
+                class="canva-image w-full h-32 lg:h-[222px] object-cover rounded-3xl"
+              /><img
+                data-template-id="detail-spa-image"
+                loading="lazy"
+                class="canva-image w-full h-32 lg:h-[222px] object-cover rounded-3xl"
+              />
+              <div
+                class="rounded-3xl bg-[#ffd66d] grid place-items-center text-5xl"
+              >
+                ✳ ↗
+              </div>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-[1.45fr_.55fr] gap-9 mt-11">
+            <div>
+              <span class="eyebrow text-[#364de5]">A STAY TO REMEMBER</span>
+              <h1 id="detail-name" class="text-5xl md:text-7xl mt-2"></h1>
+              <p id="detail-meta" class="font-bold mt-4"></p>
+              <p
+                id="detail-description"
+                class="text-lg leading-relaxed mt-6"
+              ></p>
+              <div
+                id="detail-amenities"
+                class="flex flex-wrap gap-2 mt-6"
+              ></div>
+              <h2 class="text-4xl mt-14 mb-5">Pick your room.</h2>
+              <div id="room-list" class="grid gap-4"></div>
+            </div>
+            <aside class="space-y-6">
+              <div class="panel bg-[#b9efcb] p-6">
+                <span class="eyebrow">FROM YOUR DOORSTEP</span>
+                <h2 class="text-3xl my-4">Your journey starts nearby.</h2>
+                <p id="detail-stops" class="font-bold"></p>
+                <div
+                  class="my-5 border-l-[3px] border-dashed border-[#14233c] pl-5 space-y-5"
+                >
+                  <p>⌂ Hotel check-in</p>
+                  <p>◎ Nearby stop</p>
+                  <p>➜ Matching departures</p>
+                </div>
+                <button data-go="planner" class="btn btn-dark w-full">
+                  Explore bus trips ↗
+                </button>
+              </div>
+              <div class="bg-[#ffd66d] rounded-3xl p-6">
+                <p class="eyebrow">GOOD TO KNOW</p>
+                <p class="mt-2">
+                  Bus transportation is always optional. Choose only the legs
+                  you need.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </section>
+        <section id="planner" class="view wrap py-10 md:py-14">
+          <span class="eyebrow text-[#364de5]">BUILD YOUR ADVENTURE</span>
+          <h1
+            data-template-id="planner-title"
+            class="canva-text text-5xl md:text-7xl mt-3 mb-4"
+          >
+            Make it a whole trip.
+          </h1>
+          <p data-template-id="planner-note" class="canva-text mb-7">
+            Interactive itinerary preview · Sample availability and prices · No
+            reservation or payment is made.
+          </p>
+          <div
+            class="step-scroll flex gap-2 pb-4 mb-7"
+            id="stepper"
+            aria-label="Trip planning steps"
+          ></div>
+          <div id="planner-content"></div>
+          <div class="flex justify-between gap-3 mt-8 flex-wrap">
+            <button id="step-back" class="btn btn-light">← Back</button
+            ><button id="step-next" class="btn btn-coral">Continue ↗</button>
+          </div>
+          <p
+            id="planner-error"
+            class="text-[#a82420] font-bold mt-3"
+            role="alert"
+          ></p>
+        </section>
+        <section id="dashboard" class="view wrap py-12 md:py-16">
+          <span class="eyebrow text-[#364de5]">YOUR TRAVEL SPACE</span>
+          <h1
+            data-template-id="dashboard-title"
+            class="canva-text text-5xl md:text-7xl my-4"
+          >
+            The good part starts here.
+          </h1>
+          <p data-template-id="dashboard-note" class="canva-text mb-9">
+            Your current draft itinerary, all in one colorful place. Nothing has
+            been booked.
+          </p>
+          <div class="grid lg:grid-cols-[1.2fr_.8fr] gap-7">
+            <div class="panel bg-white p-7" id="dashboard-draft"></div>
+            <div class="panel bg-[#b9efcb] p-7">
+              <span class="eyebrow">QUICK ACTION</span>
+              <h2 class="text-4xl mt-3 mb-4">Keep the journey going.</h2>
+              <p class="mb-7">
+                Adjust your room, dates, routes, or seats in the trip planner.
+              </p>
+              <button data-go="planner" class="btn btn-dark">
+                Edit draft trip ↗
+              </button>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-5 mt-9">
+            <div class="bg-[#ffd66d] rounded-3xl p-6">
+              <h2 class="text-2xl">Hotel stays</h2>
+              <p class="mt-2">
+                Your chosen sample stay appears in the draft above.
+              </p>
+            </div>
+            <div class="bg-[#ffb8a9] rounded-3xl p-6">
+              <h2 class="text-2xl">Bus journeys</h2>
+              <p class="mt-2">Add an outgoing ride, a return ride, or both.</p>
+            </div>
+            <div class="bg-[#c4c8ff] rounded-3xl p-6">
+              <h2 class="text-2xl">Account preview</h2>
+              <p class="mt-2">
+                Profile and booking history require a connected account service.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section id="admin" class="view bg-[#e8ebff] min-h-[700px]">
+          <div class="wrap py-9">
+            <div class="flex items-center justify-between flex-wrap gap-3 mb-7">
+              <div>
+                <span class="eyebrow text-[#364de5]"
+                  >OPERATIONS / DESIGN PREVIEW</span
+                >
+                <h1
+                  data-template-id="admin-title"
+                  class="canva-text text-4xl md:text-6xl mt-2"
+                >
+                  The control room.
+                </h1>
+              </div>
+              <span class="status bg-[#ffd66d]"
+                >SAMPLE DATA · THIS PAGE ONLY</span
+              >
+            </div>
+            <div class="admin-layout flex gap-6 items-start">
+              <aside
+                class="admin-sidebar w-[205px] shrink-0 bg-[#14233c] text-white rounded-3xl p-3"
+              >
+                <nav
+                  id="admin-nav"
+                  class="admin-nav grid gap-1"
+                  aria-label="Admin sections"
+                ></nav>
+              </aside>
+              <div class="min-w-0 flex-1" id="admin-content"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer
+        data-template-id="site-footer"
+        class="canva-footer bg-[#14233c] text-white py-14"
+      >
+        <div class="wrap grid md:grid-cols-4 gap-9">
+          <div class="md:col-span-2">
+            <div class="display text-4xl">
+              wayfare<span class="text-[#ff654f]">.</span>
+            </div>
+            <p
+              data-template-id="footer-description"
+              class="canva-text max-w-sm mt-4 text-[#dce1ec]"
+            >
+              Better stays. Better connections. A brighter way to imagine the
+              whole journey.
+            </p>
+            <p class="mt-6 text-xs text-[#c4cad7]">
+              University project · Interactive design prototype · No real
+              bookings or payments
+            </p>
+          </div>
+          <div>
+            <h2 class="font-bold text-lg mb-4">Explore</h2>
+            <div class="grid gap-2">
+              <button data-go="home" class="text-left hover:underline">
+                Discover</button
+              ><button data-go="hotels" class="text-left hover:underline">
+                Hotels</button
+              ><button data-go="planner" class="text-left hover:underline">
+                Trip planner
+              </button>
+            </div>
+          </div>
+          <div>
+            <h2 class="font-bold text-lg mb-4">System</h2>
+            <div class="grid gap-2">
+              <button data-go="dashboard" class="text-left hover:underline">
+                My trips</button
+              ><button data-go="admin" class="text-left hover:underline">
+                Admin studio</button
+              ><span class="text-[#c4cad7]">Hotels + buses, connected.</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <div
+      id="modal"
+      class="modal-backdrop"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div
+        class="bg-white panel p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto"
+      >
+        <h2 id="modal-title" class="text-3xl mb-4"></h2>
+        <div id="modal-body"></div>
+        <div id="modal-actions" class="flex justify-end gap-2 mt-6"></div>
+      </div>
+    </div>
+    <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+    <script>
+      (() => {
+        const hotels = [
+          {
+            id: 1,
+            name: "Solstice Coast",
+            city: "Alexandria",
+            rating: 4.9,
+            price: 175,
+            rooms: 6,
+            amenities: ["Pool", "Wi-Fi", "Breakfast"],
+            stop: "Sidi Gaber Station",
+            description:
+              "A sun-drenched hideaway where sea air, slow mornings and bold coastal style meet.",
+            image: "feature-image-1",
+            color: "#ffcfb3",
+          },
+          {
+            id: 2,
+            name: "The Indigo House",
+            city: "Cairo",
+            rating: 4.8,
+            price: 145,
+            rooms: 4,
+            amenities: ["Wi-Fi", "Breakfast", "City views"],
+            stop: "Ramses Station",
+            description:
+              "An energetic city address with a calm room waiting at the end of every adventure.",
+            image: "feature-image-2",
+            color: "#c5c7ff",
+          },
+          {
+            id: 3,
+            name: "Palm & Passage",
+            city: "Giza",
+            rating: 4.7,
+            price: 120,
+            rooms: 8,
+            amenities: ["Pool", "Wi-Fi", "Spa"],
+            stop: "Giza Square",
+            description:
+              "A playful oasis with generous spaces, warm hospitality and room to unwind.",
+            image: "feature-image-3",
+            color: "#b9efcb",
+          },
+          {
+            id: 4,
+            name: "Atlas Mountain Lodge",
+            city: "Mountain retreat",
+            rating: 4.8,
+            price: 198,
+            rooms: 3,
+            amenities: ["Wi-Fi", "Breakfast", "Scenic views"],
+            stop: "Central Coach Stop",
+            description:
+              "Wake up to mountain light and spend your evenings somewhere wonderfully quiet.",
+            image: "feature-image-4",
+            color: "#ffd66d",
+          },
+          {
+            id: 5,
+            name: "Dune & Daylight",
+            city: "Desert retreat",
+            rating: 4.6,
+            price: 210,
+            rooms: 5,
+            amenities: ["Pool", "Spa", "Breakfast"],
+            stop: "Oasis Terminal",
+            description:
+              "Golden landscapes and considered comforts make every hour feel extraordinary.",
+            image: "feature-image-5",
+            color: "#f7b49d",
+          },
+          {
+            id: 6,
+            name: "Blue Horizon Villas",
+            city: "Island escape",
+            rating: 4.9,
+            price: 260,
+            rooms: 2,
+            amenities: ["Pool", "Wi-Fi", "Sea views"],
+            stop: "Harbour Coach Stop",
+            description:
+              "Turquoise mornings and a room with a view: your invitation to slow right down.",
+            image: "feature-image-6",
+            color: "#a8e9ea",
+          },
+        ];
+        const roomOptions = [
+          { name: "Classic Room", capacity: 2, extra: 0, available: 4 },
+          { name: "Panorama Suite", capacity: 3, extra: 65, available: 2 },
+          { name: "Family Loft", capacity: 4, extra: 95, available: 1 },
+        ];
+        const routes = [
+          {
+            id: "out-1",
+            leg: "out",
+            name: "Coastal Express",
+            depart: "07:00",
+            arrive: "10:30",
+            from: "Central Terminal",
+            price: 24,
+            type: "Comfort",
+            seats: 12,
+          },
+          {
+            id: "out-2",
+            leg: "out",
+            name: "Sunrise Limited",
+            depart: "09:15",
+            arrive: "12:15",
+            from: "West Station",
+            price: 32,
+            type: "Premium",
+            seats: 7,
+          },
+          {
+            id: "back-1",
+            leg: "back",
+            name: "Evening Connector",
+            depart: "17:30",
+            arrive: "21:00",
+            from: "Hotel-area stop",
+            price: 26,
+            type: "Comfort",
+            seats: 9,
+          },
+          {
+            id: "back-2",
+            leg: "back",
+            name: "Nightfall Express",
+            depart: "19:00",
+            arrive: "22:20",
+            from: "Hotel-area stop",
+            price: 34,
+            type: "Premium",
+            seats: 5,
+          },
+        ];
+        const sections = [
+          "Dashboard",
+          "Hotels",
+          "Rooms",
+          "Users",
+          "Buses",
+          "Bus Seats",
+          "Bus Stops",
+          "Routes",
+          "Trips",
+          "Hotel Bookings",
+          "Bus Bookings",
+          "Payments",
+        ];
+        const sample = {
+          Hotels: [
+            ["Solstice Coast", "Alexandria", "Active"],
+            ["The Indigo House", "Cairo", "Active"],
+          ],
+          Rooms: [
+            ["Classic Room", "Solstice Coast", "Available"],
+            ["Panorama Suite", "The Indigo House", "Available"],
+          ],
+          Users: [
+            ["Sample Customer", "Customer", "Active"],
+            ["Sample Operator", "Admin", "Active"],
+          ],
+          Buses: [
+            ["Coastal Express", "32 seats", "Active"],
+            ["Sunrise Limited", "24 seats", "Active"],
+          ],
+          "Bus Seats": [
+            ["A1", "Coastal Express", "Available"],
+            ["A2", "Coastal Express", "Occupied"],
+          ],
+          "Bus Stops": [
+            ["Sidi Gaber Station", "Alexandria", "Connected"],
+            ["Ramses Station", "Cairo", "Connected"],
+          ],
+          Routes: [
+            ["Cairo → Alexandria", "2 stops", "Active"],
+            ["Giza → Cairo", "3 stops", "Active"],
+          ],
+          Trips: [
+            ["Coastal Express", "07:00 → 10:30", "Scheduled"],
+            ["Evening Connector", "17:30 → 21:00", "Scheduled"],
+          ],
+          "Hotel Bookings": [
+            ["Sample stay #1001", "Solstice Coast", "Illustrative"],
+            ["Sample stay #1002", "The Indigo House", "Illustrative"],
+          ],
+          "Bus Bookings": [
+            ["Sample ride #2001", "Coastal Express", "Illustrative"],
+          ],
+          Payments: [["Sample invoice #3001", "$175", "Illustrative"]],
+        };
+        const records = Object.fromEntries(
+          Object.entries(sample).map(([k, rows]) => [
+            k,
+            rows.map((r, i) => ({ id: k + "-" + i, fields: [...r] })),
+          ]),
+        );
+        const state = {
+          view: "home",
+          hotel: hotels[0],
+          room: 0,
+          step: 0,
+          checkin: "",
+          checkout: "",
+          guests: 2,
+          out: null,
+          back: null,
+          seats: { out: null, back: null },
+          admin: "Dashboard",
+          adminQuery: "",
+        };
+        const $ = (id) => document.getElementById(id);
+        const escape = (s) =>
+          String(s).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        const money = (n) => "$" + Number(n).toLocaleString("en-US");
+        const dateLabel = (s) =>
+          s
+            ? new Date(s + "T12:00:00").toLocaleDateString("en", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Not set";
+        const nights = () =>
+          state.checkin && state.checkout
+            ? Math.max(
+                1,
+                Math.round(
+                  (new Date(state.checkout) - new Date(state.checkin)) /
+                    86400000,
+                ),
+              )
+            : 1;
+        const total = () =>
+          nights() * (state.hotel.price + roomOptions[state.room].extra) +
+          (state.out ? state.out.price : 0) +
+          (state.back ? state.back.price : 0);
+        function toast(msg) {
+          const t = $("toast");
+          t.textContent = msg;
+          t.hidden = false;
+          clearTimeout(toast.timer);
+          toast.timer = setTimeout(() => (t.hidden = true), 4200);
+        }
+        function go(view) {
+          if (!$(view)) return;
+          document
+            .querySelectorAll(".view")
+            .forEach((v) => v.classList.toggle("active", v.id === view));
+          state.view = view;
+          $("mobile-menu").hidden = true;
+          $("menu-toggle").setAttribute("aria-expanded", "false");
+          document
+            .querySelectorAll(".desktop-nav .nav-link")
+            .forEach((b) =>
+              b.classList.toggle("current", b.dataset.go === view),
+            );
+          if (view === "hotels") renderHotels();
+          if (view === "detail") renderDetail();
+          if (view === "planner") renderPlanner();
+          if (view === "dashboard") renderDashboard();
+          if (view === "admin") renderAdmin();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        function imageFor(id) {
+          return document.querySelector(`[data-template-id="${id}"]`);
+        }
+        function hotelCard(h) {
+          const original = imageFor(h.image);
+          const img = original
+            ? original.cloneNode(false)
+            : document.createElement("div");
+          img.removeAttribute("id");
+          img.className = "canva-image hotel-photo";
+          return {
+            img,
+            html: `<div class="flex justify-between items-center mt-5 gap-2"><span class="eyebrow">${escape(h.city)}</span><span class="status bg-white">★ ${h.rating}</span></div><h3 class="text-3xl mt-2">${escape(h.name)}</h3><p class="text-sm mt-2">${escape(h.amenities.join(" · "))}</p><div class="flex justify-between items-end gap-3 mt-6"><div><span class="text-3xl font-black">${money(h.price)}</span><span class="text-sm"> / night</span><p class="text-xs font-bold mt-1">${h.rooms} rooms available · sample</p></div><button type="button" class="btn btn-dark !px-4" data-hotel="${h.id}">View ↗</button></div>`,
+          };
+        }
+        function mountCards(target, list) {
+          target.replaceChildren();
+          list.forEach((h) => {
+            const a = document.createElement("article");
+            a.className = "panel p-4 transition-transform hover:-translate-y-1";
+            a.style.background = h.color;
+            const c = hotelCard(h);
+            a.appendChild(c.img);
+            const body = document.createElement("div");
+            body.innerHTML = c.html;
+            a.appendChild(body);
+            target.appendChild(a);
+          });
+        }
+        function renderHotels() {
+          let items = hotels.filter((h) => {
+            const q = $("hotel-query").value.trim().toLowerCase(),
+              f = $("hotel-filter").value;
+            return (
+              (!q || (h.name + " " + h.city).toLowerCase().includes(q)) &&
+              (f === "all" ||
+                (f === "budget" && h.price < 150) ||
+                h.amenities.some((a) => a.toLowerCase() === f))
+            );
+          });
+          if ($("hotel-sort").value === "low")
+            items.sort((a, b) => a.price - b.price);
+          if ($("hotel-sort").value === "high")
+            items.sort((a, b) => b.rating - a.rating);
+          $("result-count").textContent =
+            `${items.length} sample ${items.length === 1 ? "stay" : "stays"} to explore`;
+          $("hotel-empty").hidden = items.length > 0;
+          mountCards($("hotel-grid"), items);
+        }
+        function renderDetail() {
+          const h = state.hotel;
+          $("detail-name").textContent = h.name;
+          $("detail-meta").textContent =
+            `★ ${h.rating} · ${h.city} · From ${money(h.price)} / night · ${h.rooms} sample rooms available`;
+          $("detail-description").textContent = h.description;
+          $("detail-stops").textContent = h.stop + " · sample nearby stop";
+          $("detail-amenities").innerHTML = h.amenities
+            .map((a) => `<span class="status bg-[#ffd66d]">${escape(a)}</span>`)
+            .join("");
+          $("room-list").innerHTML = roomOptions
+            .map(
+              (r, i) =>
+                `<article class="panel bg-white p-5 flex flex-wrap justify-between items-center gap-4"><div><h3 class="text-2xl">${r.name}</h3><p class="mt-1 text-sm">Up to ${r.capacity} guests · ${r.available} sample rooms left</p></div><div class="flex items-center gap-4"><strong>${money(h.price + r.extra)} <small>/ night</small></strong><button class="btn btn-coral" data-room="${i}">Select room ↗</button></div></article>`,
+            )
+            .join("");
+        }
+        function validateDates() {
+          if (!state.checkin || !state.checkout)
+            return "Choose both check-in and check-out dates.";
+          if (state.checkout <= state.checkin)
+            return "Check-out must be after check-in.";
+          if (state.guests < 1 || state.guests > 8)
+            return "Choose between 1 and 8 guests.";
+          if (state.guests > roomOptions[state.room].capacity)
+            return `The ${roomOptions[state.room].name} fits up to ${roomOptions[state.room].capacity} guests. Choose a different room or reduce guests.`;
+          return "";
+        }
+        const steps = [
+          "01 Hotel",
+          "02 Room",
+          "03 Dates",
+          "04 Transportation",
+          "05 Summary",
+          "06 Preview",
+        ];
+        function tripCard(t) {
+          const selected = state[t.leg]?.id === t.id;
+          return `<article class="rounded-3xl border-2 border-[#14233c] p-5 ${selected ? "bg-[#b9efcb]" : "bg-white"}"><div class="flex justify-between gap-3 items-start"><div><span class="eyebrow">${escape(t.type)} · ${t.seats} sample seats</span><h3 class="text-2xl mt-1">${escape(t.name)}</h3></div><strong class="text-xl">${money(t.price)}</strong></div><div class="flex items-center gap-2 my-5 font-black text-lg"><span>${t.depart}</span><span class="flex-1 border-t-2 border-dashed border-[#14233c] relative text-center text-xs">➜</span><span>${t.arrive}</span></div><p class="text-sm mb-4">${escape(t.from)} → ${escape(state.hotel.stop)} · ${t.leg === "out" ? "Arrives before sample 15:00 check-in" : "Departs after sample 11:00 check-out"}</p><button class="btn ${selected ? "btn-dark" : "btn-light"}" data-trip="${t.id}">${selected ? "Selected ✓" : "Select trip ↗"}</button></article>`;
+        }
+        function seatMap(leg) {
+          const trip = state[leg];
+          if (!trip) return "";
+          let rows = "";
+          for (let n = 0; n < 5; n++) {
+            rows += '<div class="flex items-center gap-2 justify-center my-2">';
+            for (let c = 0; c < 4; c++) {
+              if (c === 2)
+                rows += '<span class="seat-aisle" aria-hidden="true"></span>';
+              const num = n * 4 + c + 1,
+                label = String.fromCharCode(65 + n) + ((c % 4) + 1),
+                occupied = [3, 7, 12, 18].includes(num),
+                disabled = [16].includes(num),
+                selected = state.seats[leg] === label;
+              rows += `<button type="button" class="seat ${occupied ? "occupied" : disabled ? "disabled-seat" : selected ? "selected" : ""}" data-seat="${leg}:${label}" ${occupied || disabled ? "disabled" : ""} aria-label="${label}, ${occupied ? "occupied" : disabled ? "disabled" : selected ? "selected" : "available"}" aria-pressed="${selected}">${label}</button>`;
+            }
+            rows += "</div>";
+          }
+          return `<div class="bg-[#f1f4ff] rounded-3xl p-5 mt-4"><div class="flex justify-between items-center"><strong>Choose a ${leg === "out" ? "outgoing" : "return"} seat</strong><span class="text-xs">Front of bus ↑</span></div><div class="bg-white border-2 border-[#14233c] rounded-[40px] px-3 py-5 mt-3 max-w-[300px] mx-auto">${rows}</div><div class="flex flex-wrap gap-3 text-xs mt-4 justify-center"><span>🟩 Available</span><span>🟧 Selected</span><span>⬜ Occupied / disabled</span></div><p class="text-center font-bold mt-3">Selected: ${state.seats[leg] || "none"}</p></div>`;
+        }
+        function summary() {
+          return `<div class="grid lg:grid-cols-[1fr_.8fr] gap-6"><div class="space-y-5"><article class="panel bg-white p-6"><span class="eyebrow">01 / THE STAY</span><h3 class="text-3xl my-3">${escape(state.hotel.name)}</h3><p>${escape(state.hotel.city)} · ${roomOptions[state.room].name} · ${state.guests} guest${state.guests === 1 ? "" : "s"}</p><p class="mt-2">${dateLabel(state.checkin)} → ${dateLabel(state.checkout)} · ${nights()} night${nights() === 1 ? "" : "s"}</p><strong class="block mt-4">${money(nights() * (state.hotel.price + roomOptions[state.room].extra))}</strong></article>${["out", "back"].map((leg) => `<article class="rounded-3xl p-6 ${leg === "out" ? "bg-[#ffd66d]" : "bg-[#c4c8ff]"}"><span class="eyebrow">${leg === "out" ? "02 / OUTGOING" : "03 / RETURN"} · OPTIONAL</span><h3 class="text-2xl mt-2">${state[leg] ? escape(state[leg].name) : "No bus selected"}</h3><p class="mt-2">${state[leg] ? `${state[leg].depart} → ${state[leg].arrive} · Seat ${state.seats[leg] || "not selected"} · ${money(state[leg].price)}` : "Hotel-only for this leg"}</p></article>`).join("")}</div><aside class="panel bg-[#14233c] text-white p-7 h-fit"><span class="eyebrow text-[#ffd66d]">YOUR ESTIMATED TOTAL</span><div class="display text-6xl my-5">${money(total())}</div><p>${nights()} night${nights() === 1 ? "" : "s"} + ${[state.out, state.back].filter(Boolean).length} optional bus trip${[state.out, state.back].filter(Boolean).length === 1 ? "" : "s"}</p><p class="text-sm text-[#cbd2df] mt-6">Illustrative prices only. No reservation or payment is made in this prototype.</p></aside></div>`;
+        }
+        function renderPlanner() {
+          const step = state.step;
+          $("stepper").innerHTML = steps
+            .map(
+              (s, i) =>
+                `<button class="step ${i === step ? "on" : i < step ? "done" : ""}" data-step="${i}" aria-current="${i === step ? "step" : "false"}">${s}</button>`,
+            )
+            .join("");
+          let html = "";
+          if (step === 0)
+            html = `<div class="panel bg-[#ffd66d] p-7"><span class="eyebrow">01 / YOUR HOTEL</span><h2 class="text-4xl my-4">${escape(state.hotel.name)}</h2><p>${escape(state.hotel.city)} · ★ ${state.hotel.rating} · from ${money(state.hotel.price)} per night</p><button data-go="hotels" class="btn btn-light mt-6">Change hotel ↗</button></div>`;
+          if (step === 1)
+            html = `<h2 class="text-4xl mb-5">Room to roam.</h2><div class="grid md:grid-cols-3 gap-5">${roomOptions.map((r, i) => `<button data-select-room="${i}" class="panel p-6 text-left ${i === state.room ? "bg-[#b9efcb]" : "bg-white"}"><span class="eyebrow">${i === state.room ? "SELECTED ✓" : "ROOM OPTION"}</span><h3 class="text-3xl my-4">${r.name}</h3><p>Up to ${r.capacity} guests · ${r.available} sample rooms</p><strong class="block mt-5 text-2xl">${money(state.hotel.price + r.extra)} / night</strong></button>`).join("")}</div>`;
+          if (step === 2)
+            html = `<div class="panel bg-[#b9efcb] p-7"><span class="eyebrow">03 / YOUR DATES</span><h2 class="text-4xl mt-2 mb-6">When are we going?</h2><div class="grid md:grid-cols-3 gap-4"><div><label class="font-bold block mb-2" for="plan-in">Check-in</label><input id="plan-in" type="date" class="field" value="${state.checkin}"></div><div><label class="font-bold block mb-2" for="plan-out">Check-out</label><input id="plan-out" type="date" class="field" value="${state.checkout}"></div><div><label class="font-bold block mb-2" for="plan-guests">Guests</label><input id="plan-guests" type="number" min="1" max="8" class="field" value="${state.guests}"></div></div><p class="mt-5">Select dates and guests to see a sample itinerary. Hotel check-in is assumed to be 15:00; check-out is 11:00.</p></div>`;
+          if (step === 3)
+            html = `<div class="mb-7"><span class="eyebrow text-[#364de5]">MATCHED TO YOUR STAY</span><h2 class="text-4xl md:text-6xl mt-2">Trips that fit your stay.</h2><p class="mt-3">Sample routes via ${escape(state.hotel.stop)} · Outgoing buses arrive before check-in; return buses depart after check-out. Buses are optional.</p></div>${[
+              "out",
+              "back",
+            ]
+              .map(
+                (leg) =>
+                  `<div class="mb-9"><div class="flex justify-between gap-3 flex-wrap items-center mb-4"><h3 class="text-3xl">${leg === "out" ? "↗ Outgoing trip" : "↙ Return trip"}</h3><button class="font-bold underline" data-clear="${leg}">Skip / clear this leg</button></div><div class="grid md:grid-cols-2 gap-4">${routes
+                    .filter((r) => r.leg === leg)
+                    .map(tripCard)
+                    .join("")}</div>${seatMap(leg)}</div>`,
+              )
+              .join("")}`;
+          if (step === 4)
+            html = `<h2 class="text-4xl md:text-5xl mb-6">All the details, one place.</h2>${summary()}<p class="mt-5 font-bold">Review only — the next screen does not place a booking.</p>`;
+          if (step === 5)
+            html = `<div class="panel bg-[#b9efcb] p-8 md:p-12 text-center pattern"><div class="text-6xl mb-5">✳ ✦ ↗</div><span class="eyebrow">ITINERARY PREVIEW</span><h2 class="text-5xl md:text-7xl my-5">Your trip looks good!</h2><p class="text-lg max-w-xl mx-auto mb-7">This is a design preview, not a booking confirmation. No booking reference has been issued, no seats are held, and no payment has been taken.</p><div class="bg-white rounded-3xl p-6 max-w-xl mx-auto text-left"><strong>${escape(state.hotel.name)} · ${roomOptions[state.room].name}</strong><p class="mt-2">${dateLabel(state.checkin)} → ${dateLabel(state.checkout)} · ${nights()} nights</p><p class="mt-2">Buses: ${
+              [state.out, state.back]
+                .filter(Boolean)
+                .map((r) => escape(r.name))
+                .join(" + ") || "None selected"
+            }</p><p class="font-black text-2xl mt-4">Estimated total ${money(total())}</p></div><button data-go="hotels" class="btn btn-dark mt-8">Explore more stays ↗</button></div>`;
+          $("planner-content").innerHTML = html;
+          $("step-back").hidden = step === 0;
+          $("step-next").hidden = step === 5;
+          $("step-next").textContent =
+            step === 4 ? "View itinerary preview ↗" : "Continue ↗";
+          $("planner-error").textContent = "";
+        }
+        function renderDashboard() {
+          $("dashboard-draft").innerHTML =
+            `<span class="eyebrow text-[#364de5]">CURRENT DRAFT · NOT BOOKED</span><h2 class="text-4xl my-4">${escape(state.hotel.name)}</h2><p class="font-bold">${roomOptions[state.room].name} · ${escape(state.hotel.city)}</p><p class="mt-3">${dateLabel(state.checkin)} → ${dateLabel(state.checkout)}</p><div class="border-t-2 border-dashed border-[#14233c] mt-5 pt-5"><p>Outgoing: ${state.out ? escape(state.out.name) + " · seat " + (state.seats.out || "not selected") : "Not selected"}</p><p class="mt-2">Return: ${state.back ? escape(state.back.name) + " · seat " + (state.seats.back || "not selected") : "Not selected"}</p><strong class="block text-3xl mt-5">Estimated ${money(total())}</strong></div>`;
+        }
+        function renderAdmin() {
+          const nav = $("admin-nav");
+          nav.innerHTML = sections
+            .map(
+              (s) =>
+                `<button type="button" data-admin="${s}" class="${state.admin === s ? "on" : ""}">${s}</button>`,
+            )
+            .join("");
+          const box = $("admin-content");
+          if (state.admin === "Dashboard") {
+            box.innerHTML = `<div class="grid grid-cols-2 xl:grid-cols-4 gap-4">${[
+              ["Users", "128", "#ffd66d"],
+              ["Hotels", "24", "#ffb8a9"],
+              ["Rooms", "312", "#b9efcb"],
+              ["Buses", "18", "#c4c8ff"],
+              ["Trips", "46", "#c4c8ff"],
+              ["Hotel bookings", "87", "#b9efcb"],
+              ["Bus bookings", "59", "#ffd66d"],
+              ["Revenue", "$42.8k", "#ffb8a9"],
+            ]
+              .map(
+                ([n, v, c]) =>
+                  `<article class="rounded-3xl border-2 border-[#14233c] p-5" style="background:${c}"><span class="eyebrow">${n}</span><div class="display text-4xl mt-4">${v}</div><small>Illustrative</small></article>`,
+              )
+              .join(
+                "",
+              )}</div><div class="grid xl:grid-cols-[1.4fr_1fr] gap-5 mt-6"><div class="panel bg-white p-6"><h2 class="text-3xl mb-4">Booking activity</h2><div class="h-[250px]"><canvas id="activity-chart" aria-label="Illustrative hotel and bus booking activity chart" role="img"></canvas></div></div><div class="panel bg-[#ffd66d] p-6"><h2 class="text-3xl mb-4">What’s moving?</h2><p class="font-bold">★ Popular stay</p><p class="mb-5">Solstice Coast · sample</p><p class="font-bold">➜ Popular route</p><p class="mb-5">Cairo → Alexandria · sample</p><p class="text-sm">Metrics and activity are illustrative, not live operational data.</p></div></div>`;
+            if (window.Chart)
+              new Chart($("activity-chart"), {
+                type: "bar",
+                data: {
+                  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                  datasets: [
+                    {
+                      label: "Hotels",
+                      data: [7, 11, 8, 14, 12, 17, 13],
+                      backgroundColor: "#364de5",
+                      borderRadius: 7,
+                    },
+                    {
+                      label: "Buses",
+                      data: [5, 8, 6, 10, 9, 12, 10],
+                      backgroundColor: "#ff654f",
+                      borderRadius: 7,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { position: "bottom" } },
+                  scales: { y: { beginAtZero: true } },
+                },
+              });
+            return;
+          }
+          const all = records[state.admin] || [],
+            filtered = all.filter((r) =>
+              r.fields
+                .join(" ")
+                .toLowerCase()
+                .includes(state.adminQuery.toLowerCase()),
+            );
+          box.innerHTML = `<div class="panel bg-white p-5 md:p-7"><div class="flex justify-between gap-4 flex-wrap items-center mb-6"><div><span class="eyebrow text-[#364de5]">MANAGE / ${escape(state.admin.toUpperCase())}</span><h2 class="text-4xl mt-2">${escape(state.admin)}</h2></div><button class="btn btn-coral" data-add-record>Add ${escape(state.admin)} +</button></div><label for="admin-search" class="font-bold block mb-2">Search ${escape(state.admin.toLowerCase())}</label><input id="admin-search" class="field mb-5" value="${escape(state.adminQuery)}" placeholder="Search sample records"><div id="admin-table"></div></div>`;
+          renderAdminTable(filtered);
+        }
+        function renderAdminTable(rows) {
+          const target = $("admin-table");
+          if (!target) return;
+          if (!rows.length) {
+            target.innerHTML =
+              '<div class="rounded-2xl bg-[#fff3d4] p-8 text-center"><strong>No matching records.</strong><p>Try another search or add a sample record.</p></div>';
+            return;
+          }
+          target.innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Name / reference</th><th scope="col">Detail</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>${rows.map((r) => `<tr><td class="font-bold">${escape(r.fields[0])}</td><td>${escape(r.fields[1])}</td><td><span class="status text-[#285748] bg-[#e1f7e9]">${escape(r.fields[2])}</span></td><td><button data-edit="${escape(r.id)}" class="font-bold underline mr-3">Edit</button><button data-delete="${escape(r.id)}" class="font-bold underline text-[#a82420]">Delete</button></td></tr>`).join("")}</tbody></table></div>`;
+        }
+        let modalReturn = null;
+        function closeModal() {
+          $("modal").hidden = true;
+          $("modal-body").replaceChildren();
+          if (modalReturn) modalReturn.focus();
+        }
+        function openRecord(id) {
+          modalReturn = document.activeElement;
+          const entry = records[state.admin].find((r) => r.id === id),
+            editing = !!entry;
+          $("modal-title").textContent =
+            (editing ? "Edit " : "Add ") + state.admin;
+          $("modal-body").innerHTML =
+            `<form id="record-form" class="grid gap-4">${["Name / reference", "Detail", "Status"].map((label, i) => `<div><label class="font-bold block mb-2" for="record-${i}">${label}</label><input id="record-${i}" class="field" required maxlength="80" value="${escape(entry?.fields[i] || "")}"></div>`).join("")}</form><p class="text-xs mt-3">Changes affect sample records in this open page only.</p>`;
+          $("modal-actions").innerHTML =
+            '<button type="button" class="btn btn-light" data-close-modal>Cancel</button><button type="submit" form="record-form" class="btn btn-coral">Save sample record</button>';
+          $("modal").hidden = false;
+          $("record-0").focus();
+          $("record-form").onsubmit = (e) => {
+            e.preventDefault();
+            const fields = [0, 1, 2].map((i) => $("record-" + i).value.trim());
+            if (fields.some((x) => !x)) {
+              toast("Complete all three fields.");
+              return;
+            }
+            if (editing) entry.fields = fields;
+            else
+              records[state.admin].push({
+                id: state.admin + "-" + Date.now(),
+                fields,
+              });
+            closeModal();
+            renderAdmin();
+            toast(editing ? "Sample record updated." : "Sample record added.");
+          };
+        }
+        function deleteRecord(id) {
+          modalReturn = document.activeElement;
+          const entry = records[state.admin].find((r) => r.id === id);
+          if (!entry) return;
+          $("modal-title").textContent = "Delete sample record?";
+          $("modal-body").innerHTML =
+            `<p>Remove <strong>${escape(entry.fields[0])}</strong> from this page’s sample ${escape(state.admin.toLowerCase())} list?</p>`;
+          $("modal-actions").innerHTML =
+            '<button class="btn btn-light" data-close-modal>Cancel</button><button class="btn btn-coral" id="confirm-delete">Delete record</button>';
+          $("modal").hidden = false;
+          $("confirm-delete").focus();
+          $("confirm-delete").onclick = () => {
+            records[state.admin] = records[state.admin].filter(
+              (r) => r.id !== id,
+            );
+            closeModal();
+            renderAdmin();
+            toast("Sample record deleted.");
+          };
+        }
+        document.addEventListener("click", (e) => {
+          const b = e.target.closest("button");
+          if (!b) return;
+          if (b.dataset.go) {
+            go(b.dataset.go);
+            return;
+          }
+          if (b.dataset.hotel) {
+            state.hotel = hotels.find((h) => h.id === Number(b.dataset.hotel));
+            go("detail");
+            return;
+          }
+          if (b.dataset.room) {
+            state.room = Number(b.dataset.room);
+            state.step = 2;
+            go("planner");
+            return;
+          }
+          if (b.dataset.selectRoom) {
+            state.room = Number(b.dataset.selectRoom);
+            renderPlanner();
+            return;
+          }
+          if (b.dataset.step !== undefined) {
+            const next = Number(b.dataset.step);
+            if (next > 2 && validateDates()) {
+              state.step = 2;
+              renderPlanner();
+              $("planner-error").textContent = validateDates();
+              return;
+            }
+            state.step = next;
+            renderPlanner();
+            return;
+          }
+          if (b.dataset.trip) {
+            const t = routes.find((r) => r.id === b.dataset.trip);
+            state[t.leg] = state[t.leg]?.id === t.id ? null : t;
+            state.seats[t.leg] = null;
+            renderPlanner();
+            return;
+          }
+          if (b.dataset.clear) {
+            state[b.dataset.clear] = null;
+            state.seats[b.dataset.clear] = null;
+            renderPlanner();
+            return;
+          }
+          if (b.dataset.seat) {
+            const [leg, label] = b.dataset.seat.split(":");
+            state.seats[leg] = state.seats[leg] === label ? null : label;
+            renderPlanner();
+            return;
+          }
+          if (b.dataset.admin) {
+            state.admin = b.dataset.admin;
+            state.adminQuery = "";
+            renderAdmin();
+            return;
+          }
+          if (b.hasAttribute("data-add-record")) {
+            openRecord(null);
+            return;
+          }
+          if (b.dataset.edit) {
+            openRecord(b.dataset.edit);
+            return;
+          }
+          if (b.dataset.delete) {
+            deleteRecord(b.dataset.delete);
+            return;
+          }
+          if (b.hasAttribute("data-close-modal")) {
+            closeModal();
+            return;
+          }
+        });
+        $("menu-toggle").onclick = () => {
+          const open = $("mobile-menu").hidden;
+          $("mobile-menu").hidden = !open;
+          $("menu-toggle").setAttribute("aria-expanded", String(open));
+        };
+        $("hero-search").onsubmit = (e) => {
+          e.preventDefault();
+          const q = $("hero-destination").value.trim();
+          const a = $("hero-in").value,
+            z = $("hero-out").value,
+            g = Number($("hero-guests").value);
+          if (a && z && z <= a) {
+            toast("Check-out must be after check-in.");
+            return;
+          }
+          if (g < 1 || g > 8) {
+            toast("Choose between 1 and 8 guests.");
+            return;
+          }
+          state.checkin = a;
+          state.checkout = z;
+          state.guests = g;
+          $("hotel-query").value = q;
+          go("hotels");
+        };
+        $("listing-form").onsubmit = (e) => {
+          e.preventDefault();
+          renderHotels();
+        };
+        $("hotel-sort").onchange = renderHotels;
+        $("hotel-filter").onchange = renderHotels;
+        $("hotel-query").oninput = renderHotels;
+        $("planner-content").addEventListener("change", (e) => {
+          if (e.target.id === "plan-in") state.checkin = e.target.value;
+          if (e.target.id === "plan-out") state.checkout = e.target.value;
+          if (e.target.id === "plan-guests")
+            state.guests = Number(e.target.value);
+        });
+        $("step-back").onclick = () => {
+          state.step = Math.max(0, state.step - 1);
+          renderPlanner();
+        };
+        $("step-next").onclick = () => {
+          if (state.step >= 2) {
+            const error = validateDates();
+            if (error) {
+              $("planner-error").textContent = error;
+              if (state.step !== 2) {
+                state.step = 2;
+                renderPlanner();
+                $("planner-error").textContent = error;
+              }
+              return;
+            }
+          }
+          if (
+            state.step === 3 &&
+            ((state.out && !state.seats.out) ||
+              (state.back && !state.seats.back))
+          ) {
+            $("planner-error").textContent =
+              "Choose a seat for each selected bus, or clear that bus leg.";
+            return;
+          }
+          state.step = Math.min(5, state.step + 1);
+          renderPlanner();
+        };
+        $("admin-content").addEventListener("input", (e) => {
+          if (e.target.id === "admin-search") {
+            state.adminQuery = e.target.value;
+            renderAdminTable(
+              records[state.admin].filter((r) =>
+                r.fields
+                  .join(" ")
+                  .toLowerCase()
+                  .includes(state.adminQuery.toLowerCase()),
+              ),
+            );
+          }
+        });
+        $("modal").addEventListener("click", (e) => {
+          if (e.target === $("modal")) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !$("modal").hidden) closeModal();
+          if (e.key === "Tab" && !$("modal").hidden) {
+            const controls = [
+              ...$("modal").querySelectorAll(
+                'button,input,[tabindex]:not([tabindex="-1"])',
+              ),
+            ].filter((x) => !x.disabled);
+            if (!controls.length) return;
+            const first = controls[0],
+              last = controls.at(-1);
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+        mountCards($("featured-grid"), hotels.slice(0, 3));
+        renderHotels();
+        renderPlanner();
+        if (window.lucide) lucide.createIcons();
+      })();
+    </script>
+  </body>
+</html>
