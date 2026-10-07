@@ -2,13 +2,20 @@ spring:
   application:
     name: Hotel_Bus_Booking_System
   datasource:
-    driver-class-name: oracle.jdbc.driver.OracleDriver
-    url: jdbc:oracle:thin:@//localhost:1521/orclpdb
-    username: HotelBusSystem
-    password: hotelBusSystem
+#    driver-class-name: oracle.jdbc.driver.OracleDriver
+#    url: jdbc:oracle:thin:@//localhost:1521/orclpdb
+#    username: HotelBusSystem
+#    password: hotelBusSystem
 
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
+#      dialect: org.hibernate.dialect.PostgreSQLDialect
       ddl-auto: update
     show-sql: true
     properties:

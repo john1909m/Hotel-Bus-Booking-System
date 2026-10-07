@@ -132,6 +132,7 @@ public class BusTripServiceImpl implements BusTripService {
         // 3. Find bus trips on those routes
         // 4. Filter trips that arrive early enough for check-in with buffer
 
+
         // For now, we'll return all trips as a placeholder
         return getAllBusTrips().stream()
                 .filter(trip -> {

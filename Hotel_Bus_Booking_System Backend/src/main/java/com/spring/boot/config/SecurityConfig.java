@@ -41,46 +41,38 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-//                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-//                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .csrf(AbstractHttpConfigurer::disable)
+////                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+////                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+//
+//                        .anyRequest().authenticated()
+//                );
+//
+//        return http.build();
+//    }
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/signup", "/auth/login","/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/store/get/name/{storeName}",
-                                "/products/{productId}",
-                                "/product/get/all/{storeId}",
-                                "/product/get/{productId}/{storeId}",
-                                "/product/get/search/{productName}/{storeId}",
-                                "/product/get/category/{categoryId}/{storeId}",
-                                "/product/images/get/{productId}",
-                                "/category/get/store/{storeId}",
-                                "/category/get/{categoryId}",
-                                "/category/get/name/{categoryName}/store/{storeId}",
-                                "/customer/add",
-                                "/order/checkout",
-                                "/subscription-plan/get/all",
-                                "/shipping-cost/governorates",
-                                "/shipping-cost/store/{storeId}",
-                                "/deposit-settings/get/{storeId}",
-                                "/order/{storeId}/deposit",
-                                "/store-payment-methods/{storeId}",
-                                "/store/incVisit/{storeId}",
-                                "/auth/send-otp",
-                                "/auth/reset-password").permitAll()
-                        .anyRequest().authenticated()
-                );
 
-        return http.build();
-    }
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .anyRequest().permitAll()   // ← التغيير هنا
+            );
+
+    return http.build();
+}
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
