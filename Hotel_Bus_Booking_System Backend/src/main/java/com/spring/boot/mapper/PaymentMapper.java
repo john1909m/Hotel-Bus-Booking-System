@@ -15,7 +15,11 @@ public interface PaymentMapper {
 
     PaymentMapper INSTANCE = Mappers.getMapper(PaymentMapper.class);
 
+    @Mapping(target = "hotelBooking.id", source = "hotelBookingId")
+    @Mapping(target = "busBooking.id", source = "busBookingId")
     Payment paymentRequestDtoToPayment(PaymentRequestDto paymentRequestDto);
 
+    @Mapping(source = "hotelBooking.id", target = "hotelBookingId")
+    @Mapping(source = "busBooking.id", target = "busBookingId")
     PaymentDto paymentToPaymentDto(Payment payment);
 }

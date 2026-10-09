@@ -33,7 +33,7 @@ public class BusBookingRequestDto {
     private BigDecimal price;
 
     @NotNull
-    private Long userId;
+    private Long userId; // Reference to user (costumer)
 
     @NotNull
     private Long busTripId;

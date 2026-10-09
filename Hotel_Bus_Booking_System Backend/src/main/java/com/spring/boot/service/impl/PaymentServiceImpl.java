@@ -5,6 +5,8 @@ import com.spring.boot.dto.PaymentRequestDto;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.Payment;
+import com.spring.boot.model.HotelBooking;
+import com.spring.boot.model.BusBooking;
 import com.spring.boot.mapper.PaymentMapper;
 import com.spring.boot.repository.PaymentRepository;
 import com.spring.boot.repository.HotelBookingRepository;
@@ -30,18 +32,22 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentDto createPayment(PaymentRequestDto paymentRequestDto) {
         // Validate that hotel booking exists if provided
+        HotelBooking hotelBooking = null;
         if (paymentRequestDto.getHotelBookingId() != null) {
-            var hotelBooking = hotelBookingRepository.findById(paymentRequestDto.getHotelBookingId())
+            hotelBooking = hotelBookingRepository.findById(paymentRequestDto.getHotelBookingId())
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
         }
 
         // Validate that bus booking exists if provided
+        BusBooking busBooking = null;
         if (paymentRequestDto.getBusBookingId() != null) {
-            var busBooking = busBookingRepository.findById(paymentRequestDto.getBusBookingId())
+            busBooking = busBookingRepository.findById(paymentRequestDto.getBusBookingId())
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_booking_not_found")));
         }
 
         Payment payment = paymentMapper.paymentRequestDtoToPayment(paymentRequestDto);
+        payment.setHotelBooking(hotelBooking);
+        payment.setBusBooking(busBooking);
         Payment savedPayment = paymentRepository.save(payment);
         return paymentMapper.paymentToPaymentDto(savedPayment);
     }
@@ -80,14 +86,16 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.payment_not_found")));
 
         // Validate that hotel booking exists if provided
+        HotelBooking hotelBooking = null;
         if (paymentRequestDto.getHotelBookingId() != null) {
-            var hotelBooking = hotelBookingRepository.findById(paymentRequestDto.getHotelBookingId())
+            hotelBooking = hotelBookingRepository.findById(paymentRequestDto.getHotelBookingId())
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
         }
 
         // Validate that bus booking exists if provided
+        BusBooking busBooking = null;
         if (paymentRequestDto.getBusBookingId() != null) {
-            var busBooking = busBookingRepository.findById(paymentRequestDto.getBusBookingId())
+            busBooking = busBookingRepository.findById(paymentRequestDto.getBusBookingId())
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_booking_not_found")));
         }
 
@@ -96,6 +104,16 @@ public class PaymentServiceImpl implements PaymentService {
         existingPayment.setPaymentMethod(paymentRequestDto.getPaymentMethod());
         existingPayment.setPaymentStatus(paymentRequestDto.getPaymentStatus());
         existingPayment.setTransactionDate(paymentRequestDto.getTransactionDate());
+
+        // Handle hotel booking relationship: if provided, validate and set; if not provided, keep existing
+        if (hotelBooking != null) {
+            existingPayment.setHotelBooking(hotelBooking);
+        }
+
+        // Handle bus booking relationship: if provided, validate and set; if not provided, keep existing
+        if (busBooking != null) {
+            existingPayment.setBusBooking(busBooking);
+        }
 
         // Save payment
         Payment updatedPayment = paymentRepository.save(existingPayment);

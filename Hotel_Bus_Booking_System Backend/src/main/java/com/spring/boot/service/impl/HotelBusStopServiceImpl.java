@@ -40,6 +40,8 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found")));
 
         HotelBusStop hotelBusStop = hotelBusStopMapper.hotelBusStopRequestDtoToHotelBusStop(hotelBusStopRequestDto);
+        hotelBusStop.setHotel(hotel);
+        hotelBusStop.setBusStop(busStop);
         HotelBusStop savedHotelBusStop = hotelBusStopRepository.save(hotelBusStop);
         return hotelBusStopMapper.hotelBusStopToHotelBusStopDto(savedHotelBusStop);
     }
@@ -77,16 +79,22 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
         HotelBusStop existingHotelBusStop = hotelBusStopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_bus_stop_not_found")));
 
-        // Validate that hotel exists
-        var hotel = hotelRepository.findById(hotelBusStopRequestDto.getHotelId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
-
-        // Validate that bus stop exists
-        var busStop = busStopRepository.findById(hotelBusStopRequestDto.getBusStopId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found")));
-
         // Update fields
         existingHotelBusStop.setDistance(hotelBusStopRequestDto.getDistance());
+
+        // Handle hotel relationship: if provided, validate and set; if not provided, keep existing
+        if (hotelBusStopRequestDto.getHotelId() != null) {
+            var hotel = hotelRepository.findById(hotelBusStopRequestDto.getHotelId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
+            existingHotelBusStop.setHotel(hotel);
+        }
+
+        // Handle bus stop relationship: if provided, validate and set; if not provided, keep existing
+        if (hotelBusStopRequestDto.getBusStopId() != null) {
+            var busStop = busStopRepository.findById(hotelBusStopRequestDto.getBusStopId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found")));
+            existingHotelBusStop.setBusStop(busStop);
+        }
 
         // Save hotel bus stop
         HotelBusStop updatedHotelBusStop = hotelBusStopRepository.save(existingHotelBusStop);

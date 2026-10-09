@@ -87,13 +87,19 @@ public class BusTripServiceImpl implements BusTripService {
         BusTrip existingBusTrip = busTripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
 
-        // Validate that bus exists
-        var bus = busRepository.findById(busTripRequestDto.getBusId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
+        // Handle bus relationship: if provided, validate and set; if not provided, keep existing
+        if (busTripRequestDto.getBusId() != null) {
+            var bus = busRepository.findById(busTripRequestDto.getBusId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
+            existingBusTrip.setBus(bus);
+        }
 
-        // Validate that route exists
-        var route = busRouteRepository.findById(busTripRequestDto.getRouteId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
+        // Handle route relationship: if provided, validate and set; if not provided, keep existing
+        if (busTripRequestDto.getRouteId() != null) {
+            var route = busRouteRepository.findById(busTripRequestDto.getRouteId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
+            existingBusTrip.setRoute(route);
+        }
 
         // Validate that arrival time is after departure time
         if (busTripRequestDto.getArrivalTime().isBefore(busTripRequestDto.getDepartureTime()) ||
@@ -105,7 +111,6 @@ public class BusTripServiceImpl implements BusTripService {
         existingBusTrip.setDepartureTime(busTripRequestDto.getDepartureTime());
         existingBusTrip.setArrivalTime(busTripRequestDto.getArrivalTime());
         existingBusTrip.setPrice(busTripRequestDto.getPrice());
-        // Note: status would typically be updated separately
 
         // Save bus trip
         BusTrip updatedBusTrip = busTripRepository.save(existingBusTrip);
