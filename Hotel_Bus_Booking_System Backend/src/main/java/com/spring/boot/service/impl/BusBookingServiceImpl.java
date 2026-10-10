@@ -19,6 +19,8 @@ import com.spring.boot.repository.BusTripRepository;
 import com.spring.boot.service.interfaces.BusBookingService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -190,5 +192,10 @@ public class BusBookingServiceImpl implements BusBookingService {
                         busTripId, seatId,
                         java.util.List.of("CONFIRMED", "PENDING"), bookingId)
                 .isEmpty();
+    }
+
+    @Override
+    public List<BusBookingDto> getMyBusBookings(Long userId) {
+        return getBusBookingsByUserId(userId);
     }
 }

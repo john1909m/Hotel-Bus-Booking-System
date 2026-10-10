@@ -18,4 +18,6 @@ public interface UserMapper {
     User userRequestDtoToUser(UserRequestDto userRequestDto);
 
     UserDto userToUserDto(User user);
+
+    User toEntity(UserDto userDto);
 }

@@ -24,6 +24,14 @@ public interface BusBookingService {
 
     List<BusBookingDto> getBusBookingsByBusTripId(Long busTripId);
 
+    /**
+     * Get bus bookings for the current authenticated user.
+     *
+     * @param userId the ID of the current user
+     * @return list of bus bookings for the user
+     */
+    List<BusBookingDto> getMyBusBookings(Long userId);
+
     BusBookingDto updateBusBooking(Long id, BusBookingRequestDto busBookingRequestDto);
 
     void deleteBusBooking(Long id);

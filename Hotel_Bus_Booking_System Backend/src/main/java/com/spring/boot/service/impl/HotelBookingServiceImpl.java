@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -189,6 +190,11 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found"));
         }
         hotelBookingRepository.deleteById(id);
+    }
+
+    @Override
+    public List<HotelBookingDto> getMyHotelBookings(Long userId) {
+        return getHotelBookingsByUserId(userId);
     }
 
     @Override

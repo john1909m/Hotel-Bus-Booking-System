@@ -2,10 +2,10 @@ spring:
   application:
     name: Hotel_Bus_Booking_System
   datasource:
-#    driver-class-name: oracle.jdbc.driver.OracleDriver
-#    url: jdbc:oracle:thin:@//localhost:1521/orclpdb
-#    username: HotelBusSystem
-#    password: hotelBusSystem
+    #    driver-class-name: oracle.jdbc.driver.OracleDriver
+    #    url: jdbc:oracle:thin:@//localhost:1521/orclpdb
+    #    username: HotelBusSystem
+    #    password: hotelBusSystem
 
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
@@ -15,7 +15,7 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-#      dialect: org.hibernate.dialect.PostgreSQLDialect
+    #      dialect: org.hibernate.dialect.PostgreSQLDialect
       ddl-auto: update
     show-sql: true
     properties:
@@ -24,7 +24,23 @@ spring:
   messages:
     basename: validation
 
+# Admin initialization properties
+# admin.email: Email address for the initial admin user
+# admin.password: Password for the initial admin user (will be encoded)
+# admin.name: Name for the admin user (optional, defaults to "Admin User")
+# admin.phoneNumber: Phone number for the admin user (optional)
+
+# CORS properties
+# cors.allowedOrigins: Comma-separated list of allowed origins for CORS
+# Example: cors.allowedOrigins=[\"http://localhost:3000\",\"http://localhost:5173\"]
+
 logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql: trace
+
+
+token:
+  secret: hjfs46687kjsfkj@#@$#$@$%ffeddf@#sADDS
+  time: 36000000
+

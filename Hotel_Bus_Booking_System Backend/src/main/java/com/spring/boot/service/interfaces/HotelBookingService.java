@@ -21,6 +21,14 @@ public interface HotelBookingService {
 
     List<HotelBookingDto> getHotelBookingsByHotelId(Long hotelId);
 
+    /**
+     * Get hotel bookings for the current authenticated user.
+     *
+     * @param userId the ID of the current user
+     * @return list of hotel bookings for the user
+     */
+    List<HotelBookingDto> getMyHotelBookings(Long userId);
+
     HotelBookingDto updateHotelBooking(Long id, HotelBookingRequestDto hotelBookingRequestDto);
 
     void deleteHotelBooking(Long id);
