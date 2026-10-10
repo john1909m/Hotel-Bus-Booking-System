@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "skills": {
+    "angular-developer": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/angular/skills.git",
+      "skillPath": "angular-developer/SKILL.md",
+      "skillFolderHash": "1011c857e5233b7ffa9982bdf95cedb12f7483a8",
+      "installedAt": "2026-10-09T14:52:08.663Z",
+      "updatedAt": "2026-10-09T14:52:08.663Z"
+    },
+    "angular-new-app": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/angular/skills.git",
+      "skillPath": "angular-new-app/SKILL.md",
+      "skillFolderHash": "031ae4c0797d581045d9139962b3773cf5c11921",
+      "installedAt": "2026-10-09T14:52:08.666Z",
+      "updatedAt": "2026-10-09T14:52:08.666Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
+      "installedAt": "2026-10-09T14:52:16.603Z",
+      "updatedAt": "2026-10-09T14:52:16.603Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "cline",
+    "codex",
+    "cursor",
+    "droid",
+    "gemini-cli",
+    "github-copilot",
+    "kilo",
+    "kimi-code-cli",
+    "opencode",
+    "pi",
+    "warp",
+    "zed"
+  ]
+}
