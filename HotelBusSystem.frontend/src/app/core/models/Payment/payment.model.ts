@@ -1,8 +1,8 @@
 export type paymentMethod = 
 'CREDIT_CARD' |
-'DEPIT_CARD' |
+'DEBIT_CARD' |
 'PAYPAL' |
-'BANK_TRANFER';
+'BANK_TRANSFER';
 
 export type paymentStatus = 
 'PENDING' |

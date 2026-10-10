@@ -12,5 +12,5 @@ export interface BusStopRequestDto {
     city: string;
     address: string;
     latitude: number;
-    longtude: number;
+    longitude: number;
 }
