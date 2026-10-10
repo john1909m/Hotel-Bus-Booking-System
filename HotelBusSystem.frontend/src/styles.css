@@ -1,1 +1,199 @@
-/* You can add global styles to this file, and also import other style files */
+
+  /* TravelEase — Global Design Tokens & Base Styles*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap');
+
+/* ─── Light Mode Tokens ─────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --color-primary:        #009B77;
+  --color-primary-hover:  #007d60;
+  --color-primary-light:  #e0f5ef;
+  --color-soft-blue:      #C2D6D8;
+  --color-warm-sand:      #E9CBA7;
+  --color-off-white:      #F4F1E7;
+  --color-charcoal:       #2E3A40;
+
+  /* Semantic tokens */
+  --bg-page:              #FFFFFF;
+  --bg-surface:           #F4F1E7;
+  --bg-elevated:          #FFFFFF;
+  --bg-overlay:           rgba(255,255,255,0.92);
+
+  --text-primary:         #2E3A40;
+  --text-secondary:       #5a6870;
+  --text-muted:           #8a9ba3;
+  --text-on-primary:      #FFFFFF;
+
+  --border-color:         #dde4e6;
+  --border-subtle:        #edf0f1;
+
+  --shadow-sm:            0 1px 3px rgba(46,58,64,.07), 0 1px 2px rgba(46,58,64,.04);
+  --shadow-md:            0 4px 12px rgba(46,58,64,.10), 0 2px 6px rgba(46,58,64,.06);
+  --shadow-lg:            0 12px 32px rgba(46,58,64,.14), 0 4px 12px rgba(46,58,64,.08);
+
+  --header-bg:            rgba(255,255,255,0.95);
+  --nav-link:             #5a6870;
+  --nav-link-hover:       #009B77;
+
+  --card-bg:              #FFFFFF;
+  --card-border:          #dde4e6;
+
+  --input-bg:             #FFFFFF;
+  --input-border:         #C2D6D8;
+  --input-focus:          #009B77;
+
+  --focus-ring:           rgba(0,155,119,.35);
+
+  /* Typography */
+  --font-sans:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-tight:  'Inter Tight', 'Inter', -apple-system, sans-serif;
+
+  /* Spacing */
+  --section-px:   clamp(1rem, 5vw, 5rem);
+  --section-py:   clamp(3rem, 6vw, 6rem);
+  --container-max: 1200px;
+
+  /* Radius */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+}
+
+/* ─── Dark Mode Tokens ──────────────────────────────────── */
+[data-theme="dark"] {
+  --color-primary:        #35C6A0;
+  --color-primary-hover:  #28a886;
+  --color-primary-light:  #1a3d35;
+
+  --bg-page:              #182326;
+  --bg-surface:           #222F33;
+  --bg-elevated:          #2E3A40;
+  --bg-overlay:           rgba(24,35,38,0.92);
+
+  --text-primary:         #F4F1E7;
+  --text-secondary:       #B7C4C5;
+  --text-muted:           #8a9ba3;
+  --text-on-primary:      #182326;
+
+  --border-color:         #3d4f56;
+  --border-subtle:        #2e3d42;
+
+  --shadow-sm:            0 1px 3px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.18);
+  --shadow-md:            0 4px 12px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.22);
+  --shadow-lg:            0 12px 32px rgba(0,0,0,.45), 0 4px 12px rgba(0,0,0,.30);
+
+  --header-bg:            rgba(24,35,38,0.95);
+  --nav-link:             #B7C4C5;
+  --nav-link-hover:       #35C6A0;
+
+  --card-bg:              #222F33;
+  --card-border:          #3d4f56;
+
+  --input-bg:             #2E3A40;
+  --input-border:         #4a6068;
+  --input-focus:          #35C6A0;
+
+  --focus-ring:           rgba(53,198,160,.35);
+}
+
+/* ─── Base Reset ────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-base), color var(--transition-base);
+  overflow-x: hidden;
+}
+
+/* ─── Typography ─────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-tight);
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+h1 { font-size: clamp(2rem, 4.5vw, 3.5rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); }
+
+p { color: var(--text-secondary); line-height: 1.7; }
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover { color: var(--color-primary-hover); }
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ─── Focus Styles ──────────────────────────────────────── */
+:focus-visible {
+  outline: 2.5px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* ─── Container ─────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--section-px);
+}
+
+/* ─── Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -2,10 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>HotelBusSystemFrontend</title>
+  <title>TravelEase — Hotels &amp; Bus Booking</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover amazing hotels and plan your travel with ease. Comfort, convenience and unforgettable experiences — all in one place.">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Prevent theme flash -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('te-theme');
+      var preferred = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', preferred);
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
