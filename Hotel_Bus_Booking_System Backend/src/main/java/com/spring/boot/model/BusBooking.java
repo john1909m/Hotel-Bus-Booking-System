@@ -35,7 +35,7 @@ public class BusBooking extends BaseEntity {
 
     // Relationships
     @ManyToOne
-    private User user;
+    private Costumer costumer;
 
     @ManyToOne
     private BusTrip busTrip;

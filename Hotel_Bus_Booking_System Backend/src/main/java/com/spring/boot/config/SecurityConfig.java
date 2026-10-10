@@ -73,7 +73,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
     return http.build();
 }
-    @Bean
+@Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:8080","https://www.storely-eg.com","https://storely-eg.com","http://localhost:5173/*")); // React frontend

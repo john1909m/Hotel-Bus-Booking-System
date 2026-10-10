@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Data Transfer Object for User entity.
+ * Data Transfer Object for Costumer entity.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class CostumerDto {
 
     private Long id;
     private String name;

@@ -7,9 +7,12 @@ import com.spring.boot.exception.InvalidGuestCountException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.HotelBooking;
+import com.spring.boot.model.Room;
+import com.spring.boot.model.Costumer;
 import com.spring.boot.mapper.HotelBookingMapper;
 import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.HotelRepository;
+import com.spring.boot.repository.CostumerRepository;
 import com.spring.boot.repository.RoomRepository;
 
 import com.spring.boot.service.interfaces.HotelBookingService;
@@ -31,6 +34,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     private final HotelBookingMapper hotelBookingMapper;
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
+    private final CostumerRepository costumerRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
@@ -45,12 +49,9 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         var room = roomRepository.findById(hotelBookingRequestDto.getRoomId())
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
 
-        // Validate user exists (we would typically check this, but skipping for brevity)
-        // Validate hotel exists via room
-        var hotel = room.getHotel();
-        if (hotel == null) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found"));
-        }
+        // Validate user exists
+        var user = costumerRepository.findById(hotelBookingRequestDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
 
         // Validate guest count doesn't exceed room capacity
         if (hotelBookingRequestDto.getGuests() > room.getCapacity()) {
@@ -72,9 +73,10 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         BigDecimal totalPrice = (BigDecimal.valueOf(room.getPricePerNight()))
                 .multiply(BigDecimal.valueOf(nights));
 
-
         // Map DTO to entity
         HotelBooking hotelBooking = hotelBookingMapper.hotelBookingRequestDtoToHotelBooking(hotelBookingRequestDto);
+        hotelBooking.setCostumer(user);  // Set the costumer relationship
+        hotelBooking.setRoom(room);      // Set the room relationship
         hotelBooking.setTotalPrice(totalPrice);
 
         // Save booking
@@ -100,7 +102,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
 
     @Override
     public java.util.List<HotelBookingDto> getHotelBookingsByUserId(Long userId) {
-        return hotelBookingRepository.findByUserId(userId).stream()
+        return hotelBookingRepository.findByCostumer_Id(userId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
                 .collect(Collectors.toList());
     }
@@ -123,17 +125,27 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_out_before_check_in"));
         }
 
-        // Validate room exists and get it
-        var room = roomRepository.findById(hotelBookingRequestDto.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
+        // Validate room exists and get it (if provided)
+        Room room = null;
+        if (hotelBookingRequestDto.getRoomId() != null) {
+            room = roomRepository.findById(hotelBookingRequestDto.getRoomId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
+        }
 
-        // Validate guest count doesn't exceed room capacity
-        if (hotelBookingRequestDto.getGuests() > room.getCapacity()) {
+        // Validate user exists (if provided)
+        Costumer user = null;
+        if (hotelBookingRequestDto.getUserId() != null) {
+            user = costumerRepository.findById(hotelBookingRequestDto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
+        }
+
+        // Validate guest count doesn't exceed room capacity (if room provided)
+        if (room != null && hotelBookingRequestDto.getGuests() > room.getCapacity()) {
             throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
         }
 
         // Check room availability (excluding current booking)
-        if (!isRoomAvailableExcludingSelf(hotelBookingRequestDto.getRoomId(),
+        if (room != null && !isRoomAvailableExcludingSelf(room.getId(),
                 hotelBookingRequestDto.getCheckIn(),
                 hotelBookingRequestDto.getCheckOut(),
                 hotelBookingRequestDto.getRoomId(),
@@ -145,7 +157,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
                 hotelBookingRequestDto.getCheckIn(),
                 hotelBookingRequestDto.getCheckOut());
-        BigDecimal totalPrice = BigDecimal.valueOf(room.getPricePerNight())
+        BigDecimal totalPrice = BigDecimal.valueOf(room != null ? room.getPricePerNight() : existingHotelBooking.getRoom().getPricePerNight())
                 .multiply(BigDecimal.valueOf(nights));
 
         // Update fields
@@ -153,6 +165,16 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         existingHotelBooking.setCheckOut(hotelBookingRequestDto.getCheckOut());
         existingHotelBooking.setGuests(hotelBookingRequestDto.getGuests());
         existingHotelBooking.setTotalPrice(totalPrice);
+
+        // Handle costumer relationship: if provided, validate and set; if not provided, keep existing
+        if (user != null) {
+            existingHotelBooking.setCostumer(user);
+        }
+
+        // Handle room relationship: if provided, validate and set; if not provided, keep existing
+        if (room != null) {
+            existingHotelBooking.setRoom(room);
+        }
 
         // Save booking
         HotelBooking updatedHotelBooking = hotelBookingRepository.save(existingHotelBooking);

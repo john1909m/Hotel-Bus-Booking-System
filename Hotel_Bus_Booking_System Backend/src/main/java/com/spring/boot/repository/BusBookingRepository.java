@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface BusBookingRepository extends JpaRepository<BusBooking, Long> {
 
-    List<BusBooking> findByUserId(Long userId);
+    List<BusBooking> findByCostumer_Id(Long userId);
 
     List<BusBooking> findByBusTripId(Long busTripId);
 

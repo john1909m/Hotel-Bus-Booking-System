@@ -24,6 +24,7 @@ public class HotelBookingDto {
     private Integer guests;
     private BookingStatus status;
     private BigDecimal totalPrice;
-    private Long userId; // Reference to user
+    private Long userId; // Reference to user (costumer)
     private Long roomId; // Reference to room
+    private Long hotelId; // Reference to hotel
 }

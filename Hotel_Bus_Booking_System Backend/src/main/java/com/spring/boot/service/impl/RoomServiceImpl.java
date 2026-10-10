@@ -5,14 +5,11 @@ import com.spring.boot.dto.RoomRequestDto;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.Room;
+import com.spring.boot.model.Hotel;
 import com.spring.boot.mapper.RoomMapper;
+import com.spring.boot.repository.HotelRepository;
 import com.spring.boot.repository.RoomRepository;
-//import com.spring.boot.service.
 import com.spring.boot.service.interfaces.RoomService;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-
-//interface.RoomService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +22,18 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
+    private final HotelRepository hotelRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
     public RoomDto createRoom(RoomRequestDto roomRequestDto) {
         Room room = roomMapper.roomRequestDtoToRoom(roomRequestDto);
+
+        // Validate and set hotel relationship
+        Hotel hotel = hotelRepository.findById(roomRequestDto.getHotelId())
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
+        room.setHotel(hotel);
+
         Room savedRoom = roomRepository.save(room);
         return roomMapper.roomToRoomDto(savedRoom);
     }
@@ -65,6 +69,14 @@ public class RoomServiceImpl implements RoomService {
         existingRoom.setRoomType(roomRequestDto.getRoomType());
         existingRoom.setCapacity(roomRequestDto.getCapacity());
         existingRoom.setPricePerNight(roomRequestDto.getPricePerNight());
+
+        // Handle hotel relationship: if provided, validate and set; if not provided, keep existing
+        if (roomRequestDto.getHotelId() != null) {
+            Hotel hotel = hotelRepository.findById(roomRequestDto.getHotelId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
+            existingRoom.setHotel(hotel);
+        }
+        // If hotelId is null, keep existing hotel relationship (don't change it)
 
         // Save room
         Room updatedRoom = roomRepository.save(existingRoom);

@@ -17,5 +17,8 @@ public interface HotelBookingMapper {
 
     HotelBooking hotelBookingRequestDtoToHotelBooking(HotelBookingRequestDto hotelBookingRequestDto);
 
+    @Mapping(target = "userId", source = "costumer.id")
+    @Mapping(source = "room.id", target = "roomId")
+    @Mapping(source = "hotel.id", target = "hotelId")
     HotelBookingDto hotelBookingToHotelBookingDto(HotelBooking hotelBooking);
 }

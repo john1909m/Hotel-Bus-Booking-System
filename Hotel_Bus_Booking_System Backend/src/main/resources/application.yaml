@@ -8,9 +8,9 @@ spring:
 #    password: hotelBusSystem
 
     driver-class-name: org.postgresql.Driver
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+    username: postgres.drdirtrhaebtsvtdellv
+    password: Travel@0706#project
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect

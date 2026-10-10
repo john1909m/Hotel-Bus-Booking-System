@@ -17,5 +17,6 @@ public interface BusSeatMapper {
 
     BusSeat busSeatRequestDtoToBusSeat(BusSeatRequestDto busSeatRequestDto);
 
+    @Mapping(source = "bus.id", target = "busId")
     BusSeatDto busSeatToBusSeatDto(BusSeat busSeat);
 }

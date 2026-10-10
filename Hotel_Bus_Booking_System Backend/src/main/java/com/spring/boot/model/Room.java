@@ -20,6 +20,7 @@ public class Room extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "room_number", nullable = false)
     private String roomNumber;
 

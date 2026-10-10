@@ -27,7 +27,7 @@ public class HotelBookingRequestDto {
     private Integer guests;
 
 
-    private Long userId;
+    private Long userId; // Reference to user (costumer)
 
 
     private Long roomId;

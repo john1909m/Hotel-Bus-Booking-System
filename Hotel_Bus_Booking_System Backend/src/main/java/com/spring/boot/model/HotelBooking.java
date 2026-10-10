@@ -23,6 +23,7 @@ public class HotelBooking extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "check_in", nullable = false)
     private LocalDate checkIn;
 
@@ -41,7 +42,7 @@ public class HotelBooking extends BaseEntity {
 
     // Relationships
     @ManyToOne
-    private User user;
+    private Costumer costumer;
 
     @ManyToOne
     private Room room;

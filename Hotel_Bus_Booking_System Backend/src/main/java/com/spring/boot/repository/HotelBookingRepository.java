@@ -28,7 +28,7 @@ public interface HotelBookingRepository extends JpaRepository<HotelBooking, Long
             "hb.status IN ('CONFIRMED', 'PENDING') AND hb.id != ?4")
     List<HotelBooking> findOverlappingBookingsExcludingSelf(Long roomId, LocalDate checkIn, LocalDate checkOut, Long bookingId);
 
-    List<HotelBooking> findByUserId(Long userId);
+    List<HotelBooking> findByCostumer_Id(Long userId);
 
     List<HotelBooking> findByHotelId(Long hotelId);
 }

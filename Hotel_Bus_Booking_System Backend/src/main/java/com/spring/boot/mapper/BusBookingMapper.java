@@ -17,5 +17,8 @@ public interface BusBookingMapper {
 
     BusBooking busBookingRequestDtoToBusBooking(BusBookingRequestDto busBookingRequestDto);
 
+    @Mapping(target = "userId", source = "costumer.id")
+    @Mapping(source = "busTrip.id", target = "busTripId")
+    @Mapping(source = "seat.id", target = "seatId")
     BusBookingDto busBookingToBusBookingDto(BusBooking busBooking);
 }

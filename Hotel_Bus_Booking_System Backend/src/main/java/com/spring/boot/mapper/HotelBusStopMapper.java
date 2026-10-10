@@ -17,5 +17,7 @@ public interface HotelBusStopMapper {
 
     HotelBusStop hotelBusStopRequestDtoToHotelBusStop(HotelBusStopRequestDto hotelBusStopRequestDto);
 
+    @Mapping(source = "hotel.id", target = "hotelId")
+    @Mapping(source = "busStop.id", target = "busStopId")
     HotelBusStopDto hotelBusStopToHotelBusStopDto(HotelBusStop hotelBusStop);
 }

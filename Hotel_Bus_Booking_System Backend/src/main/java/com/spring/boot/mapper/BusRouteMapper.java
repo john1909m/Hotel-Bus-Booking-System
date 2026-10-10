@@ -17,5 +17,7 @@ public interface BusRouteMapper {
 
     BusRoute busRouteRequestDtoToBusRoute(BusRouteRequestDto busRouteRequestDto);
 
+    @Mapping(source = "originStop.id", target = "originStopId")
+    @Mapping(source = "destinationStop.id", target = "destinationStopId")
     BusRouteDto busRouteToBusRouteDto(BusRoute busRoute);
 }

@@ -28,7 +28,7 @@ public class BusBookingDto {
     private LocalDate bookingDate;
     private BookingStatus status;
     private BigDecimal price;
-    private Long userId; // Reference to user
+    private Long userId; // Reference to user (costumer)
     private Long busTripId; // Reference to bus trip
     private Long seatId; // Reference to seat
 }
