@@ -1,0 +1,78 @@
+<header class="public-header" [class.scrolled]="scrolled()" role="banner">
+  <div class="header-inner container">
+    <!-- Brand -->
+    <a routerLink="/" class="brand" aria-label="TravelEase home">
+      <span class="brand-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
+          <path d="M8 18 C8 18 10 10 14 10 C18 10 20 18 20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <circle cx="14" cy="10" r="2.5" fill="white"/>
+        </svg>
+      </span>
+      <span class="brand-name">TravelEase</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="nav-desktop" aria-label="Main navigation">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
+      <a href="#hotels" class="nav-link" (click)="smoothScroll($event, 'hotels')">Hotels</a>
+      <a href="#transportation" class="nav-link" (click)="smoothScroll($event, 'transportation')">Transportation</a>
+      <a href="#about" class="nav-link" (click)="smoothScroll($event, 'about')">About Us</a>
+      <a href="#contact" class="nav-link" (click)="smoothScroll($event, 'contact')">Contact</a>
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="header-actions">
+      <!-- Theme Toggle -->
+      <button
+        class="theme-toggle"
+        [attr.aria-label]="theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        (click)="toggleTheme()"
+        id="theme-toggle-btn"
+      >
+        <span class="toggle-track">
+          <span class="toggle-icon moon" aria-hidden="true">🌙</span>
+          <span class="toggle-thumb" [class.dark]="theme() === 'dark'"></span>
+          <span class="toggle-icon sun" aria-hidden="true">☀️</span>
+        </span>
+      </button>
+
+      <a href="#" class="btn-ghost" aria-label="Login to your account">Login</a>
+      <a href="#" class="btn-primary" aria-label="Register a new account">Register</a>
+
+      <!-- Mobile Hamburger -->
+      <button
+        class="hamburger"
+        [class.open]="menuOpen()"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="mobile-menu"
+        aria-label="Toggle navigation menu"
+        id="hamburger-btn"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div
+    id="mobile-menu"
+    class="mobile-menu"
+    [class.open]="menuOpen()"
+    role="navigation"
+    aria-label="Mobile navigation"
+  >
+    <nav class="mobile-nav">
+      <a routerLink="/" class="mobile-link" (click)="closeMenu()">Home</a>
+      <a href="#hotels" class="mobile-link" (click)="smoothScroll($event, 'hotels'); closeMenu()">Hotels</a>
+      <a href="#transportation" class="mobile-link" (click)="smoothScroll($event, 'transportation'); closeMenu()">Transportation</a>
+      <a href="#about" class="mobile-link" (click)="smoothScroll($event, 'about'); closeMenu()">About Us</a>
+      <a href="#contact" class="mobile-link" (click)="smoothScroll($event, 'contact'); closeMenu()">Contact</a>
+      <div class="mobile-actions">
+        <a href="#" class="btn-ghost w-full">Login</a>
+        <a href="#" class="btn-primary w-full">Register</a>
+      </div>
+    </nav>
+  </div>
+</header>
