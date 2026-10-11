@@ -10,7 +10,7 @@ import jakarta.transaction.SystemException;
 
 public interface AuthService {
     AuthResponse signUp(RegisterRequest registerRequest) throws SystemException;
-    AuthResponse login(LoginRequest loginRequest, HttpServletResponse response) throws SystemException;
+    AuthResponse login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) throws SystemException;
     void logout(HttpServletRequest request, HttpServletResponse response);
     UserDto getCurrentUser();
 }

@@ -32,14 +32,12 @@ public class RoomController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RoomDto> getRoomById(@PathVariable Long id) {
         RoomDto room = roomService.getRoomById(id);
         return new ResponseEntity<>(room, HttpStatus.OK);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<RoomDto>> getAllRooms() {
         List<RoomDto> rooms = roomService.getAllRooms();
         return new ResponseEntity<>(rooms, HttpStatus.OK);

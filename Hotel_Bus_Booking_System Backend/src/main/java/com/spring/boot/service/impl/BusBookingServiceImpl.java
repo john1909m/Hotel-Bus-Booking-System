@@ -9,11 +9,11 @@ import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.BusBooking;
 import com.spring.boot.model.BusSeat;
 import com.spring.boot.model.BusTrip;
-import com.spring.boot.model.Costumer;
+import com.spring.boot.model.User;
 import com.spring.boot.mapper.BusBookingMapper;
 import com.spring.boot.repository.BusBookingRepository;
 import com.spring.boot.repository.BusRepository;
-import com.spring.boot.repository.CostumerRepository;
+import com.spring.boot.repository.UserRepository;
 import com.spring.boot.repository.BusSeatRepository;
 import com.spring.boot.repository.BusTripRepository;
 import com.spring.boot.service.interfaces.BusBookingService;
@@ -35,13 +35,13 @@ public class BusBookingServiceImpl implements BusBookingService {
     private final BusTripRepository busTripRepository;
     private final BusSeatRepository busSeatRepository;
     private final BusRepository busRepository;
-    private final CostumerRepository costumerRepository;
+    private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
     public BusBookingDto createBusBooking(BusBookingRequestDto busBookingRequestDto) {
         // Validate that user exists
-        var user = costumerRepository.findById(busBookingRequestDto.getUserId())
+        var user = userRepository.findById(busBookingRequestDto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
 
         // Validate that bus trip exists
@@ -64,7 +64,7 @@ public class BusBookingServiceImpl implements BusBookingService {
 
         // Map DTO to entity
         BusBooking busBooking = busBookingMapper.busBookingRequestDtoToBusBooking(busBookingRequestDto);
-        busBooking.setCostumer(user);
+        busBooking.setUser(user);
         busBooking.setBusTrip(busTrip);
         busBooking.setSeat(seat);
 
@@ -91,7 +91,7 @@ public class BusBookingServiceImpl implements BusBookingService {
 
     @Override
     public java.util.List<BusBookingDto> getBusBookingsByUserId(Long userId) {
-        return busBookingRepository.findByCostumer_Id(userId).stream()
+        return busBookingRepository.findByUser_Id(userId).stream()
                 .map(busBookingMapper::busBookingToBusBookingDto)
                 .collect(Collectors.toList());
     }
@@ -109,9 +109,9 @@ public class BusBookingServiceImpl implements BusBookingService {
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_booking_not_found")));
 
         // Validate that user exists (if provided)
-        Costumer user = null;
+        User user = null;
         if (busBookingRequestDto.getUserId() != null) {
-            user = costumerRepository.findById(busBookingRequestDto.getUserId())
+            user = userRepository.findById(busBookingRequestDto.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
         }
 
@@ -144,9 +144,9 @@ public class BusBookingServiceImpl implements BusBookingService {
         existingBusBooking.setStatus(busBookingRequestDto.getStatus());
         // Note: price would typically be set based on the trip price
 
-        // Handle costumer relationship: if provided, validate and set; if not provided, keep existing
+        // Handle user relationship: if provided, validate and set; if not provided, keep existing
         if (user != null) {
-            existingBusBooking.setCostumer(user);
+            existingBusBooking.setUser(user);
         }
 
         // Handle busTrip relationship: if provided, validate and set; if not provided, keep existing

@@ -27,4 +27,5 @@ public class HotelBookingDto {
     private Long userId; // Reference to user (costumer)
     private Long roomId; // Reference to room
     private Long hotelId; // Reference to hotel
+    private String hotelName; // Name of the hotel
 }

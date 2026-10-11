@@ -42,7 +42,7 @@ public class HotelBooking extends BaseEntity {
 
     // Relationships
     @ManyToOne
-    private Costumer costumer;
+    private User user;
 
     @ManyToOne
     private Room room;

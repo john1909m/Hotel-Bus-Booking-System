@@ -1,10 +1,12 @@
 package com.spring.boot.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+
+
 
 import java.time.LocalDate;
 
@@ -24,11 +26,8 @@ public class HotelBookingRequestDto {
     private LocalDate checkOut;
 
 
+
     private Integer guests;
-
-
-    private Long userId; // Reference to user (costumer)
-
 
     private Long roomId;
 }

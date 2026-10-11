@@ -1,12 +1,12 @@
 package com.spring.boot.config;
 
-//import com.spring.boot.config.filter.AuthFilter;
-//import com.spring.boot.config.rateLimiting.RateLimitFilter;
+import com.spring.boot.config.filter.AuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,14 +28,12 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-//    private final AuthFilter authFilter;
-//    //private final RateLimitFilter rateLimitFilter;
+    private final AuthFilter authFilter;
 
-//    @Autowired
-//    public SecurityConfig(AuthFilter authFilter,RateLimitFilter rateLimitFilter) {
-//        this.rateLimitFilter=rateLimitFilter;
-//        this.authFilter = authFilter;
-//    }
+    @Autowired
+    public SecurityConfig(AuthFilter authFilter) {
+        this.authFilter = authFilter;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -48,11 +46,20 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> {
+                                    response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                                }
+                        )
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
 
                         // Public browsing endpoints (read-only)
                         .requestMatchers(HttpMethod.GET, "/api/hotels/**").permitAll()
@@ -62,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/bus-routes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bus-trips/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bus-seats/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
 
                         // Specific public endpoints for related data
                         .requestMatchers(HttpMethod.GET, "/api/bus-seats/bus/**").permitAll()
@@ -74,10 +82,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/hotel-bookings").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/api/bus-bookings").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/api/payments").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/hotel-bookings/user/**").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/bus-bookings/user/**").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/auth/me").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/hotel-bookings/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/bus-bookings/user/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasAnyRole("USER","ADMIN")
 
                         // Admin endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
@@ -111,6 +118,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/payments").hasRole("ADMIN")
 
                         // All other endpoints require authentication (but will be handled by method security)
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -120,9 +128,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4200","http://localhost:8080","https://www.storely-eg.com","https://storely-eg.com","http://localhost:5173/*")); // React frontend
+        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4200","http://localhost:8080","https://www.storely-eg.com","https://storely-eg.com")); // React frontend
         configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS")) ;
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Set-Cookie"));
 
@@ -130,7 +138,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-
-
 }

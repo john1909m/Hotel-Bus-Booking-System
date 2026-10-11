@@ -30,12 +30,15 @@ public class HotelBookingController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<HotelBookingDto> createHotelBooking(@RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
-        HotelBookingDto createdHotelBooking = hotelBookingService.createHotelBooking(hotelBookingRequestDto);
+        // Extract user ID from authentication principal
+        UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userDto.getId();
+        HotelBookingDto createdHotelBooking = hotelBookingService.createHotelBooking(hotelBookingRequestDto, userId);
         return new ResponseEntity<>(createdHotelBooking, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("#hotelBookingService.getHotelBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<HotelBookingDto> getHotelBookingById(@PathVariable Long id) {
         HotelBookingDto hotelBooking = hotelBookingService.getHotelBookingById(id);
         return new ResponseEntity<>(hotelBooking, HttpStatus.OK);
@@ -73,14 +76,14 @@ public class HotelBookingController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("#hotelBookingService.getHotelBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<HotelBookingDto> updateHotelBooking(@PathVariable Long id, @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
         HotelBookingDto updatedHotelBooking = hotelBookingService.updateHotelBooking(id, hotelBookingRequestDto);
         return new ResponseEntity<>(updatedHotelBooking, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("#hotelBookingService.getHotelBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<Void> deleteHotelBooking(@PathVariable Long id) {
         hotelBookingService.deleteHotelBooking(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

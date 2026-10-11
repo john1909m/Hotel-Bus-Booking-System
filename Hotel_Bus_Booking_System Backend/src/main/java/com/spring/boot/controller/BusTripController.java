@@ -7,6 +7,7 @@ import com.spring.boot.service.interfaces.BusTripService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class BusTripController {
     private final BusTripService busTripService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BusTripDto> createBusTrip(@RequestBody BusTripRequestDto busTripRequestDto) {
         BusTripDto createdBusTrip = busTripService.createBusTrip(busTripRequestDto);
         return new ResponseEntity<>(createdBusTrip, HttpStatus.CREATED);
@@ -55,12 +57,14 @@ public class BusTripController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BusTripDto> updateBusTrip(@PathVariable Long id, @RequestBody BusTripRequestDto busTripRequestDto) {
         BusTripDto updatedBusTrip = busTripService.updateBusTrip(id, busTripRequestDto);
         return new ResponseEntity<>(updatedBusTrip, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBusTrip(@PathVariable Long id) {
         busTripService.deleteBusTrip(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

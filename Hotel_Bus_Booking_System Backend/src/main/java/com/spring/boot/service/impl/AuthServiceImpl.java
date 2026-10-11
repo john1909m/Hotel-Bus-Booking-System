@@ -76,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest loginRequest, HttpServletResponse response) throws AuthenticationException {
+    public AuthResponse login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         // Find user by email
         User user = userRepo.findByEmail(loginRequest.getEmail());
 //                .orElseThrow(() -> new AuthenticationException("Bad.credentials"));
@@ -93,12 +93,20 @@ public class AuthServiceImpl implements AuthService {
         // Set cookie
         Cookie cookie = new Cookie("access_token", token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set to true in production with HTTPS
+        // Determine if request is secure (HTTPS)
+        boolean secure = request.isSecure();
+        cookie.setSecure(secure);
         cookie.setPath("/");
         cookie.setMaxAge(60 * 60 * 24); // 1 day
-        // For localhost development with cross-origin (different ports):
-        // Modern browsers allow SameSite=None without Secure for localhost
-        cookie.setAttribute("SameSite", "Lax");
+        // For cross-site requests (different ports), need SameSite=None with Secure=true
+        // If not secure (HTTP), we fallback to SameSite=Lax (less secure but works for same-site)
+        // For development with different ports, consider using Authorization header instead.
+        if (secure) {
+            cookie.setAttribute("SameSite", "None");
+        } else {
+            // For HTTP, use Lax (will not be sent on cross-site POST, but same-site OK)
+            cookie.setAttribute("SameSite", "Lax");
+        }
 
         response.addCookie(cookie);
 

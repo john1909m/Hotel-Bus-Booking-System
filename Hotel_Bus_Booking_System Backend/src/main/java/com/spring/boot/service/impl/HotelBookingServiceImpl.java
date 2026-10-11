@@ -2,18 +2,19 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
+import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.exception.InvalidBookingDatesException;
 import com.spring.boot.exception.InvalidGuestCountException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.HotelBooking;
 import com.spring.boot.model.Room;
-import com.spring.boot.model.Costumer;
+import com.spring.boot.model.User;
 import com.spring.boot.mapper.HotelBookingMapper;
 import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.HotelRepository;
-import com.spring.boot.repository.CostumerRepository;
 import com.spring.boot.repository.RoomRepository;
+import com.spring.boot.repository.UserRepository;
 
 import com.spring.boot.service.interfaces.HotelBookingService;
 import lombok.AllArgsConstructor;
@@ -35,11 +36,11 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     private final HotelBookingMapper hotelBookingMapper;
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
-    private final CostumerRepository costumerRepository;
+    private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
-    public HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto) {
+    public HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto, Long userId) {
         // Validate dates
         if (hotelBookingRequestDto.getCheckOut().isBefore(hotelBookingRequestDto.getCheckIn()) ||
                 hotelBookingRequestDto.getCheckOut().isEqual(hotelBookingRequestDto.getCheckIn())) {
@@ -51,7 +52,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
 
         // Validate user exists
-        var user = costumerRepository.findById(hotelBookingRequestDto.getUserId())
+        var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
 
         // Validate guest count doesn't exceed room capacity
@@ -76,9 +77,11 @@ public class HotelBookingServiceImpl implements HotelBookingService {
 
         // Map DTO to entity
         HotelBooking hotelBooking = hotelBookingMapper.hotelBookingRequestDtoToHotelBooking(hotelBookingRequestDto);
-        hotelBooking.setCostumer(user);  // Set the costumer relationship
+        hotelBooking.setUser(user);  // Set the user relationship
         hotelBooking.setRoom(room);      // Set the room relationship
+        hotelBooking.setHotel(room.getHotel()); // Set the hotel from the room
         hotelBooking.setTotalPrice(totalPrice);
+        hotelBooking.setStatus(BookingStatus.PENDING);
 
         // Save booking
         HotelBooking savedHotelBooking = hotelBookingRepository.save(hotelBooking);
@@ -103,7 +106,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
 
     @Override
     public java.util.List<HotelBookingDto> getHotelBookingsByUserId(Long userId) {
-        return hotelBookingRepository.findByCostumer_Id(userId).stream()
+        return hotelBookingRepository.findByUser_Id(userId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
                 .collect(Collectors.toList());
     }
@@ -133,13 +136,6 @@ public class HotelBookingServiceImpl implements HotelBookingService {
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
         }
 
-        // Validate user exists (if provided)
-        Costumer user = null;
-        if (hotelBookingRequestDto.getUserId() != null) {
-            user = costumerRepository.findById(hotelBookingRequestDto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
-        }
-
         // Validate guest count doesn't exceed room capacity (if room provided)
         if (room != null && hotelBookingRequestDto.getGuests() > room.getCapacity()) {
             throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
@@ -166,11 +162,6 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         existingHotelBooking.setCheckOut(hotelBookingRequestDto.getCheckOut());
         existingHotelBooking.setGuests(hotelBookingRequestDto.getGuests());
         existingHotelBooking.setTotalPrice(totalPrice);
-
-        // Handle costumer relationship: if provided, validate and set; if not provided, keep existing
-        if (user != null) {
-            existingHotelBooking.setCostumer(user);
-        }
 
         // Handle room relationship: if provided, validate and set; if not provided, keep existing
         if (room != null) {

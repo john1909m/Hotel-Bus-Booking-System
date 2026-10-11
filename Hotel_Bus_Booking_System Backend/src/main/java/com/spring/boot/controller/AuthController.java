@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5174/")
 public class AuthController {
 
     @Autowired
@@ -34,8 +33,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest loginRequest, HttpServletResponse response) throws SystemException {
-        return ResponseEntity.ok(authService.login(loginRequest, response));
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) throws SystemException {
+        return ResponseEntity.ok(authService.login(loginRequest, request, response));
     }
 
     @GetMapping("/me")

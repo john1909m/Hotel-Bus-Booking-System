@@ -1,6 +1,7 @@
 package com.spring.boot.config.jwt;
 
 import com.spring.boot.dto.UserDto;
+import com.spring.boot.enums.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -45,11 +46,18 @@ public class JwtCookieFilter extends OncePerRequestFilter {
                     return;
                 }
 
+                Role userRole = userDto.getRole();
+                if (userRole == null) {
+                    // Null role indicates invalid/missing role information
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDto,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + userDto.getRole().name()))
+                                List.of(new SimpleGrantedAuthority("ROLE_" + userRole))
                         );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);

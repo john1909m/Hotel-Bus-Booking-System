@@ -6,6 +6,7 @@ import com.spring.boot.service.interfaces.BusRouteService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class BusRouteController {
     private final BusRouteService busRouteService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BusRouteDto> createBusRoute(@RequestBody BusRouteRequestDto busRouteRequestDto) {
         BusRouteDto createdBusRoute = busRouteService.createBusRoute(busRouteRequestDto);
         return new ResponseEntity<>(createdBusRoute, HttpStatus.CREATED);
@@ -41,12 +43,14 @@ public class BusRouteController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BusRouteDto> updateBusRoute(@PathVariable Long id, @RequestBody BusRouteRequestDto busRouteRequestDto) {
         BusRouteDto updatedBusRoute = busRouteService.updateBusRoute(id, busRouteRequestDto);
         return new ResponseEntity<>(updatedBusRoute, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBusRoute(@PathVariable Long id) {
         busRouteService.deleteBusRoute(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

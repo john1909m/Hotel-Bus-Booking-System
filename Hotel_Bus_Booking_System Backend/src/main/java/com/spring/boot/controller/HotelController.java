@@ -7,6 +7,7 @@ import com.spring.boot.service.interfaces.HotelService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class HotelController {
     private final HotelService hotelService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HotelDto> createHotel(@RequestBody HotelRequestDto hotelRequestDto) {
         HotelDto createdHotel = hotelService.createHotel(hotelRequestDto);
         return new ResponseEntity<>(createdHotel, HttpStatus.CREATED);
@@ -41,12 +43,14 @@ public class HotelController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HotelDto> updateHotel(@PathVariable Long id,@RequestBody HotelRequestDto hotelRequestDto) {
         HotelDto updatedHotel = hotelService.updateHotel(id, hotelRequestDto);
         return new ResponseEntity<>(updatedHotel, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteHotel(@PathVariable Long id) {
         hotelService.deleteHotel(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

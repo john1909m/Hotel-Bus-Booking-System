@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface HotelBookingService {
 
-    HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto);
+    HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto, Long userId);
 
     HotelBookingDto getHotelBookingById(Long id);
 

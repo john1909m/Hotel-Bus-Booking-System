@@ -1,6 +1,7 @@
 package com.spring.boot.model;
 
 import com.spring.boot.enums.BookingStatus;
+import com.spring.boot.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class BusBooking extends BaseEntity {
 
     // Relationships
     @ManyToOne
-    private Costumer costumer;
+    private User user;
 
     @ManyToOne
     private BusTrip busTrip;

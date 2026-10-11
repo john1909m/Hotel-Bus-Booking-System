@@ -36,7 +36,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("( #paymentService.getPaymentById(#id).getHotelBooking() != null and #paymentService.getPaymentById(#id).getHotelBooking().getCostumer().getId() == authentication.principal.id ) or ( #paymentService.getPaymentById(#id).getBusBooking() != null and #paymentService.getPaymentById(#id).getBusBooking().getCostumer().getId() == authentication.principal.id ) or hasRole('ADMIN')")
+    @PreAuthorize("( #paymentServiceImpl.getPaymentById(#id).getHotelBooking() != null and #paymentServiceImpl.getPaymentById(#id).getHotelBooking().getUser().getId() == authentication.principal.id ) or ( #paymentServiceImpl.getPaymentById(#id).getBusBooking() != null and #paymentServiceImpl.getPaymentById(#id).getBusBooking().getUser().getId() == authentication.principal.id ) or hasRole('ADMIN')")
     public ResponseEntity<PaymentDto> getPaymentById(@PathVariable Long id) {
         PaymentDto payment = paymentService.getPaymentById(id);
         return new ResponseEntity<>(payment, HttpStatus.OK);
@@ -50,28 +50,28 @@ public class PaymentController {
     }
 
     @GetMapping("/hotel-booking/{hotelBookingId}")
-    @PreAuthorize("#hotelBookingService.getHotelBookingById(#hotelBookingId).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#hotelBookingServiceImpl.getHotelBookingById(#hotelBookingId).getUser().getId() == authentication.principal.id or hasRole('ADMIN')")
     public ResponseEntity<List<PaymentDto>> getPaymentsByHotelBookingId(@PathVariable Long hotelBookingId) {
         List<PaymentDto> payments = paymentService.getPaymentsByHotelBookingId(hotelBookingId);
         return new ResponseEntity<>(payments, HttpStatus.OK);
     }
 
     @GetMapping("/bus-booking/{busBookingId}")
-    @PreAuthorize("#busBookingService.getBusBookingById(#busBookingId).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#busBookingServiceImpl.getBusBookingById(#busBookingId).getUser().getId() == authentication.principal.id or hasRole('ADMIN')")
     public ResponseEntity<List<PaymentDto>> getPaymentsByBusBookingId(@PathVariable Long busBookingId) {
         List<PaymentDto> payments = paymentService.getPaymentsByBusBookingId(busBookingId);
         return new ResponseEntity<>(payments, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("( #paymentService.getPaymentById(#id).getHotelBooking() != null and #paymentService.getPaymentById(#id).getHotelBooking().getCostumer().getId() == authentication.principal.id ) or ( #paymentService.getPaymentById(#id).getBusBooking() != null and #paymentService.getPaymentById(#id).getBusBooking().getCostumer().getId() == authentication.principal.id ) or hasRole('ADMIN')")
+    @PreAuthorize("( #paymentServiceImpl.getPaymentById(#id).getHotelBooking() != null and #paymentServiceImpl.getPaymentById(#id).getHotelBooking().getUser().getId() == authentication.principal.id ) or ( #paymentServiceImpl.getPaymentById(#id).getBusBooking() != null and #paymentServiceImpl.getPaymentById(#id).getBusBooking().getUser().getId() == authentication.principal.id ) or hasRole('ADMIN')")
     public ResponseEntity<PaymentDto> updatePayment(@PathVariable Long id,  @RequestBody PaymentRequestDto paymentRequestDto) {
         PaymentDto updatedPayment = paymentService.updatePayment(id, paymentRequestDto);
         return new ResponseEntity<>(updatedPayment, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("( #paymentService.getPaymentById(#id).getHotelBooking() != null and #paymentService.getPaymentById(#id).getHotelBooking().getCostumer().getId() == authentication.principal.id ) or ( #paymentService.getPaymentById(#id).getBusBooking() != null and #paymentService.getPaymentById(#id).getBusBooking().getCostumer().getId() == authentication.principal.id ) or hasRole('ADMIN')")
+    @PreAuthorize("( #paymentServiceImpl.getPaymentById(#id).getHotelBooking() != null and #paymentServiceImpl.getPaymentById(#id).getHotelBooking().getUser().getId() == authentication.principal.id ) or ( #paymentServiceImpl.getPaymentById(#id).getBusBooking() != null and #paymentServiceImpl.getPaymentById(#id).getBusBooking().getUser().getId() == authentication.principal.id ) or hasRole('ADMIN')")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
         paymentService.deletePayment(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

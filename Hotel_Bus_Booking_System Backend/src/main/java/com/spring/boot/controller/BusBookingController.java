@@ -35,7 +35,7 @@ public class BusBookingController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("#busBookingService.getBusBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @busBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<BusBookingDto> getBusBookingById(@PathVariable Long id) {
         BusBookingDto busBooking = busBookingService.getBusBookingById(id);
         return new ResponseEntity<>(busBooking, HttpStatus.OK);
@@ -73,14 +73,14 @@ public class BusBookingController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("#busBookingService.getBusBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @busBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<BusBookingDto> updateBusBooking(@PathVariable Long id, @RequestBody BusBookingRequestDto busBookingRequestDto) {
         BusBookingDto updatedBusBooking = busBookingService.updateBusBooking(id, busBookingRequestDto);
         return new ResponseEntity<>(updatedBusBooking, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("#busBookingService.getBusBookingById(#id).getCostumer().getId() == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @busBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<Void> deleteBusBooking(@PathVariable Long id) {
         busBookingService.deleteBusBooking(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

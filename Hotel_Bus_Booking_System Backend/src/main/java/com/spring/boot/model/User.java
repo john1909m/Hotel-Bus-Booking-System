@@ -7,12 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * User entity representing a system user.
  */
 @Entity
 @Table(name = "users")
-@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,4 +37,11 @@ public class User extends BaseEntity {
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    // One-to-many relationships with bookings
+    @OneToMany(mappedBy = "user")
+    private List<HotelBooking> hotelBookings;
+
+    @OneToMany(mappedBy = "user")
+    private List<BusBooking> busBookings;
 }
