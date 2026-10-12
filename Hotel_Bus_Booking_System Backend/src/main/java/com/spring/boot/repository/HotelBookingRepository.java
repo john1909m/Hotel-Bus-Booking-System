@@ -30,6 +30,8 @@ public interface HotelBookingRepository extends JpaRepository<HotelBooking, Long
 
     List<HotelBooking> findByUser_Id(Long userId);
 
+    List<HotelBooking> findByUser_IdAndUser_name(Long userId,String name);
+
     List<HotelBooking> findByHotelId(Long hotelId);
 
 

@@ -2,6 +2,8 @@ package com.spring.boot.service.interfaces;
 
 import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.dto.BusBookingRequestDto;
+import com.spring.boot.enums.BookingStatus;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public interface BusBookingService {
 
     List<BusBookingDto> getBusBookingsByBusTripId(Long busTripId);
 
+    List<Long> getBookedSeatIdsByTripId(Long tripId);
     /**
      * Get bus bookings for the current authenticated user.
      *

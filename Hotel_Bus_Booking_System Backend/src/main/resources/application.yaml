@@ -24,15 +24,16 @@ spring:
   messages:
     basename: validation
 
-# Admin initialization properties
-# admin.email: Email address for the initial admin user
-# admin.password: Password for the initial admin user (will be encoded)
-# admin.name: Name for the admin user (optional, defaults to "Admin User")
-# admin.phoneNumber: Phone number for the admin user (optional)
+  ai:
+    google:
+      genai:
+        api-key: ${API_KEY}
+        chat:
+          options:
+            model: gemini-3.8-flash
+            options:
+              model: gemini-3.8-flash
 
-# CORS properties
-# cors.allowedOrigins: Comma-separated list of allowed origins for CORS
-# Example: cors.allowedOrigins=[\"http://localhost:3000\",\"http://localhost:5173\"]
 
 logging:
   level:
@@ -44,4 +45,6 @@ logging:
 token:
   secret: hjfs46687kjsfkj@#@$#$@$%ffeddf@#sADDS
   time: 36000000
+
+
 

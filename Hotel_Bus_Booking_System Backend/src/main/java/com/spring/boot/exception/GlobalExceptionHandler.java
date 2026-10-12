@@ -47,7 +47,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(bundleMessageService.getMessage(ex.getMessage()));
     }
-
+    @ExceptionHandler(AiServiceUnavailableException.class)
+    public ResponseEntity<String> handleAiUnavailable(AiServiceUnavailableException ex) {
+        // use the SAME error body type and BundleMessageService call as your other handlers
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(bundleMessageService.getMessage("ai.service.unavailable"));
+    }
     @ExceptionHandler(InvalidBookingDatesException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> handleInvalidBookingDatesException(InvalidBookingDatesException ex) {

@@ -2,6 +2,7 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.dto.BusBookingRequestDto;
+import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.exception.InvalidSeatException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.exception.SeatAlreadyBookedException;
@@ -101,6 +102,11 @@ public class BusBookingServiceImpl implements BusBookingService {
         return busBookingRepository.findByBusTripId(busTripId).stream()
                 .map(busBookingMapper::busBookingToBusBookingDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Long> getBookedSeatIdsByTripId(Long tripId) {
+        return busBookingRepository.findBookedSeatIdsByTripId(tripId);
     }
 
     @Override
