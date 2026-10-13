@@ -1,0 +1,126 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <a routerLink="/" class="auth-brand" aria-label="TravelEase Home">
+        <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
+          <path d="M8 18 C8 18 10 10 14 10 C18 10 20 18 20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <circle cx="14" cy="10" r="2.5" fill="white"/>
+        </svg>
+        <span class="brand-text">TravelEase</span>
+      </a>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join TravelEase to start booking hotels & buses seamlessly</p>
+    </div>
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <p-message severity="error" [text]="errorMessage()!" styleClass="w-full"></p-message>
+      </div>
+    }
+
+    <!-- Register Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="reg-name" class="form-label">Full Name</label>
+        <div class="input-wrapper">
+          <input
+            pInputText
+            id="reg-name"
+            type="text"
+            formControlName="name"
+            placeholder="John Doe"
+            autocomplete="name"
+            class="w-full"
+          />
+        </div>
+        @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
+          <small class="field-error">
+            @if (registerForm.get('name')?.errors?.['required']) { Name is required. }
+            @else if (registerForm.get('name')?.errors?.['minlength']) { Name must be at least 2 characters. }
+          </small>
+        }
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="reg-email" class="form-label">Email address</label>
+        <div class="input-wrapper">
+          <input
+            pInputText
+            id="reg-email"
+            type="email"
+            formControlName="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            class="w-full"
+          />
+        </div>
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          <small class="field-error">
+            @if (registerForm.get('email')?.errors?.['required']) { Email is required. }
+            @else if (registerForm.get('email')?.errors?.['email']) { Please enter a valid email address. }
+          </small>
+        }
+      </div>
+
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label for="reg-phone" class="form-label">Phone Number</label>
+        <div class="input-wrapper">
+          <input
+            pInputText
+            id="reg-phone"
+            type="tel"
+            formControlName="phoneNumber"
+            placeholder="+20 123 456 7890"
+            autocomplete="tel"
+            class="w-full"
+          />
+        </div>
+        @if (registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched) {
+          <small class="field-error">
+            @if (registerForm.get('phoneNumber')?.errors?.['required']) { Phone number is required. }
+            @else if (registerForm.get('phoneNumber')?.errors?.['pattern']) { Please enter a valid phone number. }
+          </small>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="reg-password" class="form-label">Password</label>
+        <div class="input-wrapper">
+          <p-password
+            id="reg-password"
+            formControlName="password"
+            [toggleMask]="true"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            class="w-full"
+          ></p-password>
+        </div>
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          <small class="field-error">
+            @if (registerForm.get('password')?.errors?.['required']) { Password is required. }
+            @else if (registerForm.get('password')?.errors?.['minlength']) { Password must be at least 6 characters. }
+          </small>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        label="Create Account"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+        styleClass="btn-auth-submit w-full"
+      ></p-button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login" class="auth-link">Sign in</a></p>
+    </div>
+  </div>
+</div>
