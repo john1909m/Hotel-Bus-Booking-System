@@ -1,0 +1,84 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <a routerLink="/" class="auth-brand" aria-label="TravelEase Home">
+        <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
+          <path d="M8 18 C8 18 10 10 14 10 C18 10 20 18 20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <circle cx="14" cy="10" r="2.5" fill="white"/>
+        </svg>
+        <span class="brand-text">TravelEase</span>
+      </a>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to manage your hotel & bus bookings</p>
+    </div>
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <p-message severity="error" [text]="errorMessage()!" styleClass="w-full"></p-message>
+      </div>
+    }
+
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="login-email" class="form-label">Email address</label>
+        <div class="input-wrapper">
+          <input
+            pInputText
+            id="login-email"
+            type="email"
+            formControlName="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            [class.ng-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            class="w-full"
+          />
+        </div>
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <small class="field-error">
+            @if (loginForm.get('email')?.errors?.['required']) { Email is required. }
+            @else if (loginForm.get('email')?.errors?.['email']) { Please enter a valid email address. }
+          </small>
+        }
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="login-password" class="form-label">Password</label>
+        </div>
+        <div class="input-wrapper">
+          <p-password
+            id="login-password"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            class="w-full"
+          ></p-password>
+        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <small class="field-error">
+            @if (loginForm.get('password')?.errors?.['required']) { Password is required. }
+            @else if (loginForm.get('password')?.errors?.['minlength']) { Password must be at least 6 characters. }
+          </small>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        label="Sign In"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+        styleClass="btn-auth-submit w-full"
+      ></p-button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a routerLink="/register" class="auth-link">Create an account</a></p>
+    </div>
+  </div>
+</div>
