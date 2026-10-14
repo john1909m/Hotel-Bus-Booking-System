@@ -2,12 +2,15 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
+import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.enums.Role;
-//import com.spring.boot.security.jwt.TokenHandler;
+import java.time.LocalDate;
 import com.spring.boot.dto.UserDto;
-
 import com.spring.boot.service.interfaces.HotelBookingService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 /**
  * REST controller for HotelBooking entity.
@@ -45,9 +49,21 @@ public class HotelBookingController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<HotelBookingDto>> getAllHotelBookings() {
-        List<HotelBookingDto> hotelBookings = hotelBookingService.getAllHotelBookings();
+    public ResponseEntity<Page<HotelBookingDto>> getAllHotelBookings(@ParameterObject Pageable pageable,
+                                                                     @RequestParam(required = false) BookingStatus status,
+                                                                     @RequestParam(required = false) String checkInAfter,
+                                                                     @RequestParam(required = false) String checkInBefore,
+                                                                     @RequestParam(required = false) Long userId,
+                                                                     @RequestParam(required = false) Long hotelId) {
+        // Parse date strings if provided
+        LocalDate parsedCheckInAfter = checkInAfter != null && !checkInAfter.isEmpty()
+                ? LocalDate.parse(checkInAfter)
+                : null;
+        LocalDate parsedCheckInBefore = checkInBefore != null && !checkInBefore.isEmpty()
+                ? LocalDate.parse(checkInBefore)
+                : null;
+
+        Page<HotelBookingDto> hotelBookings = hotelBookingService.getAllHotelBookingsPaginated(pageable, status, parsedCheckInAfter, parsedCheckInBefore, userId, hotelId);
         return new ResponseEntity<>(hotelBookings, HttpStatus.OK);
     }
 

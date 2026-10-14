@@ -2,6 +2,7 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.HotelBusStopDto;
 import com.spring.boot.dto.HotelBusStopRequestDto;
+import com.spring.boot.dto.PageResponse;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.HotelBusStop;
@@ -10,11 +11,17 @@ import com.spring.boot.repository.HotelBusStopRepository;
 import com.spring.boot.repository.HotelRepository;
 import com.spring.boot.repository.BusStopRepository;
 import com.spring.boot.service.interfaces.HotelBusStopService;
+import com.spring.boot.util.PaginationUtil;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Set;
+
 
 /**
  * Service implementation for HotelBusStop entity.
@@ -58,6 +65,45 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
         return hotelBusStopRepository.findAll().stream()
                 .map(hotelBusStopMapper::hotelBusStopToHotelBusStopDto)
                 .toList();
+    }
+
+    @Override
+    public PageResponse<HotelBusStopDto> getAllHotelBusStopsPaginated(int page, int size, String sortBy, String sortDirection,
+                                                                     String q, Long hotelId, Long busStopId) {
+        // Validate and normalize pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 20; // default size
+        }
+        if (size > 100) {
+            size = 100; // max size
+        }
+
+        // Validate sortBy field to prevent SQL injection and unauthorized sorting
+        String validatedSortBy = validateSortField(sortBy, "id"); // default to id if invalid
+        String validatedSortDirection = sortDirection == null || (!sortDirection.equalsIgnoreCase("asc") && !sortDirection.equalsIgnoreCase("desc"))
+            ? "asc"
+            : sortDirection.toLowerCase();
+
+        // Create Pageable with sorting
+        Sort sort = Sort.by(
+            Sort.Direction.fromString(validatedSortDirection),
+            validatedSortBy
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Get paginated results from repository
+        Page<HotelBusStop> hotelBusStopPage = hotelBusStopRepository.findByFilters(
+                q == null || q.isEmpty() ? "" : q,
+                hotelId == null ? 0L : hotelId,
+                busStopId == null ? 0L : busStopId,
+                pageable
+        );
+
+        // Convert to PageResponse using utility
+        return PaginationUtil.toPageResponse(hotelBusStopPage, hotelBusStopMapper::hotelBusStopToHotelBusStopDto);
     }
 
     @Override
@@ -109,5 +155,26 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_bus_stop_not_found"));
         }
         hotelBusStopRepository.deleteById(id);
+    }
+
+    /**
+     * Validates the sort field against a whitelist of allowed fields.
+     *
+     * @param sortBy the field to sort by
+     * @param defaultField the default field to use if sortBy is invalid
+     * @return the validated sort field or the default field
+     */
+    private String validateSortField(String sortBy, String defaultField) {
+        if (sortBy == null || sortBy.isEmpty()) {
+            return defaultField;
+        }
+
+        // Whitelist of allowed sort fields for HotelBusStop entity
+        Set<String> allowedFields = Set.of(
+            "id", "distance", "hotelId", "busStopId", "createdAt", "updatedAt"
+        );
+
+        // Check if the field is in the whitelist (case-insensitive)
+        return allowedFields.contains(sortBy.toLowerCase()) ? sortBy : defaultField;
     }
 }

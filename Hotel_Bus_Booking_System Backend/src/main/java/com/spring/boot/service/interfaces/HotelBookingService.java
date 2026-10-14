@@ -2,7 +2,11 @@ package com.spring.boot.service.interfaces;
 
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
+import org.springframework.data.domain.Pageable;
+import com.spring.boot.enums.BookingStatus;
+import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -29,6 +33,11 @@ public interface HotelBookingService {
      */
     List<HotelBookingDto> getMyHotelBookings(Long userId);
 
+    Page<HotelBookingDto> getAllHotelBookingsPaginated(Pageable pageable,
+                                                       BookingStatus status,
+                                                       LocalDate checkInAfter, LocalDate checkInBefore,
+                                                       Long userId, Long hotelId);
+
     HotelBookingDto updateHotelBooking(Long id, HotelBookingRequestDto hotelBookingRequestDto);
 
     void deleteHotelBooking(Long id);
@@ -42,5 +51,5 @@ public interface HotelBookingService {
      * @param roomId     the room ID (optional)
      * @return true if room(s) are available, false otherwise
      */
-    boolean isRoomAvailable(Long hotelId, java.time.LocalDate checkIn, java.time.LocalDate checkOut, Long roomId);
+    boolean isRoomAvailable(Long hotelId, LocalDate checkIn, LocalDate checkOut, Long roomId);
 }

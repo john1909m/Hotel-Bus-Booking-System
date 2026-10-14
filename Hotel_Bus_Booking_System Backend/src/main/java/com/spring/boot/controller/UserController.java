@@ -2,17 +2,17 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.dto.UserRequestDto;
-import com.spring.boot.enums.Role;
-
 import com.spring.boot.service.interfaces.UserService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+//import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import  org.springframework.security.access.prepost.PreAuthorize;
+import  org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * REST controller for User entity.
@@ -46,9 +46,10 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<UserDto> users = userService.getAllUsers();
+    public ResponseEntity<Page<UserDto>> getAllUsers(@ParameterObject Pageable pageable,
+                                                     @RequestParam(required = false) String q,
+                                                     @RequestParam(required = false) String role) {
+        Page<UserDto> users = userService.getAllUsersPaginated(pageable, q, role);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 

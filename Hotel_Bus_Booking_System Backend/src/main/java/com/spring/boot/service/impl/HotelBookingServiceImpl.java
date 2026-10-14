@@ -10,20 +10,22 @@ import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.HotelBooking;
 import com.spring.boot.model.Room;
 import com.spring.boot.model.User;
+import java.util.stream.Collectors;
 import com.spring.boot.mapper.HotelBookingMapper;
 import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.HotelRepository;
 import com.spring.boot.repository.RoomRepository;
 import com.spring.boot.repository.UserRepository;
-
 import com.spring.boot.service.interfaces.HotelBookingService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 /**
  * Service implementation for HotelBooking entity.
@@ -105,17 +107,36 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     }
 
     @Override
-    public java.util.List<HotelBookingDto> getHotelBookingsByUserId(Long userId) {
+    public List<HotelBookingDto> getHotelBookingsByUserId(Long userId) {
         return hotelBookingRepository.findByUser_Id(userId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
-    public java.util.List<HotelBookingDto> getHotelBookingsByHotelId(Long hotelId) {
+    public List<HotelBookingDto> getHotelBookingsByHotelId(Long hotelId) {
         return hotelBookingRepository.findByHotelId(hotelId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    public Page<HotelBookingDto> getAllHotelBookingsPaginated(Pageable pageable,
+                                                              BookingStatus status,
+                                                              LocalDate checkInAfter, LocalDate checkInBefore,
+                                                              Long userId, Long hotelId) {
+        // Get paginated results from repository
+        Page<HotelBooking> hotelBookingPage = hotelBookingRepository.findByFilters(
+                status,
+                checkInAfter,
+                checkInBefore,
+                userId == null ? 0L : userId,
+                hotelId == null ? 0L : hotelId,
+                pageable
+        );
+
+        // Convert to DTO page
+        return hotelBookingPage.map(hotelBookingMapper::hotelBookingToHotelBookingDto);
     }
 
     @Override

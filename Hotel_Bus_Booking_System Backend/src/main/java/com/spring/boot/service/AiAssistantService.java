@@ -6,10 +6,12 @@ import com.spring.boot.exception.AiRateLimitException;
 import com.spring.boot.exception.AiServiceUnavailableException;
 import com.spring.boot.service.ai.AiToolContext;
 import com.spring.boot.service.ai.AiToolContextHolder;
+import com.spring.boot.dto.ai.AiMessageDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
 public class AiAssistantService {
 
     private static final ZoneId CAIRO = ZoneId.of("Africa/Cairo");
-
+    private final ChatMemory chatMemory;
     private final ChatClient chatClient;
     private final SystemPromptService systemPromptService;
 
@@ -69,6 +71,19 @@ public class AiAssistantService {
             // ThreadLocal context must always be cleared
             AiToolContextHolder.clearContext();
         }
+    }
+
+    public List<AiMessageDto> getConversation(String conversationId, Long userId) {
+        String memoryKey = userId + ":" + conversationId;   // same key used in processMessage
+
+        return chatMemory.get(memoryKey).stream()
+                .filter(m -> m.getMessageType() == MessageType.USER
+                        || m.getMessageType() == MessageType.ASSISTANT)
+                .filter(m -> m.getText() != null && !m.getText().isBlank())
+                .map(m -> new AiMessageDto(
+                        m.getMessageType() == MessageType.USER ? "user" : "assistant",
+                        m.getText()))
+                .toList();
     }
 
     private AiResponse buildResponse(String conversationId, String answer, AiToolContext context) {

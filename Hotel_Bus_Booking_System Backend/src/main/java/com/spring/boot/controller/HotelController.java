@@ -2,9 +2,12 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.HotelDto;
 import com.spring.boot.dto.HotelRequestDto;
-
 import com.spring.boot.service.interfaces.HotelService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,14 +40,29 @@ public class HotelController {
     }
 
     @GetMapping
-    public ResponseEntity<List<HotelDto>> getAllHotels() {
-        List<HotelDto> hotels = hotelService.getAllHotels();
+    public ResponseEntity<Page<HotelDto>> getAllHotels(@ParameterObject Pageable pageable,
+                                                       @RequestParam(required = false) String q,
+                                                       @RequestParam(required = false) String city,
+                                                       @RequestParam(required = false) Double minRating,
+                                                       @RequestParam(required = false) Double maxPrice) {
+        Page<HotelDto> hotels = hotelService.getAllHotelsPaginated(pageable, q, city, minRating, maxPrice);
+        return new ResponseEntity<>(hotels, HttpStatus.OK);
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<List<HotelDto>> lookupHotels(@ParameterObject Pageable pageable,
+                                                       @RequestParam(required = false) String q) {
+        // For lookup, we want to return a limited list based on the pageable size
+        int lookupSize = Math.min(pageable.getPageSize(), 50); // cap at 50 for lookups
+        Pageable lookupPageable = PageRequest.of(0, lookupSize, pageable.getSort());
+
+        List<HotelDto> hotels = hotelService.lookupHotels(q, lookupPageable);
         return new ResponseEntity<>(hotels, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<HotelDto> updateHotel(@PathVariable Long id,@RequestBody HotelRequestDto hotelRequestDto) {
+    public ResponseEntity<HotelDto> updateHotel(@PathVariable Long id, @RequestBody HotelRequestDto hotelRequestDto) {
         HotelDto updatedHotel = hotelService.updateHotel(id, hotelRequestDto);
         return new ResponseEntity<>(updatedHotel, HttpStatus.OK);
     }

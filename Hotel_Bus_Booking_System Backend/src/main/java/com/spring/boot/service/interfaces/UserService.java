@@ -1,6 +1,8 @@
 package com.spring.boot.service.interfaces;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.dto.UserRequestDto;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -17,6 +19,9 @@ public interface UserService {
     UserDto getUserByEmail(String email);
 
     List<UserDto> getAllUsers();
+
+    Page<UserDto> getAllUsersPaginated(Pageable pageable,
+                                       String q, String role);
 
     UserDto updateUser(Long id, UserRequestDto userRequestDto);
 

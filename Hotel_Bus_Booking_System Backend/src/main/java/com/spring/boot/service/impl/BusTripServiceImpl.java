@@ -2,22 +2,24 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.BusTripDto;
 import com.spring.boot.dto.BusTripRequestDto;
+import com.spring.boot.enums.BusTripStatus;
 import com.spring.boot.exception.ResourceNotFoundException;
-import com.spring.boot.exception.InvalidSeatException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.BusTrip;
 import com.spring.boot.mapper.BusTripMapper;
 import com.spring.boot.repository.BusTripRepository;
 import com.spring.boot.repository.BusRepository;
 import com.spring.boot.repository.BusRouteRepository;
-
 import com.spring.boot.service.interfaces.BusTripService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.stream.Collectors;
-
 
 
 /**
@@ -69,17 +71,46 @@ public class BusTripServiceImpl implements BusTripService {
     }
 
     @Override
-    public java.util.List<BusTripDto> getBusTripsByBusId(Long busId) {
+    public List<BusTripDto> getBusTripsByBusId(Long busId) {
         return busTripRepository.findByBusId(busId).stream()
+                .map(busTripMapper::busTripToBusTripDto)
+                .toList();
+    }
+
+    @Override
+    public List<BusTripDto> getBusTripsByRouteId(Long routeId) {
+        return busTripRepository.findByRouteId(routeId).stream()
+                .map(busTripMapper::busTripToBusTripDto)
+                .toList();
+    }
+
+    @Override
+    public List<BusTripDto> lookupBusTrips(String query, Pageable pageable) {
+        // Use repository method to find bus trips by query with limit
+        return busTripRepository.findByQueryLimit(
+                query == null || query.isEmpty() ? "" : query,
+                pageable
+        ).stream()
                 .map(busTripMapper::busTripToBusTripDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public java.util.List<BusTripDto> getBusTripsByRouteId(Long routeId) {
-        return busTripRepository.findByRouteId(routeId).stream()
-                .map(busTripMapper::busTripToBusTripDto)
-                .collect(Collectors.toList());
+    public Page<BusTripDto> getAllBusTripsPaginated(Pageable pageable,
+                                                    Long busId, Long routeId, BusTripStatus status,
+                                                    LocalDateTime departureAfter, LocalDateTime departureBefore) {
+        // Get paginated results from repository
+        Page<BusTrip> busTripPage = busTripRepository.findByFilters(
+                busId == null ? 0L : busId,
+                routeId == null ? 0L : routeId,
+                status,
+                departureAfter,
+                departureBefore,
+                pageable
+        );
+
+        // Convert to DTO page
+        return busTripPage.map(busTripMapper::busTripToBusTripDto);
     }
 
     @Override
@@ -136,7 +167,6 @@ public class BusTripServiceImpl implements BusTripService {
         // 2. Find bus routes that stop at those bus stops
         // 3. Find bus trips on those routes
         // 4. Filter trips that arrive early enough for check-in with buffer
-
 
         // For now, we'll return all trips as a placeholder
         return getAllBusTrips().stream()

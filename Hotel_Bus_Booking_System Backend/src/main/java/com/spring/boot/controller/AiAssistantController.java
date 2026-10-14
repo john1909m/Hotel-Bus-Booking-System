@@ -3,6 +3,8 @@ package com.spring.boot.controller;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.dto.ai.AiChatRequest;
 import com.spring.boot.dto.ai.AiResponse;
+import com.spring.boot.dto.ai.AiMessageDto;
+import java.util.List;
 import com.spring.boot.dto.ai.BookingDraftRequest;
 import com.spring.boot.service.AiAssistantService;
 import jakarta.validation.Valid;
@@ -12,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -43,11 +46,8 @@ public class AiAssistantController {
      * Get a conversation by id (owner only).
      */
     @GetMapping("/conversations/{id}")
-    public ResponseEntity<String> getConversation(@PathVariable String id) {
-        Long userId = currentUserId();
-        // TODO: load the conversation and verify it belongs to userId
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                .body("Conversation retrieval not yet implemented");
+    public ResponseEntity<List<AiMessageDto>> getConversation(@PathVariable String id) {
+        return ResponseEntity.ok(aiAssistantService.getConversation(id, currentUserId()));
     }
 
     /**

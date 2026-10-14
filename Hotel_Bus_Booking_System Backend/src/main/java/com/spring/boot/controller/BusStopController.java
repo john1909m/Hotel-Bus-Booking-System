@@ -4,13 +4,16 @@ import com.spring.boot.dto.BusStopDto;
 import com.spring.boot.dto.BusStopRequestDto;
 import com.spring.boot.service.interfaces.BusStopService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 
 
 /**
@@ -25,7 +28,7 @@ public class BusStopController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BusStopDto> createBusStop( @RequestBody BusStopRequestDto busStopRequestDto) {
+    public ResponseEntity<BusStopDto> createBusStop(@RequestBody BusStopRequestDto busStopRequestDto) {
         BusStopDto createdBusStop = busStopService.createBusStop(busStopRequestDto);
         return new ResponseEntity<>(createdBusStop, HttpStatus.CREATED);
     }
@@ -37,8 +40,21 @@ public class BusStopController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BusStopDto>> getAllBusStops() {
-        List<BusStopDto> busStops = busStopService.getAllBusStops();
+    public ResponseEntity<Page<BusStopDto>> getAllBusStops(@ParameterObject Pageable pageable,
+                                                           @RequestParam(required = false) String q,
+                                                           @RequestParam(required = false) String city) {
+        Page<BusStopDto> busStops = busStopService.getAllBusStopsPaginated(pageable, q, city);
+        return new ResponseEntity<>(busStops, HttpStatus.OK);
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<List<BusStopDto>> lookupBusStops(@ParameterObject Pageable pageable,
+                                                           @RequestParam(required = false) String q) {
+        // For lookup, we want to return a limited list based on the pageable size
+        int lookupSize = Math.min(pageable.getPageSize(), 50); // cap at 50 for lookups
+        Pageable lookupPageable = PageRequest.of(0, lookupSize, pageable.getSort());
+
+        List<BusStopDto> busStops = busStopService.lookupBusStops(q, lookupPageable);
         return new ResponseEntity<>(busStops, HttpStatus.OK);
     }
 
@@ -51,8 +67,8 @@ public class BusStopController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-public ResponseEntity<Void> deleteBusStop(@PathVariable Long id) {
-    busStopService.deleteBusStop(id);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-}
+    public ResponseEntity<Void> deleteBusStop(@PathVariable Long id) {
+        busStopService.deleteBusStop(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

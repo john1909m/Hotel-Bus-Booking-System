@@ -2,9 +2,9 @@ package com.spring.boot.service.interfaces;
 
 import com.spring.boot.dto.HotelBusStopDto;
 import com.spring.boot.dto.HotelBusStopRequestDto;
+import com.spring.boot.dto.PageResponse;
 
 import java.util.List;
-
 
 
 /**
@@ -17,6 +17,9 @@ public interface HotelBusStopService {
     HotelBusStopDto getHotelBusStopById(Long id);
 
     List<HotelBusStopDto> getAllHotelBusStops();
+
+    PageResponse<HotelBusStopDto> getAllHotelBusStopsPaginated(int page, int size, String sortBy, String sortDirection,
+                                                               String q, Long hotelId, Long busStopId);
 
     List<HotelBusStopDto> getHotelBusStopsByHotelId(Long hotelId);
 

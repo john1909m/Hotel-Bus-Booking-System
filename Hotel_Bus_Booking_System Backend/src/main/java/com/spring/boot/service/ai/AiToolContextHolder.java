@@ -15,9 +15,10 @@ public class AiToolContextHolder {
 
     /**
      * Gets the current context for this thread.
+     *
      * @return the context or null if none has been set
      */
-    public static AiToolContext getContext() {
+    public static com.spring.boot.service.ai.AiToolContext getContext() {
         return CONTEXT.get();
     }
 

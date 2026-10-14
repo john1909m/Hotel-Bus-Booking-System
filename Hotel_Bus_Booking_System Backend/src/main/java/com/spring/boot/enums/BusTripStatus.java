@@ -7,5 +7,6 @@ public enum BusTripStatus {
     SCHEDULED,
     DEPARTED,
     ARRIVED,
-    CANCELLED
+    CANCELLED,
+    ANY
 }

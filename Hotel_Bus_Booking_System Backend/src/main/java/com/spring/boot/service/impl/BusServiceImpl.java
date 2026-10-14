@@ -9,7 +9,11 @@ import com.spring.boot.mapper.BusMapper;
 import com.spring.boot.repository.BusRepository;
 import com.spring.boot.service.interfaces.BusService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 /**
@@ -42,6 +46,32 @@ public class BusServiceImpl implements BusService {
         return busRepository.findAll().stream()
                 .map(busMapper::busToBusDto)
                 .toList();
+    }
+
+    @Override
+    public List<BusDto> lookupBuses(String query, Pageable pageable) {
+        // Use repository method to find buses by query with limit
+        return busRepository.findByQueryLimit(
+                query == null || query.isEmpty() ? "" : query,
+                pageable
+        ).stream()
+                .map(busMapper::busToBusDto)
+                .toList();
+    }
+
+    @Override
+    public Page<BusDto> getAllBusesPaginated(Pageable pageable,
+                                             String q, String busType, String company) {
+        // Get paginated results from repository
+        Page<Bus> busPage = busRepository.findByFilters(
+                q == null || q.isEmpty() ? "" : q,
+                busType == null || busType.isEmpty() ? "" : busType,
+                company == null || company.isEmpty() ? "" : company,
+                pageable
+        );
+
+        // Convert to DTO page
+        return busPage.map(busMapper::busToBusDto);
     }
 
     @Override

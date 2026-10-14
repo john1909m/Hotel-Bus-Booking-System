@@ -5,9 +5,13 @@ import com.spring.boot.service.interfaces.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
+import com.spring.boot.service.ai.AiToolContext;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -24,7 +28,7 @@ public class AiToolsImpl implements AiTools {
     private final BusTripService busTripService;
     private final BusSeatService busSeatService;
     private final HotelBookingService hotelBookingService;
-    private final BusBookingService busBookingService; // <- name/methods: send me the real one
+    private final BusBookingService busBookingService;
 
 
     @Override
@@ -34,17 +38,13 @@ public class AiToolsImpl implements AiTools {
             @ToolParam(required = false, description = "Maximum price per night") Double maxPrice,
             @ToolParam(required = false, description = "Minimum rating") Double minRating) {
 
-        List<HotelDto> result = hotelService.getAllHotels().stream()
-                .filter(h -> city == null || city.isBlank()
-                        || (h.getCity() != null && h.getCity().equalsIgnoreCase(city)))
-                .filter(h -> minRating == null || h.getRating() >= minRating)
-                .filter(h -> maxPrice == null
-                        || cheapestRoomPrice(h.getId())
-                        .map(price -> price <= maxPrice)
-                        .orElse(false))
-                .toList();
+        // Use the new paginated query for efficient search (small page of 10 results)
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "rating"));
 
-        // Collect result in context
+        List<HotelDto> result = hotelService
+                .getAllHotelsPaginated(pageable, null, city, minRating, maxPrice)
+                .getContent();
+
         AiToolContext context = AiToolContextHolder.getContext();
         if (context != null) {
             context.addHotelResult(result);
@@ -149,15 +149,9 @@ public class AiToolsImpl implements AiTools {
         return result;
     }
 
-    private Optional<Double> cheapestRoomPrice(Long hotelId) {
-        return roomService.getRoomsByHotelId(hotelId).stream()
-                .map(RoomDto::getPricePerNight)
-                .filter(Objects::nonNull)
-                .min(Comparator.naturalOrder());
-    }
-
     @Override
-    public void reportMissingInformation(List<String> fields) {
+    @Tool(description = "call it when the user did not provide destination, checkInDate, checkOutDate, guests or budget")
+    public void reportMissingInformation(@ToolParam(description = "The fields that are missing (e.g. 'destination', 'checkInDate')") List<String> fields) {
         AiToolContext context = AiToolContextHolder.getContext();
         if (context != null) {
             context.reportMissingInformation(fields);

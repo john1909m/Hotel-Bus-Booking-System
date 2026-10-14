@@ -9,8 +9,11 @@ import com.spring.boot.mapper.BusStopMapper;
 import com.spring.boot.repository.BusStopRepository;
 import com.spring.boot.service.interfaces.BusStopService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 
 
 /**
@@ -39,10 +42,36 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
-    public java.util.List<BusStopDto> getAllBusStops() {
-        return busStopRepository.findAll().stream()
+    public List<BusStopDto> getAllBusStops() {
+        List<BusStopDto> busStopDtos = busStopRepository.findAll().stream()
                 .map(busStopMapper::busStopToBusStopDto)
                 .toList();
+        return busStopDtos;
+    }
+
+    @Override
+    public List<BusStopDto> lookupBusStops(String query, Pageable pageable) {
+        // Use repository method to find bus stops by query with limit
+        return busStopRepository.findByQueryLimit(
+                query == null || query.isEmpty() ? "" : query,
+                pageable
+        ).stream()
+                .map(busStopMapper::busStopToBusStopDto)
+                .toList();
+    }
+
+    @Override
+    public Page<BusStopDto> getAllBusStopsPaginated(Pageable pageable,
+                                                    String q, String city) {
+        // Get paginated results from repository
+        Page<BusStop> busStopPage = busStopRepository.findByFilters(
+                q == null || q.isEmpty() ? "" : q,
+                city == null || city.isEmpty() ? "" : city,
+                pageable
+        );
+
+        // Convert to DTO page
+        return busStopPage.map(busStopMapper::busStopToBusStopDto);
     }
 
     @Override

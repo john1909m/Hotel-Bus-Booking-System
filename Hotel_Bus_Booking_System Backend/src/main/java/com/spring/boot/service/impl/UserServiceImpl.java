@@ -9,8 +9,13 @@ import com.spring.boot.mapper.UserMapper;
 import com.spring.boot.repository.UserRepository;
 import com.spring.boot.service.interfaces.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -64,6 +69,20 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream()
                 .map(userMapper::userToUserDto)
                 .toList();
+    }
+
+    @Override
+    public Page<UserDto> getAllUsersPaginated(Pageable pageable,
+                                              String q, String role) {
+        // Get paginated results from repository
+        Page<User> userPage = userRepository.findByFilters(
+                q == null || q.isEmpty() ? "" : q,
+                role == null || role.isEmpty() ? "" : role,
+                pageable
+        );
+
+        // Convert to DTO page
+        return userPage.map(userMapper::userToUserDto);
     }
 
     @Override

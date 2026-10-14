@@ -2,6 +2,7 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.BusRouteDto;
 import com.spring.boot.dto.BusRouteRequestDto;
+import com.spring.boot.dto.PageResponse;
 import com.spring.boot.service.interfaces.BusRouteService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,8 +38,22 @@ public class BusRouteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BusRouteDto>> getAllBusRoutes() {
-        List<BusRouteDto> busRoutes = busRouteService.getAllBusRoutes();
+    public ResponseEntity<PageResponse<BusRouteDto>> getAllBusRoutes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(required = false) Long originStopId,
+            @RequestParam(required = false) Long destinationStopId) {
+        PageResponse<BusRouteDto> busRoutes = busRouteService.getAllBusRoutesPaginated(page, size, sortBy, sortDirection, originStopId, destinationStopId);
+        return new ResponseEntity<>(busRoutes, HttpStatus.OK);
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<List<BusRouteDto>> lookupBusRoutes(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "10") int limit) {
+        List<BusRouteDto> busRoutes = busRouteService.lookupBusRoutes(q, limit);
         return new ResponseEntity<>(busRoutes, HttpStatus.OK);
     }
 

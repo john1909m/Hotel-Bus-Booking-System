@@ -7,9 +7,17 @@ import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.Hotel;
 import com.spring.boot.mapper.HotelMapper;
 import com.spring.boot.repository.HotelRepository;
+import com.spring.boot.repository.HotelSpecification;
 import com.spring.boot.service.interfaces.HotelService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -42,6 +50,37 @@ public class HotelServiceImpl implements HotelService {
         return hotelRepository.findAll().stream()
                 .map(hotelMapper::hotelToHotelDto)
                 .toList();
+    }
+
+    @Override
+    public List<HotelDto> getHotelsByCity(String city) {
+        return hotelRepository.findByCityIgnoreCase(city, PageRequest.of(0, Integer.MAX_VALUE)).stream()
+                .map(hotelMapper::hotelToHotelDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<HotelDto> lookupHotels(String query, Pageable pageable) {
+        // Use repository method to find hotels by query with limit
+        return hotelRepository.findByQueryLimit(
+                query == null || query.isEmpty() ? "" : query,
+                pageable
+        ).stream()
+                .map(hotelMapper::hotelToHotelDto)
+                .toList();
+    }
+
+    @Override
+    public Page<HotelDto> getAllHotelsPaginated(Pageable pageable,
+                                                String q, String city, Double minRating, Double maxPrice) {
+        // Build specification for filtering
+        Specification<Hotel> spec = HotelSpecification.withFilters(q, city, minRating, maxPrice);
+
+        // Get paginated results from repository
+        Page<Hotel> hotelPage = hotelRepository.findAll(spec, pageable);
+
+        // Convert to DTO page
+        return hotelPage.map(hotelMapper::hotelToHotelDto);
     }
 
     @Override

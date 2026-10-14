@@ -3,6 +3,7 @@ package com.spring.boot.service.impl;
 import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.dto.BusBookingRequestDto;
 import com.spring.boot.enums.BookingStatus;
+import org.springframework.data.domain.Page;
 import com.spring.boot.exception.InvalidSeatException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.exception.SeatAlreadyBookedException;
@@ -19,10 +20,16 @@ import com.spring.boot.repository.BusSeatRepository;
 import com.spring.boot.repository.BusTripRepository;
 import com.spring.boot.service.interfaces.BusBookingService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
 
 /**
  * Service implementation for BusBooking entity.
@@ -38,6 +45,9 @@ public class BusBookingServiceImpl implements BusBookingService {
     private final BusRepository busRepository;
     private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
+
+    private static final List<BookingStatus> ACTIVE_STATUSES =
+            List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING);
 
     @Override
     public BusBookingDto createBusBooking(BusBookingRequestDto busBookingRequestDto) {
@@ -91,6 +101,53 @@ public class BusBookingServiceImpl implements BusBookingService {
     }
 
     @Override
+    public Page<BusBookingDto> getAllBusBookings(Pageable pageable,
+                                                 BookingStatus status,
+                                                 LocalDate bookingDateAfter,
+                                                 LocalDate bookingDateBefore,
+                                                 Long userId,
+                                                 Long busTripId,
+                                                 Long seatId) {
+        // Get paginated results from repository
+        Page<BusBooking> busBookingPage = busBookingRepository.findByFilters(
+                status,
+                bookingDateAfter,
+                bookingDateBefore,
+                userId,
+                busTripId,
+                seatId,
+                pageable
+        );
+
+        // Convert to DTO page
+        return busBookingPage.map(busBookingMapper::busBookingToBusBookingDto);
+    }
+
+
+
+    @Override
+    public Page<BusBookingDto> getBusBookingsByBusTripId(Long busTripId,
+                                                         Pageable pageable,
+                                                         BookingStatus status,
+                                                         LocalDate bookingDateAfter,
+                                                         LocalDate bookingDateBefore,
+                                                         Long userId) {
+        // Get paginated results from repository
+        Page<BusBooking> busBookingPage = busBookingRepository.findByFilters(
+                status,
+                bookingDateAfter,
+                bookingDateBefore,
+                userId,
+                busTripId,
+                null, // seatId is null for this method
+                pageable
+        );
+
+        // Convert to DTO page
+        return busBookingPage.map(busBookingMapper::busBookingToBusBookingDto);
+    }
+
+    @Override
     public java.util.List<BusBookingDto> getBusBookingsByUserId(Long userId) {
         return busBookingRepository.findByUser_Id(userId).stream()
                 .map(busBookingMapper::busBookingToBusBookingDto)
@@ -102,11 +159,6 @@ public class BusBookingServiceImpl implements BusBookingService {
         return busBookingRepository.findByBusTripId(busTripId).stream()
                 .map(busBookingMapper::busBookingToBusBookingDto)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Long> getBookedSeatIdsByTripId(Long tripId) {
-        return busBookingRepository.findBookedSeatIdsByTripId(tripId);
     }
 
     @Override
@@ -182,26 +234,26 @@ public class BusBookingServiceImpl implements BusBookingService {
 
     @Override
     public boolean isSeatAvailable(Long busTripId, Long seatId) {
-        // Check if there are any confirmed/pending bookings for this seat on this trip
-        return busBookingRepository.findByBusTripIdAndSeatIdAndStatusIn(
-                        busTripId, seatId,
-                        java.util.List.of("CONFIRMED", "PENDING"))
+        return busBookingRepository
+                .findByBusTripIdAndSeatIdAndStatusIn(
+                        busTripId, seatId, BusBookingRepository.ACTIVE_STATUSES)
                 .isEmpty();
     }
 
-    /**
-     * Check seat availability excluding a specific booking (for updates).
-     */
     private boolean isSeatAvailableExcludingSelf(Long busTripId, Long seatId, Long bookingId) {
-        // Check if there are any confirmed/pending bookings for this seat on this trip, excluding current booking
-        return busBookingRepository.findByBusTripIdAndSeatIdAndStatusInAndIdNot(
-                        busTripId, seatId,
-                        java.util.List.of("CONFIRMED", "PENDING"), bookingId)
+        return busBookingRepository
+                .findByBusTripIdAndSeatIdAndStatusInAndIdNot(
+                        busTripId, seatId, BusBookingRepository.ACTIVE_STATUSES, bookingId)
                 .isEmpty();
     }
 
     @Override
     public List<BusBookingDto> getMyBusBookings(Long userId) {
         return getBusBookingsByUserId(userId);
+    }
+
+    @Override
+    public List<Long> getBookedSeatIdsByTripId(Long tripId) {
+        return busBookingRepository.findBookedSeatIdsByTripId(tripId);
     }
 }

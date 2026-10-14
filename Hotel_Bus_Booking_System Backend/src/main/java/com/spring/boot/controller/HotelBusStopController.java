@@ -2,6 +2,7 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.HotelBusStopDto;
 import com.spring.boot.dto.HotelBusStopRequestDto;
+import com.spring.boot.dto.PageResponse;
 import com.spring.boot.enums.Role;
 
 import com.spring.boot.service.interfaces.HotelBusStopService;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 /**
  * REST controller for HotelBusStop entity.
@@ -40,8 +42,33 @@ public class HotelBusStopController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<HotelBusStopDto>> getAllHotelBusStops() {
-        List<HotelBusStopDto> hotelBusStops = hotelBusStopService.getAllHotelBusStops();
+    public ResponseEntity<PageResponse<HotelBusStopDto>> getAllHotelBusStops(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String hotelId,
+            @RequestParam(required = false) String busStopId) {
+        // Convert hotelId and busStopId from String to Long? (null if empty or invalid)
+        Long hotelIdLong = null;
+        if (hotelId != null && !hotelId.isEmpty()) {
+            try {
+                hotelIdLong = Long.parseLong(hotelId);
+            } catch (NumberFormatException e) {
+                // Ignore invalid number, treat as null
+            }
+        }
+        Long busStopIdLong = null;
+        if (busStopId != null && !busStopId.isEmpty()) {
+            try {
+                busStopIdLong = Long.parseLong(busStopId);
+            } catch (NumberFormatException e) {
+                // Ignore invalid number, treat as null
+            }
+        }
+        PageResponse<HotelBusStopDto> hotelBusStops = hotelBusStopService.getAllHotelBusStopsPaginated(
+                page, size, sortBy, sortDirection, q, hotelIdLong, busStopIdLong);
         return new ResponseEntity<>(hotelBusStops, HttpStatus.OK);
     }
 

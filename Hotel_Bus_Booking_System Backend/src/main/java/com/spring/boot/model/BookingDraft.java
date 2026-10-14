@@ -60,5 +60,6 @@ public class BookingDraft extends BaseEntity {
     private LocalDateTime expiresAt;
 
     // Soft delete flag
+    @Builder.Default
     private boolean deleted = false;
 }
