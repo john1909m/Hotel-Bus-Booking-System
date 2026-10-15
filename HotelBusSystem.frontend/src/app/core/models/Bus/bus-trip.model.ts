@@ -2,7 +2,8 @@ export type status =
 'SCHEDULED' |
 'DEPARTED' |
 'ARRIVED' |
-'CANCELLED';
+'CANCELLED' |
+'ANY';
 
 export interface BusTripDTO {
     id: number;

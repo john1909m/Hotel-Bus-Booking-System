@@ -2,7 +2,8 @@ export type Status =
 'PENDING'|
 'CONFIRMED' |
 'CANCELLED' |
-'COMPLETED';
+'COMPLETED' |
+'ANY';
 
 export interface BusBookingDTO {
     id : number;
