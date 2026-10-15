@@ -8,6 +8,7 @@ import com.spring.boot.model.User;
 import com.spring.boot.mapper.UserMapper;
 import com.spring.boot.repository.UserRepository;
 import com.spring.boot.service.interfaces.UserService;
+import com.spring.boot.enums.Role;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,10 +75,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<UserDto> getAllUsersPaginated(Pageable pageable,
                                               String q, String role) {
+        // Parse role parameter, treating invalid values as null (no filter)
+        Role parsedRole = null;
+        if (role != null && !role.isEmpty()) {
+            try {
+                parsedRole = Role.valueOf(role);
+            } catch (IllegalArgumentException e) {
+                // If role is invalid, treat as null (no role filter)
+                parsedRole = null;
+            }
+        }
+
         // Get paginated results from repository
         Page<User> userPage = userRepository.findByFilters(
                 q == null || q.isEmpty() ? "" : q,
-                role == null || role.isEmpty() ? "" : role,
+                parsedRole,
                 pageable
         );
 

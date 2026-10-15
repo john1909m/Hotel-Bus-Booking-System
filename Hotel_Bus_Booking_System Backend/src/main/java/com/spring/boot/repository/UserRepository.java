@@ -1,6 +1,7 @@
 package com.spring.boot.repository;
 
 import com.spring.boot.model.User;
+import com.spring.boot.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,10 +26,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
         SELECT u FROM User u
         WHERE (:q = '' OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%'))
            OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%')))
-          AND (:role = '' OR u.role = :role)
+          AND (:role IS NULL OR u.role = :role)
         """)
     Page<User> findByFilters(@Param("q") String q,
-                             @Param("role") String role,
+                             @Param("role") Role role,
                              Pageable pageable);
 
     // Lookup for User is NOT needed (only hotels, buses, bus stops, routes, trips need it) - removed
