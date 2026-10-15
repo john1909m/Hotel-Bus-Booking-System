@@ -4,18 +4,19 @@ import com.spring.boot.dto.UserDto;
 import com.spring.boot.dto.ai.AiChatRequest;
 import com.spring.boot.dto.ai.AiResponse;
 import com.spring.boot.dto.ai.AiMessageDto;
-import java.util.List;
 import com.spring.boot.dto.ai.BookingDraftRequest;
+import com.spring.boot.dto.ai.BookingDraftResponse;
 import com.spring.boot.service.AiAssistantService;
+import com.spring.boot.service.interfaces.BookingDraftService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * REST controller for the AI booking assistant.
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AiAssistantController {
 
+    private final BookingDraftService bookingDraftService;
     private final AiAssistantService aiAssistantService;
 
     /**
@@ -54,35 +56,34 @@ public class AiAssistantController {
      * Create a booking draft from the user's chosen selections.
      */
     @PostMapping("/bookings/drafts")
-    public ResponseEntity<String> createBookingDraft(@Valid @RequestBody BookingDraftRequest draftRequest) {
+    public ResponseEntity<BookingDraftResponse> createBookingDraft(@Valid @RequestBody BookingDraftRequest draftRequest) {
         Long userId = currentUserId();
-        // TODO: delegate to the service: create the draft for userId (no reservation yet)
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                .body("Draft creation not yet implemented");
+        BookingDraftResponse response = bookingDraftService.createDraft(userId, draftRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Get a booking draft by id (owner only).
      */
     @GetMapping("/bookings/drafts/{id}")
-    public ResponseEntity<String> getBookingDraft(@PathVariable Long id) {
+    public ResponseEntity<BookingDraftResponse> getBookingDraft(@PathVariable Long id) {
         Long userId = currentUserId();
-        // TODO: load the draft and verify it belongs to userId
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                .body("Draft retrieval not yet implemented");
+        return bookingDraftService.getDraft(id, userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
      * Confirm a booking draft (owner only). Supports the Idempotency-Key header.
      */
     @PostMapping("/bookings/drafts/{id}/confirm")
-    public ResponseEntity<String> confirmBookingDraft(
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<BookingDraftResponse> confirmBookingDraft(
             @PathVariable Long id,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         Long userId = currentUserId();
-        // TODO: re-check availability + price, create the bookings in ONE transaction, honor idempotencyKey
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                .body("Booking confirmation not yet implemented");
+        BookingDraftResponse response = bookingDraftService.confirm(userId, id, idempotencyKey);
+        return ResponseEntity.ok(response);
     }
 
     /**

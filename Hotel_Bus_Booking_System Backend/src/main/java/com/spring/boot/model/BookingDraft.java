@@ -1,6 +1,7 @@
 package com.spring.boot.model;
 
 import com.spring.boot.enums.DraftStatus;
+import com.spring.boot.enums.SeatType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -49,15 +50,42 @@ public class BookingDraft extends BaseEntity {
     private Long outgoingSeatId;
     private Long returnSeatId;
 
-    // Pricing
+    // Going trip snapshot
+    private String goingSeatNumber;
+    private String goingSeatType;
+    private BigDecimal goingTripPrice;
+    private String goingTripOrigin;
+    private String goingTripDestination;
+    private LocalDateTime goingTripDepartureTime;
+    private LocalDateTime goingTripArrivalTime;
+
+    // Return trip snapshot
+    private String returnSeatNumber;
+    private String returnSeatType;
+    private BigDecimal returnTripPrice;
+    private String returnTripOrigin;
+    private String returnTripDestination;
+    private LocalDateTime returnTripDepartureTime;
+    private LocalDateTime returnTripArrivalTime;
+
+    // Pricing breakdown
+    private BigDecimal hotelTotal;
+    private BigDecimal goingTransportPrice;
+    private BigDecimal returnTransportPrice;
     private BigDecimal totalPrice;
 
     // Draft status
     @Enumerated(EnumType.STRING)
     private DraftStatus status;
 
-    // Expiry time (drafts expire after 24 hours)
+    // Expiry time (drafts expire after TTL from property)
     private LocalDateTime expiresAt;
+
+    // Idempotency key for confirm endpoint
+    private String idempotencyKey;
+
+    // Confirmed booking ID (hotel booking ID)
+    private Long confirmedBookingId;
 
     // Soft delete flag
     @Builder.Default

@@ -37,7 +37,8 @@ spring:
             model: gemini-3.5-flash-lite
             options:
               model: gemini-3.5-flash-lite
-
+    draft:
+      ttl-minutes: 30
 
 logging:
   level:
