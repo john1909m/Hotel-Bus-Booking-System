@@ -92,6 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/hotel-bookings/user/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/bus-bookings/user/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users/**").hasAnyRole("USER","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/bookings/drafts/{id}/confirm").hasAnyRole("USER","ADMIN")
 
                         // Admin endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
@@ -137,7 +138,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4200","http://localhost:8080","http://localhost:5173/**","http://localhost:4200/**")); // React frontend
         configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS")) ;
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type","Idempotency-Key", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Set-Cookie"));
 
