@@ -1,0 +1,582 @@
+<div class="hotels-mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Hotels Management</span>
+      </nav>
+      <h1 class="page-title">Hotels Management</h1>
+      <p class="page-subtitle">
+        Manage hotel listings, pricing metadata, location coordinates, and operational schedules.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-hotel-btn"
+        aria-label="Add new hotel"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New Hotel</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-hotel-search" class="filter-label">Search Query</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-hotel-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by hotel name or keyword…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            aria-label="Search hotels by name"
+          />
+        </div>
+      </div>
+
+      <!-- City Filter -->
+      <div class="filter-field">
+        <label for="admin-hotel-city" class="filter-label">City</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </span>
+          <input
+            id="admin-hotel-city"
+            type="text"
+            class="filter-input"
+            placeholder="Filter by city…"
+            [value]="cityFilter()"
+            (change)="onCityChange($any($event.target).value)"
+            aria-label="Filter hotels by city"
+          />
+        </div>
+      </div>
+
+      <!-- Min Rating Filter -->
+      <div class="filter-field">
+        <label for="admin-hotel-rating" class="filter-label">Rating</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </span>
+          <select
+            id="admin-hotel-rating"
+            class="filter-select"
+            [value]="minRatingFilter() ?? ''"
+            (change)="onRatingChange($any($event.target).value)"
+            aria-label="Filter by minimum rating"
+          >
+            <option value="">All Ratings</option>
+            <option value="4.5">4.5★ &amp; above</option>
+            <option value="4.0">4.0★ &amp; above</option>
+            <option value="3.5">3.5★ &amp; above</option>
+            <option value="3.0">3.0★ &amp; above</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sort Filter -->
+      <div class="filter-field">
+        <label for="admin-hotel-sort" class="filter-label">Sort Order</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="14" y2="12"></line>
+              <line x1="4" y1="18" x2="8" y2="18"></line>
+            </svg>
+          </span>
+          <select
+            id="admin-hotel-sort"
+            class="filter-select"
+            [value]="sortFilter()"
+            (change)="onSortChange($any($event.target).value)"
+            aria-label="Sort hotels"
+          >
+            <option value="">Default Order</option>
+            <option value="rating,desc">Rating: High to Low</option>
+            <option value="name,asc">Name: A to Z</option>
+            <option value="name,desc">Name: Z to A</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Hotels: <strong>{{ totalElements() }}</strong>
+      </div>
+
+      <div class="filter-actions-right">
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="clearFilters()"
+            id="admin-clear-filters-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+            Clear Filters
+          </button>
+        }
+
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="loadHotels()"
+          title="Reload hotel dataset"
+          id="admin-refresh-hotels-btn"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error State Banner ───────────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadHotels()">Retry</button>
+    </div>
+  }
+
+  <!-- ─── PrimeNG Data Table ───────────────────────────────── -->
+  <div class="table-card">
+    <p-table
+      [value]="hotels()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalElements()"
+      [first]="firstRow()"
+      (onPage)="onPageChange($event)"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      [loading]="loading()"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hotels"
+      styleClass="p-datatable-gridlines p-datatable-striped"
+      [responsiveLayout]="'scroll'"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px;">ID</th>
+          <th>Hotel Name</th>
+          <th>Location</th>
+          <th style="width: 120px;">Rating</th>
+          <th style="width: 150px;">Check-In / Out</th>
+          <th style="width: 150px;">Coordinates</th>
+          <th style="width: 140px; text-align: center;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-hotel>
+        <tr>
+          <!-- ID -->
+          <td>
+            <span class="hotel-id-badge">#{{ hotel.id }}</span>
+          </td>
+
+          <!-- Name & Description -->
+          <td>
+            <div class="hotel-cell-main">
+              <span class="hotel-table-name">{{ hotel.name }}</span>
+              @if (hotel.description) {
+                <span class="hotel-table-desc" [title]="hotel.description">
+                  {{ hotel.description }}
+                </span>
+              }
+            </div>
+          </td>
+
+          <!-- Location (City + Address) -->
+          <td>
+            <div class="hotel-cell-location">
+              <span class="city-pill">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                {{ hotel.city }}
+              </span>
+              <span class="address-text" [title]="hotel.address">{{ hotel.address }}</span>
+            </div>
+          </td>
+
+          <!-- Rating -->
+          <td>
+            <div class="rating-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>{{ hotel.rating ? (hotel.rating | number:'1.1-1') : 'N/A' }}</span>
+            </div>
+          </td>
+
+          <!-- Operating Times -->
+          <td>
+            <div class="times-cell">
+              <span class="time-item">
+                <small>In:</small> {{ hotel.checkInTime || '14:00' }}
+              </span>
+              <span class="time-item">
+                <small>Out:</small> {{ hotel.checkOutTime || '11:00' }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Coordinates -->
+          <td>
+            <div class="coord-cell">
+              <span>Lat: {{ hotel.latitude | number:'1.2-4' }}</span>
+              <span>Lng: {{ (hotel.longitude ?? hotel.longtude) | number:'1.2-4' }}</span>
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td style="text-align: center;">
+            <div class="actions-group">
+              <button
+                type="button"
+                class="action-btn edit-btn"
+                (click)="openEditDialog(hotel)"
+                title="Edit {{ hotel.name }}"
+                [attr.aria-label]="'Edit ' + hotel.name"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                class="action-btn delete-btn"
+                (click)="confirmDelete(hotel)"
+                title="Delete {{ hotel.name }}"
+                [attr.aria-label]="'Delete ' + hotel.name"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State inside Table -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="empty-table-cell">
+            <div class="table-empty-container">
+              <div class="empty-icon" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <h3>No hotels found</h3>
+              <p>
+                @if (hasActiveFilters()) {
+                  No hotels matched your active query filters.
+                } @else {
+                  No hotel data is currently available in the database.
+                }
+              </p>
+              <div class="empty-actions">
+                @if (hasActiveFilters()) {
+                  <button type="button" class="btn-secondary" (click)="clearFilters()">Clear Filters</button>
+                }
+                <button type="button" class="btn-primary-action" (click)="openCreateDialog()">Add First Hotel</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- ─── Create / Edit Hotel Dialog ────────────────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '640px' }"
+    [header]="isEditMode() ? 'Edit Hotel Details' : 'Add New Hotel'"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="hotelForm" (ngSubmit)="saveHotel()" class="dialog-form" novalidate>
+      <div class="form-grid">
+
+        <!-- Name -->
+        <div class="form-group full-width">
+          <label for="hotel-form-name" class="form-label required">Hotel Name</label>
+          <input
+            id="hotel-form-name"
+            pInputText
+            formControlName="name"
+            class="w-full"
+            placeholder="e.g. Grand Nile Plaza Hotel"
+          />
+          @if (isFieldInvalid('name')) {
+            <small class="field-error">Hotel name is required (max 150 characters).</small>
+          }
+        </div>
+
+        <!-- City -->
+        <div class="form-group">
+          <label for="hotel-form-city" class="form-label required">City</label>
+          <input
+            id="hotel-form-city"
+            pInputText
+            formControlName="city"
+            class="w-full"
+            placeholder="e.g. Cairo"
+          />
+          @if (isFieldInvalid('city')) {
+            <small class="field-error">City name is required.</small>
+          }
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label for="hotel-form-address" class="form-label required">Address</label>
+          <input
+            id="hotel-form-address"
+            pInputText
+            formControlName="address"
+            class="w-full"
+            placeholder="e.g. Corniche El Nile, Garden City"
+          />
+          @if (isFieldInvalid('address')) {
+            <small class="field-error">Address is required.</small>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="form-group full-width">
+          <label for="hotel-form-description" class="form-label">Description</label>
+          <textarea
+            id="hotel-form-description"
+            pTextarea
+            formControlName="description"
+            rows="3"
+            class="w-full"
+            placeholder="Highlight hotel amenities, ambiance, and location advantages…"
+          ></textarea>
+        </div>
+
+        <!-- Rating -->
+        <div class="form-group">
+          <label for="hotel-form-rating" class="form-label">Rating (0 - 5)</label>
+          <p-inputNumber
+            id="hotel-form-rating"
+            formControlName="rating"
+            [min]="0"
+            [max]="5"
+            [minFractionDigits]="1"
+            [maxFractionDigits]="1"
+            [step]="0.1"
+            class="w-full"
+            placeholder="e.g. 4.5"
+          />
+          @if (isFieldInvalid('rating')) {
+            <small class="field-error">Rating must be between 0 and 5.</small>
+          }
+        </div>
+
+        <!-- Latitude -->
+        <div class="form-group">
+          <label for="hotel-form-latitude" class="form-label required">Latitude</label>
+          <p-inputNumber
+            id="hotel-form-latitude"
+            formControlName="latitude"
+            [min]="-90"
+            [max]="90"
+            [minFractionDigits]="4"
+            [maxFractionDigits]="6"
+            class="w-full"
+            placeholder="e.g. 30.0444"
+          />
+          @if (isFieldInvalid('latitude')) {
+            <small class="field-error">Valid latitude required (-90 to 90).</small>
+          }
+        </div>
+
+        <!-- Longitude -->
+        <div class="form-group">
+          <label for="hotel-form-longitude" class="form-label required">Longitude</label>
+          <p-inputNumber
+            id="hotel-form-longitude"
+            formControlName="longitude"
+            [min]="-180"
+            [max]="180"
+            [minFractionDigits]="4"
+            [maxFractionDigits]="6"
+            class="w-full"
+            placeholder="e.g. 31.2357"
+          />
+          @if (isFieldInvalid('longitude')) {
+            <small class="field-error">Valid longitude required (-180 to 180).</small>
+          }
+        </div>
+
+        <!-- Check-in Time -->
+        <div class="form-group">
+          <label for="hotel-form-checkin" class="form-label required">Check-In Time</label>
+          <input
+            id="hotel-form-checkin"
+            pInputText
+            formControlName="checkInTime"
+            class="w-full"
+            placeholder="e.g. 14:00"
+          />
+          @if (isFieldInvalid('checkInTime')) {
+            <small class="field-error">Check-in time is required.</small>
+          }
+        </div>
+
+        <!-- Check-out Time -->
+        <div class="form-group">
+          <label for="hotel-form-checkout" class="form-label required">Check-Out Time</label>
+          <input
+            id="hotel-form-checkout"
+            pInputText
+            formControlName="checkOutTime"
+            class="w-full"
+            placeholder="e.g. 11:00"
+          />
+          @if (isFieldInvalid('checkOutTime')) {
+            <small class="field-error">Check-out time is required.</small>
+          }
+        </div>
+
+      </div>
+
+      <!-- Dialog Footer -->
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-submit"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>Saving…</span>
+          } @else {
+            <span>{{ isEditMode() ? 'Save Changes' : 'Create Hotel' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Dialog ───────────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '440px' }"
+    header="Confirm Hotel Deletion"
+    (onHide)="cancelDelete()"
+  >
+    <div class="delete-confirmation-body">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+
+      <p class="delete-confirmation-text">
+        Are you sure you want to permanently delete
+        <strong>"{{ hotelToDelete()?.name }}"</strong>?
+      </p>
+
+      <p class="delete-subtext">
+        This action cannot be undone. Any rooms or reservations linked to this hotel will also be affected.
+      </p>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="cancelDelete()"
+          [disabled]="deleting()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-dialog-danger"
+          (click)="executeDelete()"
+          [disabled]="deleting()"
+        >
+          @if (deleting()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>Deleting…</span>
+          } @else {
+            <span>Delete Hotel</span>
+          }
+        </button>
+      </div>
+    </div>
+  </p-dialog>
+
+</div>
