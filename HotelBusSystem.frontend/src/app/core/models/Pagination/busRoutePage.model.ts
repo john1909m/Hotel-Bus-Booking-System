@@ -6,11 +6,12 @@ export interface PageBusRouteDTO{
     totalPages: number;
     last: boolean;
     first: boolean;
-    pageable: Pageable;
-    numberOfElements: number;
     size: number;
     content: BusRouteDTO[];
-    number: number;
-    sort: Sort;
-    empty: boolean;
+    page?: number;
+    number?: number;
+    pageable?: Pageable;
+    numberOfElements?: number;
+    sort?: Sort;
+    empty?: boolean;
 }

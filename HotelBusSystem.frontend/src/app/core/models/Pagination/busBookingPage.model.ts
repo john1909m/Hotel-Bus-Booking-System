@@ -1,7 +1,7 @@
 import { BusBookingDTO } from "../Bus/bus-booking.model";
 import { Pageable, Sort } from "./userPage.model";
 
-export interface PageBusBookintDTO{
+export interface PageBusBookingDTO{
     totalElements: number;
     totalPages: number;
     last: boolean;

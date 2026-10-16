@@ -12,6 +12,7 @@ export interface UserDto{
 export interface UserRequestDto{
     name: string;
     email: string;
+    password?: string;
     phoneNumber: string;
     role: role;
 }

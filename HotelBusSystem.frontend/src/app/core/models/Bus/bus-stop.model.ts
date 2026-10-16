@@ -4,7 +4,7 @@ export interface BusStopDto {
     city: string;
     address: string;
     latitude: number;
-    longtude: number;
+    longitude: number;
 }
 
 export interface BusStopRequestDto {
