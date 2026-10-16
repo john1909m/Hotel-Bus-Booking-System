@@ -247,7 +247,7 @@ export class HotelsManagement implements OnInit, OnDestroy {
       description: hotel.description || '',
       rating: hotel.rating ?? 4.0,
       latitude: hotel.latitude ?? 30.0444,
-      longitude: (hotel as any).longitude ?? hotel.longtude ?? 31.2357,
+      longitude: (hotel as any).longitude ?? hotel.longitude ?? 31.2357,
       checkInTime: hotel.checkInTime || '14:00',
       checkOutTime: hotel.checkOutTime || '11:00',
     });

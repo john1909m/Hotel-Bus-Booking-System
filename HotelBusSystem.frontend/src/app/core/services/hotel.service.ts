@@ -52,7 +52,7 @@ export class HotelService {
 
   /**
    * GET /hotels/lookup
-   * Search dropdown / autocomplete with optional pagination and filtering.
+   * Search dropdown / autocomplete with optional search and city filters.
    * No authentication required.
    */
   lookupHotels(params: HotelLookupParams = {}): Observable<PageHotelDTO> {
@@ -102,8 +102,8 @@ export class HotelService {
    * DELETE /hotels/{id}
    * Delete a specific hotel. Requires ADMIN role.
    */
-  deleteHotel(id: number): Observable<HotelDTO> {
-    return this.http.delete<HotelDTO>(`${this.apiUrl}/${id}`).pipe(
+  deleteHotel(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       catchError(this.handleError)
     );
   }
