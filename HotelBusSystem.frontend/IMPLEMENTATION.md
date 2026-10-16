@@ -336,4 +336,243 @@ All operations strictly reuse `HotelService` without duplicating API calls:
 - [x] PrimeNG components (`p-table`, `p-dialog`, `p-toast`, `p-tag`, inputs) match the application theme and responsive layouts.
 - [x] Form validation checks all required fields and prevents duplicate submissions while requests are in flight.
 
+---
+
+# Implementation: Backend API Services Integration (UserService & PaymentService)
+
+## Overview
+
+This phase implements the backend REST API integrations for **`UserService`** and **`PaymentService`** inside the Angular core services layer, following the reference implementation pattern established by `HotelService`. 
+
+Per project instructions, this phase is strictly limited to service integration: **no UI components, HTML templates, CSS styles, or routes were modified or created**. Room Service was deliberately excluded pending backend refactoring as instructed.
+
+---
+
+## Services Implemented / Extended
+
+### 1. `UserService` (`src/app/core/services/user.service.ts`)
+
+Integrated against the `/users` endpoint structure with `HttpClient`, `HttpParams`, and error handling:
+
+| Method | Endpoint | HTTP Method | Request Body / Params | Response Model | Description |
+|---|---|---|---|---|---|
+| `getUsers(params)` / `getAllUsers(params)` | `/users` | `GET` | `UserListParams`: `page`, `size`, `sort`, `q` | `PageUserDto` | Get all users with server-side pagination & filter |
+| `getUserById(id)` | `/users/{id}` | `GET` | Path param `id: number` | `UserDto` | Get specific user by ID |
+| `getUserByEmail(email)` | `/users/email/{email}` | `GET` | Path param `email: string` (URL-encoded) | `UserDto` | Get user by email address |
+| `createUser(payload)` | `/users` | `POST` | `UserRequestDto` | `UserDto` | Create new user record |
+| `updateUser(id, payload)` | `/users/{id}` | `PUT` | `UserRequestDto` | `UserDto` | Update existing user record |
+| `deleteUser(id, payload?)` | `/users/{id}` | `DELETE` | Path param `id: number` + optional `UserRequestDto` body | `UserDto` | Delete specific user |
+
+### 2. `PaymentService` (`src/app/core/services/payment.service.ts`)
+
+Integrated against the `/payments` endpoint structure with `HttpClient`, `HttpParams`, and error handling:
+
+| Method | Endpoint | HTTP Method | Request Body / Params | Response Model | Description |
+|---|---|---|---|---|---|
+| `getPayments(params)` / `getAllPayments(params)` | `/payments` | `GET` | `PaymentListParams`: `page`, `size`, `sort` | `PaymentDTO[]` | Get all payments |
+| `getPaymentById(id)` | `/payments/{id}` | `GET` | Path param `id: number` | `PaymentDTO` | Get specific payment by ID |
+| `getPaymentByHotelBookingId(hotelBookingId)` | `/payments/hotel-booking/{hotelBookingId}` | `GET` | Path param `hotelBookingId: number` | `PaymentDTO` | Get payment by Hotel Booking ID |
+| `getPaymentByBusBookingId(busBookingId)` | `/payments/bus-booking/{busBookingId}` | `GET` | Path param `busBookingId: number` | `PaymentDTO` | Get payment by Bus Booking ID |
+| `createPayment(payload)` | `/payments` | `POST` | `PaymentRequestDTO` | `PaymentDTO` | Add new payment record |
+| `updatePayment(id, payload)` | `/payments/{id}` | `PUT` | `PaymentRequestDTO` | `PaymentDTO` | Update existing payment record |
+| `deletePayment(id, payload?)` | `/payments/{id}` | `DELETE` | Path param `id: number` + optional `PaymentRequestDTO` body | `PaymentDTO` | Delete specific payment |
+
+---
+
+## Models Reused & Aliases Added
+
+- **User Models** (`src/app/core/models/User/user.model.ts`):
+  - `UserDto`: `id`, `name`, `email`, `phoneNumber`, `role` (`'ADMIN' | 'USER'`)
+  - `UserRequestDto`: `name`, `email`, `phoneNumber`, `role`
+  - Added backward-compatible aliases: `UserDTO`, `UserRequestDTO`, `Role`
+- **User Pagination** (`src/app/core/models/Pagination/userPage.model.ts`):
+  - `PageUserDto`: `content: UserDto[]`, `totalElements`, `totalPages`, `number`, `size`, `numberOfElements`, `first`, `last`, `empty`, `pageable: Pageable`, `sort: Sort`
+  - Added backward-compatible alias: `PageUserDTO`
+- **Payment Models** (`src/app/core/models/Payment/payment.model.ts`):
+  - `PaymentDTO`: `id`, `amount`, `paymentMethod`, `paymentStatus`, `transactionDate`, `hotelBookingId`, `busBookingId`
+  - `PaymentRequestDTO`: `amount`, `paymentMethod`, `paymentStatus`, `transactionDate`, `hotelBookingId`, `busBookingId`
+  - Added backward-compatible aliases: `PaymentDto`, `PaymentRequestDto`, `PaymentMethod`, `PaymentStatus`
+
+---
+
+## Scope Verification & Constraints Adherence
+
+- [x] **No UI Changes**: Confirmed zero changes to `.html`, `.css`, or component template/view logic.
+- [x] **No Route Changes**: `app.routes.ts` remained completely untouched.
+- [x] **No Room Service Changes**: `room.service.ts` left unchanged per user instruction.
+- [x] **Reference Architecture**: Strict adherence to `HotelService` conventions (inject(HttpClient), `environment.apiBaseUrl`, `catchError(this.handleError)`).
+- [x] **Build Verification**: `ng build` succeeded with exit code 0.
+
+---
+
+# Backend API Analysis & Frontend Services Integration Audit
+
+## 1. Discovered Backend API Inventory
+
+The Backend source code was inspected across 14 REST Controllers:
+
+### Hotel & Bus Linkage (`HotelBusStopController` -> `/api/hotel-bus-stops`)
+- `POST /api/hotel-bus-stops` (Body: `HotelBusStopRequestDto`) -> `201 Created` (`HotelBusStopDto`)
+- `GET /api/hotel-bus-stops/{id}` (Path: `id`) -> `200 OK` (`HotelBusStopDto`)
+- `GET /api/hotel-bus-stops` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<HotelBusStopDto>`)
+- `GET /api/hotel-bus-stops/hotel/{hotelId}` (Path: `hotelId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<HotelBusStopDto>`)
+- `GET /api/hotel-bus-stops/bus-stop/{busStopId}` (Path: `busStopId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<HotelBusStopDto>`)
+- `PUT /api/hotel-bus-stops/{id}` (Path: `id`, Body: `HotelBusStopRequestDto`) -> `200 OK` (`HotelBusStopDto`)
+- `DELETE /api/hotel-bus-stops/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Hotel Bookings (`HotelBookingController` -> `/api/hotel-bookings`)
+- `POST /api/hotel-bookings` (Body: `HotelBookingRequestDto`) -> `201 Created` (`HotelBookingDto`)
+- `GET /api/hotel-bookings/{id}` (Path: `id`) -> `200 OK` (`HotelBookingDto`)
+- `GET /api/hotel-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<HotelBookingDto>`)
+- `GET /api/hotel-bookings/user/{userId}` (Path: `userId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<HotelBookingDto>`)
+- `GET /api/hotel-bookings/my-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<HotelBookingDto>`)
+- `GET /api/hotel-bookings/hotel/{hotelId}` (Path: `hotelId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<HotelBookingDto>`)
+- `PUT /api/hotel-bookings/{id}` (Path: `id`, Body: `HotelBookingRequestDto`) -> `200 OK` (`HotelBookingDto`)
+- `DELETE /api/hotel-bookings/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Bus Bookings (`BusBookingController` -> `/api/bus-bookings`)
+- `POST /api/bus-bookings` (Body: `BusBookingRequestDto`) -> `201 Created` (`BusBookingDto`)
+- `GET /api/bus-bookings/{id}` (Path: `id`) -> `200 OK` (`BusBookingDto`)
+- `GET /api/bus-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusBookingDto>`)
+- `GET /api/bus-bookings/bus-trip/{busTripId}` (Path: `busTripId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusBookingDto>`)
+- `GET /api/bus-bookings/user/{userId}` (Path: `userId`, Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusBookingDto>`)
+- `GET /api/bus-bookings/my-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusBookingDto>`)
+- `PUT /api/bus-bookings/{id}` (Path: `id`, Body: `BusBookingRequestDto`) -> `200 OK` (`BusBookingDto`)
+- `DELETE /api/bus-bookings/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Buses (`BusController` -> `/api/buses`)
+- `POST /api/buses` (Body: `BusRequestDto`) -> `201 Created` (`BusDto`)
+- `GET /api/buses/{id}` (Path: `id`) -> `200 OK` (`BusDto`)
+- `GET /api/buses` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusDto>`)
+- `GET /api/buses/lookup` (Params: `q`) -> `200 OK` (`List<BusDto>`)
+- `PUT /api/buses/{id}` (Path: `id`, Body: `BusRequestDto`) -> `200 OK` (`BusDto`)
+- `DELETE /api/buses/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Bus Routes (`BusRouteController` -> `/api/bus-routes`)
+- `POST /api/bus-routes` (Body: `BusRouteRequestDto`) -> `201 Created` (`BusRouteDto`)
+- `GET /api/bus-routes/{id}` (Path: `id`) -> `200 OK` (`BusRouteDto`)
+- `GET /api/bus-routes` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<BusRouteDto>`)
+- `GET /api/bus-routes/lookup` (Params: `q`) -> `200 OK` (`List<BusRouteDto>`)
+- `PUT /api/bus-routes/{id}` (Path: `id`, Body: `BusRouteRequestDto`) -> `200 OK` (`BusRouteDto`)
+- `DELETE /api/bus-routes/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Bus Seats (`BusSeatController` -> `/api/bus-seats`)
+- `POST /api/bus-seats` (Body: `BusSeatRequestDto`) -> `201 Created` (`BusSeatDto`)
+- `GET /api/bus-seats/{id}` (Path: `id`) -> `200 OK` (`BusSeatDto`)
+- `GET /api/bus-seats` -> `200 OK` (`List<BusSeatDto>`)
+- `GET /api/bus-seats/bus/{busId}` (Path: `busId`) -> `200 OK` (`List<BusSeatDto>`)
+- `PUT /api/bus-seats/{id}` (Path: `id`, Body: `BusSeatRequestDto`) -> `200 OK` (`BusSeatDto`)
+- `DELETE /api/bus-seats/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Bus Stops (`BusStopController` -> `/api/bus-stops`)
+- `POST /api/bus-stops` (Body: `BusStopRequestDto`) -> `201 Created` (`BusStopDto`)
+- `GET /api/bus-stops/{id}` (Path: `id`) -> `200 OK` (`BusStopDto`)
+- `GET /api/bus-stops` (Params: `page`, `size`, `sort`, `q`, `city`) -> `200 OK` (`Page<BusStopDto>`)
+- `GET /api/bus-stops/lookup` (Params: `page`, `size`, `sort`, `q`) -> `200 OK` (`List<BusStopDto>`)
+- `PUT /api/bus-stops/{id}` (Path: `id`, Body: `BusStopRequestDto`) -> `200 OK` (`BusStopDto`)
+- `DELETE /api/bus-stops/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Bus Trips (`BusTripController` -> `/api/bus-trips`)
+- `POST /api/bus-trips` (Body: `BusTripRequestDto`) -> `201 Created` (`BusTripDto`)
+- `GET /api/bus-trips/{id}` (Path: `id`) -> `200 OK` (`BusTripDto`)
+- `GET /api/bus-trips` (Params: `page`, `size`, `sort`, `busId`, `routeId`, `status`, `departureAfter`, `departureBefore`) -> `200 OK` (`Page<BusTripDto>`)
+- `GET /api/bus-trips/lookup` (Params: `page`, `size`, `sort`, `q`) -> `200 OK` (`List<BusTripDto>`)
+- `GET /api/bus-trips/bus/{busId}` (Path: `busId`) -> `200 OK` (`List<BusTripDto>`)
+- `GET /api/bus-trips/route/{routeId}` (Path: `routeId`) -> `200 OK` (`List<BusTripDto>`)
+- `PUT /api/bus-trips/{id}` (Path: `id`, Body: `BusTripRequestDto`) -> `200 OK` (`BusTripDto`)
+- `DELETE /api/bus-trips/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Rooms (`RoomController` -> `/api/rooms`)
+- `POST /api/rooms` (Body: `RoomRequestDto`) -> `201 Created` (`RoomDto`)
+- `GET /api/rooms/{id}` (Path: `id`) -> `200 OK` (`RoomDto`)
+- `GET /api/rooms` -> `200 OK` (`List<RoomDto>`)
+- `GET /api/rooms/hotel/{hotelId}` (Path: `hotelId`) -> `200 OK` (`List<RoomDto>`)
+- `PUT /api/rooms/{id}` (Path: `id`, Body: `RoomRequestDto`) -> `200 OK` (`RoomDto`)
+- `DELETE /api/rooms/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Payments (`PaymentController` -> `/api/payments`)
+- `POST /api/payments` (Body: `PaymentRequestDto`) -> `201 Created` (`PaymentDto`)
+- `GET /api/payments/{id}` (Path: `id`) -> `200 OK` (`PaymentDto`)
+- `GET /api/payments` -> `200 OK` (`List<PaymentDto>`)
+- `GET /api/payments/hotel-booking/{hotelBookingId}` (Path: `hotelBookingId`) -> `200 OK` (`List<PaymentDto>`)
+- `GET /api/payments/bus-booking/{busBookingId}` (Path: `busBookingId`) -> `200 OK` (`List<PaymentDto>`)
+- `PUT /api/payments/{id}` (Path: `id`, Body: `PaymentRequestDto`) -> `200 OK` (`PaymentDto`)
+- `DELETE /api/payments/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Users (`UserController` -> `/api/users`)
+- `POST /api/users` (Body: `UserRequestDto`) -> `201 Created` (`UserDto`)
+- `GET /api/users/{id}` (Path: `id`) -> `200 OK` (`UserDto`)
+- `GET /api/users/email/{email}` (Path: `email`) -> `200 OK` (`UserDto`)
+- `GET /api/users` (Params: `page`, `size`, `sort`, `q`, `role`) -> `200 OK` (`Page<UserDto>`)
+- `PUT /api/users/{id}` (Path: `id`, Body: `UserRequestDto`) -> `200 OK` (`UserDto`)
+- `DELETE /api/users/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### Hotels (`HotelController` -> `/api/hotels`)
+- `POST /api/hotels` (Body: `HotelRequestDto`) -> `201 Created` (`HotelDto`)
+- `GET /api/hotels/{id}` (Path: `id`) -> `200 OK` (`HotelDto`)
+- `GET /api/hotels` (Params: `page`, `size`, `sort`, `q`, `city`, `minRating`, `maxPrice`) -> `200 OK` (`Page<HotelDto>`)
+- `GET /api/hotels/lookup` (Params: `q`, `city`) -> `200 OK` (`List<HotelDto>`)
+- `PUT /api/hotels/{id}` (Path: `id`, Body: `HotelRequestDto`) -> `200 OK` (`HotelDto`)
+- `DELETE /api/hotels/{id}` (Path: `id`) -> `204 No Content` (`Void`)
+
+### AI Assistant (`AiAssistantController` -> `/api/ai`)
+- `POST /api/ai/chat` (Body: `AiChatRequest`) -> `200 OK` (`AiResponse`)
+- `GET /api/ai/conversations/{id}` (Path: `id`) -> `200 OK` (`List<AiMessageDto>`)
+- `POST /api/ai/bookings/drafts` (Body: `BookingDraftRequest`) -> `200 OK` (`BookingDraftResponse`)
+- `GET /api/ai/bookings/drafts/{id}` (Path: `id`) -> `200 OK` (`BookingDraftResponse`)
+- `POST /api/ai/bookings/drafts/{id}/confirm` (Path: `id`, Header: `Idempotency-Key`) -> `200 OK` (`BookingDraftResponse`)
+
+---
+
+## 2. Frontend Services Implementation & Audits
+
+| Service | File | Status | Implemented / Corrected Methods |
+|---|---|---|---|
+| `HotelBusStopService` | `src/app/core/services/hotel-bus-stop.service.ts` | Completed | Added `createHotelBusStop`, `getHotelBusStopById`, `getHotelBusStopsByHotelId`, `getHotelBusStopsByBusStopId`, `updateHotelBusStop`, `deleteHotelBusStop`. Updated `getHotelBusStops`. |
+| `HotelBookingService` | `src/app/core/services/hotel-booking.service.ts` | Newly Implemented | Implemented all 8 methods: `createHotelBooking`, `getHotelBookingById`, `getAllHotelBookings`, `getHotelBookingsByUserId`, `getMyHotelBookings`, `getHotelBookingsByHotelId`, `updateHotelBooking`, `deleteHotelBooking`. |
+| `BusBookingService` | `src/app/core/services/bus-booking.service.ts` | Completed & Corrected | Corrected `getAllBusBookings` to return `PageBusBookingDTO`, corrected `getMyBusBookings` endpoint from `/my` to `/my-bookings` returning `PageBusBookingDTO`, added `createBusBooking`, `getBusBookingById`, `getBusBookingsByBusTripId`, `getBusBookingsByUserId`, `updateBusBooking`, `deleteBusBooking`. |
+| `BusService` | `src/app/core/services/bus.service.ts` | Newly Implemented | Implemented all 6 methods: `createBus`, `getBusById`, `getAllBuses`, `lookupBuses`, `updateBus`, `deleteBus`. |
+| `BusRouteService` | `src/app/core/services/bus-route.service.ts` | Newly Implemented | Implemented all 6 methods: `createBusRoute`, `getBusRouteById`, `getAllBusRoutes`, `lookupBusRoutes`, `updateBusRoute`, `deleteBusRoute`. |
+| `BusSeatService` | `src/app/core/services/bus-seat.service.ts` | Newly Implemented | Implemented all 6 methods: `createBusSeat`, `getBusSeatById`, `getAllBusSeats`, `getBusSeatsByBusId`, `updateBusSeat`, `deleteBusSeat`. |
+| `BusStopService` | `src/app/core/services/bus-stop.service.ts` | Newly Implemented | Implemented all 6 methods: `createBusStop`, `getBusStopById`, `getAllBusStops`, `lookupBusStops`, `updateBusStop`, `deleteBusStop`. |
+| `BusTripService` | `src/app/core/services/bus-trip.service.ts` | Newly Implemented | Implemented all 8 methods: `createBusTrip`, `getBusTripById`, `getAllBusTrips`, `lookupBusTrips`, `getBusTripsByBusId`, `getBusTripsByRouteId`, `updateBusTrip`, `deleteBusTrip`. |
+| `RoomService` | `src/app/core/services/room.service.ts` | Newly Implemented | Implemented all 6 methods: `createRoom`, `getRoomById`, `getAllRooms`, `getRoomsByHotelId`, `updateRoom`, `deleteRoom`. |
+| `PaymentService` | `src/app/core/services/payment.service.ts` | Corrected | Corrected `getPaymentsByHotelBookingId` and `getPaymentsByBusBookingId` to return `Observable<PaymentDTO[]>`, corrected `deletePayment` return type to `Observable<void>`, aligned `getPayments()` without unnecessary params. |
+| `UserService` | `src/app/core/services/user.service.ts` | Corrected | Added `role?: string` to `UserListParams`, corrected `deleteUser` return type to `Observable<void>` (HTTP 204 No Content). |
+| `HotelService` | `src/app/core/services/hotel.service.ts` | Corrected | Corrected `lookupHotels` to return `Observable<HotelDTO[]>` (Backend returns `List<HotelDto>`) and updated `HotelLookupParams` to accept `q` and `city`. Corrected `deleteHotel` return type to `Observable<void>`. |
+| `AiService` | `src/app/core/services/ai.service.ts` | Newly Implemented | Implemented `chat`, `getConversation`, `createBookingDraft`, `getBookingDraft`, `confirmBookingDraft`. |
+| `AuthService` | `src/app/core/services/auth.service.ts` | Verified Correct | Verified `signup`, `login`, `logout`, `getCurrentUser` (`/auth/me`), `changePassword`. Kept intact. |
+
+---
+
+## 3. Model Modifications & Justifications
+
+1. **`HotelDTO` (`src/app/core/models/Hotel/hotel.model.ts`)**:
+   - Discrepancy: Backend `HotelDto.java` serializes `longitude: Double`, whereas frontend had `longtude: number`.
+   - Resolution: Added `longitude: number` and preserved optional `longtude?: number` for full backward compatibility with existing components and templates.
+2. **`BusStopDto` (`src/app/core/models/Bus/bus-stop.model.ts`)**:
+   - Discrepancy: Backend `BusStopDto.java` serializes `longitude: Double`, whereas frontend had `longtude: number`.
+   - Resolution: Added `longitude: number` and preserved optional `longtude?: number` for backward compatibility.
+3. **`busBookingPage.model.ts` (`src/app/core/models/Pagination/busBookingPage.model.ts`)**:
+   - Discrepancy: Interface had spelling `PageBusBookintDTO`.
+   - Resolution: Kept original identifier and exported `export type PageBusBookingDTO = PageBusBookintDTO;`.
+4. **`PageBusRouteDTO` (`src/app/core/models/Pagination/busRoutePage.model.ts`)**:
+   - Discrepancy: Backend returns `PageResponse<BusRouteDto>` (`content`, `page`, `size`, `totalElements`, `totalPages`, `first`, `last`), while frontend only modeled Spring Data `Page`.
+   - Resolution: Made Spring Data page fields optional and added `page?: number` to match both structures.
+5. **`UserRequestDto` (`src/app/core/models/User/user.model.ts`)**:
+   - Discrepancy: Backend `UserRequestDto.java` includes `password`.
+   - Resolution: Added `password?: string;` to `UserRequestDto`.
+6. **`BookingDraft.ts` (`src/app/core/models/AI Assistant/BookingDraft.ts`)**:
+   - Added: `BookingDraftResponse` interface matching Backend `BookingDraftResponse.java`.
+
+---
+
+## 4. Verification & Scope Enforcement
+
+- **Angular Build Check**: `npx ng build` executed and passed with `exit code 0` (0 compilation errors).
+- **Backend Preservation**: Zero backend files modified, renamed, moved, or deleted. Backend remained strictly read-only.
+- **Frontend UI Preservation**: Zero changes to `.html` templates, `.css` stylesheets, components, layouts, or `app.routes.ts`.
+- **Runtime Testing Note**: Static typing, parameter mapping, and URL paths have been verified against backend source code. Endpoints were not executed against live backend servers during this audit.
+
+
 
