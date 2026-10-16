@@ -1,0 +1,128 @@
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { PaymentDTO, PaymentRequestDTO } from '../models/Payment/payment.model';
+import { environment } from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class PaymentService {
+  private readonly apiUrl = `${environment.apiBaseUrl}/payments`;
+  private readonly http = inject(HttpClient);
+
+  /**
+   * GET /payments
+   * Get all payments (Admin).
+   * Response: PaymentDTO[]
+   */
+  getPayments(): Observable<PaymentDTO[]> {
+    return this.http.get<PaymentDTO[]>(this.apiUrl).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GET /payments
+   * Convenience alias for getPayments().
+   */
+  getAllPayments(): Observable<PaymentDTO[]> {
+    return this.getPayments();
+  }
+
+  /**
+   * GET /payments/{id}
+   * Get specific payment by ID.
+   * Response: PaymentDTO
+   */
+  getPaymentById(id: number): Observable<PaymentDTO> {
+    return this.http.get<PaymentDTO>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GET /payments/hotel-booking/{hotelBookingId}
+   * Get payments for a specific Hotel Booking ID.
+   * Response: PaymentDTO[]
+   */
+  getPaymentsByHotelBookingId(hotelBookingId: number): Observable<PaymentDTO[]> {
+    return this.http.get<PaymentDTO[]>(`${this.apiUrl}/hotel-booking/${hotelBookingId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Alias for backward compatibility
+   */
+  getPaymentByHotelBookingId(hotelBookingId: number): Observable<PaymentDTO[]> {
+    return this.getPaymentsByHotelBookingId(hotelBookingId);
+  }
+
+  /**
+   * GET /payments/bus-booking/{busBookingId}
+   * Get payments for a specific Bus Booking ID.
+   * Response: PaymentDTO[]
+   */
+  getPaymentsByBusBookingId(busBookingId: number): Observable<PaymentDTO[]> {
+    return this.http.get<PaymentDTO[]>(`${this.apiUrl}/bus-booking/${busBookingId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Alias for backward compatibility
+   */
+  getPaymentByBusBookingId(busBookingId: number): Observable<PaymentDTO[]> {
+    return this.getPaymentsByBusBookingId(busBookingId);
+  }
+
+  /**
+   * POST /payments
+   * Create a new payment (User).
+   * Request Body: PaymentRequestDTO
+   * Response: PaymentDTO
+   */
+  createPayment(payload: PaymentRequestDTO): Observable<PaymentDTO> {
+    return this.http.post<PaymentDTO>(this.apiUrl, payload).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * PUT /payments/{id}
+   * Update payment data.
+   * Request Body: PaymentRequestDTO
+   * Response: PaymentDTO
+   */
+  updatePayment(id: number, payload: PaymentRequestDTO): Observable<PaymentDTO> {
+    return this.http.put<PaymentDTO>(`${this.apiUrl}/${id}`, payload).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * DELETE /payments/{id}
+   * Delete payment.
+   * Response: void (HTTP 204 No Content)
+   */
+  deletePayment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let message = 'Something went wrong';
+
+    if (error.error instanceof ErrorEvent) {
+      message = `Client Error: ${error.error.message}`;
+    } else {
+      message = `Server Error [${error.status}]: ${error.message}`;
+    }
+
+    console.error(message);
+    return throwError(() => new Error(message));
+  }
+}
