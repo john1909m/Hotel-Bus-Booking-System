@@ -5,7 +5,7 @@ export interface HotelDTO{
     address: string;
     city: string;
     latitude: number;
-    longtude: number;
+    longitude: number;
     rating: number;
     checkInTime: string;
     checkOutTime: string;
