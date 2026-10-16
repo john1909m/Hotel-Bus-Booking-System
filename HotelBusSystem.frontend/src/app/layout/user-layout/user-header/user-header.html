@@ -1,0 +1,84 @@
+<header class="user-header" [class.scrolled]="scrolled()" role="banner">
+  <div class="header-inner container">
+
+    <!-- Brand -->
+    <a routerLink="/" class="brand" aria-label="TravelEase home">
+      <span class="brand-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
+          <path d="M8 18 C8 18 10 10 14 10 C18 10 20 18 20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <circle cx="14" cy="10" r="2.5" fill="white"/>
+        </svg>
+      </span>
+      <span class="brand-name">TravelEase</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="nav-desktop" aria-label="Customer navigation">
+      <a routerLink="/" class="nav-link">Home</a>
+      <a routerLink="/user/bus-bookings" routerLinkActive="active" class="nav-link">My Bus Bookings</a>
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="header-actions">
+
+      <!-- Theme Toggle -->
+      <button
+        class="theme-toggle"
+        [attr.aria-label]="theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        (click)="toggleTheme()"
+        id="user-theme-toggle-btn"
+      >
+        <span class="toggle-track">
+          <span class="toggle-icon moon" aria-hidden="true">🌙</span>
+          <span class="toggle-thumb" [class.dark]="theme() === 'dark'"></span>
+          <span class="toggle-icon sun" aria-hidden="true">☀️</span>
+        </span>
+      </button>
+
+      @if (isAuthenticated()) {
+        <span class="user-greeting">Hi, {{ currentUser()?.name }}</span>
+        <button type="button" (click)="logout()" class="btn-primary" aria-label="Sign out">Sign Out</button>
+      } @else {
+        <a routerLink="/login" class="btn-ghost">Login</a>
+        <a routerLink="/register" class="btn-primary">Register</a>
+      }
+
+      <!-- Mobile Hamburger -->
+      <button
+        class="hamburger"
+        [class.open]="menuOpen()"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="user-mobile-menu"
+        aria-label="Toggle navigation menu"
+        id="user-hamburger-btn"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div
+    id="user-mobile-menu"
+    class="mobile-menu"
+    [class.open]="menuOpen()"
+    role="navigation"
+    aria-label="Mobile customer navigation"
+  >
+    <nav class="mobile-nav">
+      <a routerLink="/" class="mobile-link" (click)="closeMenu()">Home</a>
+      <a routerLink="/user/bus-bookings" class="mobile-link" (click)="closeMenu()">My Bus Bookings</a>
+      <div class="mobile-actions">
+        @if (isAuthenticated()) {
+          <div class="user-greeting-mobile">Hi, {{ currentUser()?.name }}</div>
+          <button type="button" (click)="logout()" class="btn-primary w-full">Sign Out</button>
+        } @else {
+          <a routerLink="/login" class="btn-ghost w-full" (click)="closeMenu()">Login</a>
+          <a routerLink="/register" class="btn-primary w-full" (click)="closeMenu()">Register</a>
+        }
+      </div>
+    </nav>
+  </div>
+</header>
