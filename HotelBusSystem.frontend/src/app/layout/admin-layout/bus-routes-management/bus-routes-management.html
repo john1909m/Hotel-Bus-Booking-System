@@ -1,0 +1,187 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Bus Routes</span>
+      </nav>
+      <h1 class="page-title">Bus Routes Management</h1>
+      <p class="page-subtitle">
+        Configure travel transit corridors, inter-terminal connections, origin and destination stops, and expected journey durations.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadBusRoutes()"
+        [disabled]="loading()"
+        id="admin-bus-routes-refresh-btn"
+        aria-label="Refresh bus routes"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-route-search" class="filter-label">Quick Filter</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-route-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search route name…"
+            [value]="searchFilter()"
+            (input)="onSearchFilter($any($event.target).value)"
+            aria-label="Filter routes"
+          />
+        </div>
+      </div>
+
+      <!-- Sort By -->
+      <div class="filter-field">
+        <label for="admin-route-sort" class="filter-label">Sort By</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🗺</span>
+          <select
+            id="admin-route-sort"
+            class="filter-select"
+            [value]="sortBy()"
+            (change)="onSortChange($any($event.target).value)"
+            aria-label="Sort routes"
+          >
+            <option value="id">ID</option>
+            <option value="name">Route Name</option>
+            <option value="duration">Duration</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Routes: <strong>{{ totalElements() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error Notification Banner ────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadBusRoutes()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- ─── Data Table Card ──────────────────────────────────── -->
+  <section class="table-card" aria-label="Bus routes data table">
+    <p-table
+      [value]="displayedRoutes()"
+      [lazy]="true"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalElements()"
+      [first]="firstRow()"
+      (onPage)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} routes"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Route Name</th>
+          <th>Origin Terminal</th>
+          <th>Destination Terminal</th>
+          <th>Est. Duration</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-route>
+        <tr>
+          <td>
+            <span class="entity-id-badge">#{{ route.id }}</span>
+          </td>
+          <td>
+            <span class="table-cell-title">🗺 {{ route.name }}</span>
+          </td>
+          <td>
+            <span class="pill-badge">
+              📍 {{ getStopName(route.originStopId) }}
+            </span>
+          </td>
+          <td>
+            <span class="pill-badge">
+              🏁 {{ getStopName(route.destinationStopId) }}
+            </span>
+          </td>
+          <td>
+            <span class="duration-badge">
+              ⏱ {{ formatDuration(route.duration) }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">🗺</div>
+              <h3 class="empty-title">No bus routes found</h3>
+              <p class="empty-desc">
+                No route itineraries have been recorded in the database yet.
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+</div>

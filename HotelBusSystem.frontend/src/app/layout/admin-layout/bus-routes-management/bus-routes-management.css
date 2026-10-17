@@ -1,0 +1,27 @@
+@import '../admin-common.css';
+
+.route-stops-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.route-arrow {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-tight);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
