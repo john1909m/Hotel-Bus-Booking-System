@@ -1,0 +1,430 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Users Management</span>
+      </nav>
+      <h1 class="page-title">Users Management</h1>
+      <p class="page-subtitle">
+        Manage system users, administer accounts, assign access roles (Admin/User), and update profile records.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-user-btn"
+        aria-label="Add new user"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New User</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Query -->
+      <div class="filter-field search-field">
+        <label for="admin-user-search" class="filter-label">Search Query</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-user-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by name, email, or keyword…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            aria-label="Search users"
+          />
+        </div>
+      </div>
+
+      <!-- Role Filter -->
+      <div class="filter-field">
+        <label for="admin-user-role" class="filter-label">Role</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">👤</span>
+          <select
+            id="admin-user-role"
+            class="filter-select"
+            [value]="roleFilter()"
+            (change)="onRoleChange($any($event.target).value)"
+            aria-label="Filter by user role"
+          >
+            <option value="">All Roles</option>
+            <option value="USER">Customer (USER)</option>
+            <option value="ADMIN">Administrator (ADMIN)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sort Order -->
+      <div class="filter-field">
+        <label for="admin-user-sort" class="filter-label">Sort Order</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="14" y2="12"></line>
+              <line x1="4" y1="18" x2="8" y2="18"></line>
+            </svg>
+          </span>
+          <select
+            id="admin-user-sort"
+            class="filter-select"
+            [value]="sortFilter()"
+            (change)="onSortChange($any($event.target).value)"
+            aria-label="Sort users"
+          >
+            <option value="">Default (ID Descending)</option>
+            <option value="name,asc">Name: A to Z</option>
+            <option value="name,desc">Name: Z to A</option>
+            <option value="email,asc">Email: A to Z</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Users: <strong>{{ totalElements() }}</strong>
+      </div>
+
+      <div class="filter-actions-right">
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="clearFilters()"
+            id="admin-clear-user-filters-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+            <span>Clear Filters</span>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error Notification Banner ────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadUsers()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- ─── Data Table Card ──────────────────────────────────── -->
+  <section class="table-card" aria-label="Users data table">
+    <p-table
+      [value]="users()"
+      [lazy]="true"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalElements()"
+      [first]="firstRow()"
+      (onPage)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Name &amp; Account</th>
+          <th>Email Address</th>
+          <th>Phone Number</th>
+          <th>Role</th>
+          <th style="width: 110px; text-align: right">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-u>
+        <tr>
+          <td>
+            <span class="entity-id-badge">#{{ u.id }}</span>
+          </td>
+          <td>
+            <div class="user-name-cell">
+              <span class="table-cell-title">{{ u.name }}</span>
+              @if (u.id === currentAdminId()) {
+                <span class="table-cell-subtitle">(You)</span>
+              }
+            </div>
+          </td>
+          <td>
+            <span class="table-cell-title">{{ u.email }}</span>
+          </td>
+          <td>
+            <span>{{ u.phoneNumber || '—' }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="u.role"
+              [severity]="u.role === 'ADMIN' ? 'warn' : 'success'"
+              styleClass="user-role-tag"
+            />
+          </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(u)"
+                [attr.aria-label]="'Edit user ' + u.name"
+                title="Edit user"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(u)"
+                [attr.aria-label]="'Delete user ' + u.name"
+                title="Delete user"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">👤</div>
+              <h3 class="empty-title">No users found</h3>
+              <p class="empty-desc">
+                @if (hasActiveFilters()) {
+                  No users match your filter criteria. Try clearing your search filters.
+                } @else {
+                  No user accounts are registered in the system yet.
+                }
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <!-- ─── Create / Edit User Modal Dialog ──────────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit User' : 'Add New User'"
+    [style]="{ width: '90vw', maxWidth: '540px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="dialog-form" id="admin-user-form">
+      <div class="form-grid">
+
+        <!-- Full Name -->
+        <div class="form-group full-width">
+          <label for="userName" class="form-label">
+            Full Name <span class="required-star">*</span>
+          </label>
+          <input
+            id="userName"
+            type="text"
+            class="form-input"
+            formControlName="name"
+            placeholder="e.g. John Doe"
+          />
+          @if (userForm.get('name')?.touched && userForm.get('name')?.errors?.['required']) {
+            <span class="form-error">Full name is required.</span>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="form-group full-width">
+          <label for="userEmail" class="form-label">
+            Email Address <span class="required-star">*</span>
+          </label>
+          <input
+            id="userEmail"
+            type="email"
+            class="form-input"
+            formControlName="email"
+            placeholder="e.g. user@example.com"
+          />
+          @if (userForm.get('email')?.touched && userForm.get('email')?.errors) {
+            <span class="form-error">Please provide a valid email address.</span>
+          }
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-group">
+          <label for="userPhone" class="form-label">
+            Phone Number <span class="required-star">*</span>
+          </label>
+          <input
+            id="userPhone"
+            type="tel"
+            class="form-input"
+            formControlName="phoneNumber"
+            placeholder="e.g. +1 555-0199"
+          />
+          @if (userForm.get('phoneNumber')?.touched && userForm.get('phoneNumber')?.errors?.['required']) {
+            <span class="form-error">Phone number is required.</span>
+          }
+        </div>
+
+        <!-- Role -->
+        <div class="form-group">
+          <label for="userRole" class="form-label">
+            Role <span class="required-star">*</span>
+          </label>
+          <select id="userRole" class="form-select" formControlName="role">
+            <option value="USER">Customer (USER)</option>
+            <option value="ADMIN">Administrator (ADMIN)</option>
+          </select>
+          @if (userForm.get('role')?.touched && userForm.get('role')?.errors?.['required']) {
+            <span class="form-error">Role is required.</span>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group full-width">
+          <label for="userPassword" class="form-label">
+            {{ isEditMode() ? 'New Password (Optional)' : 'Password' }}
+            @if (!isEditMode()) { <span class="required-star">*</span> }
+          </label>
+          <input
+            id="userPassword"
+            type="password"
+            class="form-input"
+            formControlName="password"
+            [placeholder]="isEditMode() ? 'Leave blank to retain current password' : 'Enter account password'"
+            autocomplete="new-password"
+          />
+          @if (isEditMode()) {
+            <span class="password-note">Leave empty to keep existing password intact.</span>
+          }
+          @if (userForm.get('password')?.touched && userForm.get('password')?.errors) {
+            <span class="form-error">Password must be at least 6 characters.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || userForm.invalid"
+          id="admin-save-user-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update User' : 'Create User') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm User Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete User Account?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete user
+        <strong class="delete-entity-name">{{ userToDelete()?.name }} ({{ userToDelete()?.email }})</strong>?
+        This action cannot be undone.
+      </p>
+      @if (userToDelete()?.id === currentAdminId()) {
+        <div class="form-error" style="font-weight: 600">
+          ⚠️ Warning: You cannot delete your own active administrator account!
+        </div>
+      }
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteUser()"
+        [disabled]="deleting() || userToDelete()?.id === currentAdminId()"
+        id="admin-confirm-delete-user-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete User' }}
+      </button>
+    </div>
+  </p-dialog>
+
+</div>
