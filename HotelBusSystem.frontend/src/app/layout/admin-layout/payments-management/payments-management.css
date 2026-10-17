@@ -1,0 +1,27 @@
+@import '../admin-common.css';
+
+.payment-status-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.payment-method-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.amount-text {
+  font-family: var(--font-tight);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-primary);
+}
