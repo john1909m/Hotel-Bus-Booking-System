@@ -574,5 +574,94 @@ The Backend source code was inspected across 14 REST Controllers:
 - **Frontend UI Preservation**: Zero changes to `.html` templates, `.css` stylesheets, components, layouts, or `app.routes.ts`.
 - **Runtime Testing Note**: Static typing, parameter mapping, and URL paths have been verified against backend source code. Endpoints were not executed against live backend servers during this audit.
 
+---
+
+# Implementation: Admin Dashboard & Complete Management Modules
+
+## Overview
+
+This phase implements the comprehensive Admin Dashboard and Management modules in the **Hotel & Bus Booking System Angular Frontend**, fully integrating with backend APIs while preserving architecture, design system tokens, and PrimeNG UI conventions established in Hotel Management.
+
+---
+
+## 1. Components Implemented
+
+| Module | Route | Component | Purpose | Mode / Operations |
+|---|---|---|---|---|
+| **Admin Dashboard** | `/admin` | `AdminDashboard` | Live aggregate metrics and quick module access hub | Live queries to real backend endpoints with fallback handling |
+| **Hotels Management** | `/admin/hotels` | `HotelsManagement` | Hotel listings, pricing metadata, GPS coordinates | Full CRUD (Read, Create, Edit, Delete, Filter, Sort) |
+| **Rooms Management** | `/admin/rooms` | `RoomsManagement` | Hotel room inventory, capacities, room types, pricing | Full CRUD + Hotel link & filtering (`RoomService` + `HotelService`) |
+| **Users Management** | `/admin/users` | `UsersManagement` | Account administration, role assignment (Admin/User) | Full CRUD + Server-side pagination & filter (`UserService`) |
+| **Buses Management** | `/admin/buses` | `BusesManagement` | Fleet registry, bus companies, seating capacities | Server-side paginated data display (`BusService`) |
+| **Bus Seats Management** | `/admin/bus-seats` | `BusSeatsManagement` | Cabin layouts, seat tiers (Regular, Premium, Window, Aisle) | Client-side paginated data display + Bus lookup (`BusSeatService`) |
+| **Bus Stops Management** | `/admin/bus-stops` | `BusStopsManagement` | Stations, pickup points, cities, GPS coordinates | Server-side paginated data display & search (`BusStopService`) |
+| **Bus Routes Management** | `/admin/bus-routes` | `BusRoutesManagement` | Transit routes, origin/destination terminals, duration | Server-side paginated data display + Stop lookup (`BusRouteService`) |
+| **Bus Trips Management** | `/admin/bus-trips` | `BusTripsManagement` | Timetables, departure/arrival schedules, fares, statuses | Server-side paginated data display + Status filter (`BusTripService`) |
+| **Hotel Bookings** | `/admin/hotel-bookings` | `HotelBookingsManagement` | Customer room reservations, stay periods, guest counts | Server-side paginated data display (`HotelBookingService`) |
+| **Bus Bookings** | `/admin/bus-bookings` | `BusBookingsManagement` | Passenger ticket reservations, assigned seats, fares | Server-side paginated data display (`BusBookingService`) |
+| **Payments** | `/admin/payments` | `PaymentsManagement` | Transaction audit logs, payment methods, settlement volume | Client-side paginated data display + Filters (`PaymentService`) |
+
+---
+
+## 2. Admin Routing Configuration (`app.routes.ts`)
+
+All 12 admin modules are protected by `canActivate: [authGuard, roleGuard(['ADMIN'])]` inside `AdminLayout`:
+```ts
+{
+  path: 'admin',
+  canActivate: [authGuard, roleGuard(['ADMIN'])],
+  loadComponent: () => import('./layout/admin-layout/admin-layout').then(m => m.AdminLayout),
+  children: [
+    { path: '', loadComponent: () => import('./layout/admin-layout/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard) },
+    { path: 'hotels', loadComponent: () => import('./layout/admin-layout/hotels-management/hotels-management').then(m => m.HotelsManagement) },
+    { path: 'rooms', loadComponent: () => import('./layout/admin-layout/rooms-management/rooms-management').then(m => m.RoomsManagement) },
+    { path: 'users', loadComponent: () => import('./layout/admin-layout/users-management/users-management').then(m => m.UsersManagement) },
+    { path: 'buses', loadComponent: () => import('./layout/admin-layout/buses-management/buses-management').then(m => m.BusesManagement) },
+    { path: 'bus-seats', loadComponent: () => import('./layout/admin-layout/bus-seats-management/bus-seats-management').then(m => m.BusSeatsManagement) },
+    { path: 'bus-stops', loadComponent: () => import('./layout/admin-layout/bus-stops-management/bus-stops-management').then(m => m.BusStopsManagement) },
+    { path: 'bus-routes', loadComponent: () => import('./layout/admin-layout/bus-routes-management/bus-routes-management').then(m => m.BusRoutesManagement) },
+    { path: 'bus-trips', loadComponent: () => import('./layout/admin-layout/bus-trips-management/bus-trips-management').then(m => m.BusTripsManagement) },
+    { path: 'hotel-bookings', loadComponent: () => import('./layout/admin-layout/hotel-bookings-management/hotel-bookings-management').then(m => m.HotelBookingsManagement) },
+    { path: 'bus-bookings', loadComponent: () => import('./layout/admin-layout/bus-bookings-management/bus-bookings-management').then(m => m.BusBookingsManagement) },
+    { path: 'payments', loadComponent: () => import('./layout/admin-layout/payments-management/payments-management').then(m => m.PaymentsManagement) },
+  ],
+}
+```
+
+---
+
+## 3. UI Consistency & PrimeNG Integration
+
+1. **Shared Styling System (`admin-common.css`)**:
+   - Reusable layout standards for headers, breadcrumbs, filter toolbars, PrimeNG datatable overrides, action buttons, dialog forms, error banners, and empty states.
+   - Preserves all light/dark design tokens (`--color-primary`, `--bg-elevated`, `--bg-surface`, `--border-color`, `--text-primary`).
+2. **Component Conventions**:
+   - PrimeNG `p-table` used throughout with responsive layout, custom cell badges, and consistent striped styling.
+   - PrimeNG `p-dialog` used for create/edit reactive forms and delete confirmations.
+   - PrimeNG `p-toast` via `MessageService` for notifications.
+   - Loading skeletons and progress indicators for async requests.
+   - Error banners with actionable "Retry" buttons.
+
+---
+
+## 4. Security & Business Logic Safeguards
+
+1. **Password Safety in Users Management**:
+   - Creating a user requires a password (`minLength(6)`).
+   - Editing a user treats password as strictly optional. If left blank, it is omitted from the update payload, matching backend `UserServiceImpl` behavior.
+   - Passwords are never exposed or rendered in tables or views.
+2. **Self-Deletion Protection**:
+   - The admin interface detects if the user being deleted is the currently logged-in administrator (`authService.currentUser()?.id`) and prevents deletion with an explicit security warning.
+3. **Hotel-Room Relationship**:
+   - Rooms Management integrates with `HotelService` to resolve hotel names from IDs, supports filtering rooms by hotel property, and enables selecting a hotel property from a dynamic dropdown when adding or modifying rooms.
+
+---
+
+## 5. Build & Verification Results
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. All 12 admin modules compiled into independent lazy-loaded chunks with zero template or dependency errors.
+
+
 
 
