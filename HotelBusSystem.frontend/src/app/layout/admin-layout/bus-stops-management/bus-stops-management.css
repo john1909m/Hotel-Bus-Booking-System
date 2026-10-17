@@ -1,0 +1,7 @@
+@import '../admin-common.css';
+
+.coord-text {
+  font-family: monospace;
+  font-size: 0.775rem;
+  color: var(--text-muted);
+}
