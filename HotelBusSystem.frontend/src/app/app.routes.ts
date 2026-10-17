@@ -81,11 +81,66 @@ export const routes: Routes = [
           import('./layout/admin-layout/hotels-management/hotels-management').then(m => m.HotelsManagement),
         title: 'TravelEase Admin — Hotels Management',
       },
-      // Pending pages — routes reserved for future implementation:
-      // /admin/rooms, /admin/users, /admin/buses,
-      // /admin/bus-seats, /admin/bus-stops, /admin/bus-routes,
-      // /admin/bus-trips, /admin/hotel-bookings, /admin/bus-bookings,
-      // /admin/payments
+      {
+        path: 'rooms',
+        loadComponent: () =>
+          import('./layout/admin-layout/rooms-management/rooms-management').then(m => m.RoomsManagement),
+        title: 'TravelEase Admin — Rooms Management',
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./layout/admin-layout/users-management/users-management').then(m => m.UsersManagement),
+        title: 'TravelEase Admin — Users Management',
+      },
+      {
+        path: 'buses',
+        loadComponent: () =>
+          import('./layout/admin-layout/buses-management/buses-management').then(m => m.BusesManagement),
+        title: 'TravelEase Admin — Buses Fleet',
+      },
+      {
+        path: 'bus-seats',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-seats-management/bus-seats-management').then(m => m.BusSeatsManagement),
+        title: 'TravelEase Admin — Bus Seats',
+      },
+      {
+        path: 'bus-stops',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-stops-management/bus-stops-management').then(m => m.BusStopsManagement),
+        title: 'TravelEase Admin — Bus Stops',
+      },
+      {
+        path: 'bus-routes',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-routes-management/bus-routes-management').then(m => m.BusRoutesManagement),
+        title: 'TravelEase Admin — Bus Routes',
+      },
+      {
+        path: 'bus-trips',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-trips-management/bus-trips-management').then(m => m.BusTripsManagement),
+        title: 'TravelEase Admin — Bus Trips',
+      },
+      {
+        path: 'hotel-bookings',
+        loadComponent: () =>
+          import('./layout/admin-layout/hotel-bookings-management/hotel-bookings-management').then(m => m.HotelBookingsManagement),
+        title: 'TravelEase Admin — Hotel Bookings',
+      },
+      {
+        path: 'bus-bookings',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-bookings-management/bus-bookings-management').then(m => m.BusBookingsManagement),
+        title: 'TravelEase Admin — Bus Bookings',
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./layout/admin-layout/payments-management/payments-management').then(m => m.PaymentsManagement),
+        title: 'TravelEase Admin — Payments',
+      },
     ],
   },
 
