@@ -1,0 +1,422 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Rooms Management</span>
+      </nav>
+      <h1 class="page-title">Rooms Management</h1>
+      <p class="page-subtitle">
+        Configure hotel room inventory, unit capacities, room types, and pricing rates per night.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-room-btn"
+        aria-label="Add new room"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New Room</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Room Number -->
+      <div class="filter-field search-field">
+        <label for="admin-room-search" class="filter-label">Search Room</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-room-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by room number…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            aria-label="Search by room number"
+          />
+        </div>
+      </div>
+
+      <!-- Hotel Filter -->
+      <div class="filter-field">
+        <label for="admin-room-hotel" class="filter-label">Hotel</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🏨</span>
+          <select
+            id="admin-room-hotel"
+            class="filter-select"
+            [value]="selectedHotelId() ?? ''"
+            (change)="onHotelChange($any($event.target).value)"
+            aria-label="Filter by hotel"
+          >
+            <option value="">All Hotels</option>
+            @for (h of hotels(); track h.id) {
+              <option [value]="h.id">{{ h.name }} ({{ h.city }})</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Room Type Filter -->
+      <div class="filter-field">
+        <label for="admin-room-type" class="filter-label">Room Type</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🛏</span>
+          <select
+            id="admin-room-type"
+            class="filter-select"
+            [value]="roomTypeFilter()"
+            (change)="onRoomTypeChange($any($event.target).value)"
+            aria-label="Filter by room type"
+          >
+            <option value="">All Types</option>
+            <option value="SINGLE">Single</option>
+            <option value="DOUBLE">Double</option>
+            <option value="SUITE">Suite</option>
+            <option value="DELUXE">Deluxe</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Rooms: <strong>{{ filteredRooms().length }}</strong>
+      </div>
+
+      <div class="filter-actions-right">
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="clearFilters()"
+            id="admin-clear-room-filters-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+            <span>Clear Filters</span>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error Notification Banner ────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadRooms()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- ─── Data Table Card ──────────────────────────────────── -->
+  <section class="table-card" aria-label="Rooms data table">
+    <p-table
+      [value]="filteredRooms()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} rooms"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Room Number</th>
+          <th>Hotel</th>
+          <th>Type</th>
+          <th>Capacity</th>
+          <th>Price / Night</th>
+          <th style="width: 110px; text-align: right">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-room>
+        <tr>
+          <td>
+            <span class="entity-id-badge">#{{ room.id }}</span>
+          </td>
+          <td>
+            <span class="table-cell-title">{{ room.roomNumber }}</span>
+          </td>
+          <td>
+            <div class="hotel-pill">
+              <span class="table-cell-title">{{ getHotelName(room.hotelId) }}</span>
+              <span class="table-cell-subtitle">ID: {{ room.hotelId }}</span>
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="room.roomType"
+              [severity]="getRoomTypeSeverity(room.roomType)"
+              styleClass="room-type-tag"
+            />
+          </td>
+          <td>
+            <span class="capacity-cell">
+              👤 {{ room.capacity }} {{ room.capacity === 1 ? 'Guest' : 'Guests' }}
+            </span>
+          </td>
+          <td>
+            <span class="price-text">${{ room.pricePerNight | number:'1.2-2' }}</span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(room)"
+                [attr.aria-label]="'Edit room ' + room.roomNumber"
+                title="Edit room"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(room)"
+                [attr.aria-label]="'Delete room ' + room.roomNumber"
+                title="Delete room"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">🛏</div>
+              <h3 class="empty-title">No rooms found</h3>
+              <p class="empty-desc">
+                @if (hasActiveFilters()) {
+                  No rooms match your filter criteria. Try resetting your search filters.
+                } @else {
+                  No rooms have been added to the system yet. Click "Add New Room" above to create one.
+                }
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <!-- ─── Create / Edit Room Modal Dialog ──────────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Room' : 'Add New Room'"
+    [style]="{ width: '90vw', maxWidth: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="roomForm" (ngSubmit)="saveRoom()" class="dialog-form" id="admin-room-form">
+      <div class="form-grid">
+
+        <!-- Room Number -->
+        <div class="form-group">
+          <label for="roomNumber" class="form-label">
+            Room Number <span class="required-star">*</span>
+          </label>
+          <input
+            id="roomNumber"
+            type="text"
+            class="form-input"
+            formControlName="roomNumber"
+            placeholder="e.g. 101, 302-A"
+          />
+          @if (roomForm.get('roomNumber')?.touched && roomForm.get('roomNumber')?.errors?.['required']) {
+            <span class="form-error">Room number is required.</span>
+          }
+        </div>
+
+        <!-- Hotel Selection -->
+        <div class="form-group">
+          <label for="hotelId" class="form-label">
+            Hotel Property <span class="required-star">*</span>
+          </label>
+          <select id="hotelId" class="form-select" formControlName="hotelId">
+            <option [ngValue]="null" disabled>Select Hotel Property</option>
+            @for (h of hotels(); track h.id) {
+              <option [ngValue]="h.id">{{ h.name }} ({{ h.city }})</option>
+            }
+          </select>
+          @if (roomForm.get('hotelId')?.touched && roomForm.get('hotelId')?.errors?.['required']) {
+            <span class="form-error">Hotel selection is required.</span>
+          }
+        </div>
+
+        <!-- Room Type -->
+        <div class="form-group">
+          <label for="roomType" class="form-label">
+            Room Type <span class="required-star">*</span>
+          </label>
+          <select id="roomType" class="form-select" formControlName="roomType">
+            <option value="SINGLE">Single</option>
+            <option value="DOUBLE">Double</option>
+            <option value="SUITE">Suite</option>
+            <option value="DELUXE">Deluxe</option>
+          </select>
+          @if (roomForm.get('roomType')?.touched && roomForm.get('roomType')?.errors?.['required']) {
+            <span class="form-error">Room type is required.</span>
+          }
+        </div>
+
+        <!-- Capacity -->
+        <div class="form-group">
+          <label for="capacity" class="form-label">
+            Capacity (Guests) <span class="required-star">*</span>
+          </label>
+          <input
+            id="capacity"
+            type="number"
+            class="form-input"
+            formControlName="capacity"
+            min="1"
+            max="20"
+          />
+          @if (roomForm.get('capacity')?.touched && roomForm.get('capacity')?.errors) {
+            <span class="form-error">Capacity must be between 1 and 20.</span>
+          }
+        </div>
+
+        <!-- Price Per Night -->
+        <div class="form-group full-width">
+          <label for="pricePerNight" class="form-label">
+            Price Per Night ($) <span class="required-star">*</span>
+          </label>
+          <input
+            id="pricePerNight"
+            type="number"
+            class="form-input"
+            formControlName="pricePerNight"
+            min="1"
+            step="0.01"
+            placeholder="e.g. 150.00"
+          />
+          @if (roomForm.get('pricePerNight')?.touched && roomForm.get('pricePerNight')?.errors) {
+            <span class="form-error">Valid positive price is required.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || roomForm.invalid"
+          id="admin-save-room-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Room' : 'Create Room') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm Room Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete Room?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete room
+        <strong class="delete-entity-name">
+          {{ roomToDelete()?.roomNumber }} ({{ getHotelName(roomToDelete()?.hotelId ?? 0) }})
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteRoom()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-room-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete Room' }}
+      </button>
+    </div>
+  </p-dialog>
+
+</div>
