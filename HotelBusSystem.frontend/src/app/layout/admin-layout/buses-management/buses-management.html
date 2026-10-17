@@ -1,0 +1,206 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Buses Fleet</span>
+      </nav>
+      <h1 class="page-title">Buses Fleet</h1>
+      <p class="page-subtitle">
+        Review operating bus fleet vehicles, transportation carriers, coach models, and maximum seating capacities.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadBuses()"
+        [disabled]="loading()"
+        id="admin-buses-refresh-btn"
+        aria-label="Refresh buses list"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-bus-search" class="filter-label">Quick Filter</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-bus-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by bus number or company…"
+            [value]="searchFilter()"
+            (input)="onSearchFilter($any($event.target).value)"
+            aria-label="Filter buses"
+          />
+        </div>
+      </div>
+
+      <!-- Sort By -->
+      <div class="filter-field">
+        <label for="admin-bus-sort" class="filter-label">Sort By</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🚌</span>
+          <select
+            id="admin-bus-sort"
+            class="filter-select"
+            [value]="sortBy()"
+            (change)="onSortChange($any($event.target).value)"
+            aria-label="Sort buses"
+          >
+            <option value="id">ID</option>
+            <option value="busNumber">Bus Number</option>
+            <option value="company">Company</option>
+            <option value="capacity">Capacity</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sort Direction -->
+      <div class="filter-field">
+        <label for="admin-bus-dir" class="filter-label">Order</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">↕</span>
+          <select
+            id="admin-bus-dir"
+            class="filter-select"
+            [value]="sortDirection()"
+            (change)="onDirChange($any($event.target).value)"
+            aria-label="Sort direction"
+          >
+            <option value="asc">Ascending (A–Z / Low–High)</option>
+            <option value="desc">Descending (Z–A / High–Low)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Buses: <strong>{{ totalElements() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error Notification Banner ────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadBuses()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- ─── Data Table Card ──────────────────────────────────── -->
+  <section class="table-card" aria-label="Buses data table">
+    <p-table
+      [value]="displayedBuses()"
+      [lazy]="true"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalElements()"
+      [first]="firstRow()"
+      (onPage)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} buses"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Bus Number</th>
+          <th>Operating Carrier</th>
+          <th>Coach Type</th>
+          <th>Seating Capacity</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-bus>
+        <tr>
+          <td>
+            <span class="entity-id-badge">#{{ bus.id }}</span>
+          </td>
+          <td>
+            <span class="table-cell-title">{{ bus.busNumber }}</span>
+          </td>
+          <td>
+            <span class="pill-badge">🏢 {{ bus.company }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="bus.busType || 'STANDARD'"
+              severity="info"
+              styleClass="bus-type-tag"
+            />
+          </td>
+          <td>
+            <span class="capacity-badge">
+              💺 {{ bus.capacity }} Seats
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">🚌</div>
+              <h3 class="empty-title">No buses found</h3>
+              <p class="empty-desc">
+                No bus records were retrieved from the fleet registry.
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+</div>
