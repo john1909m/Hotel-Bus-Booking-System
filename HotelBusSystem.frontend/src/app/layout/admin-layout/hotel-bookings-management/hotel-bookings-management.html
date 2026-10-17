@@ -1,0 +1,198 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Hotel Bookings</span>
+      </nav>
+      <h1 class="page-title">Hotel Bookings</h1>
+      <p class="page-subtitle">
+        Review customer room reservations, check-in and check-out periods, guest headcounts, and settlement values.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadBookings()"
+        [disabled]="loading()"
+        id="admin-hotel-bookings-refresh-btn"
+        aria-label="Refresh hotel bookings"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-hotel-booking-search" class="filter-label">Quick Search</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-hotel-booking-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by hotel name or ID…"
+            [value]="searchFilter()"
+            (input)="onSearchFilter($any($event.target).value)"
+            aria-label="Filter bookings"
+          />
+        </div>
+      </div>
+
+      <!-- Sort Direction -->
+      <div class="filter-field">
+        <label for="admin-hotel-booking-dir" class="filter-label">Order</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">↕</span>
+          <select
+            id="admin-hotel-booking-dir"
+            class="filter-select"
+            [value]="sortDirection()"
+            (change)="onDirChange($any($event.target).value)"
+            aria-label="Sort direction"
+          >
+            <option value="desc">Newest First (Desc)</option>
+            <option value="asc">Oldest First (Asc)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        Total Bookings: <strong>{{ totalElements() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error Notification Banner ────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadBookings()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- ─── Data Table Card ──────────────────────────────────── -->
+  <section class="table-card" aria-label="Hotel bookings data table">
+    <p-table
+      [value]="displayedBookings()"
+      [lazy]="true"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalElements()"
+      [first]="firstRow()"
+      (onPage)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} bookings"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Hotel Property</th>
+          <th>Room &amp; Customer</th>
+          <th>Stay Period</th>
+          <th>Guests</th>
+          <th>Total Cost</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-b>
+        <tr>
+          <td>
+            <span class="entity-id-badge">#{{ b.id }}</span>
+          </td>
+          <td>
+            <span class="table-cell-title">🏨 {{ b.hotelName || ('Hotel #' + b.hotelId) }}</span>
+          </td>
+          <td>
+            <div class="date-cell">
+              <strong>Room #{{ b.roomId }}</strong>
+              <span>User ID: #{{ b.userId }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="date-cell">
+              <strong>In: {{ b.checkIn | date:'mediumDate' }}</strong>
+              <span>Out: {{ b.checkOut | date:'mediumDate' }}</span>
+            </div>
+          </td>
+          <td>
+            <span>👤 {{ b.guests }} {{ b.guests === 1 ? 'Guest' : 'Guests' }}</span>
+          </td>
+          <td>
+            <span class="price-text">${{ b.totalPrice | number:'1.2-2' }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="b.status"
+              [severity]="getStatusSeverity(b.status)"
+              styleClass="booking-status-tag"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">📋</div>
+              <h3 class="empty-title">No hotel bookings found</h3>
+              <p class="empty-desc">
+                No customer hotel reservations have been recorded yet.
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+</div>

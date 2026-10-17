@@ -1,0 +1,30 @@
+@import '../admin-common.css';
+
+.booking-status-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8125rem;
+}
+
+.date-cell strong {
+  color: var(--text-primary);
+}
+
+.date-cell span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.price-text {
+  font-family: var(--font-tight);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+}
