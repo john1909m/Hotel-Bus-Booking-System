@@ -1,0 +1,30 @@
+@import '../admin-common.css';
+
+.trip-status-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.timing-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8125rem;
+}
+
+.timing-cell strong {
+  color: var(--text-primary);
+}
+
+.timing-cell span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.price-tag {
+  font-family: var(--font-tight);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
