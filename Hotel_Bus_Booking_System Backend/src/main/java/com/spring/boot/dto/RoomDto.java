@@ -21,4 +21,5 @@ public class RoomDto {
     private Integer capacity;
     private Double pricePerNight;
     private Long hotelId; // Reference to hotel
+    private String hotelName; // Name of the hotel
 }

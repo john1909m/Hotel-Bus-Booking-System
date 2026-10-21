@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Data Transfer Object for HotelBooking entity.
@@ -25,7 +26,8 @@ public class HotelBookingDto {
     private BookingStatus status;
     private BigDecimal totalPrice;
     private Long userId; // Reference to user (costumer)
-    private Long roomId; // Reference to room
+    private Long roomId; // Reference to room (kept for backward compatibility)
     private Long hotelId; // Reference to hotel
     private String hotelName; // Name of the hotel
+    private List<RoomSummaryDto> rooms; // List of booked rooms
 }

@@ -19,14 +19,16 @@ import java.util.Map;
 @Repository
 public interface HotelBookingRepository extends JpaRepository<HotelBooking, Long> {
 
-    @Query("SELECT hb FROM HotelBooking hb WHERE hb.room.id = ?1 AND " +
+    @Query("SELECT hb FROM HotelBooking hb WHERE " +
+            "(hb.room.id = ?1 OR EXISTS (SELECT hbr FROM HotelBookingRoom hbr WHERE hbr.hotelBooking = hb AND hbr.room.id = ?1)) AND " +
             "((hb.checkIn >= ?2 AND hb.checkIn < ?3) OR " +  // Existing booking starts during new booking
             "(hb.checkOut > ?2 AND hb.checkOut <= ?3) OR " +  // Existing booking ends during new booking
             "(hb.checkIn <= ?2 AND hb.checkOut >= ?3)) AND " +  // Existing booking encompasses new booking
             "hb.status IN ('CONFIRMED', 'PENDING')")
     List<HotelBooking> findOverlappingBookings(Long roomId, LocalDate checkIn, LocalDate checkOut);
 
-    @Query("SELECT hb FROM HotelBooking hb WHERE hb.room.id = ?1 AND " +
+    @Query("SELECT hb FROM HotelBooking hb WHERE " +
+            "(hb.room.id = ?1 OR EXISTS (SELECT hbr FROM HotelBookingRoom hbr WHERE hbr.hotelBooking = hb AND hbr.room.id = ?1)) AND " +
             "((hb.checkIn >= ?2 AND hb.checkIn < ?3) OR " +  // Existing booking starts during new booking
             "(hb.checkOut > ?2 AND hb.checkOut <= ?3) OR " +  // Existing booking ends during new booking
             "(hb.checkIn <= ?2 AND hb.checkOut >= ?3)) AND " +  // Existing booking encompasses new booking

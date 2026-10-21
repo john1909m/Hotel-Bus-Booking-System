@@ -47,6 +47,8 @@ public class HotelBooking extends BaseEntity {
     @ManyToOne
     private Room room;
 
+    @OneToMany(mappedBy = "hotelBooking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private java.util.List<HotelBookingRoom> bookingRooms = new java.util.ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "hotel_id")

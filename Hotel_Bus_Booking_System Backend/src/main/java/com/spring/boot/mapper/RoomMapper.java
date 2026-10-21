@@ -18,5 +18,10 @@ public interface RoomMapper {
     Room roomRequestDtoToRoom(RoomRequestDto roomRequestDto);
 
     @Mapping(source = "hotel.id", target = "hotelId")
+    @Mapping(source = "hotel.name", target = "hotelName")
     RoomDto roomToRoomDto(Room room);
+
+    default RoomDto toDto(Room room) {
+        return roomToRoomDto(room);
+    }
 }

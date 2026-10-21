@@ -11,6 +11,8 @@ import com.spring.boot.repository.HotelRepository;
 import com.spring.boot.repository.RoomRepository;
 import com.spring.boot.service.interfaces.RoomService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -57,6 +59,12 @@ public class RoomServiceImpl implements RoomService {
         return roomRepository.findByHotelId(hotelId).stream()
                 .map(roomMapper::roomToRoomDto)
                 .toList();
+    }
+
+    @Override
+    public Page<RoomDto> getRoomsByHotelId(Long hotelId, Pageable pageable) {
+        return roomRepository.findByHotelId(hotelId, pageable)
+                .map(roomMapper::toDto);
     }
 
     @Override

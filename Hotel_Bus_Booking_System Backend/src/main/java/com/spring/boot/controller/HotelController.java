@@ -2,19 +2,21 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.HotelDto;
 import com.spring.boot.dto.HotelRequestDto;
+import com.spring.boot.dto.RoomDto;
 import com.spring.boot.service.interfaces.HotelService;
+import com.spring.boot.service.interfaces.RoomService;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 
 /**
  * REST controller for Hotel entity.
@@ -25,6 +27,7 @@ import java.util.List;
 public class HotelController {
 
     private final HotelService hotelService;
+    private final RoomService roomService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -37,6 +40,13 @@ public class HotelController {
     public ResponseEntity<HotelDto> getHotelById(@PathVariable Long id) {
         HotelDto hotel = hotelService.getHotelById(id);
         return new ResponseEntity<>(hotel, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/rooms")
+    public ResponseEntity<PagedModel<RoomDto>> getRooms(
+            @PathVariable Long id,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(new PagedModel<>(roomService.getRoomsByHotelId(id, pageable)));
     }
 
     @GetMapping
