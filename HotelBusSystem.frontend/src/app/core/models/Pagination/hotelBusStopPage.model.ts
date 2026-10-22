@@ -11,3 +11,14 @@ export interface PageHotelBusStopDTO{
     first: boolean;
     last: boolean;
 }
+
+export interface HotelBusStopListParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: string;
+  q?: string;
+  hotelId?: string;
+  busStopId?: string;
+}
+

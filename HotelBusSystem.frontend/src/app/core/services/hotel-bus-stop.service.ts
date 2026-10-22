@@ -2,17 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
-import { PageHotelBusStopDTO } from '../models/Pagination/hotelBusStopPage.model';
+import { PageHotelBusStopDTO, HotelBusStopListParams } from '../models/Pagination/hotelBusStopPage.model';
+import { handleError } from '../../../utils/ErrorHandling';
 
-export interface HotelBusStopListParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-  q?: string;
-  hotelId?: string;
-  busStopId?: string;
-}
+
 
 @Injectable({
   providedIn: 'root',
@@ -34,19 +27,8 @@ export class HotelBusStopService {
     if (params.busStopId !== undefined) httpParams = httpParams.set('busStopId', params.busStopId);
 
     return this.http.get<PageHotelBusStopDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     )
   }
-    private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
-
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
 }

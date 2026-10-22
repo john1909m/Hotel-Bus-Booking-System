@@ -1,9 +1,11 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { RoomDTO, RoomRequestDTO } from '../models/Room/room.model';
+import { PagedModelRoomDto, RoomListParams } from '../models/Pagination/roomPage.model';
+import { handleError } from '../../../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',
@@ -18,7 +20,7 @@ export class RoomService {
    */
   createRoom(payload: RoomRequestDTO): Observable<RoomDTO> {
     return this.http.post<RoomDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -28,28 +30,48 @@ export class RoomService {
    */
   getRoomById(id: number): Observable<RoomDTO> {
     return this.http.get<RoomDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
   /**
    * GET /rooms
-   * Get all rooms
+   * Get all rooms (unpaginated list)
    */
   getAllRooms(): Observable<RoomDTO[]> {
     return this.http.get<RoomDTO[]>(this.apiUrl).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
   /**
    * GET /rooms/hotel/{hotelId}
-   * Get all rooms for a specific hotel
+   * Get all rooms for a specific hotel (unpaginated list)
    */
   getRoomsByHotelId(hotelId: number): Observable<RoomDTO[]> {
     return this.http.get<RoomDTO[]>(`${this.apiUrl}/hotel/${hotelId}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
+  }
+
+  /**
+   * GET /hotels/{hotelId}/rooms
+   * Get paginated rooms for a specific hotel returning PagedRoomModelDto (PagedModel<RoomDto>)
+   */
+  getPaginatedRoomsByHotelId(
+    hotelId: number,
+    params: RoomListParams = {}
+  ): Observable<PagedModelRoomDto> {
+    let httpParams = new HttpParams();
+    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
+    if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http
+      .get<PagedModelRoomDto>(`${environment.apiBaseUrl}/hotels/${hotelId}/rooms`, {
+        params: httpParams,
+      })
+      .pipe(catchError(handleError));
   }
 
   /**
@@ -58,7 +80,7 @@ export class RoomService {
    */
   updateRoom(id: number, payload: RoomRequestDTO): Observable<RoomDTO> {
     return this.http.put<RoomDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -68,20 +90,7 @@ export class RoomService {
    */
   deleteRoom(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
-  }
-
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
-
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
-
-    console.error(message);
-    return throwError(() => new Error(message));
   }
 }

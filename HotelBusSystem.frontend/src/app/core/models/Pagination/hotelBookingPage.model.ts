@@ -16,3 +16,10 @@ export interface PageHotelBookingDTO{
     empty: boolean;
     
 }
+
+export interface HotelBookingListParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: string;
+}

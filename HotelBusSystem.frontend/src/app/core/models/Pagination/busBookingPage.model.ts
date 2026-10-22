@@ -14,3 +14,10 @@ export interface PageBusBookingDTO{
     sort: Sort;
     empty: boolean;
 }
+
+export interface BusBookingListParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: string;
+}

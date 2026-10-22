@@ -15,3 +15,14 @@ export interface PageBusDTO{
     sort: Sort;
     empty: boolean;
 }
+
+export interface BusListParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: string;
+}
+
+export interface BusLookupParams {
+  q?: string;
+}

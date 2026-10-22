@@ -23,3 +23,21 @@ export interface BusTripRequestDTO {
     busId: number;
     routeId: number;
 }
+
+export interface BusTripListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  busId?: number;
+  routeId?: number;
+  status?: status;
+  departureAfter?: string;
+  departureBefore?: string;
+}
+
+export interface BusTripLookupParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+}

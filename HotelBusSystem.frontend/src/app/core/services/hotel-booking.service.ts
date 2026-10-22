@@ -4,14 +4,9 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { HotelBookingDTO, HotelBookingRequestDTO } from '../models/Hotel/hotel-booking.model';
-import { PageHotelBookingDTO } from '../models/Pagination/hotelBookingPage.model';
+import { PageHotelBookingDTO, HotelBookingListParams } from '../models/Pagination/hotelBookingPage.model';
+import { handleError } from '../../../utils/ErrorHandling';
 
-export interface HotelBookingListParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +21,7 @@ export class HotelBookingService {
    */
   createHotelBooking(payload: HotelBookingRequestDTO): Observable<HotelBookingDTO> {
     return this.http.post<HotelBookingDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -36,7 +31,7 @@ export class HotelBookingService {
    */
   getHotelBookingById(id: number): Observable<HotelBookingDTO> {
     return this.http.get<HotelBookingDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -52,7 +47,7 @@ export class HotelBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageHotelBookingDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -68,7 +63,7 @@ export class HotelBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/user/${userId}`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -84,7 +79,7 @@ export class HotelBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/my-bookings`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -100,7 +95,7 @@ export class HotelBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/hotel/${hotelId}`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -110,7 +105,7 @@ export class HotelBookingService {
    */
   updateHotelBooking(id: number, payload: HotelBookingRequestDTO): Observable<HotelBookingDTO> {
     return this.http.put<HotelBookingDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -120,20 +115,20 @@ export class HotelBookingService {
    */
   deleteHotelBooking(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

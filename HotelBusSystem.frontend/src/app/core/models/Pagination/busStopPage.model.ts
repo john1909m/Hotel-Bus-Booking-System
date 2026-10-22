@@ -14,3 +14,19 @@ export interface PageBusStopDTO{
     sort: Sort;
     empty: boolean;
 }
+
+export interface BusStopListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+  city?: string;
+}
+
+export interface BusStopLookupParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+}
+
