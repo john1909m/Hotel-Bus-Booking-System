@@ -52,4 +52,22 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Long> {
                OR LOWER(bt.status) LIKE LOWER(CONCAT('%', :query, '%')))
         """)
     Page<BusTrip> findByQueryLimit(@Param("query") String query, @Param("pageable") Pageable pageable);
+
+    @Query("""
+        SELECT bt FROM BusTrip bt
+        JOIN bt.route r
+        JOIN r.originStop os
+        JOIN r.destinationStop ds
+        WHERE (:originCity IS NULL OR LOWER(os.city) LIKE LOWER(CONCAT('%', :originCity, '%')))
+          AND (:destinationCity IS NULL OR LOWER(ds.city) LIKE LOWER(CONCAT('%', :destinationCity, '%')))
+          AND (bt.departureTime >= COALESCE(:departureAfter, bt.departureTime))
+          AND (bt.departureTime <= COALESCE(:departureBefore, bt.departureTime))
+        ORDER BY bt.departureTime ASC
+    """)
+    List<BusTrip> findTripsByCities(
+            @Param("originCity") String originCity,
+            @Param("destinationCity") String destinationCity,
+            @Param("departureAfter") LocalDateTime departureAfter,
+            @Param("departureBefore") LocalDateTime departureBefore,
+            Pageable pageable);
 }

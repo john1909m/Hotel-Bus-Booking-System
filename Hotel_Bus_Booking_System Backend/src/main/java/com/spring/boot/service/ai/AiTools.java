@@ -2,9 +2,11 @@ package com.spring.boot.service.ai;
 
 import com.spring.boot.dto.BusSeatDto;
 import com.spring.boot.dto.BusTripDto;
+import com.spring.boot.dto.BusTripInfoDto;
 import com.spring.boot.dto.HotelDto;
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.RoomDto;
+import com.spring.boot.dto.UserBookingsDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,14 +19,27 @@ import java.util.List;
 public interface AiTools {
 
     /**
-     * Search for hotels by city, maximum price, and minimum rating.
+     * Search for hotels by name/keyword, city, maximum price, and minimum rating.
+     *
+     * @param name        Hotel name or search keyword (optional)
+     * @param city        The city to search in (optional)
+     * @param maxPrice    Maximum price per night (optional)
+     * @param minRating   Minimum rating (optional)
+     * @return List of matching hotels
+     */
+    List<HotelDto> searchHotels(String name, String city, Double maxPrice, Double minRating);
+
+    /**
+     * Search for hotels by city, maximum price, and minimum rating (backward compatible).
      *
      * @param city        The city to search in
      * @param maxPrice    Maximum price per night (optional)
      * @param minRating   Minimum rating (optional)
      * @return List of matching hotels
      */
-    List<HotelDto> searchHotels(String city, Double maxPrice, Double minRating);
+    default List<HotelDto> searchHotels(String city, Double maxPrice, Double minRating) {
+        return searchHotels(null, city, maxPrice, minRating);
+    }
 
     /**
      * Get details for a specific hotel.
@@ -77,6 +92,24 @@ public interface AiTools {
      * @return List of available seats
      */
     List<BusSeatDto> getBusSeatAvailability(Long tripId);
+
+    /**
+     * Search scheduled bus trips between an origin city and destination city.
+     *
+     * @param originCity      The departure city
+     * @param destinationCity The destination city
+     * @param departureDate   The departure date (optional)
+     * @return List of matching bus trips with route and stop details
+     */
+    List<BusTripInfoDto> searchBusTrips(String originCity, String destinationCity, LocalDate departureDate);
+
+    /**
+     * Retrieve the current authenticated user's hotel and bus bookings.
+     * The user ID is securely resolved from context/JWT and never passed by the AI model.
+     *
+     * @return User bookings summary
+     */
+    UserBookingsDto getMyBookings();
 
     /**
      * Reports missing information that the AI needs from the user.

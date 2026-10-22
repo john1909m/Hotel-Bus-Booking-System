@@ -1,6 +1,7 @@
 package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.BusTripDto;
+import com.spring.boot.dto.BusTripInfoDto;
 import com.spring.boot.dto.BusTripRequestDto;
 import com.spring.boot.enums.BusTripStatus;
 import com.spring.boot.exception.ResourceNotFoundException;
@@ -13,9 +14,11 @@ import com.spring.boot.repository.BusRouteRepository;
 import com.spring.boot.service.interfaces.BusTripService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -202,5 +205,33 @@ public class BusTripServiceImpl implements BusTripService {
                     return !tripDepartureTime.isBefore(earliestDepartureTime);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BusTripInfoDto> searchBusTrips(String originCity, String destinationCity, LocalDate departureDate) {
+        String cleanOrigin = (originCity != null && !originCity.trim().isEmpty()) ? originCity.trim() : null;
+        String cleanDest = (destinationCity != null && !destinationCity.trim().isEmpty()) ? destinationCity.trim() : null;
+
+        LocalDateTime departureAfter = departureDate != null ? departureDate.atStartOfDay() : null;
+        LocalDateTime departureBefore = departureDate != null ? departureDate.atTime(LocalTime.MAX) : null;
+
+        Pageable pageable = PageRequest.of(0, 10);
+        List<BusTrip> trips = busTripRepository.findTripsByCities(cleanOrigin, cleanDest, departureAfter, departureBefore, pageable);
+
+        return trips.stream()
+                .map(bt -> new BusTripInfoDto(
+                        bt.getId(),
+                        bt.getRoute() != null ? bt.getRoute().getId() : null,
+                        bt.getRoute() != null ? bt.getRoute().getName() : null,
+                        bt.getRoute() != null && bt.getRoute().getOriginStop() != null ? bt.getRoute().getOriginStop().getCity() : null,
+                        bt.getRoute() != null && bt.getRoute().getOriginStop() != null ? bt.getRoute().getOriginStop().getName() : null,
+                        bt.getRoute() != null && bt.getRoute().getDestinationStop() != null ? bt.getRoute().getDestinationStop().getCity() : null,
+                        bt.getRoute() != null && bt.getRoute().getDestinationStop() != null ? bt.getRoute().getDestinationStop().getName() : null,
+                        bt.getDepartureTime(),
+                        bt.getArrivalTime(),
+                        bt.getPrice(),
+                        bt.getStatus()
+                ))
+                .toList();
     }
 }

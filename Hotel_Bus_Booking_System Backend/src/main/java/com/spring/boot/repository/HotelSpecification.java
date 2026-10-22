@@ -14,8 +14,8 @@ public class HotelSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             // Text search on name or city (q parameter)
-            if (q != null && !q.isEmpty()) {
-                String likePattern = "%" + q.toLowerCase() + "%";
+            if (q != null && !q.trim().isEmpty()) {
+                String likePattern = "%" + q.trim().toLowerCase() + "%";
                 Predicate nameOrCityPredicate = cb.or(
                         cb.like(cb.lower(root.get("name")), likePattern),
                         cb.like(cb.lower(root.get("city")), likePattern)
@@ -24,8 +24,8 @@ public class HotelSpecification {
             }
 
             // City filter
-            if (city != null && !city.isEmpty()) {
-                predicates.add(cb.equal(cb.lower(root.get("city")), city.toLowerCase()));
+            if (city != null && !city.trim().isEmpty()) {
+                predicates.add(cb.equal(cb.lower(root.get("city")), city.trim().toLowerCase()));
             }
 
             // Minimum rating filter

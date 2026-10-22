@@ -1,6 +1,7 @@
 package com.spring.boot.service.interfaces;
 
 import com.spring.boot.dto.BusTripDto;
+import com.spring.boot.dto.BusTripInfoDto;
 import com.spring.boot.dto.BusTripRequestDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,4 +57,14 @@ public interface BusTripService {
      */
     List<BusTripDto> findSuitableReturnTrips(Long hotelId, LocalDate checkOutDate,
                                              String checkOutTime, int timeBufferHours);
+
+    /**
+     * Search scheduled bus trips between an origin city and destination city.
+     *
+     * @param originCity      the departure city
+     * @param destinationCity the arrival city
+     * @param departureDate   the departure date (optional)
+     * @return list of matching bus trips with route and stop details
+     */
+    List<BusTripInfoDto> searchBusTrips(String originCity, String destinationCity, LocalDate departureDate);
 }

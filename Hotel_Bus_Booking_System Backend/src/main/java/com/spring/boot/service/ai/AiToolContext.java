@@ -1,8 +1,10 @@
 package com.spring.boot.service.ai;
 
 import com.spring.boot.dto.BusSeatDto;
+import com.spring.boot.dto.BusTripInfoDto;
 import com.spring.boot.dto.HotelDto;
 import com.spring.boot.dto.RoomDto;
+import com.spring.boot.dto.UserBookingsDto;
 import com.spring.boot.dto.ai.AiResult;
 
 import java.util.ArrayList;
@@ -14,14 +16,23 @@ import java.util.List;
  */
 public class AiToolContext {
 
+    private Long userId;
     private final List<AiResult> results = new ArrayList<>();
     private final java.util.Set<String> missingInformation = new java.util.HashSet<>();
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
     /**
      * Adds a hotel search result.
      */
     public void addHotelResult(List<HotelDto> hotels) {
-        if (hotels != null && !hotels.isEmpty()) {
+        if (hotels != null) {
             results.add(new AiResult("HOTEL", hotels));
         }
     }
@@ -39,7 +50,7 @@ public class AiToolContext {
      * Adds a room availability result.
      */
     public void addRoomResult(List<RoomDto> rooms) {
-        if (rooms != null && !rooms.isEmpty()) {
+        if (rooms != null) {
             results.add(new AiResult("ROOM", rooms));
         }
     }
@@ -54,11 +65,29 @@ public class AiToolContext {
     }
 
     /**
+     * Adds a bus trip search result.
+     */
+    public void addBusTripSearchResult(List<BusTripInfoDto> busTrips) {
+        if (busTrips != null) {
+            results.add(new AiResult("BUS_SEARCH", busTrips));
+        }
+    }
+
+    /**
      * Adds a bus seat availability result.
      */
     public void addSeatResult(List<BusSeatDto> seats) {
-        if (seats != null && !seats.isEmpty()) {
+        if (seats != null) {
             results.add(new AiResult("SEAT_MAP", seats));
+        }
+    }
+
+    /**
+     * Adds user bookings result.
+     */
+    public void addUserBookingsResult(UserBookingsDto userBookings) {
+        if (userBookings != null) {
+            results.add(new AiResult("USER_BOOKINGS", userBookings));
         }
     }
 
@@ -91,5 +120,6 @@ public class AiToolContext {
     public void clear() {
         results.clear();
         missingInformation.clear();
+        userId = null;
     }
 }

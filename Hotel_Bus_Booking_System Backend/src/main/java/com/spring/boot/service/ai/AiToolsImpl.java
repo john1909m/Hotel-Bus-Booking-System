@@ -10,13 +10,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
-import com.spring.boot.service.ai.AiToolContext;
 
 import java.time.LocalDate;
 import java.util.*;
 
 /**
- * Read-only AI tools. They delegate to existing services and never take a userId.
+ * Read-only AI tools. They delegate to existing services and never take a userId from tool arguments.
  * Drafts and bookings are NOT tools: they go through the REST endpoints.
  */
 @Component
@@ -30,27 +29,64 @@ public class AiToolsImpl implements AiTools {
     private final HotelBookingService hotelBookingService;
     private final BusBookingService busBookingService;
 
-
     @Override
-    @Tool(description = "Search hotels by city, maximum price per night and minimum rating. All parameters are optional.")
+    @Tool(description = "Fuzzy-search hotels by name/keyword, city, max price per night (EGP), and min rating (1-5). "
+            + "Matching is partial and case-insensitive. Prefer the raw keyword the user said "
+            + "(e.g. 'pharaohs'), NOT an expanded name like 'Pharaohs Hotel'. All parameters optional.")
     public List<HotelDto> searchHotels(
-            @ToolParam(required = false, description = "City name") String city,
-            @ToolParam(required = false, description = "Maximum price per night") Double maxPrice,
-            @ToolParam(required = false, description = "Minimum rating") Double minRating) {
+            @ToolParam(required = false, description = "Hotel name or keyword (e.g. 'Pharaohs', 'Hilton')") String name,
+            @ToolParam(required = false, description = "City name (e.g. 'Cairo', 'Alexandria', 'Hurghada')") String city,
+            @ToolParam(required = false, description = "Maximum room price per night in EGP") Double maxPrice,
+            @ToolParam(required = false, description = "Minimum rating (1.0 to 5.0)") Double minRating) {
 
-        // Use the new paginated query for efficient search (small page of 10 results)
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "rating"));
 
+        // Drop generic words the model tends to append, and punctuation
+        String cleaned = cleanHotelKeyword(name);
+
         List<HotelDto> result = hotelService
-                .getAllHotelsPaginated(pageable, null, city, minRating, maxPrice)
+                .getAllHotelsPaginated(pageable, cleaned, city, minRating, maxPrice)
                 .getContent();
 
-        AiToolContext context = AiToolContextHolder.getContext();
-        if (context != null) {
-            context.addHotelResult(result);
+        // Fallback: try the longest meaningful token ("pharaohs hotel" -> "pharaohs")
+        if (result.isEmpty() && cleaned != null) {
+            String token = longestToken(cleaned);
+            if (token != null && !token.equalsIgnoreCase(cleaned)) {
+                System.out.printf("AI hotel search fallback token='%s'%n", token);
+                result = hotelService
+                        .getAllHotelsPaginated(pageable, token, city, minRating, maxPrice)
+                        .getContent();
+            }
         }
 
+        AiToolContext context = AiToolContextHolder.getContext();
+        if (context != null) context.addHotelResult(result);
+        System.out.println("AI hotel search results: " + result.size());
         return result;
+    }
+
+    private static final Set<String> NOISE_WORDS = Set.of(
+            "hotel", "hotels", "resort", "resorts", "inn", "suites", "hostel", "lodge", "the", "a", "an");
+
+    private static String cleanHotelKeyword(String raw) {
+        if (raw == null) return null;
+        String s = raw.replaceAll("['’\"]", " ").trim();
+        if (s.isEmpty()) return null;
+        // If it's only a single token, keep it as-is (don't strip "Pharaohs")
+        String[] parts = s.split("\\s+");
+        if (parts.length == 1) return parts[0];
+        // Remove noise words; if everything got removed, keep the original
+        String joined = Arrays.stream(parts)
+                .filter(p -> !NOISE_WORDS.contains(p.toLowerCase()))
+                .reduce((a, b) -> a + " " + b).orElse(s);
+        return joined.isBlank() ? s : joined;
+    }
+
+    private static String longestToken(String s) {
+        return Arrays.stream(s.split("\\s+"))
+                .filter(t -> t.length() >= 3)
+                .max(Comparator.comparingInt(String::length))
+                .orElse(null);
     }
 
     @Override
@@ -97,6 +133,23 @@ public class AiToolsImpl implements AiTools {
         AiToolContext context = AiToolContextHolder.getContext();
         if (context != null) {
             context.addRoomResult(result);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Tool(description = "Search scheduled bus trips between an origin city and destination city with optional departure date.")
+    public List<BusTripInfoDto> searchBusTrips(
+            @ToolParam(description = "Origin departure city (e.g. 'Cairo')") String originCity,
+            @ToolParam(description = "Destination arrival city (e.g. 'Hurghada')") String destinationCity,
+            @ToolParam(required = false, description = "Departure date in ISO format yyyy-MM-dd") LocalDate departureDate) {
+
+        List<BusTripInfoDto> result = busTripService.searchBusTrips(originCity, destinationCity, departureDate);
+
+        AiToolContext context = AiToolContextHolder.getContext();
+        if (context != null) {
+            context.addBusTripSearchResult(result);
         }
 
         return result;
@@ -155,8 +208,28 @@ public class AiToolsImpl implements AiTools {
     }
 
     @Override
-    @Tool(description = "call it when the user did not provide destination, checkInDate, checkOutDate, guests or budget")
-    public void reportMissingInformation(@ToolParam(description = "The fields that are missing (e.g. 'destination', 'checkInDate')") List<String> fields) {
+    @Tool(description = "Retrieve the current authenticated user's hotel and bus bookings and their statuses. Takes no parameters.")
+    public UserBookingsDto getMyBookings() {
+        AiToolContext context = AiToolContextHolder.getContext();
+        Long userId = context != null ? context.getUserId() : null;
+        if (userId == null) {
+            return new UserBookingsDto(Collections.emptyList(), Collections.emptyList());
+        }
+
+        List<HotelBookingDto> hotelBookings = hotelBookingService.getMyHotelBookings(userId);
+        List<BusBookingDto> busBookings = busBookingService.getMyBusBookings(userId);
+
+        UserBookingsDto result = new UserBookingsDto(hotelBookings, busBookings);
+        if (context != null) {
+            context.addUserBookingsResult(result);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Tool(description = "Report missing essential information needed to proceed with a booking flow (e.g. 'destination', 'checkInDate', 'checkOutDate', 'adults').")
+    public void reportMissingInformation(@ToolParam(description = "The fields that are missing") List<String> fields) {
         AiToolContext context = AiToolContextHolder.getContext();
         if (context != null) {
             context.reportMissingInformation(fields);

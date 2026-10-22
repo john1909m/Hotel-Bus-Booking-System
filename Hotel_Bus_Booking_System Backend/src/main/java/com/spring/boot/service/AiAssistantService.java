@@ -40,6 +40,7 @@ public class AiAssistantService {
      */
     public AiResponse processMessage(String conversationId, String message, Long userId) {
         AiToolContext toolContext = new AiToolContext();
+        toolContext.setUserId(userId);
         AiToolContextHolder.setContext(toolContext);
         try {
             // Rules live in the system prompt resource file; here we only add the current date
@@ -109,9 +110,11 @@ public class AiAssistantService {
                 .map(AiResult::type)
                 .collect(Collectors.toSet());
 
+        if (types.contains("USER_BOOKINGS")) return "BOOKING_INQUIRY";
         if (types.contains("SEAT_MAP")) return "SEAT_SELECTION";
-        if (types.contains("BUS_TRIP")) return "BUS_RECOMMENDATION";
+        if (types.contains("BUS_TRIP") || types.contains("BUS_SEARCH")) return "BUS_RECOMMENDATION";
         if (types.contains("ROOM")) return "ROOM_SELECTION";
+        if (types.contains("HOTEL_DETAILS")) return "HOTEL_DETAILS";
         if (types.contains("HOTEL")) return "HOTEL_SEARCH";
         return "GENERAL";
     }
