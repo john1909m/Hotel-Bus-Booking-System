@@ -52,4 +52,28 @@ public interface HotelBookingService {
      * @return true if room(s) are available, false otherwise
      */
     boolean isRoomAvailable(Long hotelId, LocalDate checkIn, LocalDate checkOut, Long roomId);
+
+    /**
+     * Calculates the required capacity for adults and children, enforcing:
+     * - Adults >= 1 (or fallback to guests >= 1)
+     * - Child ages between 0 and 17
+     * - Children < 12 are free (do not count towards room capacity)
+     * - Children >= 12 count as full guests
+     *
+     * @param adults requested adults count
+     * @param childAges requested child ages (optional)
+     * @param fallbackGuests legacy guests count if adults is null
+     * @return required room capacity
+     */
+    int calculateRequiredCapacity(Integer adults, List<Integer> childAges, Integer fallbackGuests);
+
+    /**
+     * Validates that the total capacity of selected rooms accommodates the guests.
+     *
+     * @param totalCapacity sum of capacities of selected rooms
+     * @param adults requested adults count
+     * @param childAges requested child ages (optional)
+     * @param fallbackGuests legacy guests count if adults is null
+     */
+    void validateRoomCapacity(int totalCapacity, Integer adults, List<Integer> childAges, Integer fallbackGuests);
 }

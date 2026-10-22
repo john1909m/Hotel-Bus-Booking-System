@@ -68,23 +68,28 @@ public class AiToolsImpl implements AiTools {
     }
 
     @Override
-    @Tool(description = "List the rooms of a hotel that are available for the given dates and number of guests.")
+    public List<RoomDto> checkRoomAvailability(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer guests) {
+        return checkRoomAvailability(hotelId, checkIn, checkOut, guests, Collections.emptyList());
+    }
+
+    @Override
+    @Tool(description = "List the rooms of a hotel that are available for the given dates, number of adults, and optional child ages. Children under 12 do not count towards room capacity.")
     public List<RoomDto> checkRoomAvailability(
             @ToolParam(description = "Hotel id") Long hotelId,
             @ToolParam(description = "Check-in date, ISO format yyyy-MM-dd") LocalDate checkIn,
             @ToolParam(description = "Check-out date, ISO format yyyy-MM-dd") LocalDate checkOut,
-            @ToolParam(description = "Number of guests") Integer guests) {
+            @ToolParam(description = "Number of adults (required, >= 1, or total guests if children omitted)") Integer adults,
+            @ToolParam(description = "List of child ages (each 0-17)", required = false) List<Integer> childAges) {
 
         // Tool inputs come from the model: validate like any user input
         if (checkIn == null || checkOut == null || !checkOut.isAfter(checkIn)) {
             throw new IllegalArgumentException("Check-out must be after check-in");
         }
-        if (guests == null || guests < 1) {
-            throw new IllegalArgumentException("Guests must be at least 1");
-        }
+
+        int requiredCapacity = hotelBookingService.calculateRequiredCapacity(adults, childAges, null);
 
         List<RoomDto> result = roomService.getRoomsByHotelId(hotelId).stream()
-                .filter(room -> room.getCapacity() >= guests)
+                .filter(room -> room.getCapacity() >= requiredCapacity)
                 .filter(room -> hotelBookingService.isRoomAvailable(hotelId, checkIn, checkOut, room.getId()))
                 .toList();
 

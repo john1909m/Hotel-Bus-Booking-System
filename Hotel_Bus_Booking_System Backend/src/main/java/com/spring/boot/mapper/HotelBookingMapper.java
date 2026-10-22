@@ -56,5 +56,12 @@ public interface HotelBookingMapper {
         } else {
             dto.setRooms(Collections.emptyList());
         }
+
+        if (dto.getAdults() == null && hotelBooking.getGuests() != null) {
+            dto.setAdults(hotelBooking.getGuests());
+        }
+        if (dto.getChildAges() == null) {
+            dto.setChildAges(Collections.emptyList());
+        }
     }
 }

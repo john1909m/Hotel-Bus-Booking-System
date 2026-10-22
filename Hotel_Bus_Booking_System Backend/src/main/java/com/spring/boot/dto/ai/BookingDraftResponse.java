@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,7 +42,12 @@ public class BookingDraftResponse {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private Long nights;
+    @Schema(description = "Total number of guests (adults + children)", example = "3")
     private Integer guests;
+    @Schema(description = "Number of adults (>= 1)", example = "2")
+    private Integer adults;
+    @Schema(description = "List of child ages (0-17)", example = "[5]")
+    private java.util.List<Integer> childAges;
 
     // Going trip
     private Long goingTripId;

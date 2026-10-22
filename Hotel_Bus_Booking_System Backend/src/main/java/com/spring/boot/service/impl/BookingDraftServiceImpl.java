@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,10 +95,11 @@ public class BookingDraftServiceImpl implements BookingDraftService {
             throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_in_past"));
         }
 
-        // Validate guest count
-        if (request.guests() > room.getCapacity()) {
-            throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
-        }
+        // Validate capacity with adults and child ages (free-under-12 rule)
+        hotelBookingService.validateRoomCapacity(room.getCapacity(),
+                request.adults(),
+                request.childAges(),
+                request.guests());
 
         // Validate room availability (using the same logic as the booking flow)
         if (!isRoomAvailable(room.getId(), checkIn, checkOut)) {
@@ -113,6 +115,14 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         BigDecimal returnTransportPrice = request.returnTripId() != null ? calculateTransportPrice(request.returnTripId()) : BigDecimal.ZERO;
         BigDecimal totalPrice = hotelTotal.add(goingTransportPrice).add(returnTransportPrice);
 
+        int effectiveAdults = request.adults() != null
+                ? request.adults()
+                : (request.guests() != null ? request.guests() : 1);
+        List<Integer> effectiveChildAges = request.childAges() != null
+                ? request.childAges()
+                : Collections.emptyList();
+        int totalOccupants = effectiveAdults + effectiveChildAges.size();
+
         // Create draft with snapshot
         BookingDraft draft = BookingDraft.builder()
                 .userId(userId)
@@ -124,7 +134,7 @@ public class BookingDraftServiceImpl implements BookingDraftService {
                 .roomPricePerNight(BigDecimal.valueOf(room.getPricePerNight()))
                 .checkIn(checkIn)
                 .checkOut(checkOut)
-                .guests(request.guests())
+                .guests(totalOccupants)
                 .outgoingTripId(request.goingTripId())
                 .returnTripId(request.returnTripId())
                 .outgoingSeatId(request.goingSeatId())
@@ -161,7 +171,10 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         }
 
         BookingDraft savedDraft = bookingDraftRepository.save(draft);
-        return mapToResponse(savedDraft);
+        BookingDraftResponse response = mapToResponse(savedDraft);
+        response.setAdults(effectiveAdults);
+        response.setChildAges(effectiveChildAges);
+        return response;
     }
 
     @Override
@@ -446,47 +459,46 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         // We'll build the response with the required fields.
         // For simplicity, we'll map only the basic fields and leave the transport details as null if not set.
         // In a real implementation, we would map all the snapshot fields.
-        BookingDraftResponse response = new BookingDraftResponse(
-                draft.getId(),
-                draft.getStatus(),
-                draft.getExpiresAt(),
-                draft.getHotelId(),
-                draft.getHotelName(),
-                draft.getRoomId(),
-                draft.getRoomNumber(),
-                null, // roomType - we'll set it below if we have roomId
-                draft.getRoomCapacity(),
-                draft.getRoomPricePerNight(),
-                draft.getCheckIn(),
-                draft.getCheckOut(),
-                java.time.temporal.ChronoUnit.DAYS.between(draft.getCheckIn(), draft.getCheckOut()),
-                draft.getGuests(),
-                // Going trip and seat
-                draft.getOutgoingTripId(),
-                draft.getOutgoingSeatId(),
-                draft.getGoingSeatNumber(),
-                draft.getGoingSeatType(),
-                draft.getGoingTripPrice(),
-                draft.getGoingTripOrigin(),
-                draft.getGoingTripDestination(),
-                draft.getGoingTripDepartureTime(),
-                draft.getGoingTripArrivalTime(),
-                // Return trip and seat
-                draft.getReturnTripId(),
-                draft.getReturnSeatId(),
-                draft.getReturnSeatNumber(),
-                draft.getReturnSeatType(),
-                draft.getReturnTripPrice(),
-                draft.getReturnTripOrigin(),
-                draft.getReturnTripDestination(),
-                draft.getReturnTripDepartureTime(),
-                draft.getReturnTripArrivalTime(),
-                draft.getHotelTotal(),
-                draft.getGoingTransportPrice(),
-                draft.getReturnTransportPrice(),
-                draft.getTotalPrice(),
-                draft.getConfirmedBookingId()
-        );
+        BookingDraftResponse response = BookingDraftResponse.builder()
+                .id(draft.getId())
+                .status(draft.getStatus())
+                .expiresAt(draft.getExpiresAt())
+                .hotelId(draft.getHotelId())
+                .hotelName(draft.getHotelName())
+                .roomId(draft.getRoomId())
+                .roomNumber(draft.getRoomNumber())
+                .roomCapacity(draft.getRoomCapacity())
+                .pricePerNight(draft.getRoomPricePerNight())
+                .checkInDate(draft.getCheckIn())
+                .checkOutDate(draft.getCheckOut())
+                .nights(java.time.temporal.ChronoUnit.DAYS.between(draft.getCheckIn(), draft.getCheckOut()))
+                .guests(draft.getGuests())
+                .adults(draft.getGuests())
+                .childAges(Collections.emptyList())
+                .goingTripId(draft.getOutgoingTripId())
+                .goingSeatId(draft.getOutgoingSeatId())
+                .goingSeatNumber(draft.getGoingSeatNumber())
+                .goingSeatType(draft.getGoingSeatType())
+                .goingTripPrice(draft.getGoingTripPrice())
+                .goingTripOrigin(draft.getGoingTripOrigin())
+                .goingTripDestination(draft.getGoingTripDestination())
+                .goingTripDepartureTime(draft.getGoingTripDepartureTime())
+                .goingTripArrivalTime(draft.getGoingTripArrivalTime())
+                .returnTripId(draft.getReturnTripId())
+                .returnSeatId(draft.getReturnSeatId())
+                .returnSeatNumber(draft.getReturnSeatNumber())
+                .returnSeatType(draft.getReturnSeatType())
+                .returnTripPrice(draft.getReturnTripPrice())
+                .returnTripOrigin(draft.getReturnTripOrigin())
+                .returnTripDestination(draft.getReturnTripDestination())
+                .returnTripDepartureTime(draft.getReturnTripDepartureTime())
+                .returnTripArrivalTime(draft.getReturnTripArrivalTime())
+                .hotelTotal(draft.getHotelTotal())
+                .goingTransportPrice(draft.getGoingTransportPrice())
+                .returnTransportPrice(draft.getReturnTransportPrice())
+                .totalPrice(draft.getTotalPrice())
+                .bookingId(draft.getConfirmedBookingId())
+                .build();
 
         // If we have room ID, we can fetch the room to get the room type
         if (draft.getRoomId() != null) {

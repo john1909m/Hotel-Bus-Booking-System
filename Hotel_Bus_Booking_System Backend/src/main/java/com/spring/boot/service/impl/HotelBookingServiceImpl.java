@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -106,13 +107,20 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             }
         }
 
-        // 4. Total guests capacity: sum of capacities of selected rooms >= requested guest count
-        if (hotelBookingRequestDto.getGuests() != null) {
-            int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
-            if (hotelBookingRequestDto.getGuests() > totalCapacity) {
-                throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
-            }
-        }
+        // 4. Total guests capacity: sum of capacities of selected rooms >= required capacity (free under 12 rule)
+        int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
+        validateRoomCapacity(totalCapacity,
+                hotelBookingRequestDto.getAdults(),
+                hotelBookingRequestDto.getChildAges(),
+                hotelBookingRequestDto.getGuests());
+
+        int effectiveAdults = hotelBookingRequestDto.getAdults() != null
+                ? hotelBookingRequestDto.getAdults()
+                : hotelBookingRequestDto.getGuests();
+        List<Integer> effectiveChildAges = hotelBookingRequestDto.getChildAges() != null
+                ? hotelBookingRequestDto.getChildAges()
+                : Collections.emptyList();
+        int totalOccupants = effectiveAdults + effectiveChildAges.size();
 
         // 5. totalPrice = sum over rooms of (nights * room.pricePerNight). Computed on server.
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
@@ -130,6 +138,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         hotelBooking.setHotel(hotel);
         hotelBooking.setRoom(rooms.get(0)); // Set first room for backward compatibility
         hotelBooking.setTotalPrice(totalPrice);
+        hotelBooking.setGuests(totalOccupants);
         hotelBooking.setStatus(BookingStatus.PENDING);
 
         // Save booking
@@ -147,7 +156,11 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         savedHotelBooking.setBookingRooms(bookingRooms);
 
         // Return DTO
-        return hotelBookingMapper.hotelBookingToHotelBookingDto(savedHotelBooking);
+        HotelBookingDto dto = hotelBookingMapper.hotelBookingToHotelBookingDto(savedHotelBooking);
+        dto.setAdults(effectiveAdults);
+        dto.setChildAges(effectiveChildAges);
+        dto.setGuests(totalOccupants);
+        return dto;
     }
 
     @Override
@@ -244,12 +257,21 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             }
         }
 
-        if (hotelBookingRequestDto.getGuests() != null && !rooms.isEmpty()) {
+        if (!rooms.isEmpty()) {
             int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
-            if (hotelBookingRequestDto.getGuests() > totalCapacity) {
-                throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
-            }
+            validateRoomCapacity(totalCapacity,
+                    hotelBookingRequestDto.getAdults(),
+                    hotelBookingRequestDto.getChildAges(),
+                    hotelBookingRequestDto.getGuests() != null ? hotelBookingRequestDto.getGuests() : existingHotelBooking.getGuests());
         }
+
+        int effectiveAdults = hotelBookingRequestDto.getAdults() != null
+                ? hotelBookingRequestDto.getAdults()
+                : (hotelBookingRequestDto.getGuests() != null ? hotelBookingRequestDto.getGuests() : existingHotelBooking.getGuests());
+        List<Integer> effectiveChildAges = hotelBookingRequestDto.getChildAges() != null
+                ? hotelBookingRequestDto.getChildAges()
+                : Collections.emptyList();
+        int totalOccupants = effectiveAdults + effectiveChildAges.size();
 
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
                 hotelBookingRequestDto.getCheckIn(),
@@ -261,7 +283,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
 
         existingHotelBooking.setCheckIn(hotelBookingRequestDto.getCheckIn());
         existingHotelBooking.setCheckOut(hotelBookingRequestDto.getCheckOut());
-        existingHotelBooking.setGuests(hotelBookingRequestDto.getGuests());
+        existingHotelBooking.setGuests(totalOccupants);
         existingHotelBooking.setTotalPrice(totalPrice);
 
         if (requestedRoomIds != null && !requestedRoomIds.isEmpty()) {
@@ -278,7 +300,11 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         }
 
         HotelBooking updatedHotelBooking = hotelBookingRepository.save(existingHotelBooking);
-        return hotelBookingMapper.hotelBookingToHotelBookingDto(updatedHotelBooking);
+        HotelBookingDto dto = hotelBookingMapper.hotelBookingToHotelBookingDto(updatedHotelBooking);
+        dto.setAdults(effectiveAdults);
+        dto.setChildAges(effectiveChildAges);
+        dto.setGuests(totalOccupants);
+        return dto;
     }
 
     @Override
@@ -322,5 +348,39 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         return hotelBookingRepository.findOverlappingBookingsExcludingSelf(
                         roomId, checkIn, checkOut, bookingId)
                 .isEmpty();
+    }
+
+    @Override
+    public int calculateRequiredCapacity(Integer adults, List<Integer> childAges, Integer fallbackGuests) {
+        Integer effectiveAdults = adults;
+        if (effectiveAdults == null) {
+            effectiveAdults = fallbackGuests;
+        }
+
+        if (effectiveAdults == null || effectiveAdults < 1) {
+            throw new InvalidGuestCountException(bundleMessageService.getMessage("error.invalid_adults"));
+        }
+
+        int count12Plus = 0;
+        if (childAges != null) {
+            for (Integer age : childAges) {
+                if (age == null || age < 0 || age > 17) {
+                    throw new InvalidGuestCountException(bundleMessageService.getMessage("error.invalid_child_age"));
+                }
+                if (age >= 12) {
+                    count12Plus++;
+                }
+            }
+        }
+
+        return effectiveAdults + count12Plus;
+    }
+
+    @Override
+    public void validateRoomCapacity(int totalCapacity, Integer adults, List<Integer> childAges, Integer fallbackGuests) {
+        int required = calculateRequiredCapacity(adults, childAges, fallbackGuests);
+        if (required > totalCapacity) {
+            throw new InvalidGuestCountException(bundleMessageService.getMessage("error.guest_count_exceeds_capacity"));
+        }
     }
 }

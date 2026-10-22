@@ -55,6 +55,8 @@ public class AiAssistantController {
     /**
      * Create a booking draft from the user's chosen selections.
      */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Create a booking draft",
+               description = "Creates a draft reservation for hotel and optional bus transport. Enforces capacity rules (children under 12 are free).")
     @PostMapping("/bookings/drafts")
     public ResponseEntity<BookingDraftResponse> createBookingDraft(@Valid @RequestBody BookingDraftRequest draftRequest) {
         Long userId = currentUserId();

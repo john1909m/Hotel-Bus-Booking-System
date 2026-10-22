@@ -1,6 +1,7 @@
 package com.spring.boot.dto;
 
 import com.spring.boot.enums.BookingStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,12 @@ public class HotelBookingDto {
     private Long id;
     private LocalDate checkIn;
     private LocalDate checkOut;
+    @Schema(description = "Total number of guests (adults + children)", example = "3")
     private Integer guests;
+    @Schema(description = "Number of adult guests", example = "2")
+    private Integer adults;
+    @Schema(description = "List of child ages (0-17)", example = "[5]")
+    private List<Integer> childAges;
     private BookingStatus status;
     private BigDecimal totalPrice;
     private Long userId; // Reference to user (costumer)

@@ -35,7 +35,20 @@ public interface AiTools {
     HotelDto getHotelDetails(Long hotelId);
 
     /**
-     * Check room availability for a hotel and date range.
+     * Check room availability for a hotel and date range with adults and child ages.
+     * Children under 12 do not count towards room capacity.
+     *
+     * @param hotelId   The hotel ID
+     * @param checkIn   Check-in date
+     * @param checkOut  Check-out date
+     * @param adults    Number of adults (>= 1)
+     * @param childAges List of child ages (0-17, optional)
+     * @return List of available rooms
+     */
+    List<RoomDto> checkRoomAvailability(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer adults, List<Integer> childAges);
+
+    /**
+     * Check room availability for a hotel and date range (backward compatible).
      *
      * @param hotelId   The hotel ID
      * @param checkIn   Check-in date
@@ -43,7 +56,9 @@ public interface AiTools {
      * @param guests    Number of guests
      * @return List of available rooms
      */
-    List<RoomDto> checkRoomAvailability(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer guests);
+    default List<RoomDto> checkRoomAvailability(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer guests) {
+        return checkRoomAvailability(hotelId, checkIn, checkOut, guests, java.util.Collections.emptyList());
+    }
 
     /**
      * Recommend bus trips based on hotel and dates.
@@ -135,6 +150,12 @@ class BookingDraftRequest {
     public void setCheckOut(LocalDate checkOut) { this.checkOut = checkOut; }
     public Integer getGuests() { return guests; }
     public void setGuests(Integer guests) { this.guests = guests; }
+    private Integer adults;
+    private List<Integer> childAges;
+    public Integer getAdults() { return adults; }
+    public void setAdults(Integer adults) { this.adults = adults; }
+    public List<Integer> getChildAges() { return childAges; }
+    public void setChildAges(List<Integer> childAges) { this.childAges = childAges; }
     public Long getOutgoingTripId() { return outgoingTripId; }
     public void setOutgoingTripId(Long outgoingTripId) { this.outgoingTripId = outgoingTripId; }
     public Long getReturnTripId() { return returnTripId; }
