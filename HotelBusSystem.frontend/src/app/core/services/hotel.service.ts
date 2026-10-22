@@ -3,25 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { HotelDTO, HotelRequestDTO } from '../models/Hotel/hotel.model';
-import { PageHotelDTO } from '../models/Pagination/hotelPage.model';
+import { PageHotelDTO, HotelListParams, HotelLookupParams } from '../models/Pagination/hotelPage.model';
 import { environment } from '../../../environments/environment';
+import { handleError } from '../../../utils/ErrorHandling';
 
-export interface HotelListParams {
-  page?: number;
-  size?: number;
-  sort?: string;
-  q?: string;
-  city?: string;
-  minRating?: number;
-  maxPrice?: number;
-}
 
-export interface HotelLookupParams {
-  page?: number;
-  size?: number;
-  sort?: string;
-  q?: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -46,7 +32,7 @@ export class HotelService {
     if (params.maxPrice !== undefined) httpParams = httpParams.set('maxPrice', params.maxPrice);
 
     return this.http.get<PageHotelDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -63,7 +49,7 @@ export class HotelService {
     if (params.q) httpParams = httpParams.set('q', params.q);
 
     return this.http.get<PageHotelDTO>(`${this.apiUrl}/lookup`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -74,7 +60,7 @@ export class HotelService {
    */
   getHotelById(id: number): Observable<HotelDTO> {
     return this.http.get<HotelDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -84,7 +70,7 @@ export class HotelService {
    */
   createHotel(payload: HotelRequestDTO): Observable<HotelDTO> {
     return this.http.post<HotelDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -94,7 +80,7 @@ export class HotelService {
    */
   updateHotel(id: number, payload: HotelRequestDTO): Observable<HotelDTO> {
     return this.http.put<HotelDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -104,21 +90,21 @@ export class HotelService {
    */
   deleteHotel(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }
 

@@ -16,3 +16,11 @@ export interface UserRequestDto{
     phoneNumber: string;
     role: role;
 }
+
+export interface UserListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+  role?: string;
+}

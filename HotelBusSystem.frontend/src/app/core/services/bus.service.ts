@@ -4,18 +4,10 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusDTO, BusRequestDTO } from '../models/Bus/bus.model';
-import { PageBusDTO } from '../models/Pagination/busPage.model';
+import { PageBusDTO, BusListParams, BusLookupParams } from '../models/Pagination/busPage.model'
+import { handleError } from '../../../utils/ErrorHandling';;
 
-export interface BusListParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-}
 
-export interface BusLookupParams {
-  q?: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +22,7 @@ export class BusService {
    */
   createBus(payload: BusRequestDTO): Observable<BusDTO> {
     return this.http.post<BusDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -40,7 +32,7 @@ export class BusService {
    */
   getBusById(id: number): Observable<BusDTO> {
     return this.http.get<BusDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -56,7 +48,7 @@ export class BusService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -69,7 +61,7 @@ export class BusService {
     if (params.q) httpParams = httpParams.set('q', params.q);
 
     return this.http.get<BusDTO[]>(`${this.apiUrl}/lookup`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -79,7 +71,7 @@ export class BusService {
    */
   updateBus(id: number, payload: BusRequestDTO): Observable<BusDTO> {
     return this.http.put<BusDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -89,20 +81,20 @@ export class BusService {
    */
   deleteBus(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusSeatDTO, BusSeatRequestDTO } from '../models/Bus/bus-seat.model';
+import { handleError } from '../../../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',
@@ -18,7 +19,7 @@ export class BusSeatService {
    */
   createBusSeat(payload: BusSeatRequestDTO): Observable<BusSeatDTO> {
     return this.http.post<BusSeatDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -28,7 +29,7 @@ export class BusSeatService {
    */
   getBusSeatById(id: number): Observable<BusSeatDTO> {
     return this.http.get<BusSeatDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -38,7 +39,7 @@ export class BusSeatService {
    */
   getAllBusSeats(): Observable<BusSeatDTO[]> {
     return this.http.get<BusSeatDTO[]>(this.apiUrl).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -48,7 +49,7 @@ export class BusSeatService {
    */
   getBusSeatsByBusId(busId: number): Observable<BusSeatDTO[]> {
     return this.http.get<BusSeatDTO[]>(`${this.apiUrl}/bus/${busId}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -58,7 +59,7 @@ export class BusSeatService {
    */
   updateBusSeat(id: number, payload: BusSeatRequestDTO): Observable<BusSeatDTO> {
     return this.http.put<BusSeatDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -68,20 +69,20 @@ export class BusSeatService {
    */
   deleteBusSeat(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { PaymentDTO, PaymentRequestDTO } from '../models/Payment/payment.model';
 import { environment } from '../../../environments/environment';
+import { handleError } from '../../../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +20,7 @@ export class PaymentService {
    */
   getPayments(): Observable<PaymentDTO[]> {
     return this.http.get<PaymentDTO[]>(this.apiUrl).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -38,7 +39,7 @@ export class PaymentService {
    */
   getPaymentById(id: number): Observable<PaymentDTO> {
     return this.http.get<PaymentDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -49,7 +50,7 @@ export class PaymentService {
    */
   getPaymentsByHotelBookingId(hotelBookingId: number): Observable<PaymentDTO[]> {
     return this.http.get<PaymentDTO[]>(`${this.apiUrl}/hotel-booking/${hotelBookingId}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -67,7 +68,7 @@ export class PaymentService {
    */
   getPaymentsByBusBookingId(busBookingId: number): Observable<PaymentDTO[]> {
     return this.http.get<PaymentDTO[]>(`${this.apiUrl}/bus-booking/${busBookingId}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -86,7 +87,7 @@ export class PaymentService {
    */
   createPayment(payload: PaymentRequestDTO): Observable<PaymentDTO> {
     return this.http.post<PaymentDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -98,7 +99,7 @@ export class PaymentService {
    */
   updatePayment(id: number, payload: PaymentRequestDTO): Observable<PaymentDTO> {
     return this.http.put<PaymentDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -109,20 +110,20 @@ export class PaymentService {
    */
   deletePayment(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

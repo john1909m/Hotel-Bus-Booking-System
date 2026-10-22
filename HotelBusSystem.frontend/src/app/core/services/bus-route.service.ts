@@ -4,18 +4,10 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusRouteDTO, BusRouteRequestDTO } from '../models/Bus/bus-route';
-import { PageBusRouteDTO } from '../models/Pagination/busRoutePage.model';
+import { BusRouteListParams, BusRouteLookupParams, PageBusRouteDTO } from '../models/Pagination/busRoutePage.model';
+import { handleError } from '../../../utils/ErrorHandling';
 
-export interface BusRouteListParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-}
 
-export interface BusRouteLookupParams {
-  q?: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +22,7 @@ export class BusRouteService {
    */
   createBusRoute(payload: BusRouteRequestDTO): Observable<BusRouteDTO> {
     return this.http.post<BusRouteDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -40,7 +32,7 @@ export class BusRouteService {
    */
   getBusRouteById(id: number): Observable<BusRouteDTO> {
     return this.http.get<BusRouteDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -56,7 +48,7 @@ export class BusRouteService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusRouteDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -69,7 +61,7 @@ export class BusRouteService {
     if (params.q) httpParams = httpParams.set('q', params.q);
 
     return this.http.get<BusRouteDTO[]>(`${this.apiUrl}/lookup`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -79,7 +71,7 @@ export class BusRouteService {
    */
   updateBusRoute(id: number, payload: BusRouteRequestDTO): Observable<BusRouteDTO> {
     return this.http.put<BusRouteDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -89,20 +81,20 @@ export class BusRouteService {
    */
   deleteBusRoute(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

@@ -14,3 +14,5 @@ export interface PageBusTripDTO{
     sort: Sort;
     empty: boolean;
 }
+
+

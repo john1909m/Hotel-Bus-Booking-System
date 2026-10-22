@@ -11,6 +11,7 @@ export interface RoomDTO{
     capacity: number;
     pricePerNight: number;
     hotelId: number;
+    hotelName: string;
 }
 
 export interface RoomRequestDTO{
@@ -19,5 +20,12 @@ export interface RoomRequestDTO{
     capacity: number;
     pricePerNight: number;
     hotelId: number;
+}
+
+export interface RoomSummaryDto {
+    id: number;
+    roomId: number;
+    roomType: roomType;
+    pricePerNight: number;
 }
 

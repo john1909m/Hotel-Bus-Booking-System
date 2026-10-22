@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AiChatRequest, AiChatResponse } from '../models/AI Assistant/AIChat.model';
 import { AIMessage } from '../models/AI Assistant/AIMessage.model';
 import { BookingDraftRequest, BookingDraftResponse } from '../models/AI Assistant/BookingDraft.model';
-
+import { handleError } from '../../../utils/ErrorHandling';
 @Injectable({
   providedIn: 'root',
 })
@@ -20,7 +20,7 @@ export class AiService {
    */
   chat(request: AiChatRequest): Observable<AiChatResponse> {
     return this.http.post<AiChatResponse>(`${this.apiUrl}/chat`, request).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -30,7 +30,7 @@ export class AiService {
    */
   getConversation(id: string): Observable<AIMessage[]> {
     return this.http.get<AIMessage[]>(`${this.apiUrl}/conversations/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -40,7 +40,7 @@ export class AiService {
    */
   createBookingDraft(draftRequest: BookingDraftRequest): Observable<BookingDraftResponse> {
     return this.http.post<BookingDraftResponse>(`${this.apiUrl}/bookings/drafts`, draftRequest).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -50,7 +50,7 @@ export class AiService {
    */
   getBookingDraft(id: number): Observable<BookingDraftResponse> {
     return this.http.get<BookingDraftResponse>(`${this.apiUrl}/bookings/drafts/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -65,20 +65,20 @@ export class AiService {
     }
 
     return this.http.post<BookingDraftResponse>(`${this.apiUrl}/bookings/drafts/${id}/confirm`, {}, { headers }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

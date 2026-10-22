@@ -15,3 +15,27 @@ export interface PageHotelDTO{
     sort: Sort;
     empty: boolean;
 }
+
+export interface HotelListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+  city?: string;
+  minRating?: number;
+  maxPrice?: number;
+}
+
+export interface HotelLookupParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  q?: string;
+}
+
+export interface PageMetadata{
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}

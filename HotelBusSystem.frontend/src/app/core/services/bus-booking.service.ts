@@ -3,15 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { BusBookingDTO, BusBookingRequestDTO } from '../models/Bus/bus-booking.model';
-import { PageBusBookingDTO } from '../models/Pagination/busBookingPage.model';
+import { PageBusBookingDTO, BusBookingListParams } from '../models/Pagination/busBookingPage.model';
 import { environment } from '../../../environments/environment';
+import { handleError } from '../../../utils/ErrorHandling';
 
-export interface BusBookingListParams {
-  page?: number;
-  size?: number;
-  sortBy?: string;
-  sortDirection?: string;
-}
+
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +22,7 @@ export class BusBookingService {
    */
   createBusBooking(payload: BusBookingRequestDTO): Observable<BusBookingDTO> {
     return this.http.post<BusBookingDTO>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -36,7 +32,7 @@ export class BusBookingService {
    */
   getBusBookingById(id: number): Observable<BusBookingDTO> {
     return this.http.get<BusBookingDTO>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -52,7 +48,7 @@ export class BusBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusBookingDTO>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -68,7 +64,7 @@ export class BusBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusBookingDTO>(`${this.apiUrl}/bus-trip/${busTripId}`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -84,7 +80,7 @@ export class BusBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusBookingDTO>(`${this.apiUrl}/user/${userId}`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -100,7 +96,7 @@ export class BusBookingService {
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
 
     return this.http.get<PageBusBookingDTO>(`${this.apiUrl}/my-bookings`, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -110,7 +106,7 @@ export class BusBookingService {
    */
   updateBusBooking(id: number, payload: BusBookingRequestDTO): Observable<BusBookingDTO> {
     return this.http.put<BusBookingDTO>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -120,20 +116,20 @@ export class BusBookingService {
    */
   deleteBusBooking(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }

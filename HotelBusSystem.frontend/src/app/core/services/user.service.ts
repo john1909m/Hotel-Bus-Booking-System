@@ -2,17 +2,10 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { UserDto, UserRequestDto } from '../models/User/user.model';
+import { UserDto, UserRequestDto, UserListParams} from '../models/User/user.model';
 import { PageUserDto } from '../models/Pagination/userPage.model';
 import { environment } from '../../../environments/environment';
-
-export interface UserListParams {
-  page?: number;
-  size?: number;
-  sort?: string;
-  q?: string;
-  role?: string;
-}
+import { handleError } from '../../../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +28,7 @@ export class UserService {
     if (params.role) httpParams = httpParams.set('role', params.role);
 
     return this.http.get<PageUserDto>(this.apiUrl, { params: httpParams }).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -54,7 +47,7 @@ export class UserService {
    */
   getUserById(id: number): Observable<UserDto> {
     return this.http.get<UserDto>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -65,7 +58,7 @@ export class UserService {
    */
   getUserByEmail(email: string): Observable<UserDto> {
     return this.http.get<UserDto>(`${this.apiUrl}/email/${encodeURIComponent(email)}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -77,7 +70,7 @@ export class UserService {
    */
   createUser(payload: UserRequestDto): Observable<UserDto> {
     return this.http.post<UserDto>(this.apiUrl, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -89,7 +82,7 @@ export class UserService {
    */
   updateUser(id: number, payload: UserRequestDto): Observable<UserDto> {
     return this.http.put<UserDto>(`${this.apiUrl}/${id}`, payload).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
@@ -100,20 +93,20 @@ export class UserService {
    */
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(this.handleError)
+      catchError(handleError)
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let message = 'Something went wrong';
+  // private handleError(error: HttpErrorResponse) {
+  //   let message = 'Something went wrong';
 
-    if (error.error instanceof ErrorEvent) {
-      message = `Client Error: ${error.error.message}`;
-    } else {
-      message = `Server Error [${error.status}]: ${error.message}`;
-    }
+  //   if (error.error instanceof ErrorEvent) {
+  //     message = `Client Error: ${error.error.message}`;
+  //   } else {
+  //     message = `Server Error [${error.status}]: ${error.message}`;
+  //   }
 
-    console.error(message);
-    return throwError(() => new Error(message));
-  }
+  //   console.error(message);
+  //   return throwError(() => new Error(message));
+  // }
 }
