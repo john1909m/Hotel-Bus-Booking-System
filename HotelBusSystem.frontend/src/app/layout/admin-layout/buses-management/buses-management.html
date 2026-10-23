@@ -13,22 +13,36 @@
       </nav>
       <h1 class="page-title">Buses Fleet</h1>
       <p class="page-subtitle">
-        Review operating bus fleet vehicles, transportation carriers, coach models, and maximum seating capacities.
+        Review and manage operating bus fleet vehicles, transportation carriers, coach models, and maximum seating capacities.
       </p>
     </div>
 
     <div class="header-actions">
       <button
         type="button"
-        class="btn-refresh"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-bus-btn"
+        aria-label="Add new bus"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New Bus</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
         (click)="loadBuses()"
         [disabled]="loading()"
         id="admin-buses-refresh-btn"
         aria-label="Refresh buses list"
       >
         <svg
-          width="16"
-          height="16"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -157,6 +171,7 @@
           <th>Operating Carrier</th>
           <th>Coach Type</th>
           <th>Seating Capacity</th>
+          <th style="width: 140px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -179,9 +194,60 @@
             />
           </td>
           <td>
-            <span class="capacity-badge">
-              💺 {{ bus.capacity }} Seats
-            </span>
+            <button
+              type="button"
+              class="capacity-badge-btn"
+              (click)="openSeatsDialog(bus)"
+              [attr.aria-label]="'View seats for ' + bus.busNumber"
+              title="Click to view and inspect bus seats"
+            >
+              <span>💺 {{ bus.capacity }} Seats</span>
+              <span class="seats-link-hint">Seats</span>
+            </button>
+          </td>
+          <td>
+            <div class="table-actions">
+              <!-- View Seats Action -->
+              <button
+                type="button"
+                class="btn-action btn-action-seats"
+                (click)="openSeatsDialog(bus)"
+                [attr.aria-label]="'Inspect seats for ' + bus.busNumber"
+                title="View & Inspect Seats"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 18v3m16-3v3M4 11V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5M4 11h16m-16 0v7h16v-7"/>
+                </svg>
+              </button>
+
+              <!-- Edit Bus Action -->
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(bus)"
+                [attr.aria-label]="'Edit bus ' + bus.busNumber"
+                title="Edit bus"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+
+              <!-- Delete Bus Action -->
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(bus)"
+                [attr.aria-label]="'Delete bus ' + bus.busNumber"
+                title="Delete bus"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
           </td>
         </tr>
       </ng-template>
@@ -189,12 +255,12 @@
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5">
+          <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🚌</div>
               <h3 class="empty-title">No buses found</h3>
               <p class="empty-desc">
-                No bus records were retrieved from the fleet registry.
+                No bus records were retrieved from the fleet registry. Click "Add New Bus" to create one.
               </p>
             </div>
           </td>
@@ -202,5 +268,278 @@
       </ng-template>
     </p-table>
   </section>
+
+  <!-- ─── Create / Edit Bus Modal Dialog ────────────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Bus' : 'Add New Bus'"
+    [style]="{ width: '90vw', maxWidth: '540px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="busForm" (ngSubmit)="saveBus()" class="dialog-form" id="admin-bus-form">
+      <div class="form-grid">
+
+        <!-- Bus Number -->
+        <div class="form-group">
+          <label for="busNumber" class="form-label">
+            Bus Number <span class="required-star">*</span>
+          </label>
+          <input
+            id="busNumber"
+            type="text"
+            class="form-input"
+            formControlName="busNumber"
+            placeholder="e.g. BUS-101, CAI-702"
+          />
+          @if (busForm.get('busNumber')?.touched && busForm.get('busNumber')?.errors?.['required']) {
+            <span class="form-error">Bus number is required.</span>
+          }
+        </div>
+
+        <!-- Operating Carrier -->
+        <div class="form-group">
+          <label for="company" class="form-label">
+            Operating Carrier <span class="required-star">*</span>
+          </label>
+          <input
+            id="company"
+            type="text"
+            class="form-input"
+            formControlName="company"
+            placeholder="e.g. SuperJet, GoBus"
+          />
+          @if (busForm.get('company')?.touched && busForm.get('company')?.errors?.['required']) {
+            <span class="form-error">Company / Carrier name is required.</span>
+          }
+        </div>
+
+        <!-- Seating Capacity -->
+        <div class="form-group">
+          <label for="capacity" class="form-label">
+            Seating Capacity <span class="required-star">*</span>
+          </label>
+          <input
+            id="capacity"
+            type="number"
+            class="form-input"
+            formControlName="capacity"
+            min="1"
+            max="120"
+            placeholder="e.g. 45"
+          />
+          @if (busForm.get('capacity')?.touched && busForm.get('capacity')?.errors) {
+            <span class="form-error">Capacity must be between 1 and 120 seats.</span>
+          }
+        </div>
+
+        <!-- Bus Type -->
+        <div class="form-group">
+          <label for="busType" class="form-label">
+            Coach Type <span class="required-star">*</span>
+          </label>
+          <select id="busType" class="form-select" formControlName="busType" [value]="selectedBusForSeats()"
+            (change)="onTypeChange($any($event.target).value)"
+          >
+            <option value=" ">All Types</option>
+            @for(type of buses(); track type.id){
+                <option [value]="type.id">{{type.busType}}</option>
+            }
+          </select>
+          @if (busForm.get('busType')?.touched && busForm.get('busType')?.errors?.['required']) {
+            <span class="form-error">Coach type is required.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || busForm.invalid"
+          id="admin-save-bus-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Bus' : 'Create Bus') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm Bus Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete Bus?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete bus
+        <strong class="delete-entity-name">
+          {{ busToDelete()?.busNumber }} ({{ busToDelete()?.company }})
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteBus()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-bus-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete Bus' }}
+      </button>
+    </div>
+  </p-dialog>
+
+  <!-- ─── View Bus Seats Modal Dialog ──────────────────────── -->
+  <p-dialog
+    [(visible)]="seatsDialogVisible"
+    [modal]="true"
+    [header]="'Seats for Bus ' + (selectedBusForSeats()?.busNumber || '') + ' (' + (selectedBusForSeats()?.company || '') + ')'"
+    [style]="{ width: '92vw', maxWidth: '820px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeSeatsDialog()"
+  >
+    <div class="seats-popup-container">
+
+      <!-- Metadata summary bar -->
+      <div class="seats-summary-banner">
+        <div class="seats-metrics">
+          <div class="metric-item">
+            <span>Bus Capacity:</span>
+            <span class="metric-value">💺 {{ selectedBusForSeats()?.capacity ?? 0 }}</span>
+          </div>
+
+          <div class="metric-item">
+            <span>Generated Seats:</span>
+            <span
+              [class.metric-badge-ok]="currentBusSeats().length === (selectedBusForSeats()?.capacity ?? 0)"
+              [class.metric-badge-warn]="currentBusSeats().length !== (selectedBusForSeats()?.capacity ?? 0)"
+            >
+              {{ currentBusSeats().length }} / {{ selectedBusForSeats()?.capacity ?? 0 }}
+            </span>
+          </div>
+
+          <div class="metric-item">
+            <span>Coach:</span>
+            <span class="metric-value">{{ selectedBusForSeats()?.busType || 'STANDARD' }}</span>
+          </div>
+        </div>
+
+        @if (currentBusSeats().length < (selectedBusForSeats()?.capacity ?? 0)) {
+          <button
+            type="button"
+            class="btn-auto-generate"
+            (click)="autoGenerateSeatsForCurrentBus()"
+            [disabled]="generatingSeats() || loadingSeats()"
+            id="admin-auto-generate-seats-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+            <span>{{ generatingSeats() ? 'Generating Seats…' : 'Auto-Generate Seats' }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Loading State -->
+      @if (loadingSeats()) {
+        <div class="seats-loading-state">
+          <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" />
+          <span>Loading seats data…</span>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (!loadingSeats() && currentBusSeats().length === 0) {
+        <div class="seats-empty-state">
+          <div class="empty-icon" aria-hidden="true">💺</div>
+          <h3 class="empty-title">No Seats Generated Yet</h3>
+          <p class="empty-desc">
+            This bus does not have any seat records generated in the database.
+          </p>
+          <button
+            type="button"
+            class="btn-primary-action"
+            (click)="autoGenerateSeatsForCurrentBus()"
+            [disabled]="generatingSeats()"
+          >
+            <span>Generate {{ selectedBusForSeats()?.capacity }} Seats Now</span>
+          </button>
+        </div>
+      }
+
+      <!-- Seats Grid -->
+      @if (!loadingSeats() && currentBusSeats().length > 0) {
+        <div class="seats-grid-scroll">
+          <div class="seats-grid">
+            @for (seat of sortedBusSeats(); track seat.id) {
+              <div class="seat-card">
+                <div class="seat-card-header">
+                  <span class="seat-number">💺 {{ seat.seatNumber }}</span>
+                  <span class="seat-id">#{{ seat.id }}</span>
+                </div>
+                <div class="seat-card-footer">
+                  <p-tag
+                    [value]="seat.seatType"
+                    [severity]="getSeatTypeSeverity(seat.seatType)"
+                    styleClass="seat-type-tag"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Popup Footer Actions -->
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-save"
+          (click)="closeSeatsDialog()"
+          id="admin-seats-dialog-done-btn"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  </p-dialog>
 
 </div>
