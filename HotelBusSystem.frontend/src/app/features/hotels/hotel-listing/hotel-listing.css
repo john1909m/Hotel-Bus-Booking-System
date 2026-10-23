@@ -255,6 +255,18 @@
   width: fit-content;
 }
 
+.hotel-card-name-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  outline: none;
+}
+
+.hotel-card-name-link:hover .hotel-card-name,
+.hotel-card-name-link:focus-visible .hotel-card-name {
+  color: var(--color-primary);
+}
+
 .hotel-card-name {
   font-size: 1.0625rem;
   font-weight: 700;
@@ -262,6 +274,7 @@
   font-family: var(--font-tight);
   line-height: 1.25;
   margin: 0;
+  transition: color var(--transition-fast);
 }
 
 .hotel-card-address {
@@ -324,6 +337,45 @@
   border: 1px solid var(--border-subtle);
   padding: 0.2rem 0.55rem;
   border-radius: var(--radius-full);
+}
+
+/* ── Card Action Footer ── */
+.hotel-card-actions {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-view-hotel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-view-hotel:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 155, 119, 0.25);
+}
+
+.btn-view-hotel svg {
+  transition: transform var(--transition-fast);
+}
+
+.btn-view-hotel:hover svg {
+  transform: translateX(3px);
 }
 
 /* ─── Skeleton Loading Cards ──────────────────────────────── */

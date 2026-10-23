@@ -9,17 +9,18 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { HotelService, HotelListParams } from '../../../core/services/hotel.service';
+import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
-import { PageHotelDTO } from '../../../core/models/Pagination/hotelPage.model';
+import { PageHotelDTO,  HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
 
 type PageState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-hotel-listing',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, RouterLink],
   templateUrl: './hotel-listing.html',
   styleUrl: './hotel-listing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
