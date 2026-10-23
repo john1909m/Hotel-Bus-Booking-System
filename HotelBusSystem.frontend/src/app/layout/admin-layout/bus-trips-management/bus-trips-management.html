@@ -13,22 +13,36 @@
       </nav>
       <h1 class="page-title">Bus Trips Management</h1>
       <p class="page-subtitle">
-        Monitor scheduled transit journeys, departure and arrival timetables, assigned coaches, and ticket pricing.
+        Monitor and schedule transit journeys, departure and arrival timetables, assigned coaches, and ticket pricing.
       </p>
     </div>
 
     <div class="header-actions">
       <button
         type="button"
-        class="btn-refresh"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-trip-btn"
+        aria-label="Schedule new bus trip"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Schedule New Trip</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
         (click)="loadTrips()"
         [disabled]="loading()"
         id="admin-bus-trips-refresh-btn"
         aria-label="Refresh bus trips"
       >
         <svg
-          width="16"
-          height="16"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -136,6 +150,7 @@
           <th>Arrival</th>
           <th>Ticket Fare</th>
           <th>Status</th>
+          <th style="width: 110px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -176,13 +191,41 @@
               styleClass="trip-status-tag"
             />
           </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(trip)"
+                [attr.aria-label]="'Edit trip #' + trip.id"
+                title="Edit trip"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(trip)"
+                [attr.aria-label]="'Delete trip #' + trip.id"
+                title="Delete trip"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
         </tr>
       </ng-template>
 
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7">
+          <td colspan="8">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🛣</div>
               <h3 class="empty-title">No bus trips found</h3>
@@ -190,7 +233,7 @@
                 @if (statusFilter()) {
                   No trips match the status filter: {{ statusFilter() }}.
                 } @else {
-                  No scheduled trips were retrieved from the database.
+                  No scheduled trips were retrieved from the database. Click "Schedule New Trip" to create one.
                 }
               </p>
             </div>
@@ -199,5 +242,189 @@
       </ng-template>
     </p-table>
   </section>
+
+  <!-- ─── Create / Edit Bus Trip Modal Dialog ───────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Bus Trip' : 'Schedule New Bus Trip'"
+    [style]="{ width: '90vw', maxWidth: '580px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="tripForm" (ngSubmit)="saveTrip()" class="dialog-form" id="admin-trip-form">
+      <div class="form-grid">
+
+        <!-- Bus Assignment -->
+        <div class="form-group">
+          <label for="tripBusId" class="form-label">
+            Assigned Bus Vehicle <span class="required-star">*</span>
+          </label>
+          <select id="tripBusId" class="form-select" formControlName="busId">
+            <option [ngValue]="null" disabled>Select Bus</option>
+            @for (b of buses(); track b.id) {
+              <option [ngValue]="b.id">{{ b.busNumber }} — {{ b.company }} ({{ b.capacity }} seats)</option>
+            }
+          </select>
+          @if (tripForm.get('busId')?.touched && tripForm.get('busId')?.errors?.['required']) {
+            <span class="form-error">Bus vehicle assignment is required.</span>
+          }
+        </div>
+
+        <!-- Route Assignment -->
+        <div class="form-group">
+          <label for="tripRouteId" class="form-label">
+            Assigned Route Corridor <span class="required-star">*</span>
+          </label>
+          <select id="tripRouteId" class="form-select" formControlName="routeId">
+            <option [ngValue]="null" disabled>Select Route</option>
+            @for (r of routes(); track r.id) {
+              <option [ngValue]="r.id">{{ r.name }}</option>
+            }
+          </select>
+          @if (tripForm.get('routeId')?.touched && tripForm.get('routeId')?.errors?.['required']) {
+            <span class="form-error">Route corridor assignment is required.</span>
+          }
+        </div>
+
+        <!-- Departure Datetime -->
+        <div class="form-group">
+          <label for="departure" class="form-label">
+            Departure Date &amp; Time <span class="required-star">*</span>
+          </label>
+          <input
+            id="departure"
+            type="datetime-local"
+            class="form-input"
+            formControlName="departure"
+          />
+          @if (tripForm.get('departure')?.touched && tripForm.get('departure')?.errors?.['required']) {
+            <span class="form-error">Departure time is required.</span>
+          }
+        </div>
+
+        <!-- Arrival Datetime -->
+        <div class="form-group">
+          <label for="arrivalTime" class="form-label">
+            Arrival Date &amp; Time <span class="required-star">*</span>
+          </label>
+          <input
+            id="arrivalTime"
+            type="datetime-local"
+            class="form-input"
+            formControlName="arrivalTime"
+          />
+          @if (tripForm.get('arrivalTime')?.touched && tripForm.get('arrivalTime')?.errors?.['required']) {
+            <span class="form-error">Arrival time is required.</span>
+          }
+        </div>
+
+        <!-- Ticket Price -->
+        <div class="form-group">
+          <label for="price" class="form-label">
+            Ticket Fare ($) <span class="required-star">*</span>
+          </label>
+          <input
+            id="price"
+            type="number"
+            class="form-input"
+            formControlName="price"
+            min="1"
+            step="0.01"
+            placeholder="e.g. 50.00"
+          />
+          @if (tripForm.get('price')?.touched && tripForm.get('price')?.errors) {
+            <span class="form-error">Valid positive price is required.</span>
+          }
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label for="status" class="form-label">
+            Operational Status <span class="required-star">*</span>
+          </label>
+          <select id="status" class="form-select" formControlName="status">
+            <option value="SCHEDULED">Scheduled</option>
+            <option value="DEPARTED">Departed</option>
+            <option value="ARRIVED">Arrived</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          @if (tripForm.get('status')?.touched && tripForm.get('status')?.errors?.['required']) {
+            <span class="form-error">Status is required.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || tripForm.invalid"
+          id="admin-save-trip-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Trip' : 'Schedule Trip') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm Trip Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete Bus Trip?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete trip
+        <strong class="delete-entity-name">
+          #{{ tripToDelete()?.id }} ({{ getRouteLabel(tripToDelete()?.routeId ?? 0) }})
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteTrip()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-trip-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete Trip' }}
+      </button>
+    </div>
+  </p-dialog>
 
 </div>

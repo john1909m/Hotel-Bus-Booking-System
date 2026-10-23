@@ -20,15 +20,29 @@
     <div class="header-actions">
       <button
         type="button"
-        class="btn-refresh"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-route-btn"
+        aria-label="Add new bus route"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New Route</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
         (click)="loadBusRoutes()"
         [disabled]="loading()"
         id="admin-bus-routes-refresh-btn"
         aria-label="Refresh bus routes"
       >
         <svg
-          width="16"
-          height="16"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -138,6 +152,7 @@
           <th>Origin Terminal</th>
           <th>Destination Terminal</th>
           <th>Est. Duration</th>
+          <th style="width: 110px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -164,18 +179,46 @@
               ⏱ {{ formatDuration(route.duration) }}
             </span>
           </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(route)"
+                [attr.aria-label]="'Edit route ' + route.name"
+                title="Edit route"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(route)"
+                [attr.aria-label]="'Delete route ' + route.name"
+                title="Delete route"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
         </tr>
       </ng-template>
 
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5">
+          <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🗺</div>
               <h3 class="empty-title">No bus routes found</h3>
               <p class="empty-desc">
-                No route itineraries have been recorded in the database yet.
+                No route itineraries have been recorded in the database yet. Click "Add New Route" to create one.
               </p>
             </div>
           </td>
@@ -183,5 +226,157 @@
       </ng-template>
     </p-table>
   </section>
+
+  <!-- ─── Create / Edit Bus Route Modal Dialog ──────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Bus Route' : 'Add New Bus Route'"
+    [style]="{ width: '90vw', maxWidth: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="routeForm" (ngSubmit)="saveRoute()" class="dialog-form" id="admin-route-form">
+      <div class="form-grid">
+
+        <!-- Route Name -->
+        <div class="form-group full-width">
+          <label for="routeName" class="form-label">
+            Route Name <span class="required-star">*</span>
+          </label>
+          <input
+            id="routeName"
+            type="text"
+            class="form-input"
+            formControlName="name"
+            placeholder="e.g. Cairo to Alexandria Express"
+          />
+          @if (routeForm.get('name')?.touched && routeForm.get('name')?.errors?.['required']) {
+            <span class="form-error">Route name is required.</span>
+          }
+        </div>
+
+        <!-- Origin Stop -->
+        <div class="form-group">
+          <label for="originStopId" class="form-label">
+            Origin Terminal <span class="required-star">*</span>
+          </label>
+          <select id="originStopId" class="form-select" formControlName="originStopId">
+            <option [ngValue]="null" disabled>Select Origin Stop</option>
+            @for (s of stops(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }} ({{ s.city }})</option>
+            }
+          </select>
+          @if (routeForm.get('originStopId')?.touched && routeForm.get('originStopId')?.errors?.['required']) {
+            <span class="form-error">Origin stop is required.</span>
+          }
+        </div>
+
+        <!-- Destination Stop -->
+        <div class="form-group">
+          <label for="destinationStopId" class="form-label">
+            Destination Terminal <span class="required-star">*</span>
+          </label>
+          <select id="destinationStopId" class="form-select" formControlName="destinationStopId">
+            <option [ngValue]="null" disabled>Select Destination Stop</option>
+            @for (s of stops(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }} ({{ s.city }})</option>
+            }
+          </select>
+          @if (routeForm.get('destinationStopId')?.touched && routeForm.get('destinationStopId')?.errors?.['required']) {
+            <span class="form-error">Destination stop is required.</span>
+          }
+        </div>
+
+        <!-- Duration in minutes -->
+        <div class="form-group full-width">
+          <label for="duration" class="form-label">
+            Estimated Duration (Minutes) <span class="required-star">*</span>
+          </label>
+          <input
+            id="duration"
+            type="number"
+            class="form-input"
+            formControlName="duration"
+            min="1"
+            placeholder="e.g. 180"
+          />
+          @if (routeForm.get('duration')?.touched && routeForm.get('duration')?.errors) {
+            <span class="form-error">Valid duration in minutes is required.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || routeForm.invalid"
+          id="admin-save-route-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Route' : 'Create Route') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm Route Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete Bus Route?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete route
+        <strong class="delete-entity-name">
+          {{ routeToDelete()?.name }}
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteRoute()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-route-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete Route' }}
+      </button>
+    </div>
+  </p-dialog>
 
 </div>

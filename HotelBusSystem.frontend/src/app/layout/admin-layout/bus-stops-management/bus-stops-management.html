@@ -20,15 +20,29 @@
     <div class="header-actions">
       <button
         type="button"
-        class="btn-refresh"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-stop-btn"
+        aria-label="Add new bus stop"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add New Bus Stop</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
         (click)="loadBusStops()"
         [disabled]="loading()"
         id="admin-bus-stops-refresh-btn"
         aria-label="Refresh bus stops"
       >
         <svg
-          width="16"
-          height="16"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -152,6 +166,7 @@
           <th>City</th>
           <th>Street Address</th>
           <th>Coordinates (Lat, Long)</th>
+          <th style="width: 110px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -171,8 +186,36 @@
           </td>
           <td>
             <span class="coord-text">
-              {{ stop.latitude | number:'1.4-4' }}, {{ stop.longitude | number:'1.4-4' }}
+              {{ stop.latitude | number:'1.4-4' }}, {{ (stop.longitude ?? stop.longtude) | number:'1.4-4' }}
             </span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(stop)"
+                [attr.aria-label]="'Edit stop ' + stop.name"
+                title="Edit stop"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(stop)"
+                [attr.aria-label]="'Delete stop ' + stop.name"
+                title="Delete stop"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
           </td>
         </tr>
       </ng-template>
@@ -180,7 +223,7 @@
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5">
+          <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🚏</div>
               <h3 class="empty-title">No bus stops found</h3>
@@ -188,7 +231,7 @@
                 @if (hasActiveFilters()) {
                   No bus stops match your filter query.
                 } @else {
-                  No transit stops have been registered yet.
+                  No transit stops have been registered yet. Click "Add New Bus Stop" to create one.
                 }
               </p>
             </div>
@@ -197,5 +240,177 @@
       </ng-template>
     </p-table>
   </section>
+
+  <!-- ─── Create / Edit Bus Stop Modal Dialog ───────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Bus Stop' : 'Add New Bus Stop'"
+    [style]="{ width: '90vw', maxWidth: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="stopForm" (ngSubmit)="saveStop()" class="dialog-form" id="admin-stop-form">
+      <div class="form-grid">
+
+        <!-- Station / Stop Name -->
+        <div class="form-group full-width">
+          <label for="stopName" class="form-label">
+            Stop Name <span class="required-star">*</span>
+          </label>
+          <input
+            id="stopName"
+            type="text"
+            class="form-input"
+            formControlName="name"
+            placeholder="e.g. Cairo Gateway Station, Ramses Terminal"
+          />
+          @if (stopForm.get('name')?.touched && stopForm.get('name')?.errors?.['required']) {
+            <span class="form-error">Stop name is required.</span>
+          }
+        </div>
+
+        <!-- City -->
+        <div class="form-group">
+          <label for="stopCity" class="form-label">
+            City <span class="required-star">*</span>
+          </label>
+          <input
+            id="stopCity"
+            type="text"
+            class="form-input"
+            formControlName="city"
+            placeholder="e.g. Cairo"
+          />
+          @if (stopForm.get('city')?.touched && stopForm.get('city')?.errors?.['required']) {
+            <span class="form-error">City is required.</span>
+          }
+        </div>
+
+        <!-- Street Address -->
+        <div class="form-group">
+          <label for="stopAddress" class="form-label">
+            Street Address <span class="required-star">*</span>
+          </label>
+          <input
+            id="stopAddress"
+            type="text"
+            class="form-input"
+            formControlName="address"
+            placeholder="e.g. Ramses Square, Downtown"
+          />
+          @if (stopForm.get('address')?.touched && stopForm.get('address')?.errors?.['required']) {
+            <span class="form-error">Address is required.</span>
+          }
+        </div>
+
+        <!-- Latitude -->
+        <div class="form-group">
+          <label for="stopLatitude" class="form-label">
+            Latitude <span class="required-star">*</span>
+          </label>
+          <input
+            id="stopLatitude"
+            type="number"
+            step="0.0001"
+            class="form-input"
+            formControlName="latitude"
+            placeholder="e.g. 30.0444"
+          />
+          @if (stopForm.get('latitude')?.touched && stopForm.get('latitude')?.errors) {
+            <span class="form-error">Valid latitude required (-90 to 90).</span>
+          }
+        </div>
+
+        <!-- Longitude -->
+        <div class="form-group">
+          <label for="stopLongitude" class="form-label">
+            Longitude <span class="required-star">*</span>
+          </label>
+          <input
+            id="stopLongitude"
+            type="number"
+            step="0.0001"
+            class="form-input"
+            formControlName="longitude"
+            placeholder="e.g. 31.2357"
+          />
+          @if (stopForm.get('longitude')?.touched && stopForm.get('longitude')?.errors) {
+            <span class="form-error">Valid longitude required (-180 to 180).</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || stopForm.invalid"
+          id="admin-save-stop-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Stop' : 'Create Stop') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Confirm Stop Deletion"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Delete Bus Stop?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete stop
+        <strong class="delete-entity-name">
+          {{ stopToDelete()?.name }} ({{ stopToDelete()?.city }})
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteStop()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-stop-btn"
+      >
+        {{ deleting() ? 'Deleting…' : 'Delete Stop' }}
+      </button>
+    </div>
+  </p-dialog>
 
 </div>
