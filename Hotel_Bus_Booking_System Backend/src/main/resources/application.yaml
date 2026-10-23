@@ -51,5 +51,11 @@ token:
   secret: hjfs46687kjsfkj@#@$#$@$%ffeddf@#sADDS
   time: 36000000
 
+app:
+  images:
+    allowed-hosts:
+      - images.example.com
+      - pub-cloudflare-r2.dev
+
 
 

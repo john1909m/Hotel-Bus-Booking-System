@@ -30,6 +30,7 @@ public class HotelServiceImpl implements HotelService {
     private final HotelRepository hotelRepository;
     private final HotelMapper hotelMapper;
     private final BundleMessageService bundleMessageService;
+    private final com.spring.boot.repository.HotelImageRepository hotelImageRepository;
 
     @Override
     public HotelDto createHotel(HotelRequestDto hotelRequestDto) {
@@ -107,10 +108,12 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void deleteHotel(Long id) {
         if (!hotelRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found"));
         }
+        hotelImageRepository.deleteByHotelId(id);
         hotelRepository.deleteById(id);
     }
 }
