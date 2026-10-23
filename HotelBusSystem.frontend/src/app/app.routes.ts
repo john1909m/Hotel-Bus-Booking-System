@@ -22,6 +22,12 @@ export const routes: Routes = [
           import('./features/hotels/hotel-listing/hotel-listing').then(m => m.HotelListing),
         title: 'TravelEase — Browse Hotels',
       },
+      {
+        path: 'hotels/:id',
+        loadComponent: () =>
+          import('./features/hotels/hotel-details/hotel-details').then(m => m.HotelDetails),
+        title: 'TravelEase — Hotel Details & Rooms',
+      },
     ],
   },
 

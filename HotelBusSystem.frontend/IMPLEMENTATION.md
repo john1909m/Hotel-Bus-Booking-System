@@ -13,7 +13,7 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 ### Customer Layout
 
 | File | Description |
-|---|---|
+| --- | --- |
 | `src/app/layout/user-layout/user-layout.ts` | Shell component with `UserHeader` and `RouterOutlet` |
 | `src/app/layout/user-layout/user-header/user-header.ts` | Responsive navigation for authenticated users |
 | `src/app/layout/user-layout/user-header/user-header.html` | Header template with auth-aware controls |
@@ -22,7 +22,7 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 ### Admin Layout
 
 | File | Description |
-|---|---|
+| --- | --- |
 | `src/app/layout/admin-layout/admin-layout.ts` | Admin shell with sidebar, topbar, logout |
 | `src/app/layout/admin-layout/admin-layout.html` | Template with sidebar nav, overlay, topbar, content area |
 | `src/app/layout/admin-layout/admin-layout.css` | Full-width sidebar + responsive mobile behavior |
@@ -33,7 +33,7 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 ## Files Modified
 
 | File | Change |
-|---|---|
+| --- | --- |
 | `src/app/app.routes.ts` | Added `UserLayout` and `AdminLayout` routes with correct guards |
 | `src/app/layout/user-layout/BusBookings/BusBookings.component.ts` | Converted to `standalone: true` for lazy loading |
 
@@ -41,7 +41,6 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 
 ## Routing Structure
 
-```
 / (PublicLayout)
 └── ''              → Landing Page
 
@@ -56,11 +55,10 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 └── ''              → AdminDashboard
 
 ** → redirectTo: ''
-```
 
 ---
 
-## Authentication & Guards — Reused Unchanged
+Authentication & Guards — Reused Unchanged
 
 - `AuthService` — signals, `/auth/me`, `ensureInitialized()`
 - `authGuard` — awaits initialization, redirects to `/login?returnUrl=...`
@@ -69,9 +67,7 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 - `authInterceptor` — global `withCredentials: true`
 - No token stored in browser storage. No changes to cookie handling.
 
----
-
-## Customer Layout
+Customer Layout
 
 - Fixed header with TravelEase branding
 - Navigation links to `/` (Home) and `/user/bus-bookings`
@@ -80,7 +76,7 @@ Authentication was already fully integrated prior to this phase (cookie-based, H
 - Responsive: hamburger menu at ≤900px, mobile dropdown nav
 - `RouterOutlet` renders child pages
 
-## Admin Layout
+Admin Layout
 
 - Persistent sidebar (260px) with all 12 module navigation items
 - Items: Dashboard, Hotels, Rooms, Users, Buses, Bus Seats, Bus Stops, Routes, Trips, Hotel Bookings, Bus Bookings, Payments
@@ -130,7 +126,7 @@ Clicking these will trigger the wildcard redirect (`** → ''`) until implemente
 
 ## Next Recommended Phase
 
-**Phase 3: Admin Module CRUD Pages**
+Phase 3: Admin Module CRUD Pages
 
 Implement the admin data management pages for each of the pending routes above. Each page should provide list, create, edit, and delete operations using the existing backend API and services.
 
@@ -138,28 +134,28 @@ Suggested order: Users → Hotels → Rooms → Buses → Bus Routes → Bus Sto
 
 ---
 
-# Implementation: Hotel Listing with API Integration & Pagination
+## Implementation: Hotel Listing with API Integration & Pagination
 
-## Overview
+Overview
 
 This phase implements the public **Hotel Listing** feature, integrating with the real backend REST endpoints according to the provided API contracts, using the existing Spring Data pagination models and design tokens.
 
 ---
 
-## Files Created
+Files Created
 
 | File | Description |
-|---|---|
+| --- | --- |
 | `src/app/features/hotels/hotel-listing/hotel-listing.ts` | Standalone component with Angular signals, reactive search debounce, filter state, pagination controls, and accessibility attributes |
 | `src/app/features/hotels/hotel-listing/hotel-listing.html` | Template with 4 distinct states (Loading skeleton, Success grid, Empty state, Error retry), search/filter bar, and numeric pagination |
 | `src/app/features/hotels/hotel-listing/hotel-listing.css` | Component styles implementing shimmer loading skeleton, responsive card grid, filter dropdowns, and pagination using design tokens |
 
 ---
 
-## Files Modified
+ Files Modified
 
 | File | Change |
-|---|---|
+| --- | --- |
 | `src/app/core/services/hotel.service.ts` | Fully implemented all 6 API contract methods (`getHotels`, `lookupHotels`, `getHotelById`, `createHotel`, `updateHotel`, `deleteHotel`) with `HttpParams` and error handling |
 | `src/app/app.routes.ts` | Registered public `/hotels` route under `PublicLayout` with lazy loading |
 | `IMPLEMENTATION.md` | Updated with feature documentation, API contracts, and verification details |
@@ -169,7 +165,7 @@ This phase implements the public **Hotel Listing** feature, integrating with the
 ## APIs Integrated
 
 | Endpoint | Method | Purpose | Auth | Request Model / Params | Response Model |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `/hotels` | GET | Hotel listing & filters | Public (None) | `page` (default 0), `size` (default 20), `sort`, `q`, `city`, `minRating`, `maxPrice` | `PageHotelDTO` |
 | `/hotels/lookup` | GET | Search dropdown / autocomplete | Public (None) | `page` (default 0), `size` (default 20), `sort`, `q` | `PageHotelDTO` |
 | `/hotels/{id}` | GET | Specific hotel details | Public (None) | Path parameter `id: number` | `HotelDTO` |
@@ -216,10 +212,8 @@ This phase implements the public **Hotel Listing** feature, integrating with the
 4. **Error State**: Displays accessible alert with server error message and a "Try Again" retry button that re-executes `loadHotels()`.
 
 ---
+ Routing Structure
 
-## Routing Structure
-
-```
 / (PublicLayout)
 ├── ''              → Landing Page
 └── hotels          → HotelListing (Public, Lazy Loaded)
@@ -235,11 +229,10 @@ This phase implements the public **Hotel Listing** feature, integrating with the
 └── ''              → AdminDashboard
 
 ** → redirectTo: ''
-```
 
 ---
 
-## Verification Performed
+ Verification Performed
 
 - [x] Compilation and TypeScript check: Zero errors.
 - [x] Standalone component contract: Correct `imports` (`FormsModule`, `RouterLink`, `DecimalPipe`).
@@ -257,9 +250,9 @@ This phase implements the public **Hotel Listing** feature, integrating with the
 
 ---
 
-# Implementation: Admin Hotel Management (CRUD & PrimeNG Integration)
+## Implementation: Admin Hotel Management (CRUD & PrimeNG Integration)
 
-## Overview
+ Overview
 
 This phase implements the **Hotel Management page inside the Admin Dashboard**, allowing authenticated administrators (`ADMIN` role) to browse, search, filter, create, edit, and delete hotel records using the existing `HotelService`, `HotelDTO`, `HotelRequestDTO`, and `PageHotelDTO` models.
 
@@ -267,20 +260,20 @@ The page utilizes PrimeNG components (`p-table`, `p-dialog`, `p-toast`, `p-tag`,
 
 ---
 
-## Files Created
+ Files Created
 
 | File | Description |
-|---|---|
+| --- | --- |
 | `src/app/layout/admin-layout/hotels-management/hotels-management.ts` | Standalone component with Angular signals, PrimeNG table integration, reactive forms, validation, and CRUD operations using `HotelService` |
 | `src/app/layout/admin-layout/hotels-management/hotels-management.html` | Template with responsive table, search and filter toolbar, create/edit modal dialog, delete confirmation dialog, and toast notifications |
 | `src/app/layout/admin-layout/hotels-management/hotels-management.css` | Custom styling harmonizing PrimeNG components with design tokens (`--bg-elevated`, `--color-primary`, `--border-color`, etc.) |
 
 ---
 
-## Files Modified
+Files Modified
 
 | File | Change |
-|---|---|
+| --- | --- |
 | `src/app/app.routes.ts` | Added lazy-loaded `/admin/hotels` child route under `admin` protected by `authGuard` and `roleGuard(['ADMIN'])` |
 | `src/app/features/hotels/hotel-listing/hotel-listing.ts` | Removed unused `RouterLink` import to keep compiler warnings clean |
 | `IMPLEMENTATION.md` | Appended documentation for Admin Hotel Management feature |
@@ -292,14 +285,13 @@ The page utilizes PrimeNG components (`p-table`, `p-dialog`, `p-toast`, `p-tag`,
 - **Sidebar Integration**: The sidebar item `{ label: 'Hotels', route: '/admin/hotels', icon: '🏨' }` in `AdminLayout` now routes directly to `HotelsManagement`.
 - **Role-Based Authorization**: Protected by existing `authGuard` and `roleGuard(['ADMIN'])`. Unauthenticated users or non-admin users (`USER`) cannot access this route.
 - **Route Definition**:
-  ```ts
+ts
   {
     path: 'hotels',
     loadComponent: () =>
       import('./layout/admin-layout/hotels-management/hotels-management').then(m => m.HotelsManagement),
     title: 'TravelEase Admin — Hotels Management',
   }
-  ```
 
 ---
 
@@ -327,7 +319,7 @@ All operations strictly reuse `HotelService` without duplicating API calls:
 
 ---
 
-## Verification Performed
+Verification Performed
 
 - [x] `ng build` — Succeeded with exit code 0 (`chunk-WHLYSASU.js [hotels-management]`).
 - [x] Admin Sidebar link `/admin/hotels` opens `HotelsManagement` lazy-loaded.
@@ -338,11 +330,11 @@ All operations strictly reuse `HotelService` without duplicating API calls:
 
 ---
 
-# Implementation: Backend API Services Integration (UserService & PaymentService)
+## Implementation: Backend API Services Integration (UserService & PaymentService)
 
-## Overview
+ Overview
 
-This phase implements the backend REST API integrations for **`UserService`** and **`PaymentService`** inside the Angular core services layer, following the reference implementation pattern established by `HotelService`. 
+This phase implements the backend REST API integrations for **`UserService`** and **`PaymentService`** inside the Angular core services layer, following the reference implementation pattern established by `HotelService`.
 
 Per project instructions, this phase is strictly limited to service integration: **no UI components, HTML templates, CSS styles, or routes were modified or created**. Room Service was deliberately excluded pending backend refactoring as instructed.
 
@@ -355,7 +347,7 @@ Per project instructions, this phase is strictly limited to service integration:
 Integrated against the `/users` endpoint structure with `HttpClient`, `HttpParams`, and error handling:
 
 | Method | Endpoint | HTTP Method | Request Body / Params | Response Model | Description |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `getUsers(params)` / `getAllUsers(params)` | `/users` | `GET` | `UserListParams`: `page`, `size`, `sort`, `q` | `PageUserDto` | Get all users with server-side pagination & filter |
 | `getUserById(id)` | `/users/{id}` | `GET` | Path param `id: number` | `UserDto` | Get specific user by ID |
 | `getUserByEmail(email)` | `/users/email/{email}` | `GET` | Path param `email: string` (URL-encoded) | `UserDto` | Get user by email address |
@@ -368,7 +360,7 @@ Integrated against the `/users` endpoint structure with `HttpClient`, `HttpParam
 Integrated against the `/payments` endpoint structure with `HttpClient`, `HttpParams`, and error handling:
 
 | Method | Endpoint | HTTP Method | Request Body / Params | Response Model | Description |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | `getPayments(params)` / `getAllPayments(params)` | `/payments` | `GET` | `PaymentListParams`: `page`, `size`, `sort` | `PaymentDTO[]` | Get all payments |
 | `getPaymentById(id)` | `/payments/{id}` | `GET` | Path param `id: number` | `PaymentDTO` | Get specific payment by ID |
 | `getPaymentByHotelBookingId(hotelBookingId)` | `/payments/hotel-booking/{hotelBookingId}` | `GET` | Path param `hotelBookingId: number` | `PaymentDTO` | Get payment by Hotel Booking ID |
@@ -405,13 +397,14 @@ Integrated against the `/payments` endpoint structure with `HttpClient`, `HttpPa
 
 ---
 
-# Backend API Analysis & Frontend Services Integration Audit
+## Backend API Analysis & Frontend Services Integration Audit
 
 ## 1. Discovered Backend API Inventory
 
 The Backend source code was inspected across 14 REST Controllers:
 
-### Hotel & Bus Linkage (`HotelBusStopController` -> `/api/hotel-bus-stops`)
+## Hotel & Bus Linkage (`HotelBusStopController` -> `/api/hotel-bus-stops`)
+
 - `POST /api/hotel-bus-stops` (Body: `HotelBusStopRequestDto`) -> `201 Created` (`HotelBusStopDto`)
 - `GET /api/hotel-bus-stops/{id}` (Path: `id`) -> `200 OK` (`HotelBusStopDto`)
 - `GET /api/hotel-bus-stops` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<HotelBusStopDto>`)
@@ -421,6 +414,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/hotel-bus-stops/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Hotel Bookings (`HotelBookingController` -> `/api/hotel-bookings`)
+
 - `POST /api/hotel-bookings` (Body: `HotelBookingRequestDto`) -> `201 Created` (`HotelBookingDto`)
 - `GET /api/hotel-bookings/{id}` (Path: `id`) -> `200 OK` (`HotelBookingDto`)
 - `GET /api/hotel-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<HotelBookingDto>`)
@@ -431,6 +425,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/hotel-bookings/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Bus Bookings (`BusBookingController` -> `/api/bus-bookings`)
+
 - `POST /api/bus-bookings` (Body: `BusBookingRequestDto`) -> `201 Created` (`BusBookingDto`)
 - `GET /api/bus-bookings/{id}` (Path: `id`) -> `200 OK` (`BusBookingDto`)
 - `GET /api/bus-bookings` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusBookingDto>`)
@@ -441,6 +436,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/bus-bookings/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Buses (`BusController` -> `/api/buses`)
+
 - `POST /api/buses` (Body: `BusRequestDto`) -> `201 Created` (`BusDto`)
 - `GET /api/buses/{id}` (Path: `id`) -> `200 OK` (`BusDto`)
 - `GET /api/buses` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`Page<BusDto>`)
@@ -449,6 +445,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/buses/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Bus Routes (`BusRouteController` -> `/api/bus-routes`)
+
 - `POST /api/bus-routes` (Body: `BusRouteRequestDto`) -> `201 Created` (`BusRouteDto`)
 - `GET /api/bus-routes/{id}` (Path: `id`) -> `200 OK` (`BusRouteDto`)
 - `GET /api/bus-routes` (Params: `page`, `size`, `sortBy`, `sortDirection`) -> `200 OK` (`PageResponse<BusRouteDto>`)
@@ -457,6 +454,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/bus-routes/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Bus Seats (`BusSeatController` -> `/api/bus-seats`)
+
 - `POST /api/bus-seats` (Body: `BusSeatRequestDto`) -> `201 Created` (`BusSeatDto`)
 - `GET /api/bus-seats/{id}` (Path: `id`) -> `200 OK` (`BusSeatDto`)
 - `GET /api/bus-seats` -> `200 OK` (`List<BusSeatDto>`)
@@ -465,6 +463,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/bus-seats/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Bus Stops (`BusStopController` -> `/api/bus-stops`)
+
 - `POST /api/bus-stops` (Body: `BusStopRequestDto`) -> `201 Created` (`BusStopDto`)
 - `GET /api/bus-stops/{id}` (Path: `id`) -> `200 OK` (`BusStopDto`)
 - `GET /api/bus-stops` (Params: `page`, `size`, `sort`, `q`, `city`) -> `200 OK` (`Page<BusStopDto>`)
@@ -473,6 +472,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/bus-stops/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Bus Trips (`BusTripController` -> `/api/bus-trips`)
+
 - `POST /api/bus-trips` (Body: `BusTripRequestDto`) -> `201 Created` (`BusTripDto`)
 - `GET /api/bus-trips/{id}` (Path: `id`) -> `200 OK` (`BusTripDto`)
 - `GET /api/bus-trips` (Params: `page`, `size`, `sort`, `busId`, `routeId`, `status`, `departureAfter`, `departureBefore`) -> `200 OK` (`Page<BusTripDto>`)
@@ -483,6 +483,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/bus-trips/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Rooms (`RoomController` -> `/api/rooms`)
+
 - `POST /api/rooms` (Body: `RoomRequestDto`) -> `201 Created` (`RoomDto`)
 - `GET /api/rooms/{id}` (Path: `id`) -> `200 OK` (`RoomDto`)
 - `GET /api/rooms` -> `200 OK` (`List<RoomDto>`)
@@ -491,6 +492,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/rooms/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Payments (`PaymentController` -> `/api/payments`)
+
 - `POST /api/payments` (Body: `PaymentRequestDto`) -> `201 Created` (`PaymentDto`)
 - `GET /api/payments/{id}` (Path: `id`) -> `200 OK` (`PaymentDto`)
 - `GET /api/payments` -> `200 OK` (`List<PaymentDto>`)
@@ -500,6 +502,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/payments/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Users (`UserController` -> `/api/users`)
+
 - `POST /api/users` (Body: `UserRequestDto`) -> `201 Created` (`UserDto`)
 - `GET /api/users/{id}` (Path: `id`) -> `200 OK` (`UserDto`)
 - `GET /api/users/email/{email}` (Path: `email`) -> `200 OK` (`UserDto`)
@@ -508,6 +511,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/users/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### Hotels (`HotelController` -> `/api/hotels`)
+
 - `POST /api/hotels` (Body: `HotelRequestDto`) -> `201 Created` (`HotelDto`)
 - `GET /api/hotels/{id}` (Path: `id`) -> `200 OK` (`HotelDto`)
 - `GET /api/hotels` (Params: `page`, `size`, `sort`, `q`, `city`, `minRating`, `maxPrice`) -> `200 OK` (`Page<HotelDto>`)
@@ -516,6 +520,7 @@ The Backend source code was inspected across 14 REST Controllers:
 - `DELETE /api/hotels/{id}` (Path: `id`) -> `204 No Content` (`Void`)
 
 ### AI Assistant (`AiAssistantController` -> `/api/ai`)
+
 - `POST /api/ai/chat` (Body: `AiChatRequest`) -> `200 OK` (`AiResponse`)
 - `GET /api/ai/conversations/{id}` (Path: `id`) -> `200 OK` (`List<AiMessageDto>`)
 - `POST /api/ai/bookings/drafts` (Body: `BookingDraftRequest`) -> `200 OK` (`BookingDraftResponse`)
@@ -527,7 +532,7 @@ The Backend source code was inspected across 14 REST Controllers:
 ## 2. Frontend Services Implementation & Audits
 
 | Service | File | Status | Implemented / Corrected Methods |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `HotelBusStopService` | `src/app/core/services/hotel-bus-stop.service.ts` | Completed | Added `createHotelBusStop`, `getHotelBusStopById`, `getHotelBusStopsByHotelId`, `getHotelBusStopsByBusStopId`, `updateHotelBusStop`, `deleteHotelBusStop`. Updated `getHotelBusStops`. |
 | `HotelBookingService` | `src/app/core/services/hotel-booking.service.ts` | Newly Implemented | Implemented all 8 methods: `createHotelBooking`, `getHotelBookingById`, `getAllHotelBookings`, `getHotelBookingsByUserId`, `getMyHotelBookings`, `getHotelBookingsByHotelId`, `updateHotelBooking`, `deleteHotelBooking`. |
 | `BusBookingService` | `src/app/core/services/bus-booking.service.ts` | Completed & Corrected | Corrected `getAllBusBookings` to return `PageBusBookingDTO`, corrected `getMyBusBookings` endpoint from `/my` to `/my-bookings` returning `PageBusBookingDTO`, added `createBusBooking`, `getBusBookingById`, `getBusBookingsByBusTripId`, `getBusBookingsByUserId`, `updateBusBooking`, `deleteBusBooking`. |
@@ -576,9 +581,9 @@ The Backend source code was inspected across 14 REST Controllers:
 
 ---
 
-# Implementation: Admin Dashboard & Complete Management Modules
+## Implementation: Admin Dashboard & Complete Management Modules
 
-## Overview
+ Overview
 
 This phase implements the comprehensive Admin Dashboard and Management modules in the **Hotel & Bus Booking System Angular Frontend**, fully integrating with backend APIs while preserving architecture, design system tokens, and PrimeNG UI conventions established in Hotel Management.
 
@@ -587,26 +592,26 @@ This phase implements the comprehensive Admin Dashboard and Management modules i
 ## 1. Components Implemented
 
 | Module | Route | Component | Purpose | Mode / Operations |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **Admin Dashboard** | `/admin` | `AdminDashboard` | Live aggregate metrics and quick module access hub | Live queries to real backend endpoints with fallback handling |
 | **Hotels Management** | `/admin/hotels` | `HotelsManagement` | Hotel listings, pricing metadata, GPS coordinates | Full CRUD (Read, Create, Edit, Delete, Filter, Sort) |
 | **Rooms Management** | `/admin/rooms` | `RoomsManagement` | Hotel room inventory, capacities, room types, pricing | Full CRUD + Hotel link & filtering (`RoomService` + `HotelService`) |
 | **Users Management** | `/admin/users` | `UsersManagement` | Account administration, role assignment (Admin/User) | Full CRUD + Server-side pagination & filter (`UserService`) |
-| **Buses Management** | `/admin/buses` | `BusesManagement` | Fleet registry, bus companies, seating capacities | Server-side paginated data display (`BusService`) |
-| **Bus Seats Management** | `/admin/bus-seats` | `BusSeatsManagement` | Cabin layouts, seat tiers (Regular, Premium, Window, Aisle) | Client-side paginated data display + Bus lookup (`BusSeatService`) |
-| **Bus Stops Management** | `/admin/bus-stops` | `BusStopsManagement` | Stations, pickup points, cities, GPS coordinates | Server-side paginated data display & search (`BusStopService`) |
-| **Bus Routes Management** | `/admin/bus-routes` | `BusRoutesManagement` | Transit routes, origin/destination terminals, duration | Server-side paginated data display + Stop lookup (`BusRouteService`) |
-| **Bus Trips Management** | `/admin/bus-trips` | `BusTripsManagement` | Timetables, departure/arrival schedules, fares, statuses | Server-side paginated data display + Status filter (`BusTripService`) |
-| **Hotel Bookings** | `/admin/hotel-bookings` | `HotelBookingsManagement` | Customer room reservations, stay periods, guest counts | Server-side paginated data display (`HotelBookingService`) |
-| **Bus Bookings** | `/admin/bus-bookings` | `BusBookingsManagement` | Passenger ticket reservations, assigned seats, fares | Server-side paginated data display (`BusBookingService`) |
-| **Payments** | `/admin/payments` | `PaymentsManagement` | Transaction audit logs, payment methods, settlement volume | Client-side paginated data display + Filters (`PaymentService`) |
+| **Buses Management** | `/admin/buses` | `BusesManagement` | Fleet registry, bus companies, seating capacities | Full CRUD (`BusService`: `getAllBuses`, `createBus`, `updateBus`, `deleteBus`) |
+| **Bus Seats Management** | `/admin/bus-seats` | `BusSeatsManagement` | Cabin layouts, seat tiers (Regular, Premium, Window, Aisle) | Client-side paginated data display + Bus lookup (`BusSeatService`) — CRUD deferred |
+| **Bus Stops Management** | `/admin/bus-stops` | `BusStopsManagement` | Stations, pickup points, cities, GPS coordinates | Full CRUD (`BusStopService`: `getAllBusStops`, `createBusStop`, `updateBusStop`, `deleteBusStop`) |
+| **Bus Routes Management** | `/admin/bus-routes` | `BusRoutesManagement` | Transit routes, origin/destination terminals, duration | Full CRUD (`BusRouteService`: `getAllBusRoutes`, `createBusRoute`, `updateBusRoute`, `deleteBusRoute` + Stop lookup) |
+| **Bus Trips Management** | `/admin/bus-trips` | `BusTripsManagement` | Timetables, departure/arrival schedules, fares, statuses | Full CRUD (`BusTripService`: `getAllBusTrips`, `createBusTrip`, `updateBusTrip`, `deleteBusTrip` + Lookups) |
+| **Hotel Bookings** | `/admin/hotel-bookings` | `HotelBookingsManagement` | Customer room reservations, stay periods, guest counts | Full CRUD (`HotelBookingService`: `getAllHotelBookings`, `createHotelBooking`, `updateHotelBooking`, `deleteHotelBooking` + `RoomService`) |
+| **Bus Bookings** | `/admin/bus-bookings` | `BusBookingsManagement` | Passenger ticket reservations, assigned seats, fares | Full CRUD (`BusBookingService`: `getAllBusBookings`, `createBusBooking`, `updateBusBooking`, `deleteBusBooking` + `BusTripService`) |
+| **Payments** | `/admin/payments` | `PaymentsManagement` | Transaction audit logs, payment methods, settlement volume | Full CRUD (`PaymentService`: `getPayments`, `createPayment`, `updatePayment`, `deletePayment`) |
 
 ---
 
 ## 2. Admin Routing Configuration (`app.routes.ts`)
 
 All 12 admin modules are protected by `canActivate: [authGuard, roleGuard(['ADMIN'])]` inside `AdminLayout`:
-```ts
+ts
 {
   path: 'admin',
   canActivate: [authGuard, roleGuard(['ADMIN'])],
@@ -626,9 +631,6 @@ All 12 admin modules are protected by `canActivate: [authGuard, roleGuard(['ADMI
     { path: 'payments', loadComponent: () => import('./layout/admin-layout/payments-management/payments-management').then(m => m.PaymentsManagement) },
   ],
 }
-```
-
----
 
 ## 3. UI Consistency & PrimeNG Integration
 
@@ -662,6 +664,171 @@ All 12 admin modules are protected by `canActivate: [authGuard, roleGuard(['ADMI
 - **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
 - **`npx ng build`**: Exited with code `0`. All 12 admin modules compiled into independent lazy-loaded chunks with zero template or dependency errors.
 
+---
 
+## Implementation: Admin Management Modules Full CRUD Operations
 
+ Overview
 
+This phase completed all missing CRUD operations across the Admin Management pages in the Angular frontend, specifically implementing `POST` (Create), `PUT` (Update), and `DELETE` (Delete) along with interactive dialogs and reactive forms. All changes utilize the pre-existing Angular API Services and DTO models without modifying backend or service contracts.
+
+---
+
+## 1. Summary of Operations Implemented by Page
+
+| Admin Management Page | Component | Service & Methods Utilized | Operations Implemented | Request Model / DTO |
+| --- | --- | --- | --- | --- |
+| **Buses Fleet** | `BusesManagement` | `BusService`• `createBus`• `updateBus`• `deleteBus`• `getAllBuses` | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `BusRequestDTO`(`busNumber`, `company`, `capacity`, `busType`) |
+| **Bus Stops & Stations** | `BusStopsManagement` | `BusStopService`• `createBusStop`• `updateBusStop`• `deleteBusStop`• `getAllBusStops` | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `BusStopRequestDto`(`name`, `city`, `address`, `latitude`, `longitude`) |
+| **Bus Routes** | `BusRoutesManagement` | `BusRouteService`• `createBusRoute`• `updateBusRoute`• `deleteBusRoute`• `getAllBusRoutes``BusStopService`• `lookupBusStops` | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `BusRouteRequestDTO`(`name`, `duration`, `originStopId`, `destinationStopId`) |
+| **Bus Trips** | `BusTripsManagement` | `BusTripService`• `createBusTrip`• `updateBusTrip`• `deleteBusTrip`• `getAllBusTrips``BusService` (`lookupBuses`)`BusRouteService` (`lookupBusRoutes`) | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `BusTripRequestDTO`(`busId`, `routeId`, `departure`, `arrivalTime`, `price`, `status`) |
+| **Hotel Bookings** | `HotelBookingsManagement` | `HotelBookingService`• `createHotelBooking`• `updateHotelBooking`• `deleteHotelBooking`• `getAllHotelBookings``RoomService` (`getAllRooms`) | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `HotelBookingRequestDTO`(`roomId`, `checkIn`, `checkOut`, `guests`) |
+| **Bus Bookings** | `BusBookingsManagement` | `BusBookingService`• `createBusBooking`• `updateBusBooking`• `deleteBusBooking`• `getAllBusBookings` `BusTripService` (`lookupBusTrips`) | • **Create (`POST`)**• **Update (`PUT`)** **Delete (`DELETE`)** | `BusBookingRequestDTO`(`busTripId`, `userId`, `seatId`, `price`, `status`, `bookingDate`) |
+| **Payments** | `PaymentsManagement` | `PaymentService`• `createPayment`• `updatePayment`• `deletePayment`• `getPayments` | • **Create (`POST`)**• **Update (`PUT`)**• **Delete (`DELETE`)** | `PaymentRequestDTO`(`amount`, `paymentMethod`, `paymentStatus`, `transactionDate`, `hotelBookingId`, `busBookingId`) |
+| **Hotels Management** | `HotelsManagement` | `HotelService` | Verified pre-existing full CRUD | `HotelRequestDTO` |
+| **Rooms Management** | `RoomsManagement` | `RoomService` + `HotelService` | Verified pre-existing full CRUD | `RoomRequestDTO` |
+| **Users Management** | `UsersManagement` | `UserService` | Verified pre-existing full CRUD | `UserRequestDto` |
+| **Bus Seats Management** | `BusSeatsManagement` | `BusSeatService` | *Excluded from current phase* | Dedicated implementation deferred |
+
+---
+
+## 2. Implementation Specifications
+
+### A. Reactive Forms & Validation Rules
+
+- **Form Architecture**: Built with Angular `FormBuilder` and strongly typed reactive controls (`FormGroup`).
+- **Validation**:
+  - Required fields enforced (`Validators.required`).
+  - String length bounds (`Validators.maxLength(...)`).
+  - Numerical value constraints (`Validators.min(...)`, `Validators.max(...)`).
+  - Date sanity checks (e.g. check-out strictly after check-in, arrival strictly after departure).
+  - Geographic coordinate bounds (-90 to 90 for latitude, -180 to 180 for longitude).
+  - Business rules (e.g. route origin stop and destination stop cannot be identical).
+- **Inline Error Feedback**: Displayed when controls are dirty or touched.
+
+### B. Dialogs & Modals
+
+- **Create / Edit Modal (`p-dialog`)**:
+  - Dynamically switches header title (`Create ...` vs `Edit ...`) and submit button label based on `isEditMode()` signal.
+  - Form controls pre-populated with entity attributes on edit, and reset with sensible defaults on create.
+- **Delete Confirmation Modal (`p-dialog`)**:
+  - Displays the specific entity name/reference and a deletion warning.
+  - Provides explicit Cancel and Delete actions.
+
+### C. State Management & Asynchronous Handling
+
+- **Double-Submission Prevention**: `saving` and `deleting` signals disable submit/delete buttons and render inline loading spinners while requests are in flight.
+- **Data Refresh**:
+  - On successful create, the table resets to page 0 and refetches data.
+  - On successful update, the table refreshes the current page.
+  - On successful delete, if the last item on a page was removed, the page index decrements before refreshing to prevent empty views.
+- **Feedback & Notifications**: PrimeNG `MessageService` (`p-toast`) presents feedback for successful operations and detailed error toasts if API calls fail.
+
+---
+
+## 3. Deferred / Incomplete Operations
+
+- **Bus Seats Management (`BusSeatsManagement`)**:
+  - Per project instructions, Bus Seats CRUD was intentionally deferred to be handled as a separate dedicated phase after establishing CRUD across all other administrative modules.
+
+---
+
+## 4. Verification Results
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. All 12 admin modules compiled into independent lazy-loaded chunks with zero template or dependency errors.
+
+---
+
+## Implementation: Buses Management & Integrated Bus Seats Management
+
+Overview
+
+This phase integrated Bus Seats Management directly into the existing **Buses Management Module** (`src/app/layout/admin-layout/buses-management/`). It enables administrators to manage buses and their associated seats in a unified interface: automatically generating seats upon bus creation, inspecting seats in a dedicated popup dialog with responsive card layouts, and synchronizing seat capacity on edit with active booking safety checks.
+
+All changes were implemented using the existing Angular API Services (`BusService`, `BusSeatService`, `BusBookingService`) and existing models (`BusDTO`, `BusSeatDTO`, `BusSeatRequestDTO`, `BusBookingDTO`, `SeatType`, `Status`) without modifying or inventing any backend services.
+
+---
+
+## 1. Features & Architectural Integration
+
+### A. Automatic Seat Generation on Bus Creation
+
+- **Trigger**: When an administrator creates a new bus in `BusesManagementComponent` with capacity $N$.
+- **Mechanism**:
+  1. Calls `busService.createBus(payload)` to persist the bus and receive the created `BusDTO` (including `id`).
+  2. Automatically executes sequential seat creation for seat numbers `1` through $N$ via `busSeatService.createBusSeat(...)`.
+  3. Assigns deterministic seat types using standard transport conventions:
+     - Seats `1` through `4`: `SeatType.PREMIUM`
+     - Remaining seats (4-across configuration):
+       - Position `0` and `3` (indices modulo 4 = 1, 0): `SeatType.WINDOW`
+       - Position `1` (indices modulo 4 = 2): `SeatType.AISLE`
+       - Position `2` (indices modulo 4 = 3): `SeatType.REGULAR`
+  4. Collects and displays feedback upon completion (notifying the user of both bus creation and seat generation counts).
+
+### B. View Bus Seats Popup Dialog
+
+- **Access Points**:
+  - Direct action button (`💺` / `btn-action-seats`) in the table's Actions column.
+  - Interactive Capacity badge button (`p-button` / `.capacity-badge-btn`) in the table's Capacity column.
+- **Header**: Formatted strictly as `"Seats for Bus [busNumber] ([company])"`.
+- **Summary Banner**:
+  - Displays total bus capacity (`bus.capacity`).
+  - Displays currently generated seat count (`currentBusSeats().length`), with color-coded status badges (`metric-badge-ok` if matching capacity, `metric-badge-warn` if discrepancies exist).
+  - Includes an `"Auto-Generate Seats"` action button if the seat count is lower than the capacity.
+- **Seat Cards Grid**:
+  - Responsive grid layout (`repeat(auto-fill, minmax(135px, 1fr))`) within a scrollable container (`max-height: 480px`).
+  - Individual rectangular cards for each seat displaying:
+    - Seat icon and number (`💺 Seat X`).
+    - Seat database identifier (`#ID`).
+    - Color-coded `p-tag` with the seat type:
+      - `PREMIUM` (severity: `warn`)
+      - `WINDOW` (severity: `info`)
+      - `AISLE` (severity: `success`)
+      - `REGULAR` (severity: `secondary`)
+- **Footer**: Includes a `"Done"` button to close the dialog.
+
+### C. Capacity Synchronization on Bus Update
+
+When an administrator edits a bus and modifies its capacity:
+
+1. **Bus Information Update**: Persists the updated bus record via `busService.updateBus(id, payload)`.
+2. **Capacity Increase**:
+   - Compares existing seat numbers with the new capacity.
+   - Generates only the missing seats up to the new capacity using `busSeatService.createBusSeat(...)`.
+   - Preserves all pre-existing seats without re-creating them.
+3. **Capacity Decrease & Booking Safety Constraints**:
+   - Identifies candidate seats to remove (seat numbers exceeding the new capacity).
+   - Queries existing bookings via `busBookingService.getAllBusBookings({ size: 1000 })`.
+   - Checks if any candidate seat is linked to an active booking (`status !== 'CANCELLED'`).
+   - **Protection Rule**: Never deletes seats associated with active bookings. Booked seats are preserved and a warning notification is displayed to the administrator detailing why they were retained.
+   - Deletes only unbooked candidate seats using `busSeatService.deleteBusSeat(seat.id)`.
+
+---
+
+## 2. API Services and Methods Utilized
+
+| Service | Method | Purpose in Buses Management |
+| --- | --- | --- |
+| `BusService` | `getAllBuses(pageable)` | Fetches paginated list of buses. |
+| `BusService` | `createBus(payload)` | Creates new bus record. |
+| `BusService` | `updateBus(id, payload)` | Updates bus record. |
+| `BusService` | `deleteBus(id)` | Deletes bus record. |
+| `BusSeatService` | `getAllBusSeats(pageable)` | Retrieves seats and filters by `busId` to populate seat dialog and audit existing seats. |
+| `BusSeatService` | `createBusSeat(payload)` | Persists an individual seat for a bus. |
+| `BusSeatService` | `deleteBusSeat(id)` | Removes excess seat on capacity decrease when no active bookings exist. |
+| `BusBookingService` | `getAllBusBookings(pageable)` | Checks for active bookings on candidate seats prior to seat removal. |
+
+---
+
+## 3. Unsupported Operations & Architectural Limitations
+
+- **Bulk Seat Creation Endpoint**: The existing `BusSeatService` only provides single-seat creation (`createBusSeat(payload: BusSeatRequestDTO)`). Frontend executes sequential HTTP requests with async handling rather than a single atomic batch payload.
+- **Seat Filtering by Bus ID Query Parameter**: `getAllBusSeats` takes pagination/sort parameters (`PageableParams`); seat filtering by `busId` is handled client-side over retrieved seat sets.
+
+---
+
+## 4. Verification & Build Results
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. All Angular modules and components compiled with zero errors.
