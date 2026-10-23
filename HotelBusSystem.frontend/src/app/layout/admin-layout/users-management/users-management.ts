@@ -26,9 +26,9 @@ import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 
 // Core Models & Services
-import { UserService, UserListParams } from '../../../core/services/user.service';
+import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserDto, UserRequestDto, role } from '../../../core/models/User/user.model';
+import { UserDto, UserRequestDto, role, UserListParams } from '../../../core/models/User/user.model';
 import { PageUserDto } from '../../../core/models/Pagination/userPage.model';
 
 @Component({
