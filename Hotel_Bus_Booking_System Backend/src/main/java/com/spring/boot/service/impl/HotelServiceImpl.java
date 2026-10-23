@@ -16,8 +16,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import com.spring.boot.model.HotelImage;
 
 
 /**
@@ -43,7 +47,13 @@ public class HotelServiceImpl implements HotelService {
     public HotelDto getHotelById(Long id) {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
-        return hotelMapper.hotelToHotelDto(hotel);
+        HotelDto dto = hotelMapper.hotelToHotelDto(hotel);
+        List<HotelImage> coverImages = hotelImageRepository
+                .findByHotelIdInAndRoomTypeIsNullOrderBySortOrderAscIdAsc(Collections.singletonList(id));
+        if (!coverImages.isEmpty()) {
+            dto.setCoverImageUrl(coverImages.get(0).getUrl());
+        }
+        return dto;
     }
 
     @Override
@@ -80,8 +90,32 @@ public class HotelServiceImpl implements HotelService {
         // Get paginated results from repository
         Page<Hotel> hotelPage = hotelRepository.findAll(spec, pageable);
 
-        // Convert to DTO page
-        return hotelPage.map(hotelMapper::hotelToHotelDto);
+        // If the page is empty, skip the image query entirely
+        if (hotelPage.isEmpty()) {
+            return hotelPage.map(hotelMapper::hotelToHotelDto);
+        }
+
+        // Collect hotel ids of THAT page only
+        List<Long> hotelIds = hotelPage.getContent().stream()
+                .map(Hotel::getId)
+                .toList();
+
+        // Call repository ONCE with those ids
+        List<HotelImage> coverImages = hotelImageRepository
+                .findByHotelIdInAndRoomTypeIsNullOrderBySortOrderAscIdAsc(hotelIds);
+
+        // Build Map<Long, String> keeping the FIRST image per hotel (ordered by sortOrder, id)
+        Map<Long, String> coverByHotelId = new HashMap<>();
+        for (HotelImage image : coverImages) {
+            coverByHotelId.putIfAbsent(image.getHotel().getId(), image.getUrl());
+        }
+
+        // Map each hotel to HotelDto and set coverImageUrl
+        return hotelPage.map(hotel -> {
+            HotelDto dto = hotelMapper.hotelToHotelDto(hotel);
+            dto.setCoverImageUrl(coverByHotelId.get(hotel.getId()));
+            return dto;
+        });
     }
 
     @Override

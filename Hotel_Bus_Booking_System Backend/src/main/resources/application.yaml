@@ -10,7 +10,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
     username: postgres.drdirtrhaebtsvtdellv
-    password: Travel@0706#project
+    password: ${POSTGRESQL_PASS}
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect

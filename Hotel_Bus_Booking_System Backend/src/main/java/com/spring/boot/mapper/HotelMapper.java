@@ -17,5 +17,6 @@ public interface HotelMapper {
 
     Hotel hotelRequestDtoToHotel(HotelRequestDto hotelRequestDto);
 
+    @Mapping(target = "coverImageUrl", ignore = true)
     HotelDto hotelToHotelDto(Hotel hotel);
 }

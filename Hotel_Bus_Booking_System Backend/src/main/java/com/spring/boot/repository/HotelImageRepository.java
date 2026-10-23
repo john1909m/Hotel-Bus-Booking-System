@@ -20,6 +20,8 @@ public interface HotelImageRepository extends JpaRepository<HotelImage, Long> {
 
     List<HotelImage> findByHotelIdAndRoomTypeOrderBySortOrderAscIdAsc(Long hotelId, RoomType roomType);
 
+    List<HotelImage> findByHotelIdInAndRoomTypeIsNullOrderBySortOrderAscIdAsc(java.util.Collection<Long> hotelIds);
+
     @Modifying
     @Query("DELETE FROM HotelImage hi WHERE hi.hotel.id = :hotelId")
     void deleteByHotelId(@Param("hotelId") Long hotelId);
