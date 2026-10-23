@@ -1,0 +1,933 @@
+<div class="hotel-details-container">
+  <!-- ── TOP NAVIGATION & BREADCRUMBS ── -->
+  <nav class="breadcrumb-bar" aria-label="Breadcrumb navigation">
+    <div class="breadcrumb-inner">
+      <a routerLink="/hotels" class="back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Hotels</span>
+      </a>
+
+      <ol class="breadcrumbs-list">
+        <li><a routerLink="/">Home</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li><a routerLink="/hotels">Hotels</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li class="current" aria-current="page">
+          @if (hotelState() === 'success') {
+            {{ hotel()?.name }}
+          } @else if (hotelState() === 'loading') {
+            <span>Loading...</span>
+          } @else {
+            <span>Hotel Details</span>
+          }
+        </li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- ── HOTEL LOADING STATE (SKELETON) ── -->
+  @if (hotelState() === 'loading') {
+    <div class="hotel-skeleton-wrapper" aria-busy="true" aria-label="Loading hotel details">
+      <div class="skeleton-hero">
+        <div class="skeleton-pill"></div>
+        <div class="skeleton-title"></div>
+        <div class="skeleton-subtitle"></div>
+        <div class="skeleton-gallery"></div>
+      </div>
+      <div class="skeleton-rooms-grid">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="skeleton-room-card"></div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── HOTEL ERROR STATE ── -->
+  @if (hotelState() === 'error') {
+    <section class="state-card error-card" role="alert">
+      <div class="state-icon error-icon" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2>Hotel Not Found</h2>
+      <p class="error-msg">{{ hotelError() }}</p>
+      <div class="state-actions">
+        <button type="button" class="btn btn-secondary" (click)="retryLoad()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Try Again
+        </button>
+        <a routerLink="/hotels" class="btn btn-primary">
+          Browse All Hotels
+        </a>
+      </div>
+    </section>
+  }
+
+  <!-- ── HOTEL SUCCESS STATE ── -->
+  @if (hotelState() === 'success' && hotel(); as h) {
+    <!-- ── HOTEL HERO SECTION ── -->
+    <header class="hotel-hero">
+      <div class="hotel-hero-top">
+        <div class="hotel-badges-row">
+          @if (h.city) {
+            <span class="badge badge-city">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+              {{ h.city }}
+            </span>
+          }
+          @if (h.rating) {
+            <div class="badge badge-rating" aria-label="Rated {{ h.rating }} out of 5 stars">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>{{ h.rating | number:'1.1-1' }} Stars</span>
+            </div>
+          }
+          @if (hasCoordinates()) {
+            <span class="badge badge-coords" title="GPS Coordinates">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              {{ h.latitude | number:'1.2-2' }}, {{ h.longitude | number:'1.2-2' }}
+            </span>
+          }
+        </div>
+
+        <h1 class="hotel-title">{{ h.name }}</h1>
+
+        @if (h.address) {
+          <p class="hotel-address">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>{{ h.address }}, {{ h.city }}</span>
+          </p>
+        }
+      </div>
+
+      <!-- ── VISUAL SHOWCASE & TIMINGS ── -->
+      <div class="hotel-showcase-grid">
+        <div class="hotel-featured-banner" role="img" [attr.aria-label]="'Visual feature for ' + h.name">
+          <div class="banner-overlay">
+            <div class="banner-icon-cluster">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <div class="banner-hotel-tag">
+              <span class="hotel-tag-city">{{ h.city }}</span>
+              <span class="hotel-tag-name">{{ h.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hotel-info-sidebar">
+          <!-- Timings Card -->
+          <div class="info-card timings-card">
+            <h3 class="info-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Check-in & Check-out
+            </h3>
+            <div class="timings-grid">
+              <div class="timing-block">
+                <span class="timing-label">Check-in</span>
+                <span class="timing-val">{{ h.checkInTime || '14:00' }}</span>
+              </div>
+              <div class="timing-block">
+                <span class="timing-label">Check-out</span>
+                <span class="timing-val">{{ h.checkOutTime || '11:00' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rating & Standards Card -->
+          <div class="info-card standards-card">
+            <h3 class="info-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              Guest Rating & Class
+            </h3>
+            <div class="stars-summary">
+              <div class="stars-row" aria-hidden="true">
+                @for (star of starArray(); track $index) {
+                  <svg class="star-icon" [class.star-filled]="star === 1" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                }
+              </div>
+              <span class="rating-number">{{ h.rating ? (h.rating | number:'1.1-1') : 'Unrated' }}</span>
+            </div>
+            <p class="standards-note">Verified accommodation standards</p>
+          </div>
+
+          <!-- Quick Jump Button -->
+          <a href="#hotel-rooms-section" class="btn btn-primary btn-jump-rooms">
+            <span>Browse Available Rooms</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- ── DESCRIPTION & AMENITIES CARD ── -->
+      <section class="hotel-about-card" aria-labelledby="about-hotel-heading">
+        <h2 id="about-hotel-heading" class="section-title">About {{ h.name }}</h2>
+        <div class="hotel-desc-text">
+          <p>{{ h.description || 'Welcome to ' + h.name + ', offering comfortable accommodations and convenient access to local attractions in ' + h.city + '.' }}</p>
+        </div>
+
+        <!-- Curated Amenities Highlights -->
+        <div class="hotel-amenities-strip">
+          <h3 class="amenities-title">Property Highlights</h3>
+          <ul class="amenities-list">
+            <li class="amenity-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
+              <span>High-Speed Wi-Fi</span>
+            </li>
+            <li class="amenity-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+              </svg>
+              <span>Climate Control (AC)</span>
+            </li>
+            <li class="amenity-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+              <span>24/7 Front Desk</span>
+            </li>
+            <li class="amenity-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Prime City Access</span>
+            </li>
+            <li class="amenity-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Daily Housekeeping</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </header>
+
+    <!-- ── ROOMS SECTION ── -->
+    <section id="hotel-rooms-section" class="hotel-rooms-section" aria-labelledby="rooms-heading">
+      <div class="rooms-header">
+        <div class="rooms-header-text">
+          <h2 id="rooms-heading" class="rooms-title">Accommodations & Rooms</h2>
+          <p class="rooms-subtitle">Browse the room categories and suites currently registered at {{ h.name }}.</p>
+        </div>
+
+        <!-- Filter & Sort Controls -->
+        <div class="rooms-controls-bar">
+          <!-- Room Type Filter Chips -->
+          <div class="room-type-chips" role="radiogroup" aria-label="Filter by room type">
+            <button
+              type="button"
+              class="type-chip"
+              [class.active]="selectedRoomType() === 'ALL'"
+              (click)="onRoomTypeFilterChange('ALL')"
+              aria-pressed="selectedRoomType() === 'ALL'">
+              All Rooms ({{ roomTypeCounts()['ALL'] }})
+            </button>
+            <button
+              type="button"
+              class="type-chip"
+              [class.active]="selectedRoomType() === 'SINGLE'"
+              (click)="onRoomTypeFilterChange('SINGLE')"
+              aria-pressed="selectedRoomType() === 'SINGLE'">
+              Single ({{ roomTypeCounts()['SINGLE'] }})
+            </button>
+            <button
+              type="button"
+              class="type-chip"
+              [class.active]="selectedRoomType() === 'DOUBLE'"
+              (click)="onRoomTypeFilterChange('DOUBLE')"
+              aria-pressed="selectedRoomType() === 'DOUBLE'">
+              Double ({{ roomTypeCounts()['DOUBLE'] }})
+            </button>
+            <button
+              type="button"
+              class="type-chip"
+              [class.active]="selectedRoomType() === 'SUITE'"
+              (click)="onRoomTypeFilterChange('SUITE')"
+              aria-pressed="selectedRoomType() === 'SUITE'">
+              Suite ({{ roomTypeCounts()['SUITE'] }})
+            </button>
+            <button
+              type="button"
+              class="type-chip"
+              [class.active]="selectedRoomType() === 'DELUXE'"
+              (click)="onRoomTypeFilterChange('DELUXE')"
+              aria-pressed="selectedRoomType() === 'DELUXE'">
+              Deluxe ({{ roomTypeCounts()['DELUXE'] }})
+            </button>
+          </div>
+
+          <!-- Sort Dropdown -->
+          <div class="sort-control">
+            <label for="roomsSortSelect" class="sort-label">Sort by:</label>
+            <select
+              id="roomsSortSelect"
+              class="sort-select"
+              (change)="onSortChange($event)">
+              <option value="default">Default Order</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="capacity-desc">Capacity: Largest First</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GUEST SELECTION & CAPACITY PLANNING ── -->
+      <section class="guest-selection-card" aria-labelledby="guest-selection-title">
+        <div class="guest-card-header">
+          <div class="guest-card-title-wrap">
+            <div class="guest-icon-circle" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 id="guest-selection-title" class="guest-card-title">Guest Selection & Capacity</h3>
+              <p class="guest-card-subtitle">Set your travel party to verify room capacity across your selected rooms.</p>
+            </div>
+          </div>
+
+          <!-- Capacity Badge in Header -->
+          <div class="capacity-indicator-pill" [ngClass]="'capacity-pill--' + capacityStatus()" aria-live="polite">
+            @if (capacityStatus() === 'no-rooms') {
+              <span class="indicator-dot dot-neutral"></span>
+              <span>No rooms selected</span>
+            } @else if (capacityStatus() === 'missing-age') {
+              <span class="indicator-dot dot-warning"></span>
+              <span>Child age required</span>
+            } @else if (capacityStatus() === 'exceeded') {
+              <span class="indicator-dot dot-danger"></span>
+              <span>Capacity Exceeded ({{ totalRoomCapacity() }}/{{ requiredCapacity() }})</span>
+            } @else {
+              <span class="indicator-dot dot-success"></span>
+              <span>Capacity Matched ({{ requiredCapacity() }}/{{ totalRoomCapacity() }})</span>
+            }
+          </div>
+        </div>
+
+        <!-- Steppers Grid: Adults & Children -->
+        <div class="guest-steppers-grid">
+          <!-- Adults Stepper -->
+          <div class="stepper-item">
+            <div class="stepper-info">
+              <div class="stepper-label-row">
+                <span class="stepper-label">Adults</span>
+                <span class="stepper-badge">Age 18+</span>
+              </div>
+              <span class="stepper-hint">At least 1 adult required</span>
+            </div>
+            <div class="stepper-control" role="group" aria-label="Adults count selector">
+              <button
+                type="button"
+                class="btn-stepper"
+                [disabled]="adultsCount() <= 1"
+                (click)="decreaseAdults()"
+                aria-label="Decrease adults count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <span class="stepper-value" aria-live="polite">{{ adultsCount() }}</span>
+              <button
+                type="button"
+                class="btn-stepper"
+                (click)="increaseAdults()"
+                aria-label="Increase adults count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Children Stepper -->
+          <div class="stepper-item">
+            <div class="stepper-info">
+              <div class="stepper-label-row">
+                <span class="stepper-label">Children</span>
+                <span class="stepper-badge">Ages 0–17</span>
+              </div>
+              <span class="stepper-hint">Individual age required</span>
+            </div>
+            <div class="stepper-control" role="group" aria-label="Children count selector">
+              <button
+                type="button"
+                class="btn-stepper"
+                [disabled]="totalChildrenCount() === 0"
+                (click)="removeLastChild()"
+                aria-label="Decrease children count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <span class="stepper-value" aria-live="polite">{{ totalChildrenCount() }}</span>
+              <button
+                type="button"
+                class="btn-stepper"
+                (click)="addChild()"
+                aria-label="Add a child">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Children Policy Clear Guide -->
+        <div class="guest-policy-callout" role="note" aria-label="Children room capacity policy">
+          <div class="policy-rule">
+            <span class="policy-dot dot-free"></span>
+            <div class="policy-rule-text">
+              <strong>Children aged 0–11: Free</strong>
+              <span>Stay free of charge and do <em>not</em> count toward room capacity.</span>
+            </div>
+          </div>
+          <div class="policy-divider"></div>
+          <div class="policy-rule">
+            <span class="policy-dot dot-capacity"></span>
+            <div class="policy-rule-text">
+              <strong>Children aged 12–17: Count toward capacity</strong>
+              <span>Occupy standard room capacity (counted alongside adults).</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Individual Children Age Selectors -->
+        @if (children().length > 0) {
+          <div class="children-ages-block" aria-label="Child age selectors">
+            <div class="children-ages-block-header">
+              <div class="block-title-wrap">
+                <h4 class="children-ages-title">Children Ages</h4>
+                <span class="required-sublabel">* Select each child's age to verify room capacity</span>
+              </div>
+              <button type="button" class="btn-add-child-link" (click)="addChild()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Child</span>
+              </button>
+            </div>
+
+            <div class="children-cards-grid">
+              @for (child of children(); track child.id; let idx = $index) {
+                <div class="child-card" [class.child-card--unselected]="child.age === null">
+                  <div class="child-card-header">
+                    <span class="child-name">Child {{ idx + 1 }}</span>
+                    <button
+                      type="button"
+                      class="btn-child-remove"
+                      (click)="removeChild(child.id)"
+                      [attr.aria-label]="'Remove Child ' + (idx + 1)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      <span>Remove</span>
+                    </button>
+                  </div>
+
+                  <div class="child-card-body">
+                    <label [for]="'child-age-' + child.id" class="child-select-label">Age at check-in</label>
+                    <select
+                      [id]="'child-age-' + child.id"
+                      class="child-age-select"
+                      [class.is-invalid]="child.age === null"
+                      (change)="onChildAgeSelect(child.id, $event)"
+                      [attr.aria-label]="'Age for child ' + (idx + 1)">
+                      <option value="" disabled [selected]="child.age === null">Select age (0–17)</option>
+                      @for (a of availableChildAges; track a) {
+                        <option [value]="a" [selected]="child.age === a">
+                          {{ a === 0 ? 'Under 1 year (0)' : (a === 1 ? '1 year old' : a + ' years old') }}
+                          — {{ a <= 11 ? 'Free (Ages 0–11)' : 'Counts toward capacity (Ages 12–17)' }}
+                        </option>
+                      }
+                    </select>
+
+                    <div class="child-status-pill" [ngClass]="child.age === null ? 'status--missing' : (child.age <= 11 ? 'status--free' : 'status--capacity')">
+                      @if (child.age === null) {
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="12"></line>
+                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>Age required</span>
+                      } @else if (child.age <= 11) {
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Free of charge (0 room cap)</span>
+                      } @else {
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Counts toward room capacity (+1)</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Dynamic Feedback Alert Banner -->
+        <div class="capacity-feedback-banner" [ngClass]="'banner--' + capacityStatus()" role="alert" aria-live="polite">
+          @if (capacityStatus() === 'no-rooms') {
+            <div class="banner-inner">
+              <div class="banner-icon-col">
+                <div class="banner-icon-circle icon-info">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
+              </div>
+              <div class="banner-text-col">
+                <span class="banner-title">No rooms selected yet</span>
+                <p class="banner-desc">
+                  Your travel party of <strong>{{ totalGuestsCount() }} {{ totalGuestsCount() === 1 ? 'guest' : 'guests' }}</strong>
+                  ({{ adultsCount() }} adult{{ adultsCount() === 1 ? '' : 's' }}{{ capacityChildrenCount() > 0 ? ' + ' + capacityChildrenCount() + ' teen' + (capacityChildrenCount() === 1 ? '' : 's') + ' aged 12–17' : '' }})
+                  requires a total room capacity of <strong>{{ requiredCapacity() }}</strong>.
+                  @if (freeChildrenCount() > 0) {
+                    <span>({{ freeChildrenCount() }} child{{ freeChildrenCount() === 1 ? '' : 'ren' }} aged 0–11 stay free).</span>
+                  }
+                  Please browse the rooms below and click <strong>Select Room</strong> to allocate sufficient capacity.
+                </p>
+              </div>
+              <div class="banner-metric-col">
+                <span class="metric-number">0 / {{ requiredCapacity() }}</span>
+                <span class="metric-label">Capacity Met</span>
+              </div>
+            </div>
+          } @else if (capacityStatus() === 'missing-age') {
+            <div class="banner-inner">
+              <div class="banner-icon-col">
+                <div class="banner-icon-circle icon-warning">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+              </div>
+              <div class="banner-text-col">
+                <span class="banner-title">Child age selection required</span>
+                <p class="banner-desc">
+                  Please select an age for each child above to calculate whether they stay free (ages 0–11) or count toward required room capacity (ages 12–17).
+                </p>
+              </div>
+            </div>
+          } @else if (capacityStatus() === 'exceeded') {
+            <div class="banner-inner">
+              <div class="banner-icon-col">
+                <div class="banner-icon-circle icon-danger">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+              </div>
+              <div class="banner-text-col">
+                <span class="banner-title">Selected rooms cannot accommodate all guests</span>
+                <p class="banner-desc">
+                  The {{ selectedRoomsCount() }} selected {{ selectedRoomsCount() === 1 ? 'room accommodates' : 'rooms accommodate' }}
+                  <strong>{{ totalRoomCapacity() }}</strong> {{ totalRoomCapacity() === 1 ? 'guest' : 'guests' }}, but your travel party requires capacity for
+                  <strong>{{ requiredCapacity() }}</strong>
+                  ({{ adultsCount() }} adult{{ adultsCount() === 1 ? '' : 's' }}{{ capacityChildrenCount() > 0 ? ' + ' + capacityChildrenCount() + ' child' + (capacityChildrenCount() === 1 ? '' : 'ren') + ' aged 12–17' : '' }}).
+                  You need capacity for <strong>{{ requiredCapacity() - totalRoomCapacity() }}</strong> more {{ (requiredCapacity() - totalRoomCapacity()) === 1 ? 'guest' : 'guests' }}. Please select additional or larger rooms.
+                </p>
+              </div>
+              <div class="banner-metric-col metric-danger">
+                <span class="metric-number">{{ totalRoomCapacity() }} / {{ requiredCapacity() }}</span>
+                <span class="metric-label">Deficit: -{{ requiredCapacity() - totalRoomCapacity() }}</span>
+              </div>
+            </div>
+          } @else if (capacityStatus() === 'valid') {
+            <div class="banner-inner">
+              <div class="banner-icon-col">
+                <div class="banner-icon-circle icon-success">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div class="banner-text-col">
+                <span class="banner-title">Guest selection and room capacity valid</span>
+                <p class="banner-desc">
+                  The {{ selectedRoomsCount() }} selected {{ selectedRoomsCount() === 1 ? 'room accommodates' : 'rooms accommodate' }}
+                  up to <strong>{{ totalRoomCapacity() }}</strong> {{ totalRoomCapacity() === 1 ? 'guest' : 'guests' }}
+                  for your required capacity of <strong>{{ requiredCapacity() }}</strong>
+                  ({{ remainingCapacity() }} extra {{ remainingCapacity() === 1 ? 'space' : 'spaces' }} available).
+                  @if (freeChildrenCount() > 0) {
+                    <span>Includes {{ freeChildrenCount() }} child{{ freeChildrenCount() === 1 ? '' : 'ren' }} aged 0–11 staying free.</span>
+                  }
+                </p>
+              </div>
+              <div class="banner-metric-col metric-success">
+                <span class="metric-number">{{ requiredCapacity() }} / {{ totalRoomCapacity() }}</span>
+                <span class="metric-label">Capacity Met</span>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ── MULTI-ROOM SELECTION INDICATOR BAR ── -->
+      <section class="selection-indicator-bar" [class.has-selection]="selectedRoomsCount() > 0" aria-label="Room selection status">
+        @if (selectedRoomsCount() > 0) {
+          <div class="selection-indicator-content">
+            <div class="selection-summary">
+              <span class="selection-count-badge" aria-live="polite">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span><strong>{{ selectedRoomsCount() }}</strong> {{ selectedRoomsCount() === 1 ? 'room selected' : 'rooms selected' }}</span>
+              </span>
+
+              <!-- Live Capacity Status Pill in Bar -->
+              <span class="selection-capacity-status" [ngClass]="'status--' + capacityStatus()" aria-live="polite">
+                @if (capacityStatus() === 'valid') {
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Capacity Matched ({{ requiredCapacity() }}/{{ totalRoomCapacity() }})</span>
+                } @else if (capacityStatus() === 'exceeded') {
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>Capacity Exceeded: {{ totalRoomCapacity() }} of {{ requiredCapacity() }} needed</span>
+                } @else if (capacityStatus() === 'missing-age') {
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>Child Age Needed</span>
+                }
+              </span>
+
+              <span class="selection-hotel-scope-note">Selected for this hotel</span>
+            </div>
+
+            <!-- List of selected room pills with individual remove button -->
+            <div class="selected-rooms-pills" role="list" aria-label="Selected rooms list">
+              @for (sel of selectedRooms(); track sel.id) {
+                <div class="selected-room-pill" role="listitem">
+                  <span class="pill-badge" [ngClass]="getRoomTypeBadgeClass(sel.roomType)">{{ sel.roomType }}</span>
+                  <span class="pill-number">Room #{{ sel.roomNumber }} (Cap: {{ sel.capacity }})</span>
+                  <button
+                    type="button"
+                    class="btn-pill-remove"
+                    (click)="deselectRoom(sel.id)"
+                    [attr.aria-label]="'Deselect Room #' + sel.roomNumber">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Clear All Selection button -->
+            <button
+              type="button"
+              class="btn-clear-selection"
+              (click)="clearSelectedRooms()"
+              aria-label="Remove all selected rooms">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Clear All</span>
+            </button>
+          </div>
+        } @else {
+          <div class="selection-empty-hint" role="status">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>No rooms selected yet. You have specified <strong>{{ totalGuestsCount() }} {{ totalGuestsCount() === 1 ? 'guest' : 'guests' }}</strong> (capacity needed: <strong>{{ requiredCapacity() }}</strong>). Click <strong>Select Room</strong> on any room card below to pick one or more rooms.</span>
+          </div>
+        }
+      </section>
+
+      <!-- ── ROOMS LOADING STATE ── -->
+      @if (roomsState() === 'loading') {
+        <div class="rooms-loading-grid" aria-busy="true" aria-label="Loading rooms">
+          @for (n of [1, 2, 3, 4, 5, 6]; track n) {
+            <div class="room-card-skeleton">
+              <div class="skeleton-img"></div>
+              <div class="skeleton-text-group">
+                <div class="skeleton-line line-short"></div>
+                <div class="skeleton-line line-med"></div>
+                <div class="skeleton-line line-long"></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── ROOMS ERROR STATE ── -->
+      @if (roomsState() === 'error') {
+        <div class="state-card error-card inline-error" role="alert">
+          <p>{{ roomsError() }}</p>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="loadRooms(h.id)">
+            Retry Loading Rooms
+          </button>
+        </div>
+      }
+
+      <!-- ── ROOMS EMPTY STATE ── -->
+      @if (roomsState() === 'empty' || (roomsState() === 'success' && filteredRooms().length === 0)) {
+        <div class="state-card empty-card" role="status">
+          <div class="state-icon empty-icon" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <h3>No Rooms Available</h3>
+          @if (selectedRoomType() !== 'ALL') {
+            <p>No {{ getRoomTypeLabel(selectedRoomType()) }} rooms found in this hotel.</p>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="onRoomTypeFilterChange('ALL')">
+              View All Room Types
+            </button>
+          } @else {
+            <p>There are currently no rooms listed for this hotel. Please check back later.</p>
+          }
+        </div>
+      }
+
+      <!-- ── ROOMS SUCCESS GRID ── -->
+      @if (roomsState() === 'success' && filteredRooms().length > 0) {
+        <div class="rooms-grid" role="list" aria-label="Available rooms list">
+          @for (room of filteredRooms(); track trackByRoomId($index, room)) {
+            <article class="room-card" [class.room-card--selected]="isRoomSelected(room.id)" role="listitem">
+              <!-- Room Card Header / Illustration Banner -->
+              <div class="room-banner">
+                <div class="room-banner-tags">
+                  <div class="room-type-tag" [ngClass]="getRoomTypeBadgeClass(room.roomType)">
+                    {{ getRoomTypeLabel(room.roomType) }}
+                  </div>
+                  <div class="room-id-tag">
+                    Room #{{ room.roomNumber }}
+                  </div>
+                </div>
+
+              
+              </div>
+
+              <!-- Room Card Body -->
+              <div class="room-card-body">
+                <div class="room-title-row">
+                  <h3 class="room-title">{{ getRoomTypeLabel(room.roomType) }}</h3>
+                  <span class="room-number-sub">No. {{ room.roomNumber }}</span>
+                </div>
+
+                <!-- Capacity & Specs -->
+                <div class="room-specs">
+                  <span class="spec-item" title="Maximum Capacity">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Up to <strong>{{ room.capacity }}</strong> {{ room.capacity === 1 ? 'Guest' : 'Guests' }}</span>
+                  </span>
+
+                  <span class="spec-item" title="Room Type Standard">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                    <span>{{ room.roomType }} Class</span>
+                  </span>
+                </div>
+
+                <!-- Included Room Amenities -->
+                <ul class="room-amenities-tags" aria-label="Room features">
+                  @for (amenity of getRoomAmenities(room.roomType); track amenity) {
+                    <li class="amenity-tag">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>{{ amenity }}</span>
+                    </li>
+                  }
+                </ul>
+
+                <!-- Room Price Section & Selection Action -->
+                <div class="room-pricing-row">
+                  <div class="pricing-content">
+                    <span class="price-val">{{ room.pricePerNight | number:'1.2-2' }} <small>EGP</small></span>
+                    <span class="price-period">per night</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn-room-select"
+                    [class.btn-room-select--active]="isRoomSelected(room.id)"
+                    (click)="toggleRoomSelection(room)"
+                    [attr.aria-pressed]="isRoomSelected(room.id)"
+                    [attr.aria-label]="(isRoomSelected(room.id) ? 'Deselect room ' : 'Select room ') + room.roomNumber">
+                    @if (isRoomSelected(room.id)) {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>Selected</span>
+                    } @else {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      <span>Select Room</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+
+        <!-- ── ROOMS PAGINATION ── -->
+        @if (totalRoomsPages() > 1) {
+          <nav class="rooms-pagination" aria-label="Rooms pages navigation">
+            <button
+              type="button"
+              class="page-btn page-nav-btn"
+              [disabled]="isFirstPage()"
+              (click)="previousRoomsPage()"
+              aria-label="Previous rooms page">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Previous</span>
+            </button>
+
+            <div class="page-numbers">
+              @for (pageNum of pageNumbers(); track pageNum) {
+                <button
+                  type="button"
+                  class="page-btn page-num-btn"
+                  [class.active]="pageNum === currentRoomsPage()"
+                  [attr.aria-current]="pageNum === currentRoomsPage() ? 'page' : null"
+                  (click)="goToRoomsPage(pageNum)">
+                  {{ pageNum + 1 }}
+                </button>
+              }
+            </div>
+
+            <button
+              type="button"
+              class="page-btn page-nav-btn"
+              [disabled]="isLastPage()"
+              (click)="nextRoomsPage()"
+              aria-label="Next rooms page">
+              <span>Next</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </nav>
+        }
+      }
+    </section>
+  
+    <!-- ── FLOATING SELECTED ROOMS DOCK (WHEN SCROLLED OR NAVIGATING) ── -->
+    @if (selectedRoomsCount() > 0) {
+      <aside class="floating-selection-dock" aria-label="Selected rooms summary bar">
+        <div class="floating-selection-inner">
+          <div class="floating-info">
+            <span class="floating-badge">{{ selectedRoomsCount() }}</span>
+            <div class="floating-text-wrap">
+              <div class="floating-title-row">
+                <span class="floating-title">{{ selectedRoomsCount() === 1 ? '1 Room Selected' : selectedRoomsCount() + ' Rooms Selected' }}</span>
+                <span class="floating-capacity-chip" [ngClass]="'chip--' + capacityStatus()">
+                  @if (capacityStatus() === 'valid') {
+                    <span>✓ Capacity OK ({{ requiredCapacity() }}/{{ totalRoomCapacity() }})</span>
+                  } @else if (capacityStatus() === 'exceeded') {
+                    <span>⚠ Over Capacity ({{ totalRoomCapacity() }}/{{ requiredCapacity() }})</span>
+                  } @else if (capacityStatus() === 'missing-age') {
+                    <span>⚠ Age Needed</span>
+                  }
+                </span>
+              </div>
+              <span class="floating-detail">
+                @for (sel of selectedRooms(); track sel.id; let last = $last) {
+                  #{{ sel.roomNumber }} ({{ sel.roomType }}){{ !last ? ', ' : '' }}
+                }
+              </span>
+            </div>
+          </div>
+          <div class="floating-actions">
+            <button
+              type="button"
+              class="btn-floating-clear"
+              (click)="clearSelectedRooms()"
+              aria-label="Clear all selected rooms">
+              Clear All
+            </button>
+          </div>
+        </div>
+      </aside>
+    }
+  }
+</div>
