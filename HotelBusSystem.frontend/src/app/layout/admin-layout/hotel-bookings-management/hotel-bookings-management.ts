@@ -8,24 +8,45 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import {
+  ReactiveFormsModule,
+  FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
 // PrimeNG Modules
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 
 // Core Models & Services
-import { HotelBookingService, HotelBookingListParams } from '../../../core/services/hotel-booking.service';
-import { HotelBookingDTO, status } from '../../../core/models/Hotel/hotel-booking.model';
-import { PageHotelBookingDTO } from '../../../core/models/Pagination/hotelBookingPage.model';
+import { HotelBookingService } from '../../../core/services/hotel-booking.service';
+import { RoomService } from '../../../core/services/room.service';
+import { HotelBookingDTO, HotelBookingRequestDTO, status } from '../../../core/models/Hotel/hotel-booking.model';
+import { RoomDTO } from '../../../core/models/Room/room.model';
+import { PageHotelBookingDTO, HotelBookingListParams } from '../../../core/models/Pagination/hotelBookingPage.model';
 
 @Component({
   selector: 'app-hotel-bookings-management',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, TableModule, ButtonModule, ToastModule, TagModule],
+  imports: [
+    CommonModule,
+    DatePipe,
+    DecimalPipe,
+    ReactiveFormsModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    ToastModule,
+    TagModule,
+  ],
   providers: [MessageService],
   templateUrl: './hotel-bookings-management.html',
   styleUrl: './hotel-bookings-management.css',
@@ -33,18 +54,31 @@ import { PageHotelBookingDTO } from '../../../core/models/Pagination/hotelBookin
 })
 export class HotelBookingsManagement implements OnInit, OnDestroy {
   private readonly bookingService = inject(HotelBookingService);
+  private readonly roomService = inject(RoomService);
+  private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly destroy$ = new Subject<void>();
 
   readonly bookings = signal<HotelBookingDTO[]>([]);
+  readonly rooms = signal<RoomDTO[]>([]);
   readonly pageData = signal<PageHotelBookingDTO | null>(null);
   readonly loading = signal<boolean>(false);
+  readonly saving = signal<boolean>(false);
+  readonly deleting = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly searchFilter = signal<string>('');
   readonly sortDirection = signal<string>('desc');
   readonly currentPage = signal<number>(0);
   readonly pageSize = signal<number>(10);
+
+  // ── Dialog Signals ─────────────────────────────────────────
+  readonly dialogVisible = signal<boolean>(false);
+  readonly isEditMode = signal<boolean>(false);
+  readonly editingBookingId = signal<number | null>(null);
+
+  readonly deleteDialogVisible = signal<boolean>(false);
+  readonly bookingToDelete = signal<HotelBookingDTO | null>(null);
 
   readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
@@ -57,17 +91,37 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       (b) =>
         (b.hotelName && b.hotelName.toLowerCase().includes(q)) ||
         String(b.id).includes(q) ||
-        String(b.userId).includes(q)
+        String(b.userId).includes(q) ||
+        String(b.roomId).includes(q)
     );
   });
 
+  // ── Reactive Form ──────────────────────────────────────────
+  readonly bookingForm: FormGroup = this.fb.group({
+    roomId: [null, [Validators.required]],
+    guests: [1, [Validators.required, Validators.min(1), Validators.max(20)]],
+    checkIn: ['', [Validators.required]],
+    checkOut: ['', [Validators.required]],
+  });
+
   ngOnInit(): void {
+    this.loadRoomsLookup();
     this.loadBookings();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  loadRoomsLookup(): void {
+    this.roomService
+      .getAllRooms()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => this.rooms.set(Array.isArray(data) ? data : []),
+        error: () => this.rooms.set([]),
+      });
   }
 
   loadBookings(): void {
@@ -134,5 +188,198 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       default:
         return 'secondary';
     }
+  }
+
+  getRoomLabel(roomId: number): string {
+    const found = this.rooms().find((r) => r.id === roomId);
+    return found ? `Room ${found.roomNumber} (${found.roomType})` : `Room #${roomId}`;
+  }
+
+  // ── Create & Edit Handlers ─────────────────────────────────
+  openCreateDialog(): void {
+    this.isEditMode.set(false);
+    this.editingBookingId.set(null);
+
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const inStr = today.toISOString().slice(0, 10);
+    const outStr = tomorrow.toISOString().slice(0, 10);
+
+    const defaultRoom = this.rooms().length > 0 ? this.rooms()[0].id : null;
+
+    this.bookingForm.reset({
+      roomId: defaultRoom,
+      guests: 1,
+      checkIn: inStr,
+      checkOut: outStr,
+    });
+    this.dialogVisible.set(true);
+  }
+
+  openEditDialog(b: HotelBookingDTO): void {
+    this.isEditMode.set(true);
+    this.editingBookingId.set(b.id);
+
+    const inStr = b.checkIn ? b.checkIn.slice(0, 10) : '';
+    const outStr = b.checkOut ? b.checkOut.slice(0, 10) : '';
+
+    this.bookingForm.patchValue({
+      roomId: b.roomId,
+      guests: b.guests,
+      checkIn: inStr,
+      checkOut: outStr,
+    });
+    this.dialogVisible.set(true);
+  }
+
+  closeDialog(): void {
+    this.dialogVisible.set(false);
+    this.bookingForm.reset();
+  }
+
+  saveBooking(): void {
+    if (this.bookingForm.invalid) {
+      this.bookingForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Please fill in all required booking fields correctly.',
+        life: 4000,
+      });
+      return;
+    }
+
+    const formVal = this.bookingForm.getRawValue();
+
+    if (new Date(formVal.checkIn) >= new Date(formVal.checkOut)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Dates',
+        detail: 'Check-out date must be strictly after check-in date.',
+        life: 4000,
+      });
+      return;
+    }
+
+    this.saving.set(true);
+
+    const payload: HotelBookingRequestDTO = {
+      roomId: Number(formVal.roomId),
+      guests: Number(formVal.guests),
+      checkIn: String(formVal.checkIn),
+      checkOut: String(formVal.checkOut),
+    };
+
+    if (this.isEditMode()) {
+      const id = this.editingBookingId();
+      if (!id) {
+        this.saving.set(false);
+        return;
+      }
+
+      this.bookingService
+        .updateHotelBooking(id, payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.saving.set(false);
+            this.dialogVisible.set(false);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Booking Updated',
+              detail: `Hotel booking #${id} has been updated.`,
+              life: 4000,
+            });
+            this.loadBookings();
+          },
+          error: (err) => {
+            this.saving.set(false);
+            const msg = err?.message || 'Failed to update hotel booking.';
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Update Failed',
+              detail: msg,
+              life: 5000,
+            });
+          },
+        });
+    } else {
+      this.bookingService
+        .createHotelBooking(payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (created) => {
+            this.saving.set(false);
+            this.dialogVisible.set(false);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Booking Created',
+              detail: `Hotel booking #${created.id} was created successfully.`,
+              life: 4000,
+            });
+            this.currentPage.set(0);
+            this.loadBookings();
+          },
+          error: (err) => {
+            this.saving.set(false);
+            const msg = err?.message || 'Failed to create hotel booking.';
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Creation Failed',
+              detail: msg,
+              life: 5000,
+            });
+          },
+        });
+    }
+  }
+
+  // ── Delete Handlers ────────────────────────────────────────
+  openDeleteDialog(booking: HotelBookingDTO): void {
+    this.bookingToDelete.set(booking);
+    this.deleteDialogVisible.set(true);
+  }
+
+  closeDeleteDialog(): void {
+    this.deleteDialogVisible.set(false);
+    this.bookingToDelete.set(null);
+  }
+
+  confirmDeleteBooking(): void {
+    const booking = this.bookingToDelete();
+    if (!booking) return;
+
+    this.deleting.set(true);
+    this.bookingService
+      .deleteHotelBooking(booking.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.deleting.set(false);
+          this.deleteDialogVisible.set(false);
+          this.bookingToDelete.set(null);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Booking Deleted',
+            detail: `Hotel booking #${booking.id} has been cancelled/deleted.`,
+            life: 4000,
+          });
+
+          if (this.bookings().length === 1 && this.currentPage() > 0) {
+            this.currentPage.update((p) => p - 1);
+          }
+          this.loadBookings();
+        },
+        error: (err) => {
+          this.deleting.set(false);
+          const msg = err?.message || 'Failed to delete hotel booking.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Delete Failed',
+            detail: msg,
+            life: 5000,
+          });
+        },
+      });
   }
 }

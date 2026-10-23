@@ -30,9 +30,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
 
 // Core Models & Services
-import { HotelService, HotelListParams } from '../../../core/services/hotel.service';
+import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO, HotelRequestDTO } from '../../../core/models/Hotel/hotel.model';
-import { PageHotelDTO } from '../../../core/models/Pagination/hotelPage.model';
+import { PageHotelDTO, HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
 
 @Component({
   selector: 'app-hotels-management',

@@ -20,15 +20,29 @@
     <div class="header-actions">
       <button
         type="button"
-        class="btn-refresh"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-hotel-booking-btn"
+        aria-label="Create hotel booking"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>New Booking</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
         (click)="loadBookings()"
         [disabled]="loading()"
         id="admin-hotel-bookings-refresh-btn"
         aria-label="Refresh hotel bookings"
       >
         <svg
-          width="16"
-          height="16"
+          width="15"
+          height="15"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -139,6 +153,7 @@
           <th>Guests</th>
           <th>Total Cost</th>
           <th>Status</th>
+          <th style="width: 110px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -175,18 +190,46 @@
               styleClass="booking-status-tag"
             />
           </td>
+          <td>
+            <div class="table-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-edit"
+                (click)="openEditDialog(b)"
+                [attr.aria-label]="'Edit booking #' + b.id"
+                title="Edit booking"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-delete"
+                (click)="openDeleteDialog(b)"
+                [attr.aria-label]="'Cancel/Delete booking #' + b.id"
+                title="Cancel/Delete booking"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
         </tr>
       </ng-template>
 
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7">
+          <td colspan="8">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">📋</div>
               <h3 class="empty-title">No hotel bookings found</h3>
               <p class="empty-desc">
-                No customer hotel reservations have been recorded yet.
+                No customer hotel reservations have been recorded yet. Click "New Booking" to create one.
               </p>
             </div>
           </td>
@@ -194,5 +237,167 @@
       </ng-template>
     </p-table>
   </section>
+
+  <!-- ─── Create / Edit Hotel Booking Modal Dialog ─────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [header]="isEditMode() ? 'Edit Hotel Booking' : 'New Hotel Booking'"
+    [style]="{ width: '90vw', maxWidth: '540px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="bookingForm" (ngSubmit)="saveBooking()" class="dialog-form" id="admin-hotel-booking-form">
+      <div class="form-grid">
+
+        <!-- Room Selection -->
+        <div class="form-group full-width">
+          <label for="bookingRoomId" class="form-label">
+            Select Room <span class="required-star">*</span>
+          </label>
+          @if (rooms().length > 0) {
+            <select id="bookingRoomId" class="form-select" formControlName="roomId">
+              <option [ngValue]="null" disabled>Select Hotel Room</option>
+              @for (r of rooms(); track r.id) {
+                <option [ngValue]="r.id">{{ getRoomLabel(r.id) }} — ${{ r.pricePerNight }}/night (Cap: {{ r.capacity }})</option>
+              }
+            </select>
+          } @else {
+            <input
+              id="bookingRoomId"
+              type="number"
+              class="form-input"
+              formControlName="roomId"
+              placeholder="Enter Room ID"
+            />
+          }
+          @if (bookingForm.get('roomId')?.touched && bookingForm.get('roomId')?.errors?.['required']) {
+            <span class="form-error">Room selection is required.</span>
+          }
+        </div>
+
+        <!-- Check-in Date -->
+        <div class="form-group">
+          <label for="checkIn" class="form-label">
+            Check-In Date <span class="required-star">*</span>
+          </label>
+          <input
+            id="checkIn"
+            type="date"
+            class="form-input"
+            formControlName="checkIn"
+          />
+          @if (bookingForm.get('checkIn')?.touched && bookingForm.get('checkIn')?.errors?.['required']) {
+            <span class="form-error">Check-in date is required.</span>
+          }
+        </div>
+
+        <!-- Check-out Date -->
+        <div class="form-group">
+          <label for="checkOut" class="form-label">
+            Check-Out Date <span class="required-star">*</span>
+          </label>
+          <input
+            id="checkOut"
+            type="date"
+            class="form-input"
+            formControlName="checkOut"
+          />
+          @if (bookingForm.get('checkOut')?.touched && bookingForm.get('checkOut')?.errors?.['required']) {
+            <span class="form-error">Check-out date is required.</span>
+          }
+        </div>
+
+        <!-- Number of Guests -->
+        <div class="form-group full-width">
+          <label for="guests" class="form-label">
+            Number of Guests <span class="required-star">*</span>
+          </label>
+          <input
+            id="guests"
+            type="number"
+            class="form-input"
+            formControlName="guests"
+            min="1"
+            max="20"
+            placeholder="1"
+          />
+          @if (bookingForm.get('guests')?.touched && bookingForm.get('guests')?.errors) {
+            <span class="form-error">Guests must be between 1 and 20.</span>
+          }
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="saving() || bookingForm.invalid"
+          id="admin-save-hotel-booking-btn"
+        >
+          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Reservation' : 'Confirm Reservation') }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    header="Cancel / Delete Hotel Booking"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDeleteDialog()"
+  >
+    <div class="delete-dialog-content">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="delete-title">Cancel Reservation?</h3>
+      <p class="delete-desc">
+        Are you sure you want to permanently delete hotel booking
+        <strong class="delete-entity-name">
+          #{{ bookingToDelete()?.id }} ({{ bookingToDelete()?.hotelName || ('Hotel #' + bookingToDelete()?.hotelId) }})
+        </strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="closeDeleteDialog()"
+        [disabled]="deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="confirmDeleteBooking()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-hotel-booking-btn"
+      >
+        {{ deleting() ? 'Cancelling…' : 'Delete Booking' }}
+      </button>
+    </div>
+  </p-dialog>
 
 </div>
