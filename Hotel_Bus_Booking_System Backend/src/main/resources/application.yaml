@@ -52,6 +52,13 @@ token:
   time: 36000000
 
 app:
+  storage:
+    enabled: ${APP_STORAGE_ENABLED:true}
+    bucket: ${CLOUDFLARE_R2_BUCKET:}
+    public-url: ${CLOUDFLARE_R2_PUBLIC_URL:https://images.example.com}
+    access-key: ${CLOUDFLARE_R2_ACCESS_KEY:}
+    secret-key: ${CLOUDFLARE_R2_SECRET_KEY:}
+    account-id: ${CLOUDFLARE_R2_ACCOUNT_ID:}
   images:
     allowed-hosts:
       - images.example.com
