@@ -60,7 +60,7 @@ app:
     secret-key: ${CLOUDFLARE_R2_SECRET_KEY:}
     account-id: ${CLOUDFLARE_R2_ACCOUNT_ID:}
   images:
-    allowed-hosts: images.example.com, pub-cloudflare-r2.dev, pub-e3f67119581e41a09e34c0a920c52720.r2.dev
+    allowed-hosts: images.example.com, pub-cloudflare-r2.dev, pub-9188aaa3f1d74a5ca857aecc65c7c25f.r2.dev
 
 
 
