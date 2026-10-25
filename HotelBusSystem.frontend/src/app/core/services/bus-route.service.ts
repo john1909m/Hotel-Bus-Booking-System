@@ -85,16 +85,4 @@ export class BusRouteService {
     );
   }
 
-  // private handleError(error: HttpErrorResponse) {
-  //   let message = 'Something went wrong';
-
-  //   if (error.error instanceof ErrorEvent) {
-  //     message = `Client Error: ${error.error.message}`;
-  //   } else {
-  //     message = `Server Error [${error.status}]: ${error.message}`;
-  //   }
-
-  //   console.error(message);
-  //   return throwError(() => new Error(message));
-  // }
 }
