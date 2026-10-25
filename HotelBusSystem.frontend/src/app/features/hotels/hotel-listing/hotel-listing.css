@@ -193,28 +193,27 @@
   background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
   overflow: hidden;
   flex-shrink: 0;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  outline: none;
 }
 
-.hotel-card-img-placeholder {
+.hotel-card-img-wrap:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.hotel-card-img {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  background: linear-gradient(
-    135deg,
-    hsl(160, 30%, 94%) 0%,
-    hsl(185, 25%, 92%) 100%
-  );
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-normal);
 }
 
-[data-theme="dark"] .hotel-card-img-placeholder {
-  background: linear-gradient(
-    135deg,
-    hsl(200, 15%, 22%) 0%,
-    hsl(200, 20%, 18%) 100%
-  );
+.hotel-card:hover .hotel-card-img {
+  transform: scale(1.04);
 }
 
 .hotel-rating-badge {

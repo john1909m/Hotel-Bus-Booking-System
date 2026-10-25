@@ -251,6 +251,17 @@
     <form [formGroup]="bookingForm" (ngSubmit)="saveBooking()" class="dialog-form" id="admin-hotel-booking-form">
       <div class="form-grid">
 
+        <!-- Hotel Property Name (Edit Mode) -->
+        @if (isEditMode() && selectedHotelName()) {
+          <div class="form-group full-width hotel-name-display-box">
+            <span class="hotel-display-label">Hotel Property</span>
+            <div class="hotel-display-value">
+              <span class="hotel-icon" aria-hidden="true">🏨</span>
+              <strong>{{ selectedHotelName() }}</strong>
+            </div>
+          </div>
+        }
+
         <!-- Room Selection -->
         <div class="form-group full-width">
           <label for="bookingRoomId" class="form-label">
@@ -327,6 +338,23 @@
             <span class="form-error">Guests must be between 1 and 20.</span>
           }
         </div>
+
+        <!-- Status Dropdown (Edit Mode) -->
+        @if (isEditMode()) {
+          <div class="form-group full-width">
+            <label for="bookingStatus" class="form-label">
+              Booking Status <span class="required-star">*</span>
+            </label>
+            <select id="bookingStatus" class="form-select" formControlName="status">
+              @for (st of availableStatuses; track st) {
+                <option [value]="st">{{ st }}</option>
+              }
+            </select>
+            @if (bookingForm.get('status')?.touched && bookingForm.get('status')?.errors?.['required']) {
+              <span class="form-error">Status is required.</span>
+            }
+          </div>
+        }
 
       </div>
 

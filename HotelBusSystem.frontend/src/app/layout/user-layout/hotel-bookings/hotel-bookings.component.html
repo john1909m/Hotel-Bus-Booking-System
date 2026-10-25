@@ -1,0 +1,315 @@
+<div class="my-bookings-container container">
+  <!-- ── PAGE HEADER ── -->
+  <header class="page-header">
+    <div class="header-text">
+      <div class="header-badge-row">
+        <span class="header-category-badge">Guest Portal</span>
+        <span class="header-count-badge">{{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}</span>
+      </div>
+      <h1 class="page-title">My Hotel Bookings</h1>
+      <p class="page-subtitle">Track, review, and manage your hotel stays and reservations.</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-secondary btn-refresh"
+        [disabled]="loading()"
+        (click)="loadMyBookings()"
+        aria-label="Refresh my bookings list">
+        <svg
+          class="refresh-icon"
+          [class.spin]="loading()"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <a routerLink="/hotels" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Book a Room</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ── LOADING SKELETON ── -->
+  @if (loading()) {
+    <div class="bookings-skeleton-grid" aria-busy="true" aria-label="Loading reservations">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="booking-skeleton-card"></div>
+      }
+    </div>
+  }
+
+  <!-- ── ERROR STATE ── -->
+  @if (!loading() && error()) {
+    <section class="state-card error-card" role="alert">
+      <div class="state-icon error-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2>Unable to Load Bookings</h2>
+      <p class="error-msg">{{ error() }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadMyBookings()">
+        Try Again
+      </button>
+    </section>
+  }
+
+  <!-- ── EMPTY STATE ── -->
+  @if (!loading() && !error() && bookings().length === 0) {
+    <section class="state-card empty-card" role="status">
+      <div class="state-icon empty-icon" aria-hidden="true">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <h2>No Hotel Bookings Yet</h2>
+      <p class="empty-desc">
+        You haven't made any hotel reservations yet. Explore our curated selection of verified hotels and book your next stay.
+      </p>
+      <a routerLink="/hotels" class="btn btn-primary">
+        Browse Available Hotels
+      </a>
+    </section>
+  }
+
+  <!-- ── BOOKINGS LIST ── -->
+  @if (!loading() && !error() && bookings().length > 0) {
+    <div class="bookings-grid" role="list" aria-label="Hotel reservations list">
+      @for (booking of bookings(); track booking.id) {
+        <article class="booking-card" role="listitem">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="header-left">
+              <span class="booking-ref-badge">#{{ booking.id }}</span>
+              <h2 class="card-hotel-name">
+                @if (booking.hotelId) {
+                  <a [routerLink]="['/hotels', booking.hotelId]" class="hotel-title-link">
+                    {{ booking.hotelName || 'Hotel Stay' }}
+                  </a>
+                } @else {
+                  <span>{{ booking.hotelName || 'Hotel Stay' }}</span>
+                }
+              </h2>
+            </div>
+
+            <div class="header-right">
+              <div class="status-wrap">
+                <span class="status-badge" [ngClass]="getStatusClass(booking.status)">
+                  {{ booking.status }}
+                </span>
+                <span class="status-hint">{{ getStatusDescription(booking.status) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <!-- Stay Dates Box -->
+            <div class="stay-meta-strip">
+              <div class="meta-box">
+                <span class="meta-label">Check-in</span>
+                <span class="meta-value">{{ booking.checkIn | date:'mediumDate' }}</span>
+                <span class="meta-raw">{{ booking.checkIn }}</span>
+              </div>
+
+              <div class="meta-duration">
+                <span class="duration-arrow">&rarr;</span>
+                @if (calculateNights(booking.checkIn, booking.checkOut); as nights) {
+                  <span class="duration-pill">{{ nights }} {{ nights === 1 ? 'Night' : 'Nights' }}</span>
+                }
+              </div>
+
+              <div class="meta-box">
+                <span class="meta-label">Check-out</span>
+                <span class="meta-value">{{ booking.checkOut | date:'mediumDate' }}</span>
+                <span class="meta-raw">{{ booking.checkOut }}</span>
+              </div>
+            </div>
+
+            <!-- Booking Details Grid -->
+            <div class="booking-details-grid">
+              <div class="detail-item">
+                <span class="detail-label">Guests</span>
+                <span class="detail-val">
+                  {{ booking.guests }} {{ booking.guests === 1 ? 'Guest' : 'Guests' }}
+                  @if (booking.adults) {
+                    <small>({{ booking.adults }} Adult{{ booking.adults === 1 ? '' : 's' }}</small>
+                  }
+                  @if (booking.childAges && booking.childAges.length > 0) {
+                    <small>, {{ booking.childAges.length }} Child{{ booking.childAges.length === 1 ? '' : 'ren' }} [ages: {{ booking.childAges.join(', ') }}])</small>
+                  } @else if (booking.adults) {
+                    <small>)</small>
+                  }
+                </span>
+              </div>
+
+              <div class="detail-item">
+                <span class="detail-label">Rooms Booked</span>
+                <span class="detail-val">
+                  @if (booking.rooms && booking.rooms.length > 0) {
+                    <div class="rooms-tags-list">
+                      @for (room of booking.rooms; track room.id) {
+                        <span class="room-tag">Room #{{ room.roomNumber }} ({{ room.roomType }})</span>
+                      }
+                    </div>
+                  } @else if (booking.roomId) {
+                    <span>Room ID: #{{ booking.roomId }}</span>
+                  } @else {
+                    <span>Standard Accommodations</span>
+                  }
+                </span>
+              </div>
+
+              <div class="detail-item total-price-item">
+                <span class="detail-label">Authoritative Total Price</span>
+                <span class="detail-val price-highlight">
+                  {{ booking.totalPrice | number:'1.2-2' }} <small>EGP</small>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <span class="footer-note">
+              @if (booking.status === 'PENDING') {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Awaiting review / check-in confirmation by hotel front desk.</span>
+              } @else if (booking.status === 'CONFIRMED') {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Confirmed reservation. Keep your booking reference handy upon check-in.</span>
+              } @else {
+                <span>Reservation ID: #{{ booking.id }}</span>
+              }
+            </span>
+
+            @if (booking.hotelId) {
+              <div class="card-action-group">
+                @if (canCancelBooking(booking)) {
+                  <button
+                    type="button"
+                    class="btn-card-cancel"
+                    (click)="openCancelDialog(booking)"
+                    aria-label="Cancel this reservation">
+                    Cancel Booking
+                  </button>
+                }
+                <a
+                  [routerLink]="['/hotels', booking.hotelId]"
+                  [queryParams]="{ editBookingId: booking.id }"
+                  class="btn-card-action">
+                  <span>View Details / Edit Booking </span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </a>
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <!-- ── CANCELLATION CONFIRMATION DIALOG ── -->
+  <p-dialog
+    [(visible)]="cancelDialogVisible"
+    [modal]="true"
+    header="Cancel Hotel Reservation"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeCancelDialog()">
+    @if (bookingToCancel(); as b) {
+      <div class="cancel-dialog-content">
+        <div class="cancel-warning-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div>
+            <strong>Cancel Booking #{{ b.id }}</strong>
+            <p>
+              Are you sure you want to cancel your reservation at <strong>{{ b.hotelName || ('Hotel #' + b.hotelId) }}</strong>?
+              This action will change the status to <strong>CANCELLED</strong>. The record will remain in your history and will <em>not</em> be permanently deleted.
+            </p>
+          </div>
+        </div>
+
+        <div class="cancel-details-summary">
+          <div class="summary-line">
+            <span>Check-in:</span>
+            <strong>{{ b.checkIn }}</strong>
+          </div>
+          <div class="summary-line">
+            <span>Check-out:</span>
+            <strong>{{ b.checkOut }}</strong>
+          </div>
+          <div class="summary-line">
+            <span>Current Status:</span>
+            <span class="status-badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
+          </div>
+        </div>
+
+        @if (cancelErrorMessage()) {
+          <div class="cancel-error-alert" role="alert">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ cancelErrorMessage() }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="cancel-dialog-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeCancelDialog()"
+          [disabled]="isCancelling()">
+          Keep Reservation
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger-action"
+          (click)="confirmCancel()"
+          [disabled]="isCancelling()">
+          {{ isCancelling() ? 'Processing...' : 'Confirm Cancellation' }}
+        </button>
+      </div>
+    }
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>

@@ -1,0 +1,403 @@
+<p-drawer
+  [(visible)]="visible"
+  (visibleChange)="onDrawerVisibleChange($event)"
+  position="right"
+  [modal]="true"
+  [dismissible]="true"
+  [blockScroll]="true"
+  [closeOnEscape]="true"
+  styleClass="hotel-booking-drawer"
+  ariaLabel="Booking Summary Sidebar">
+
+  <!-- ── CUSTOM HEADER ── -->
+  <ng-template #header>
+    <div class="drawer-header-wrap">
+      <div class="drawer-header-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+      </div>
+      <div class="drawer-header-titles">
+        <h2 class="drawer-title">Booking Summary</h2>
+        <span class="drawer-hotel-name">{{ hotel?.name || 'Hotel Reservation' }}</span>
+      </div>
+      @if (selectedRooms.length > 0) {
+        <span class="drawer-rooms-badge">
+          {{ selectedRooms.length }} {{ selectedRooms.length === 1 ? 'Room' : 'Rooms' }}
+        </span>
+      }
+    </div>
+  </ng-template>
+
+  <!-- ── DRAWER CONTENT ── -->
+  <div class="drawer-body">
+    <!-- Edit Mode Indicator -->
+    @if (isEditMode) {
+      <div class="drawer-edit-banner" role="alert">
+        <div class="edit-banner-badge">EDITING</div>
+        <div class="edit-banner-info">
+          <strong>Modifying Reservation #{{ editingBookingId }}</strong>
+          <small>Submitting will update this existing booking.</small>
+        </div>
+      </div>
+    }
+
+    <!-- ── SECTION A: STAY INFORMATION ── -->
+    <section class="drawer-section stay-info-section" aria-labelledby="stay-info-heading">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="step-tag">A</span>
+          <h3 id="stay-info-heading" class="section-title">Stay Information</h3>
+        </div>
+        <button
+          type="button"
+          class="btn-change-dates"
+          (click)="onChangeDates()"
+          title="Return to room catalog to change dates">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Change Dates</span>
+        </button>
+      </div>
+
+      <div class="stay-info-card">
+        <div class="stay-dates-row">
+          <div class="stay-date-block">
+            <span class="date-label">Check-in</span>
+            <span class="date-val">{{ formattedCheckIn || checkIn || 'Not selected' }}</span>
+          </div>
+
+          <div class="stay-arrow" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+
+          <div class="stay-date-block">
+            <span class="date-label">Check-out</span>
+            <span class="date-val">{{ formattedCheckOut || checkOut || 'Not selected' }}</span>
+          </div>
+        </div>
+
+        <div class="stay-duration-row">
+          @if (stayNights !== null && stayNights > 0) {
+            <span class="stay-nights-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              {{ stayNights }} {{ stayNights === 1 ? 'Night' : 'Nights' }} Stay
+            </span>
+          } @else {
+            <span class="stay-nights-badge stay-nights-badge--warning">
+              Stay dates required to calculate total price
+            </span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION B: ROOM & GUEST ALLOCATION ── -->
+    <section class="drawer-section rooms-allocation-section" aria-labelledby="rooms-alloc-heading">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="step-tag">B</span>
+          <h3 id="rooms-alloc-heading" class="section-title">
+            Room & Guest Allocation ({{ selectedRooms.length }})
+          </h3>
+        </div>
+        @if (selectedRooms.length > 1) {
+          <button
+            type="button"
+            class="btn-auto-distribute"
+            (click)="autoDistribute.emit()"
+            title="Reset to automatic guest distribution across selected rooms">
+            Auto-Distribute
+          </button>
+        }
+      </div>
+
+      <!-- Empty State -->
+      @if (selectedRooms.length === 0) {
+        <div class="drawer-empty-rooms" role="status">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <h4>No Rooms Selected</h4>
+          <p>Please browse the available rooms catalog and select at least one room to continue.</p>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeDrawer()">
+            Browse Rooms
+          </button>
+        </div>
+      } @else {
+        <!-- Per-Room Cards -->
+        <div class="drawer-rooms-list">
+          @for (room of selectedRooms; track room.id) {
+            <article class="drawer-room-card" [class.drawer-room-card--overload]="isRoomOverCapacity(room)">
+              <!-- Room Card Header -->
+              <div class="room-card-head">
+                <div class="room-card-info">
+                  <div class="room-title-line">
+                    <strong class="room-number">Room #{{ room.roomNumber }}</strong>
+                    <span class="room-type-tag">{{ getRoomTypeLabel(room.roomType) }}</span>
+                  </div>
+                  <span class="room-cap-hint">Max Occupancy: {{ room.capacity }} guests</span>
+                </div>
+
+                <div class="room-card-right">
+                  <div class="room-price-stack">
+                    <span class="room-nightly-rate">{{ room.pricePerNight | number:'1.2-2' }} EGP</span>
+                    <span class="room-nightly-sub">/ night</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-remove-room"
+                    (click)="onRemoveRoom(room.id)"
+                    title="Remove this room from selection"
+                    [attr.aria-label]="'Remove Room #' + room.roomNumber">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Capacity Indicator -->
+              <div class="room-occupancy-status" [class.status--overload]="isRoomOverCapacity(room)">
+                @if (isRoomOverCapacity(room)) {
+                  <span class="occupancy-pill pill--danger">
+                    ⚠ Exceeds capacity: {{ getRoomRequiredCapacity(room.id) }} / {{ room.capacity }} guests
+                  </span>
+                } @else {
+                  <span class="occupancy-pill pill--ok">
+                    ✓ Occupancy: {{ getRoomRequiredCapacity(room.id) }} / {{ room.capacity }} guests
+                  </span>
+                }
+              </div>
+
+              <!-- Adults Allocation for this Room -->
+              <div class="room-allocation-block">
+                <div class="alloc-row">
+                  <div class="alloc-meta">
+                    <span class="alloc-label">Adults in this room</span>
+                    <small class="alloc-sub">Age 18+ (min 1 per room)</small>
+                  </div>
+                  <div class="alloc-stepper">
+                    <button
+                      type="button"
+                      class="btn-stepper-mini"
+                      [disabled]="getRoomAdults(room.id) <= 1"
+                      (click)="onDecreaseAdults(room.id)"
+                      [attr.aria-label]="'Decrease adults in room ' + room.roomNumber">
+                      &minus;
+                    </button>
+                    <span class="stepper-count">{{ getRoomAdults(room.id) }}</span>
+                    <button
+                      type="button"
+                      class="btn-stepper-mini"
+                      (click)="onIncreaseAdults(room.id)"
+                      [attr.aria-label]="'Increase adults in room ' + room.roomNumber">
+                      &plus;
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Children Allocation for this Room -->
+              <div class="room-children-block">
+                <div class="children-block-header">
+                  <div>
+                    <span class="alloc-label">Children in this room</span>
+                    <small class="policy-hint">Ages 0–11: Free &bull; Ages 12–17: Capacity +1</small>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-add-child-room"
+                    (click)="onAddChild(room.id)"
+                    [attr.aria-label]="'Add child to room ' + room.roomNumber">
+                    + Add Child
+                  </button>
+                </div>
+
+                @if (getRoomChildren(room.id).length === 0) {
+                  <p class="no-children-note">No children assigned to this room.</p>
+                } @else {
+                  <div class="children-table">
+                    @for (child of getRoomChildren(room.id); track child.id; let cIdx = $index) {
+                      <div class="child-picker-row" [class.row--unselected]="child.age === null">
+                        <span class="child-index-label">Child {{ cIdx + 1 }}</span>
+                        <div class="child-age-wrapper">
+                          <select
+                            class="child-age-select"
+                            [class.select--missing]="child.age === null"
+                            (change)="onChildAgeSelected(child.id, $event)"
+                            [attr.aria-label]="'Select age for Child ' + (cIdx + 1) + ' in room ' + room.roomNumber">
+                            <option value="" disabled [selected]="child.age === null">Select Age (0–17)</option>
+                            @for (age of availableChildAges; track age) {
+                              <option [value]="age" [selected]="child.age === age">
+                                {{ age === 0 ? 'Under 1 (0 yrs)' : age + ' yrs' }}
+                                {{ age <= 11 ? '— Free' : '— Capacity +1' }}
+                              </option>
+                            }
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          class="btn-delete-child"
+                          (click)="onRemoveChild(child.id, room.id)"
+                          title="Remove child"
+                          [attr.aria-label]="'Remove Child ' + (cIdx + 1)">
+                          &times;
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Stay Cost Subtotal for this Room -->
+              @if (getRoomStayCost(room); as roomCost) {
+                <div class="room-stay-subtotal">
+                  <span>Room Stay Subtotal ({{ stayNights }} nights):</span>
+                  <strong>{{ roomCost | number:'1.2-2' }} EGP</strong>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ── SECTION C: PRICE BREAKDOWN ── -->
+    <section class="drawer-section pricing-breakdown-section" aria-labelledby="pricing-breakdown-heading">
+      <div class="section-title-wrap">
+        <span class="step-tag">C</span>
+        <h3 id="pricing-breakdown-heading" class="section-title">Price Breakdown</h3>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-rows-group">
+          @for (room of selectedRooms; track room.id) {
+            <div class="price-line">
+              <span class="price-line-title">Room #{{ room.roomNumber }} ({{ room.roomType }})</span>
+              <span class="price-line-val">{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
+            </div>
+          }
+
+          <div class="price-line total-nightly-line">
+            <span>Combined Nightly Rate:</span>
+            <strong>{{ totalNightlyRate | number:'1.2-2' }} EGP</strong>
+          </div>
+
+          <div class="price-line duration-line">
+            <span>Stay Duration:</span>
+            @if (stayNights !== null && stayNights > 0) {
+              <span>{{ stayNights }} {{ stayNights === 1 ? 'Night' : 'Nights' }}</span>
+            } @else {
+              <span class="text-pending">Select valid dates</span>
+            }
+          </div>
+        </div>
+
+        <div class="price-separator"></div>
+
+        <div class="grand-total-block">
+          <div class="grand-total-labels">
+            <span class="total-label">Total Estimated Stay</span>
+            <small class="total-note">All selected rooms for full stay</small>
+          </div>
+          <div class="grand-total-amount">
+            @if (totalStayCost !== null && totalStayCost > 0) {
+              <span class="total-number">{{ totalStayCost | number:'1.2-2' }}</span>
+              <span class="total-currency">EGP</span>
+            } @else {
+              <span class="total-pending">Dates Required</span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION D: BOOKING CONFIRMATION ── -->
+    <section class="drawer-section confirmation-section" aria-labelledby="confirmation-heading">
+      <div class="section-title-wrap">
+        <span class="step-tag">D</span>
+        <h3 id="confirmation-heading" class="section-title">Confirmation</h3>
+      </div>
+
+      <!-- Validation Errors Checklist -->
+      @if (validationErrors.length > 0 && selectedRooms.length > 0) {
+        <div class="validation-box" role="alert">
+          <div class="validation-box-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <strong>Action Needed Before Confirmation:</strong>
+          </div>
+          <ul class="validation-list">
+            @for (err of validationErrors; track err) {
+              <li>{{ err }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Backend / Submission Error Callout -->
+      @if (errorMessage) {
+        <div class="error-callout" role="alert">
+          <strong>Notice:</strong>
+          <p>{{ errorMessage }}</p>
+          @if (errorStatus === 401 || errorStatus === 403) {
+            <a [routerLink]="['/login']" [queryParams]="{ returnUrl: currentUrl }" class="btn-login-redirect">
+              Sign In to Your Account
+            </a>
+          }
+        </div>
+      }
+
+      <!-- Unauthenticated Guest Note -->
+      @if (!isAuthenticated) {
+        <div class="guest-notice" role="note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>You will be redirected to sign in. Your booking selections will be securely preserved.</span>
+        </div>
+      }
+
+      <!-- Primary Confirmation Button -->
+      <button
+        pButton
+        type="button"
+        id="btn-drawer-confirm-booking"
+        class="btn-drawer-submit"
+        [disabled]="!canSubmit || isSubmitting"
+        (click)="onSubmit()"
+        [attr.aria-busy]="isSubmitting">
+        @if (isSubmitting) {
+          <span>{{ isEditMode ? 'Updating Reservation...' : 'Creating Reservation...' }}</span>
+        } @else {
+          <span>{{ isEditMode ? 'Update Hotel Booking #' + editingBookingId : 'Confirm Hotel Booking' }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="btn-drawer-keep-browsing"
+        (click)="closeDrawer()">
+        Return to Browsing Rooms
+      </button>
+    </section>
+  </div>
+</p-drawer>

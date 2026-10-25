@@ -96,12 +96,16 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
     );
   });
 
+  readonly availableStatuses: readonly status[] = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
+  readonly selectedHotelName = signal<string>('');
+
   // ── Reactive Form ──────────────────────────────────────────
   readonly bookingForm: FormGroup = this.fb.group({
     roomId: [null, [Validators.required]],
     guests: [1, [Validators.required, Validators.min(1), Validators.max(20)]],
     checkIn: ['', [Validators.required]],
     checkOut: ['', [Validators.required]],
+    status: ['PENDING', [Validators.required]],
   });
 
   ngOnInit(): void {
@@ -133,6 +137,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       size: this.pageSize(),
       sortBy: 'id',
       sortDirection: this.sortDirection(),
+      status: 'ANY',
     };
 
     this.bookingService
@@ -199,6 +204,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   openCreateDialog(): void {
     this.isEditMode.set(false);
     this.editingBookingId.set(null);
+    this.selectedHotelName.set('');
 
     const today = new Date();
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -212,6 +218,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       guests: 1,
       checkIn: inStr,
       checkOut: outStr,
+      status: 'PENDING',
     });
     this.dialogVisible.set(true);
   }
@@ -219,6 +226,17 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   openEditDialog(b: HotelBookingDTO): void {
     this.isEditMode.set(true);
     this.editingBookingId.set(b.id);
+
+    // Resolve the hotel's actual name
+    const foundRoom = this.rooms().find((r) => r.id === b.roomId);
+    const resolvedName =
+      b.hotelName ||
+      (b.hotelId
+        ? `Hotel #${b.hotelId}`
+        : foundRoom
+        ? `Hotel #${foundRoom.hotelId}`
+        : 'Hotel Property');
+    this.selectedHotelName.set(resolvedName);
 
     const inStr = b.checkIn ? b.checkIn.slice(0, 10) : '';
     const outStr = b.checkOut ? b.checkOut.slice(0, 10) : '';
@@ -228,6 +246,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       guests: b.guests,
       checkIn: inStr,
       checkOut: outStr,
+      status: b.status || 'PENDING',
     });
     this.dialogVisible.set(true);
   }

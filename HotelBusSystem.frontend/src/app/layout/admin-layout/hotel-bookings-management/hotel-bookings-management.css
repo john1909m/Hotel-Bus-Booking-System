@@ -28,3 +28,35 @@
   color: var(--color-primary);
   font-size: 0.95rem;
 }
+
+.hotel-name-display-box {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hotel-display-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+}
+
+.hotel-display-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .hotel-name-display-box {
+  background: rgba(53, 198, 160, 0.1);
+  border-color: rgba(53, 198, 160, 0.3);
+}
+

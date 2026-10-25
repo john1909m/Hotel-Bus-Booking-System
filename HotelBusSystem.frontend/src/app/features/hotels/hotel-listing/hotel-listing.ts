@@ -14,18 +14,20 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { PageHotelDTO,  HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
+import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
 
 type PageState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-hotel-listing',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormsModule, DecimalPipe, RouterLink, SafeImageUrlPipe],
   templateUrl: './hotel-listing.html',
   styleUrl: './hotel-listing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HotelListing implements OnInit, OnDestroy {
+  readonly defaultPlaceholder = DEFAULT_IMAGE_PLACEHOLDER;
   private readonly hotelService = inject(HotelService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
@@ -170,7 +172,9 @@ export class HotelListing implements OnInit, OnDestroy {
     if (page === this.currentPage()) return;
     this.currentPage.set(page);
     this.loadHotels();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   previousPage(): void {
@@ -189,5 +193,12 @@ export class HotelListing implements OnInit, OnDestroy {
   getStarArray(rating: number): number[] {
     const full = Math.round(Math.max(0, Math.min(5, rating)));
     return Array.from({ length: 5 }, (_, i) => i < full ? 1 : 0);
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img && !img.src.includes('hotel-placeholder.svg')) {
+      img.src = this.defaultPlaceholder;
+    }
   }
 }
