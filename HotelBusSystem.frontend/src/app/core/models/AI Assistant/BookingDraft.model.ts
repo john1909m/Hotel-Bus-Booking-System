@@ -10,6 +10,8 @@ export interface BookingDraftRequest{
     checkInDate: string;
     checkOutDate: string;
     guests: number;
+    adults: number;
+    childAges: number[];
     goingTripId: number;
     goingSeatId: number;
     returnTripId: number;
@@ -31,6 +33,8 @@ export interface BookingDraftResponse {
     checkOutDate?: string;
     nights?: number;
     guests?: number;
+    adults: number;
+    childAges: number[];
     goingTripId?: number;
     goingSeatId?: number;
     goingSeatNumber?: string;
