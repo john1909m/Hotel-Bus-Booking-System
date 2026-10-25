@@ -9,6 +9,12 @@ spring:
     hikari:
       max-lifetime: 300000
       keepalive-time: 120000
+
+  cache:
+    type: redis
+    redis:
+      use-key-prefix: true
+      time-to-live: 600000
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -42,6 +48,8 @@ spring:
 logging:
   level:
     org.hibernate.SQL: info
+
+
 
 token:
   secret: hjfs46687kjsfkj@#@$#$@$%ffeddf@#sADDS

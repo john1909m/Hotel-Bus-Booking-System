@@ -16,6 +16,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +38,10 @@ public class BusRouteServiceImpl implements BusRouteService {
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusRouteDto createBusRoute(BusRouteRequestDto busRouteRequestDto) {
         // Validate that origin stop exists
         BusStop originStop = busStopRepository.findById(busRouteRequestDto.getOriginStopId())
@@ -51,6 +58,7 @@ public class BusRouteServiceImpl implements BusRouteService {
     }
 
     @Override
+    @Cacheable(value = "bus-routes", key = "#id")
     public BusRouteDto getBusRouteById(Long id) {
         BusRoute busRoute = busRouteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
@@ -84,6 +92,7 @@ public class BusRouteServiceImpl implements BusRouteService {
     }
 
     @Override
+    @Cacheable(value = "bus-routes", key = "'list:' + #page + ':' + #size + ':' + (#sortBy == null ? '' : #sortBy.trim().toLowerCase()) + ':' + (#sortDirection == null ? '' : #sortDirection.trim().toLowerCase()) + ':' + (#originStopId == null ? '' : #originStopId) + ':' + (#destinationStopId == null ? '' : #destinationStopId)")
     public PageResponse<BusRouteDto> getAllBusRoutesPaginated(int page, int size, String sortBy, String sortDirection,
                                                               Long originStopId, Long destinationStopId) {
         // Validate and normalize pagination parameters
@@ -143,6 +152,10 @@ public class BusRouteServiceImpl implements BusRouteService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusRouteDto updateBusRoute(Long id, BusRouteRequestDto busRouteRequestDto) {
         BusRoute existingBusRoute = busRouteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
@@ -173,6 +186,10 @@ public class BusRouteServiceImpl implements BusRouteService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public void deleteBusRoute(Long id) {
         if (!busRouteRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found"));

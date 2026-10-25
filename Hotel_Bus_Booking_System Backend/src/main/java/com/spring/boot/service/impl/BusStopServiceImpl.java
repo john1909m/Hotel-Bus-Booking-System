@@ -11,6 +11,9 @@ import com.spring.boot.service.interfaces.BusStopService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +31,11 @@ public class BusStopServiceImpl implements BusStopService {
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-stops", allEntries = true),
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusStopDto createBusStop(BusStopRequestDto busStopRequestDto) {
         BusStop busStop = busStopMapper.busStopRequestDtoToBusStop(busStopRequestDto);
         BusStop savedBusStop = busStopRepository.save(busStop);
@@ -35,6 +43,7 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
+    @Cacheable(value = "bus-stops", key = "#id")
     public BusStopDto getBusStopById(Long id) {
         BusStop busStop = busStopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found")));
@@ -61,6 +70,7 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
+    @Cacheable(value = "bus-stops", key = "'list:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort + ':' + (#q == null ? '' : #q.trim().toLowerCase()) + ':' + (#city == null ? '' : #city.trim().toLowerCase())")
     public Page<BusStopDto> getAllBusStopsPaginated(Pageable pageable,
                                                     String q, String city) {
         // Get paginated results from repository
@@ -75,6 +85,11 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-stops", allEntries = true),
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusStopDto updateBusStop(Long id, BusStopRequestDto busStopRequestDto) {
         BusStop existingBusStop = busStopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found")));
@@ -94,6 +109,11 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "bus-stops", allEntries = true),
+            @CacheEvict(value = "bus-routes", allEntries = true),
+            @CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public void deleteBusStop(Long id) {
         if (!busStopRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_stop_not_found"));

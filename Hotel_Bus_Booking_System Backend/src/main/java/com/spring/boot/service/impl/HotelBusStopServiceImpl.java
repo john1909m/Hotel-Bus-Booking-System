@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +39,10 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "hotels", allEntries = true),
+            @CacheEvict(value = "bus-stops", allEntries = true)
+    })
     public HotelBusStopDto createHotelBusStop(HotelBusStopRequestDto hotelBusStopRequestDto) {
         // Validate that hotel exists
         var hotel = hotelRepository.findById(hotelBusStopRequestDto.getHotelId())
@@ -121,6 +127,10 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "hotels", allEntries = true),
+            @CacheEvict(value = "bus-stops", allEntries = true)
+    })
     public HotelBusStopDto updateHotelBusStop(Long id, HotelBusStopRequestDto hotelBusStopRequestDto) {
         HotelBusStop existingHotelBusStop = hotelBusStopRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_bus_stop_not_found")));
@@ -150,6 +160,10 @@ public class HotelBusStopServiceImpl implements HotelBusStopService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "hotels", allEntries = true),
+            @CacheEvict(value = "bus-stops", allEntries = true)
+    })
     public void deleteHotelBusStop(Long id) {
         if (!hotelBusStopRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_bus_stop_not_found"));
