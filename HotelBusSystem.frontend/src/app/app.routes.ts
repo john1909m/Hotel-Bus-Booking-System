@@ -55,6 +55,12 @@ export const routes: Routes = [
       import('./layout/user-layout/user-layout').then(m => m.UserLayout),
     children: [
       {
+        path: 'hotel-bookings',
+        loadComponent: () =>
+          import('./layout/user-layout/hotel-bookings/hotel-bookings.component').then(m => m.HotelBookingsComponent),
+        title: 'TravelEase — My Hotel Bookings',
+      },
+      {
         path: 'bus-bookings',
         loadComponent: () =>
           import('./layout/user-layout/BusBookings/BusBookings.component').then(m => m.BusBookingsComponent),
@@ -62,7 +68,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'bus-bookings',
+        redirectTo: 'hotel-bookings',
         pathMatch: 'full',
       },
     ],
@@ -87,6 +93,13 @@ export const routes: Routes = [
           import('./layout/admin-layout/hotels-management/hotels-management').then(m => m.HotelsManagement),
         title: 'TravelEase Admin — Hotels Management',
       },
+      {
+        path: 'hotel-images',
+        loadComponent: () =>
+          import('./layout/admin-layout/hotel-images-management/hotel-images-management').then(m => m.HotelImagesManagement),
+        title: 'TravelEase Admin — Hotel Images Management',
+      },
+
       {
         path: 'rooms',
         loadComponent: () =>
