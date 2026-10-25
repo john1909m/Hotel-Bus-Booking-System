@@ -24,7 +24,6 @@ import java.time.LocalTime;
 import java.util.List;
 import com.spring.boot.exception.BookingConflictException;
 import com.spring.boot.repository.BusBookingRepository;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
@@ -46,7 +45,6 @@ public class BusTripServiceImpl implements BusTripService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "bus-trips", allEntries = true)
     public BusTripDto createBusTrip(BusTripRequestDto busTripRequestDto) {
         // Validate that bus exists
         var bus = busRepository.findById(busTripRequestDto.getBusId())
@@ -126,7 +124,6 @@ public class BusTripServiceImpl implements BusTripService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "bus-trips", allEntries = true)
     public BusTripDto updateBusTrip(Long id, BusTripRequestDto busTripRequestDto) {
         BusTrip existingBusTrip = busTripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
@@ -165,7 +162,6 @@ public class BusTripServiceImpl implements BusTripService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "bus-trips", allEntries = true)
     public void deleteBusTrip(Long id) {
         if (!busTripRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found"));

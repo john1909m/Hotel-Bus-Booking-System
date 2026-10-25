@@ -16,9 +16,6 @@ import com.spring.boot.validator.ImageUrlValidator;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -43,10 +40,6 @@ public class HotelImageServiceImpl implements HotelImageService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotel-images", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
     public HotelImageDto addImage(Long hotelId, HotelImageRequest request) {
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("error.hotel_not_found"));
@@ -71,7 +64,6 @@ public class HotelImageServiceImpl implements HotelImageService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "hotel-images", key = "'hotel:' + #hotelId + ':' + (#roomType == null ? '' : #roomType.trim().toLowerCase())")
     public List<HotelImageDto> getImages(Long hotelId, String roomType) {
         if (!hotelRepository.existsById(hotelId)) {
             throw new ResourceNotFoundException("error.hotel_not_found");
@@ -96,10 +88,6 @@ public class HotelImageServiceImpl implements HotelImageService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotel-images", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
     public HotelImageDto updateImage(Long imageId, HotelImageRequest request) {
         HotelImage existingImage = hotelImageRepository.findById(imageId)
                 .orElseThrow(() -> new ResourceNotFoundException("error.hotel_image_not_found"));
@@ -123,10 +111,6 @@ public class HotelImageServiceImpl implements HotelImageService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotel-images", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
     public void deleteImage(Long imageId) {
         HotelImage existingImage = hotelImageRepository.findById(imageId)
                 .orElseThrow(() -> new ResourceNotFoundException("error.hotel_image_not_found"));

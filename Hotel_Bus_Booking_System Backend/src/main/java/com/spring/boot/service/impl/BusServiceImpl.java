@@ -11,9 +11,6 @@ import com.spring.boot.service.interfaces.BusService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,10 +28,6 @@ public class BusServiceImpl implements BusService {
     private final BundleMessageService bundleMessageService;
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "buses", allEntries = true),
-            @CacheEvict(value = "bus-trips", allEntries = true)
-    })
     public BusDto createBus(BusRequestDto busRequestDto) {
         Bus bus = busMapper.busRequestDtoToBus(busRequestDto);
         Bus savedBus = busRepository.save(bus);
@@ -42,7 +35,6 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
-    @Cacheable(value = "buses", key = "#id")
     public BusDto getBusById(Long id) {
         Bus bus = busRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
@@ -83,10 +75,6 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "buses", allEntries = true),
-            @CacheEvict(value = "bus-trips", allEntries = true)
-    })
     public BusDto updateBus(Long id, BusRequestDto busRequestDto) {
         Bus existingBus = busRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
@@ -105,10 +93,6 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "buses", allEntries = true),
-            @CacheEvict(value = "bus-trips", allEntries = true)
-    })
     public void deleteBus(Long id) {
         if (!busRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found"));

@@ -27,9 +27,6 @@ import com.spring.boot.model.HotelImage;
 import com.spring.boot.exception.BookingConflictException;
 import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.RoomRepository;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -48,11 +45,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotels", allEntries = true),
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotel-images", allEntries = true)
-    })
     public HotelDto createHotel(HotelRequestDto hotelRequestDto) {
         Hotel hotel = hotelMapper.hotelRequestDtoToHotel(hotelRequestDto);
         Hotel savedHotel = hotelRepository.save(hotel);
@@ -60,7 +52,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = "hotels", key = "#id")
     public HotelDto getHotelById(Long id) {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
@@ -137,11 +128,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotels", allEntries = true),
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotel-images", allEntries = true)
-    })
     public HotelDto updateHotel(Long id, HotelRequestDto hotelRequestDto) {
         Hotel existingHotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
@@ -166,11 +152,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "hotels", allEntries = true),
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotel-images", allEntries = true)
-    })
     public void deleteHotel(Long id) {
         if (!hotelRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found"));

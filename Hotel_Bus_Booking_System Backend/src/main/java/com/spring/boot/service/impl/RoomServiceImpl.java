@@ -20,7 +20,6 @@ import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.HotelBookingRoomRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -39,10 +38,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
+    @CacheEvict(value = "rooms", allEntries = true)
     public RoomDto createRoom(RoomRequestDto roomRequestDto) {
         Room room = roomMapper.roomRequestDtoToRoom(roomRequestDto);
 
@@ -71,7 +67,6 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @Cacheable(value = "rooms", key = "'hotel:' + #hotelId")
     public java.util.List<RoomDto> getRoomsByHotelId(Long hotelId) {
         return roomRepository.findByHotelId(hotelId).stream()
                 .map(roomMapper::roomToRoomDto)
@@ -86,10 +81,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
+    @CacheEvict(value = "rooms", allEntries = true)
     public RoomDto updateRoom(Long id, RoomRequestDto roomRequestDto) {
         Room existingRoom = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
@@ -117,10 +109,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "rooms", allEntries = true),
-            @CacheEvict(value = "hotels", allEntries = true)
-    })
+    @CacheEvict(value = "rooms", allEntries = true)
     public void deleteRoom(Long id) {
         if (!roomRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
