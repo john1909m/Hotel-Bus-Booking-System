@@ -65,21 +65,14 @@ public class TokenHandler {
     }
 
     public UserDto validateToken(String token) {
-        try {
-            Claims claims = jwtParser.parseClaimsJws(token).getBody();
-            Long userId = claims.get("userId", Long.class);
-            String role = claims.get("role", String.class);
-            UserDto userDto = new UserDto();
-            userDto.setId(userId);
-            userDto.setName(claims.getSubject());
-            userDto.setRole(Role.valueOf(role));
-
-            return userDto;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        Claims claims = jwtParser.parseClaimsJws(token).getBody();
+        Long userId = claims.get("userId", Long.class);
+        String role = claims.get("role", String.class);
+        UserDto userDto = new UserDto();
+        userDto.setId(userId);
+        userDto.setName(claims.getSubject());
+        userDto.setRole(Role.valueOf(role));
+        return userDto;
     }
 
 }

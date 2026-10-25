@@ -50,13 +50,13 @@ public class HotelController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<HotelDto>> getAllHotels(@ParameterObject Pageable pageable,
-                                                       @RequestParam(required = false) String q,
-                                                       @RequestParam(required = false) String city,
-                                                       @RequestParam(required = false) Double minRating,
-                                                       @RequestParam(required = false) Double maxPrice) {
+    public ResponseEntity<PagedModel<HotelDto>> getAllHotels(@ParameterObject Pageable pageable,
+                                                             @RequestParam(required = false) String q,
+                                                             @RequestParam(required = false) String city,
+                                                             @RequestParam(required = false) Double minRating,
+                                                             @RequestParam(required = false) Double maxPrice) {
         Page<HotelDto> hotels = hotelService.getAllHotelsPaginated(pageable, q, city, minRating, maxPrice);
-        return new ResponseEntity<>(hotels, HttpStatus.OK);
+        return new ResponseEntity<>(new PagedModel<>(hotels), HttpStatus.OK);
     }
 
     @GetMapping("/lookup")

@@ -53,6 +53,8 @@ public interface BusBookingService {
 
     BusBookingDto updateBusBooking(Long id, BusBookingRequestDto busBookingRequestDto);
 
+    BusBookingDto updateBookingStatus(Long id, BookingStatus newStatus);
+
     void deleteBusBooking(Long id);
 
     /**

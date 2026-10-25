@@ -3,17 +3,20 @@ package com.spring.boot.repository;
 import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.model.BusBooking;
 import com.spring.boot.repository.spec.BusBookingSpecs;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-
+import java.util.Optional;
 
 /**
  * Spring Data JPA repository for BusBooking entity.
@@ -22,9 +25,17 @@ import java.util.List;
 public interface BusBookingRepository extends JpaRepository<BusBooking, Long> {
     List<BookingStatus> ACTIVE_STATUSES = List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT bb FROM BusBooking bb WHERE bb.id = :id")
+    Optional<BusBooking> findByIdForUpdate(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"user", "busTrip", "seat"})
     List<BusBooking> findByUser_Id(Long userId);
 
+    @EntityGraph(attributePaths = {"user", "busTrip", "seat"})
     List<BusBooking> findByBusTripId(Long busTripId);
+
+    boolean existsByBusTripId(Long busTripId);
 
     List<BusBooking> findByBusTripIdAndSeatIdAndStatusIn(
             Long busTripId, Long seatId, List<BookingStatus> statuses);
@@ -66,7 +77,12 @@ public interface BusBookingRepository extends JpaRepository<BusBooking, Long> {
                 userId, busTripId, seatId), pageable);
     }
 
+    @EntityGraph(attributePaths = {"user", "busTrip", "seat"})
     Page<BusBooking> findAll(Specification<BusBooking> filter, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = {"user", "busTrip", "seat"})
+    Page<BusBooking> findAll(Pageable pageable);
 
     /** Same call without seatId (the second signature in your errors). */
     default Page<BusBooking> findByFilters(BookingStatus status,

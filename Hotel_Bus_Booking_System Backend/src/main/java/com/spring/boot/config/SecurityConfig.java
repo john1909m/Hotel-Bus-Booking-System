@@ -29,10 +29,12 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final AuthFilter authFilter;
+    private final com.spring.boot.helper.BundleMessageService bundleMessageService;
 
     @Autowired
-    public SecurityConfig(AuthFilter authFilter) {
+    public SecurityConfig(AuthFilter authFilter, com.spring.boot.helper.BundleMessageService bundleMessageService) {
         this.authFilter = authFilter;
+        this.bundleMessageService = bundleMessageService;
     }
 
     @Bean
@@ -50,13 +52,21 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(
                                 (request, response, authException) -> {
-                                    response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                                    String errorKey = (String) request.getAttribute("jwt_error");
+                                    if (errorKey == null) {
+                                        errorKey = "Unauthorized";
+                                    }
+                                    String message = bundleMessageService.getMessage(errorKey);
+                                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                                    response.setContentType("application/json;charset=UTF-8");
+                                    response.getWriter().write(String.format("{\"error\":\"Unauthorized\",\"message\":\"%s\"}", message));
                                 }
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/meta/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -128,6 +138,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/hotel-bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bus-bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/payments").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/hotel-bookings/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/bus-bookings/*/status").hasRole("ADMIN")
 
                         // All other endpoints require authentication (but will be handled by method security)
                         .requestMatchers("/error").permitAll()
@@ -141,7 +154,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4200","http://localhost:8080","http://localhost:5173/**","http://localhost:4200/**")); // React frontend
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS")) ;
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS")) ;
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type","Idempotency-Key", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Set-Cookie"));

@@ -2,24 +2,24 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.dto.BusBookingRequestDto;
+import com.spring.boot.dto.StatusUpdateRequestDto;
 import com.spring.boot.enums.BookingStatus;
-import com.spring.boot.enums.Role;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.service.interfaces.BusBookingService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-
 
 /**
  * REST controller for BusBooking entity.
@@ -45,14 +45,13 @@ public class BusBookingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BusBookingDto>> getAllBusBookings(@ParameterObject Pageable pageable,
-                                                                 @RequestParam(required = false) BookingStatus status,
-                                                                 @RequestParam(required = false) String bookingDateAfter,
-                                                                 @RequestParam(required = false) String bookingDateBefore,
-                                                                 @RequestParam(required = false) Long userId,
-                                                                 @RequestParam(required = false) Long busTripId,
-                                                                 @RequestParam(required = false) Long seatId) {
-        // Parse date strings if provided
+    public ResponseEntity<PagedModel<BusBookingDto>> getAllBusBookings(@ParameterObject Pageable pageable,
+                                                                      @RequestParam(required = false) BookingStatus status,
+                                                                      @RequestParam(required = false) String bookingDateAfter,
+                                                                      @RequestParam(required = false) String bookingDateBefore,
+                                                                      @RequestParam(required = false) Long userId,
+                                                                      @RequestParam(required = false) Long busTripId,
+                                                                      @RequestParam(required = false) Long seatId) {
         LocalDate parsedBookingDateAfter = bookingDateAfter != null && !bookingDateAfter.isEmpty()
                 ? LocalDate.parse(bookingDateAfter)
                 : null;
@@ -61,17 +60,16 @@ public class BusBookingController {
                 : null;
 
         Page<BusBookingDto> busBookings = busBookingService.getAllBusBookings(pageable, status, parsedBookingDateAfter, parsedBookingDateBefore, userId, busTripId, seatId);
-        return new ResponseEntity<>(busBookings, HttpStatus.OK);
+        return new ResponseEntity<>(new PagedModel<>(busBookings), HttpStatus.OK);
     }
 
     @GetMapping("/bus-trip/{busTripId}")
-    public ResponseEntity<Page<BusBookingDto>> getBusBookingsByBusTripId(@PathVariable Long busTripId,
-                                                                         @ParameterObject Pageable pageable,
-                                                                         @RequestParam(required = false) BookingStatus status,
-                                                                         @RequestParam(required = false) String bookingDateAfter,
-                                                                         @RequestParam(required = false) String bookingDateBefore,
-                                                                         @RequestParam(required = false) Long userId) {
-        // Parse date strings if provided
+    public ResponseEntity<PagedModel<BusBookingDto>> getBusBookingsByBusTripId(@PathVariable Long busTripId,
+                                                                              @ParameterObject Pageable pageable,
+                                                                              @RequestParam(required = false) BookingStatus status,
+                                                                              @RequestParam(required = false) String bookingDateAfter,
+                                                                              @RequestParam(required = false) String bookingDateBefore,
+                                                                              @RequestParam(required = false) Long userId) {
         LocalDate parsedBookingDateAfter = bookingDateAfter != null && !bookingDateAfter.isEmpty()
                 ? LocalDate.parse(bookingDateAfter)
                 : null;
@@ -80,7 +78,7 @@ public class BusBookingController {
                 : null;
 
         Page<BusBookingDto> busBookings = busBookingService.getBusBookingsByBusTripId(busTripId, pageable, status, parsedBookingDateAfter, parsedBookingDateBefore, userId);
-        return new ResponseEntity<>(busBookings, HttpStatus.OK);
+        return new ResponseEntity<>(new PagedModel<>(busBookings), HttpStatus.OK);
     }
 
     @GetMapping("/user/{userId}")
@@ -93,7 +91,6 @@ public class BusBookingController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<BusBookingDto>> getMyBusBookings() {
-        // Extract user ID from authentication principal
         UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDto.getId();
         List<BusBookingDto> busBookings = busBookingService.getMyBusBookings(userId);
@@ -101,14 +98,22 @@ public class BusBookingController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @busBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<BusBookingDto> updateBusBooking(@PathVariable Long id, @RequestBody BusBookingRequestDto busBookingRequestDto) {
         BusBookingDto updatedBusBooking = busBookingService.updateBusBooking(id, busBookingRequestDto);
         return new ResponseEntity<>(updatedBusBooking, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update bus booking status", description = "Admin only. Validates allowed status transitions.")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BusBookingDto> updateBusBookingStatus(
+            @PathVariable Long id,
+            @RequestBody StatusUpdateRequestDto statusDto) {
+        BusBookingDto updated = busBookingService.updateBookingStatus(id, statusDto.getStatus());
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @busBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<Void> deleteBusBooking(@PathVariable Long id) {
         busBookingService.deleteBusBooking(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

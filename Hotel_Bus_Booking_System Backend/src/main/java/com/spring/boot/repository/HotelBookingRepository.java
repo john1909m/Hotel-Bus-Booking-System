@@ -2,22 +2,29 @@ package com.spring.boot.repository;
 
 import com.spring.boot.model.HotelBooking;
 import com.spring.boot.enums.BookingStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Spring Data JPA repository for HotelBooking entity.
  */
 @Repository
 public interface HotelBookingRepository extends JpaRepository<HotelBooking, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT hb FROM HotelBooking hb WHERE hb.id = :id")
+    Optional<HotelBooking> findByIdForUpdate(@Param("id") Long id);
 
     @Query("SELECT hb FROM HotelBooking hb WHERE " +
             "(hb.room.id = ?1 OR EXISTS (SELECT hbr FROM HotelBookingRoom hbr WHERE hbr.hotelBooking = hb AND hbr.room.id = ?1)) AND " +
@@ -35,12 +42,20 @@ public interface HotelBookingRepository extends JpaRepository<HotelBooking, Long
             "hb.status IN ('CONFIRMED', 'PENDING') AND hb.id != ?4")
     List<HotelBooking> findOverlappingBookingsExcludingSelf(Long roomId, LocalDate checkIn, LocalDate checkOut, Long bookingId);
 
+    @EntityGraph(attributePaths = {"user", "room", "hotel"})
     List<HotelBooking> findByUser_Id(Long userId);
 
-    List<HotelBooking> findByUser_IdAndUser_name(Long userId,String name);
+    @EntityGraph(attributePaths = {"user", "room", "hotel"})
+    List<HotelBooking> findByUser_IdAndUser_name(Long userId, String name);
 
+    @EntityGraph(attributePaths = {"user", "room", "hotel"})
     List<HotelBooking> findByHotelId(Long hotelId);
 
+    boolean existsByRoom_Id(Long roomId);
+
+    boolean existsByHotelId(Long hotelId);
+
+    @EntityGraph(attributePaths = {"user", "room", "hotel"})
     @Query(value = """
                 SELECT DISTINCT hb FROM HotelBooking hb
                 WHERE (:status = 'ANY' OR hb.status = :status)

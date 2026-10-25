@@ -2,16 +2,19 @@ package com.spring.boot.repository;
 
 import com.spring.boot.enums.BusTripStatus;
 import com.spring.boot.model.BusTrip;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Optional;
 
 /**
  * Spring Data JPA repository for BusTrip entity.
@@ -19,10 +22,17 @@ import java.util.List;
 @Repository
 public interface BusTripRepository extends JpaRepository<BusTrip, Long> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT bt FROM BusTrip bt WHERE bt.id = :id")
+    Optional<BusTrip> findByIdForUpdate(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"bus", "route", "route.originStop", "route.destinationStop"})
     List<BusTrip> findByBusId(Long busId);
 
+    @EntityGraph(attributePaths = {"bus", "route", "route.originStop", "route.destinationStop"})
     List<BusTrip> findByRouteId(Long routeId);
 
+    @EntityGraph(attributePaths = {"bus", "route", "route.originStop", "route.destinationStop"})
     @Query(value = """
                 SELECT DISTINCT bt FROM BusTrip bt
                 WHERE (:busId = 0 OR bt.bus.id = :busId)
@@ -41,6 +51,7 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Long> {
                                 Pageable pageable);
 
     // Lookup for BusTrip is needed (hotels, buses, bus stops, routes, trips need it)
+    @EntityGraph(attributePaths = {"bus", "route"})
     @Query("""
         SELECT bt FROM BusTrip bt
         WHERE (:query = '' OR LOWER(CAST(bt.id AS string)) LIKE LOWER(CONCAT('%', :query, '%'))
@@ -53,6 +64,7 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Long> {
         """)
     Page<BusTrip> findByQueryLimit(@Param("query") String query, @Param("pageable") Pageable pageable);
 
+    @EntityGraph(attributePaths = {"bus", "route", "route.originStop", "route.destinationStop"})
     @Query("""
         SELECT bt FROM BusTrip bt
         JOIN bt.route r

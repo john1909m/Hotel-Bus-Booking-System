@@ -24,6 +24,11 @@ import java.util.stream.Collectors;
 import com.spring.boot.model.HotelImage;
 
 
+import com.spring.boot.exception.BookingConflictException;
+import com.spring.boot.repository.HotelBookingRepository;
+import com.spring.boot.repository.RoomRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Service implementation for Hotel entity.
  */
@@ -35,8 +40,11 @@ public class HotelServiceImpl implements HotelService {
     private final HotelMapper hotelMapper;
     private final BundleMessageService bundleMessageService;
     private final com.spring.boot.repository.HotelImageRepository hotelImageRepository;
+    private final RoomRepository roomRepository;
+    private final HotelBookingRepository hotelBookingRepository;
 
     @Override
+    @Transactional
     public HotelDto createHotel(HotelRequestDto hotelRequestDto) {
         Hotel hotel = hotelMapper.hotelRequestDtoToHotel(hotelRequestDto);
         Hotel savedHotel = hotelRepository.save(hotel);
@@ -119,6 +127,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Transactional
     public HotelDto updateHotel(Long id, HotelRequestDto hotelRequestDto) {
         Hotel existingHotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
@@ -142,10 +151,13 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void deleteHotel(Long id) {
         if (!hotelRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found"));
+        }
+        if (roomRepository.existsByHotelId(id) || hotelBookingRepository.existsByHotelId(id)) {
+            throw new BookingConflictException(bundleMessageService.getMessage("error.hotel_has_bookings"));
         }
         hotelImageRepository.deleteByHotelId(id);
         hotelRepository.deleteById(id);

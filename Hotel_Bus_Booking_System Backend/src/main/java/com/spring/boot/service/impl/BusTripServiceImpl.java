@@ -22,6 +22,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import com.spring.boot.exception.BookingConflictException;
+import com.spring.boot.repository.BusBookingRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.stream.Collectors;
 
 
@@ -36,9 +40,11 @@ public class BusTripServiceImpl implements BusTripService {
     private final BusTripMapper busTripMapper;
     private final BusRepository busRepository;
     private final BusRouteRepository busRouteRepository;
+    private final BusBookingRepository busBookingRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @Transactional
     public BusTripDto createBusTrip(BusTripRequestDto busTripRequestDto) {
         // Validate that bus exists
         var bus = busRepository.findById(busTripRequestDto.getBusId())
@@ -117,6 +123,7 @@ public class BusTripServiceImpl implements BusTripService {
     }
 
     @Override
+    @Transactional
     public BusTripDto updateBusTrip(Long id, BusTripRequestDto busTripRequestDto) {
         BusTrip existingBusTrip = busTripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
@@ -154,9 +161,13 @@ public class BusTripServiceImpl implements BusTripService {
     }
 
     @Override
+    @Transactional
     public void deleteBusTrip(Long id) {
         if (!busTripRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found"));
+        }
+        if (busBookingRepository.existsByBusTripId(id)) {
+            throw new BookingConflictException(bundleMessageService.getMessage("error.trip_has_bookings"));
         }
         busTripRepository.deleteById(id);
     }

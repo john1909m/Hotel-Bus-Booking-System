@@ -40,6 +40,8 @@ public interface HotelBookingService {
 
     HotelBookingDto updateHotelBooking(Long id, HotelBookingRequestDto hotelBookingRequestDto);
 
+    HotelBookingDto updateBookingStatus(Long id, BookingStatus newStatus);
+
     void deleteHotelBooking(Long id);
 
     /**

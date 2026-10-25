@@ -46,11 +46,11 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<UserDto>> getAllUsers(@ParameterObject Pageable pageable,
+    public ResponseEntity<org.springframework.data.web.PagedModel<UserDto>> getAllUsers(@ParameterObject Pageable pageable,
                                                      @RequestParam(required = false) String q,
                                                      @RequestParam(required = false) String role) {
         Page<UserDto> users = userService.getAllUsersPaginated(pageable, q, role);
-        return new ResponseEntity<>(users, HttpStatus.OK);
+        return new ResponseEntity<>(new org.springframework.data.web.PagedModel<>(users), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")

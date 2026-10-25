@@ -3,11 +3,15 @@ package com.spring.boot.config.filter;
 import com.spring.boot.config.jwt.TokenHandler;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.enums.Role;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +23,8 @@ import java.util.List;
 
 @Component
 public class AuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
 
     private final TokenHandler tokenHandler;
 
@@ -33,7 +39,6 @@ public class AuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String token = null;
-        boolean tokenExtracted = false;
 
         // Try to get token from cookie first
         if (request.getCookies() != null) {
@@ -45,43 +50,7 @@ public class AuthFilter extends OncePerRequestFilter {
             }
         }
 
-        // If we have a token from cookie, try to validate it
-        if (token != null) {
-            tokenExtracted = true;
-            try {
-                UserDto userDto = tokenHandler.validateToken(token);
-
-                if (userDto != null) {
-                    // Token from cookie is valid, use it
-                    Role userRole = userDto.getRole();
-                    if (userRole == null) {
-                        // Null role indicates invalid/missing role information
-                        SecurityContextHolder.clearContext();
-                    } else {
-                        List<SimpleGrantedAuthority> authorities =
-                                List.of(new SimpleGrantedAuthority(
-                                        "ROLE_" + userRole
-                                ));
-
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDto,
-                                        null,
-                                        authorities
-                                );
-
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                        filterChain.doFilter(request, response);
-                        return;
-                    }
-                }
-            } catch (Exception e) {
-                // Cookie token is invalid, fall through to check header
-                token = null;
-            }
-        }
-
-        // If cookie token was invalid or not present, try Authorization header
+        // If not in cookie, check Authorization header
         if (token == null) {
             String header = request.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
@@ -89,38 +58,32 @@ public class AuthFilter extends OncePerRequestFilter {
             }
         }
 
-        // Determine if token was extracted from header
-        if (token != null && !tokenExtracted) {
-            tokenExtracted = true;
-        }
-
-        // Validate token from header (if we got one)
         if (token != null) {
             try {
                 UserDto userDto = tokenHandler.validateToken(token);
+                if (userDto != null && userDto.getRole() != null) {
+                    List<SimpleGrantedAuthority> authorities = List.of(
+                            new SimpleGrantedAuthority("ROLE_" + userDto.getRole())
+                    );
 
-                if (userDto != null) {
-                    Role userRole = userDto.getRole();
-                    if (userRole == null) {
-                        // Null role indicates invalid/missing role information
-                        SecurityContextHolder.clearContext();
-                    } else {
-                        List<SimpleGrantedAuthority> authorities =
-                                List.of(new SimpleGrantedAuthority(
-                                        "ROLE_" + userRole
-                                ));
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDto, null, authorities);
 
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDto,
-                                        null,
-                                        authorities
-                                );
-
-                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    SecurityContextHolder.clearContext();
                 }
-
-            } }catch (Exception e) {
+            } catch (ExpiredJwtException e) {
+                log.warn("JWT token expired: {}", e.getMessage());
+                request.setAttribute("jwt_error", "auth.token.expired");
+                SecurityContextHolder.clearContext();
+            } catch (JwtException | IllegalArgumentException e) {
+                log.warn("Invalid JWT token: {}", e.getMessage());
+                request.setAttribute("jwt_error", "auth.token.invalid");
+                SecurityContextHolder.clearContext();
+            } catch (Exception e) {
+                log.warn("Authentication failed for token: {}", e.getMessage());
+                request.setAttribute("jwt_error", "auth.token.invalid");
                 SecurityContextHolder.clearContext();
             }
         }

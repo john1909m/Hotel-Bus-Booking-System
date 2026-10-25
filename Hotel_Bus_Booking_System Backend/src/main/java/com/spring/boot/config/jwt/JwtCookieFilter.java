@@ -18,54 +18,22 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+// Deprecated duplicate filter: AuthFilter handles JWT authentication
 public class JwtCookieFilter extends OncePerRequestFilter {
 
-    @Autowired
     private TokenHandler tokenHandler;
+
+    public JwtCookieFilter() {
+    }
+
+    public JwtCookieFilter(TokenHandler tokenHandler) {
+        this.tokenHandler = tokenHandler;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
-        String token = extractTokenFromCookie(request);
-
-        if (token == null) {
-            token = extractTokenFromHeader(request);
-        }
-
-        System.out.println("🔍 Token: " + (token != null ? "EXISTS" : "NULL"));
-
-        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            try {
-                UserDto userDto = tokenHandler.validateToken(token);
-
-                if (userDto == null) {
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-
-                Role userRole = userDto.getRole();
-                if (userRole == null) {
-                    // Null role indicates invalid/missing role information
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDto,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + userRole))
-                        );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (Exception e) {
-                System.out.println("❌ Invalid token: " + e.getMessage());
-            }
-        }
-
         filterChain.doFilter(request, response);
     }
 

@@ -9,12 +9,13 @@ import com.spring.boot.exception.InvalidGuestCountException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.exception.RoomUnavailableException;
 import com.spring.boot.helper.BundleMessageService;
+import com.spring.boot.helper.SecurityUtils;
+import com.spring.boot.mapper.HotelBookingMapper;
 import com.spring.boot.model.Hotel;
 import com.spring.boot.model.HotelBooking;
 import com.spring.boot.model.HotelBookingRoom;
 import com.spring.boot.model.Room;
 import com.spring.boot.model.User;
-import com.spring.boot.mapper.HotelBookingMapper;
 import com.spring.boot.repository.HotelBookingRepository;
 import com.spring.boot.repository.HotelBookingRoomRepository;
 import com.spring.boot.repository.HotelRepository;
@@ -24,16 +25,13 @@ import com.spring.boot.service.interfaces.HotelBookingService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +41,13 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class HotelBookingServiceImpl implements HotelBookingService {
 
+    private static final Map<BookingStatus, Set<BookingStatus>> ALLOWED_BOOKING_TRANSITIONS = Map.of(
+            BookingStatus.PENDING, Set.of(BookingStatus.CONFIRMED, BookingStatus.CANCELLED),
+            BookingStatus.CONFIRMED, Set.of(BookingStatus.COMPLETED, BookingStatus.CANCELLED),
+            BookingStatus.COMPLETED, Collections.emptySet(),
+            BookingStatus.CANCELLED, Collections.emptySet()
+    );
+
     private final HotelBookingRepository hotelBookingRepository;
     private final HotelBookingRoomRepository hotelBookingRoomRepository;
     private final HotelBookingMapper hotelBookingMapper;
@@ -50,6 +55,18 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
+
+    public void validateStatusTransition(BookingStatus current, BookingStatus requested) {
+        if (requested == null || current == requested) {
+            return;
+        }
+        Set<BookingStatus> allowed = ALLOWED_BOOKING_TRANSITIONS.getOrDefault(current, Collections.emptySet());
+        if (!allowed.contains(requested)) {
+            throw new BookingConflictException(
+                    bundleMessageService.getMessage("error.booking.invalid_status_transition", new Object[]{current, requested})
+            );
+        }
+    }
 
     @Override
     @Transactional
@@ -74,21 +91,20 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             }
         }
 
-        // 2. No duplicate room ids in the request
+        // No duplicate room ids in the request
         Set<Long> uniqueIds = new HashSet<>(requestedRoomIds);
         if (uniqueIds.size() != requestedRoomIds.size()) {
             throw new BookingConflictException(bundleMessageService.getMessage("error.duplicate_rooms"));
         }
 
-        // Fetch rooms and validate existence
-        List<Room> rooms = new ArrayList<>();
-        for (Long roomId : requestedRoomIds) {
-            Room room = roomRepository.findById(roomId)
-                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
-            rooms.add(room);
+        // Lock rooms in ascending ID order to prevent deadlocks and serialize concurrent booking attempts
+        List<Long> sortedRoomIds = requestedRoomIds.stream().sorted().toList();
+        List<Room> rooms = roomRepository.findAllByIdsForUpdate(sortedRoomIds);
+        if (rooms.size() != sortedRoomIds.size()) {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
         }
 
-        // 1. All room ids belong to the SAME hotel as the booking
+        // All room ids belong to the SAME hotel as the booking
         Long hotelId = rooms.get(0).getHotel().getId();
         for (Room room : rooms) {
             if (!room.getHotel().getId().equals(hotelId)) {
@@ -97,7 +113,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         }
         Hotel hotel = rooms.get(0).getHotel();
 
-        // 3. Every room is available for the given dates (call existing check per room)
+        // Every room is available for the given dates
         for (Room room : rooms) {
             if (!isRoomAvailable(hotelId,
                     hotelBookingRequestDto.getCheckIn(),
@@ -107,7 +123,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             }
         }
 
-        // 4. Total guests capacity: sum of capacities of selected rooms >= required capacity (free under 12 rule)
+        // Total guests capacity: sum of capacities of selected rooms >= required capacity (free under 12 rule)
         int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
         validateRoomCapacity(totalCapacity,
                 hotelBookingRequestDto.getAdults(),
@@ -122,7 +138,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
                 : Collections.emptyList();
         int totalOccupants = effectiveAdults + effectiveChildAges.size();
 
-        // 5. totalPrice = sum over rooms of (nights * room.pricePerNight). Computed on server.
+        // totalPrice = sum over rooms of (nights * room.pricePerNight)
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
                 hotelBookingRequestDto.getCheckIn(),
                 hotelBookingRequestDto.getCheckOut());
@@ -164,13 +180,21 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HotelBookingDto getHotelBookingById(Long id) {
         HotelBooking hotelBooking = hotelBookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
+
+        if (!SecurityUtils.isOwnerOrAdmin(hotelBooking.getUser() != null ? hotelBooking.getUser().getId() : null)) {
+            // For reads: return 404 (do not reveal existence)
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found"));
+        }
+
         return hotelBookingMapper.hotelBookingToHotelBookingDto(hotelBooking);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HotelBookingDto> getAllHotelBookings() {
         return hotelBookingRepository.findAll().stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
@@ -178,13 +202,18 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HotelBookingDto> getHotelBookingsByUserId(Long userId) {
+        if (!SecurityUtils.isOwnerOrAdmin(userId)) {
+            return Collections.emptyList();
+        }
         return hotelBookingRepository.findByUser_Id(userId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HotelBookingDto> getHotelBookingsByHotelId(Long hotelId) {
         return hotelBookingRepository.findByHotelId(hotelId).stream()
                 .map(hotelBookingMapper::hotelBookingToHotelBookingDto)
@@ -192,6 +221,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<HotelBookingDto> getAllHotelBookingsPaginated(Pageable pageable,
                                                               BookingStatus status,
                                                               LocalDate checkInAfter, LocalDate checkInBefore,
@@ -214,6 +244,16 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         HotelBooking existingHotelBooking = hotelBookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
 
+        if (!SecurityUtils.isOwnerOrAdmin(existingHotelBooking.getUser() != null ? existingHotelBooking.getUser().getId() : null)) {
+            throw new AccessDeniedException(bundleMessageService.getMessage("error.access_denied"));
+        }
+
+        // Validate status transition if status is being updated
+        if (hotelBookingRequestDto.getStatus() != null && hotelBookingRequestDto.getStatus() != existingHotelBooking.getStatus()) {
+            validateStatusTransition(existingHotelBooking.getStatus(), hotelBookingRequestDto.getStatus());
+            existingHotelBooking.setStatus(hotelBookingRequestDto.getStatus());
+        }
+
         // Validate dates
         if (hotelBookingRequestDto.getCheckOut().isBefore(hotelBookingRequestDto.getCheckIn()) ||
                 hotelBookingRequestDto.getCheckOut().isEqual(hotelBookingRequestDto.getCheckIn())) {
@@ -231,11 +271,14 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             if (uniqueIds.size() != requestedRoomIds.size()) {
                 throw new BookingConflictException(bundleMessageService.getMessage("error.duplicate_rooms"));
             }
-            for (Long roomId : requestedRoomIds) {
-                Room r = roomRepository.findById(roomId)
-                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
-                rooms.add(r);
+
+            // Lock rooms in ascending ID order
+            List<Long> sortedRoomIds = requestedRoomIds.stream().sorted().toList();
+            rooms = roomRepository.findAllByIdsForUpdate(sortedRoomIds);
+            if (rooms.size() != sortedRoomIds.size()) {
+                throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
             }
+
             Long hotelId = rooms.get(0).getHotel().getId();
             for (Room r : rooms) {
                 if (!r.getHotel().getId().equals(hotelId)) {
@@ -308,19 +351,38 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     }
 
     @Override
-    public void deleteHotelBooking(Long id) {
-        if (!hotelBookingRepository.existsById(id)) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found"));
-        }
-        hotelBookingRepository.deleteById(id);
+    @Transactional
+    public HotelBookingDto updateBookingStatus(Long id, BookingStatus newStatus) {
+        HotelBooking booking = hotelBookingRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
+
+        validateStatusTransition(booking.getStatus(), newStatus);
+        booking.setStatus(newStatus);
+        HotelBooking saved = hotelBookingRepository.save(booking);
+        return hotelBookingMapper.hotelBookingToHotelBookingDto(saved);
     }
 
     @Override
+    @Transactional
+    public void deleteHotelBooking(Long id) {
+        HotelBooking existing = hotelBookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_booking_not_found")));
+
+        if (!SecurityUtils.isOwnerOrAdmin(existing.getUser() != null ? existing.getUser().getId() : null)) {
+            throw new AccessDeniedException(bundleMessageService.getMessage("error.access_denied"));
+        }
+
+        hotelBookingRepository.delete(existing);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<HotelBookingDto> getMyHotelBookings(Long userId) {
         return getHotelBookingsByUserId(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isRoomAvailable(Long hotelId, LocalDate checkIn, LocalDate checkOut, Long roomId) {
         var room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
@@ -329,14 +391,9 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             return false;
         }
 
-        return hotelBookingRepository.findOverlappingBookings(
-                        roomId, checkIn, checkOut)
-                .isEmpty();
+        return hotelBookingRepository.findOverlappingBookings(roomId, checkIn, checkOut).isEmpty();
     }
 
-    /**
-     * Check room availability excluding a specific booking (for updates).
-     */
     private boolean isRoomAvailableExcludingSelf(Long roomId, LocalDate checkIn, LocalDate checkOut, Long hotelId, Long bookingId) {
         var room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
@@ -345,9 +402,7 @@ public class HotelBookingServiceImpl implements HotelBookingService {
             return false;
         }
 
-        return hotelBookingRepository.findOverlappingBookingsExcludingSelf(
-                        roomId, checkIn, checkOut, bookingId)
-                .isEmpty();
+        return hotelBookingRepository.findOverlappingBookingsExcludingSelf(roomId, checkIn, checkOut, bookingId).isEmpty();
     }
 
     @Override

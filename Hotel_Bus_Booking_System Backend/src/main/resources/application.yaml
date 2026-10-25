@@ -2,24 +2,23 @@ spring:
   application:
     name: Hotel_Bus_Booking_System
   datasource:
-    #    driver-class-name: oracle.jdbc.driver.OracleDriver
-    #    url: jdbc:oracle:thin:@//localhost:1521/orclpdb
-    #    username: HotelBusSystem
-    #    password: hotelBusSystem
-
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
     username: postgres.drdirtrhaebtsvtdellv
     password: ${POSTGRESQL_PASS}
+    hikari:
+      max-lifetime: 300000
+      keepalive-time: 120000
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
   data:
     web:
       pageable:
@@ -42,10 +41,7 @@ spring:
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql: trace
-    org.springframework.security: DEBUG
-
+    org.hibernate.SQL: info
 
 token:
   secret: hjfs46687kjsfkj@#@$#$@$%ffeddf@#sADDS
@@ -61,6 +57,3 @@ app:
     account-id: ${CLOUDFLARE_R2_ACCOUNT_ID:}
   images:
     allowed-hosts: images.example.com, pub-cloudflare-r2.dev, pub-9188aaa3f1d74a5ca857aecc65c7c25f.r2.dev
-
-
-

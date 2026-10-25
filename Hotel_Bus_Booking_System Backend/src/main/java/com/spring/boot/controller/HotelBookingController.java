@@ -2,9 +2,8 @@ package com.spring.boot.controller;
 
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
+import com.spring.boot.dto.StatusUpdateRequestDto;
 import com.spring.boot.enums.BookingStatus;
-import com.spring.boot.enums.Role;
-import java.time.LocalDate;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.service.interfaces.HotelBookingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,15 +11,15 @@ import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
-
 
 /**
  * REST controller for HotelBooking entity.
@@ -37,7 +36,6 @@ public class HotelBookingController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<HotelBookingDto> createHotelBooking(@RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
-        // Extract user ID from authentication principal
         UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDto.getId();
         HotelBookingDto createdHotelBooking = hotelBookingService.createHotelBooking(hotelBookingRequestDto, userId);
@@ -45,20 +43,18 @@ public class HotelBookingController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<HotelBookingDto> getHotelBookingById(@PathVariable Long id) {
         HotelBookingDto hotelBooking = hotelBookingService.getHotelBookingById(id);
         return new ResponseEntity<>(hotelBooking, HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<Page<HotelBookingDto>> getAllHotelBookings(@ParameterObject Pageable pageable,
-                                                                     @RequestParam(required = false) BookingStatus status,
-                                                                     @RequestParam(required = false) String checkInAfter,
-                                                                     @RequestParam(required = false) String checkInBefore,
-                                                                     @RequestParam(required = false) Long userId,
-                                                                     @RequestParam(required = false) Long hotelId) {
-        // Parse date strings if provided
+    public ResponseEntity<PagedModel<HotelBookingDto>> getAllHotelBookings(@ParameterObject Pageable pageable,
+                                                                          @RequestParam(required = false) BookingStatus status,
+                                                                          @RequestParam(required = false) String checkInAfter,
+                                                                          @RequestParam(required = false) String checkInBefore,
+                                                                          @RequestParam(required = false) Long userId,
+                                                                          @RequestParam(required = false) Long hotelId) {
         LocalDate parsedCheckInAfter = checkInAfter != null && !checkInAfter.isEmpty()
                 ? LocalDate.parse(checkInAfter)
                 : null;
@@ -67,7 +63,7 @@ public class HotelBookingController {
                 : null;
 
         Page<HotelBookingDto> hotelBookings = hotelBookingService.getAllHotelBookingsPaginated(pageable, status, parsedCheckInAfter, parsedCheckInBefore, userId, hotelId);
-        return new ResponseEntity<>(hotelBookings, HttpStatus.OK);
+        return new ResponseEntity<>(new PagedModel<>(hotelBookings), HttpStatus.OK);
     }
 
     @GetMapping("/user/{userId}")
@@ -80,7 +76,6 @@ public class HotelBookingController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<HotelBookingDto>> getMyHotelBookings() {
-        // Extract user ID from authentication principal
         UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDto.getId();
         List<HotelBookingDto> hotelBookings = hotelBookingService.getMyHotelBookings(userId);
@@ -97,14 +92,22 @@ public class HotelBookingController {
     @Operation(summary = "Update a hotel booking",
                description = "Updates an existing booking. Checks room capacity with the free-under-12 rule.")
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<HotelBookingDto> updateHotelBooking(@PathVariable Long id, @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
         HotelBookingDto updatedHotelBooking = hotelBookingService.updateHotelBooking(id, hotelBookingRequestDto);
         return new ResponseEntity<>(updatedHotelBooking, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update hotel booking status", description = "Admin only. Validates allowed status transitions.")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<HotelBookingDto> updateHotelBookingStatus(
+            @PathVariable Long id,
+            @RequestBody StatusUpdateRequestDto statusDto) {
+        HotelBookingDto updated = hotelBookingService.updateBookingStatus(id, statusDto.getStatus());
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @hotelBookingSecurity.isOwner(#id, authentication)")
     public ResponseEntity<Void> deleteHotelBooking(@PathVariable Long id) {
         hotelBookingService.deleteHotelBooking(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

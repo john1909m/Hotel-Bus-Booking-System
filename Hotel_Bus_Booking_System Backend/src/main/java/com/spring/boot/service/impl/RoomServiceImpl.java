@@ -15,6 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.spring.boot.exception.BookingConflictException;
+import com.spring.boot.repository.HotelBookingRepository;
+import com.spring.boot.repository.HotelBookingRoomRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Service implementation for Room entity.
  */
@@ -25,9 +30,12 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
     private final HotelRepository hotelRepository;
+    private final HotelBookingRoomRepository hotelBookingRoomRepository;
+    private final HotelBookingRepository hotelBookingRepository;
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @Transactional
     public RoomDto createRoom(RoomRequestDto roomRequestDto) {
         Room room = roomMapper.roomRequestDtoToRoom(roomRequestDto);
 
@@ -68,6 +76,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public RoomDto updateRoom(Long id, RoomRequestDto roomRequestDto) {
         Room existingRoom = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
@@ -94,9 +103,13 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public void deleteRoom(Long id) {
         if (!roomRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
+        }
+        if (hotelBookingRoomRepository.existsByRoomId(id) || hotelBookingRepository.existsByRoom_Id(id)) {
+            throw new BookingConflictException(bundleMessageService.getMessage("error.room_has_bookings"));
         }
         roomRepository.deleteById(id);
     }

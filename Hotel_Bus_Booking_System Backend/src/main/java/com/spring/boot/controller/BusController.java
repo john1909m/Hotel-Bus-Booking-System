@@ -41,12 +41,12 @@ public class BusController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BusDto>> getAllBuses(@ParameterObject Pageable pageable,
+    public ResponseEntity<org.springframework.data.web.PagedModel<BusDto>> getAllBuses(@ParameterObject Pageable pageable,
                                                     @RequestParam(required = false) String q,
                                                     @RequestParam(required = false) String busType,
                                                     @RequestParam(required = false) String company) {
         Page<BusDto> buses = busService.getAllBusesPaginated(pageable, q, busType, company);
-        return new ResponseEntity<>(buses, HttpStatus.OK);
+        return new ResponseEntity<>(new org.springframework.data.web.PagedModel<>(buses), HttpStatus.OK);
     }
 
     @GetMapping("/lookup")
