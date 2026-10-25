@@ -92,7 +92,6 @@ public class BusRouteServiceImpl implements BusRouteService {
     }
 
     @Override
-    @Cacheable(value = "bus-routes", key = "'list:' + #page + ':' + #size + ':' + (#sortBy == null ? '' : #sortBy.trim().toLowerCase()) + ':' + (#sortDirection == null ? '' : #sortDirection.trim().toLowerCase()) + ':' + (#originStopId == null ? '' : #originStopId) + ':' + (#destinationStopId == null ? '' : #destinationStopId)")
     public PageResponse<BusRouteDto> getAllBusRoutesPaginated(int page, int size, String sortBy, String sortDirection,
                                                               Long originStopId, Long destinationStopId) {
         // Validate and normalize pagination parameters

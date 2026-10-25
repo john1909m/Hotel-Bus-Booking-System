@@ -68,7 +68,6 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
-    @Cacheable(value = "buses", key = "'list:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort + ':' + (#q == null ? '' : #q.trim().toLowerCase()) + ':' + (#busType == null ? '' : #busType.trim().toLowerCase()) + ':' + (#company == null ? '' : #company.trim().toLowerCase())")
     public Page<BusDto> getAllBusesPaginated(Pageable pageable,
                                              String q, String busType, String company) {
         // Get paginated results from repository

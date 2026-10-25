@@ -25,7 +25,6 @@ import java.util.List;
 import com.spring.boot.exception.BookingConflictException;
 import com.spring.boot.repository.BusBookingRepository;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
@@ -108,7 +107,6 @@ public class BusTripServiceImpl implements BusTripService {
     }
 
     @Override
-    @Cacheable(value = "bus-trips", key = "'list:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort + ':' + (#busId == null ? '' : #busId) + ':' + (#routeId == null ? '' : #routeId) + ':' + (#status == null ? '' : #status) + ':' + (#departureAfter == null ? '' : #departureAfter.toString()) + ':' + (#departureBefore == null ? '' : #departureBefore.toString())")
     public Page<BusTripDto> getAllBusTripsPaginated(Pageable pageable,
                                                     Long busId, Long routeId, BusTripStatus status,
                                                     LocalDateTime departureAfter, LocalDateTime departureBefore) {

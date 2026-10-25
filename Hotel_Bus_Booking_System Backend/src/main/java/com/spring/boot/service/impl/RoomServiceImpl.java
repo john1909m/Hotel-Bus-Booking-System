@@ -79,7 +79,6 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @Cacheable(value = "rooms", key = "'hotel:' + #hotelId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public Page<RoomDto> getRoomsByHotelId(Long hotelId, Pageable pageable) {
         return roomRepository.findByHotelId(hotelId, pageable)
                 .map(roomMapper::toDto);

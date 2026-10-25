@@ -70,7 +70,6 @@ public class BusStopServiceImpl implements BusStopService {
     }
 
     @Override
-    @Cacheable(value = "bus-stops", key = "'list:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort + ':' + (#q == null ? '' : #q.trim().toLowerCase()) + ':' + (#city == null ? '' : #city.trim().toLowerCase())")
     public Page<BusStopDto> getAllBusStopsPaginated(Pageable pageable,
                                                     String q, String city) {
         // Get paginated results from repository

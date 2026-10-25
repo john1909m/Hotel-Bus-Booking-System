@@ -99,7 +99,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = "hotels", key = "'list:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort + ':' + (#q == null ? '' : #q.trim().toLowerCase()) + ':' + (#city == null ? '' : #city.trim().toLowerCase()) + ':' + (#minRating == null ? '' : #minRating) + ':' + (#maxPrice == null ? '' : #maxPrice)")
     public Page<HotelDto> getAllHotelsPaginated(Pageable pageable,
                                                 String q, String city, Double minRating, Double maxPrice) {
         // Build specification for filtering
