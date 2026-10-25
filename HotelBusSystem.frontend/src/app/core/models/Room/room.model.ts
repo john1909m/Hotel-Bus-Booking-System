@@ -25,6 +25,7 @@ export interface RoomRequestDTO{
 export interface RoomSummaryDto {
     id: number;
     roomId: number;
+    roomNumber: string;
     roomType: roomType;
     pricePerNight: number;
 }

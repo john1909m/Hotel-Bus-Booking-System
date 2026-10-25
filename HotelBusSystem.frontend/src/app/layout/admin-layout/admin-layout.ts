@@ -36,7 +36,9 @@ export class AdminLayout implements OnInit {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard',      route: '/admin',                 icon: '▦' },
     { label: 'Hotels',         route: '/admin/hotels',          icon: '🏨' },
+    { label: 'Hotel Images',   route: '/admin/hotel-images',    icon: '🖼️' },
     { label: 'Rooms',          route: '/admin/rooms',           icon: '🛏' },
+
     { label: 'Users',          route: '/admin/users',           icon: '👤' },
     { label: 'Buses',          route: '/admin/buses',           icon: '🚌' },
     { label: 'Bus Seats',      route: '/admin/bus-seats',       icon: '💺' },

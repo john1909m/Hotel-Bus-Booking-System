@@ -1,0 +1,531 @@
+<div class="images-mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>Admin Portal</span>
+        <span class="sep">/</span>
+        <span class="current">Hotel Images</span>
+      </nav>
+      <h1 class="page-title">Hotel Images Management</h1>
+      <p class="page-subtitle">
+        Upload, organize, and manage high-resolution hotel and room-type photography directly synced with cloud storage.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="openUploadDialog()"
+        [disabled]="!selectedHotelId() || loadingHotels()"
+        id="admin-upload-image-btn"
+        aria-label="Upload new image"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Upload New Image</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Hotel Selection Control Card ─────────────────────── -->
+  <section class="hotel-selector-card" aria-label="Select target hotel">
+    <div class="selector-row">
+      <div class="selector-field">
+        <label for="hotel-select-dropdown" class="selector-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Select Hotel Property
+        </label>
+        <div class="select-wrapper">
+          <select
+            id="hotel-select-dropdown"
+            class="hotel-dropdown"
+            [disabled]="loadingHotels()"
+            [value]="selectedHotelId() ?? ''"
+            (change)="selectHotel($any($event.target).value)"
+            aria-label="Choose hotel to manage images"
+          >
+            @if (hotels().length === 0 && !loadingHotels()) {
+              <option value="">No hotels found in system</option>
+            }
+            @for (h of hotels(); track h.id) {
+              <option [value]="h.id">
+                {{ h.name }} — {{ h.city }} (★ {{ h.rating || 'N/A' }})
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Stats Pill Strip -->
+      @if (selectedHotel()) {
+        <div class="hotel-stats-strip">
+          <div class="stat-pill">
+            <span class="stat-label">Total Images</span>
+            <span class="stat-val">{{ images().length }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Hotel Gallery</span>
+            <span class="stat-val">{{ hotelGalleryCount() }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Room Types</span>
+            <span class="stat-val">{{ availableRoomTypes().length }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ─── Error Banner ─────────────────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadHotels()">Retry</button>
+    </div>
+  }
+
+  <!-- ─── Gallery Filter Chips ─────────────────────────────── -->
+  @if (selectedHotelId() && images().length > 0) {
+    <nav class="gallery-filter-chips" aria-label="Filter gallery by category">
+      <button
+        type="button"
+        class="chip-btn"
+        [class.active]="categoryFilter() === 'ALL'"
+        (click)="setFilter('ALL')"
+      >
+        <span>All Photography</span>
+        <span class="chip-count">{{ images().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="chip-btn"
+        [class.active]="categoryFilter() === 'HOTEL_GALLERY'"
+        (click)="setFilter('HOTEL_GALLERY')"
+      >
+        <span>Hotel Gallery</span>
+        <span class="chip-count">{{ hotelGalleryCount() }}</span>
+      </button>
+
+      @for (roomType of availableRoomTypes(); track roomType) {
+        <button
+          type="button"
+          class="chip-btn"
+          [class.active]="categoryFilter() === roomType"
+          (click)="setFilter(roomType)"
+        >
+          <span>{{ roomType }}</span>
+        </button>
+      }
+    </nav>
+  }
+
+  <!-- ─── Image Grid Showcase ──────────────────────────────── -->
+  <main class="gallery-content-area" id="admin-gallery-content">
+
+    <!-- Loading State -->
+    @if (loadingImages()) {
+      <div class="gallery-grid skeleton-grid" aria-busy="true" aria-label="Loading gallery images">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="image-card skeleton-card">
+            <div class="skeleton-thumb"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton-line" style="width: 60%;"></div>
+              <div class="skeleton-line" style="width: 30%;"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Empty State: No Hotel Selected -->
+    @else if (!selectedHotelId()) {
+      <div class="empty-state-card">
+        <div class="empty-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <h2 class="empty-title">No Hotel Selected</h2>
+        <p class="empty-desc">
+          Choose a hotel from the dropdown selector above to manage its exterior, lobby, and room photography.
+        </p>
+      </div>
+    }
+
+    <!-- Empty State: Hotel Has No Images -->
+    @else if (filteredImages().length === 0) {
+      <div class="empty-state-card">
+        <div class="empty-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M12 12v9"/>
+            <path d="m16 16-4-4-4 4"/>
+          </svg>
+        </div>
+        <h2 class="empty-title">
+          @if (categoryFilter() !== 'ALL') {
+            No Images Match Filter
+          } @else {
+            No Images for "{{ selectedHotel()?.name }}"
+          }
+        </h2>
+        <p class="empty-desc">
+          @if (categoryFilter() !== 'ALL') {
+            No images found under the "{{ categoryFilter() }}" category.
+          } @else {
+            This hotel does not have any gallery images yet. Start by uploading the first high-resolution photo.
+          }
+        </p>
+        <div class="empty-actions">
+          @if (categoryFilter() !== 'ALL') {
+            <button type="button" class="btn-secondary" (click)="setFilter('ALL')">View All Images</button>
+          }
+          <button type="button" class="btn-primary-action" (click)="openUploadDialog()">
+            Upload First Image
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Populated Gallery Grid -->
+    @else {
+      <div class="gallery-grid" role="list" aria-label="Hotel gallery images">
+        @for (img of filteredImages(); track img.id) {
+          <article class="image-card" role="listitem">
+            <!-- Thumbnail Box -->
+            <div class="image-thumbnail-wrap">
+              <img
+                [src]="img.url | safeImageUrl"
+                [alt]="img.roomType ? (selectedHotel()?.name + ' ' + img.roomType + ' Room') : (selectedHotel()?.name + ' Gallery Image')"
+                class="image-thumb"
+                loading="lazy"
+              />
+
+              <!-- Top Overlay: Sort Order & Category Badge -->
+              <div class="card-overlay-top">
+                <span class="sort-badge" title="Sort Order">
+                  #{{ img.sortOrder }}
+                </span>
+
+                @if (img.roomType) {
+                  <span class="category-badge room-badge">
+                    🛏️ {{ img.roomType }}
+                  </span>
+                } @else {
+                  <span class="category-badge hotel-badge">
+                    🏨 Hotel Gallery
+                  </span>
+                }
+              </div>
+
+              <!-- Delete Action Hover Button -->
+              <button
+                type="button"
+                class="btn-card-delete"
+                (click)="confirmDelete(img)"
+                title="Delete image #{{ img.id }}"
+                [attr.aria-label]="'Delete image ' + img.id"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Card Metadata Footer -->
+            <div class="card-meta">
+              <span class="image-id">ID: #{{ img.id }}</span>
+              <a [href]="img.url" target="_blank" rel="noopener noreferrer" class="view-link" title="Open full image in new tab">
+                Open full URL ↗
+              </a>
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+  </main>
+
+  <!-- ─── Upload Image Dialog ──────────────────────────────── -->
+  <p-dialog
+    [(visible)]="uploadDialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '580px' }"
+    [header]="'Upload Image — ' + (selectedHotel()?.name || 'Hotel')"
+    (onHide)="closeUploadDialog()"
+  >
+    <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="upload-dialog-form" novalidate>
+
+      <!-- 1. File Picker / Dropzone -->
+      <div class="form-group full-width">
+        <label class="form-label required">Select Image File</label>
+
+        @if (!previewUrl()) {
+          <label class="file-dropzone" for="image-file-input">
+            <input
+              id="image-file-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onFileSelected($event)"
+              class="hidden-file-input"
+              [disabled]="uploading()"
+            />
+            <div class="dropzone-content">
+              <div class="dropzone-icon" aria-hidden="true">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <span class="dropzone-prompt">Click or drag an image here</span>
+              <span class="dropzone-hint">Supported: JPEG, PNG, WebP (Max 5 MB)</span>
+            </div>
+          </label>
+        } @else {
+          <!-- Active Preview -->
+          <div class="preview-container">
+            <img [src]="previewUrl()" alt="Local upload preview" class="preview-image" />
+            <div class="preview-info">
+              <div class="preview-text">
+                <strong class="file-name">{{ selectedFile()?.name }}</strong>
+                <span class="file-size">{{ formatFileSize(selectedFile()?.size) }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-remove-preview"
+                (click)="clearFilePreview()"
+                [disabled]="uploading()"
+              >
+                Change Photo
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- 2. Image Category Choice -->
+      <div class="form-group full-width">
+        <label class="form-label required">Image Category</label>
+        <div class="category-radio-group">
+          <label class="radio-card" [class.selected]="uploadForm.get('categoryType')?.value === 'HOTEL'">
+            <input
+              type="radio"
+              formControlName="categoryType"
+              value="HOTEL"
+              class="radio-input"
+              [disabled]="uploading()"
+            />
+            <div class="radio-card-body">
+              <span class="radio-title">🏨 Hotel Gallery</span>
+              <span class="radio-sub">Lobby, exterior, pool, facade, amenities</span>
+            </div>
+          </label>
+
+          <label class="radio-card" [class.selected]="uploadForm.get('categoryType')?.value === 'ROOM'">
+            <input
+              type="radio"
+              formControlName="categoryType"
+              value="ROOM"
+              class="radio-input"
+              [disabled]="uploading()"
+            />
+            <div class="radio-card-body">
+              <span class="radio-title">🛏️ Room Type</span>
+              <span class="radio-sub">Specific room interior, bathroom, view</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. Room Type Selector (conditional) -->
+      @if (uploadForm.get('categoryType')?.value === 'ROOM') {
+        <div class="form-group full-width">
+          <label for="upload-form-roomtype" class="form-label required">Select Room Type</label>
+
+          @if (availableRoomTypes().length > 0) {
+            <select
+              id="upload-form-roomtype"
+              formControlName="roomType"
+              class="form-select w-full"
+              [disabled]="uploading()"
+            >
+              <option value="" disabled>-- Select a Room Type --</option>
+              @for (rtype of availableRoomTypes(); track rtype) {
+                <option [value]="rtype">{{ rtype }}</option>
+              }
+            </select>
+          } @else {
+            <div class="warning-banner" role="status">
+              <span class="warning-icon" aria-hidden="true">⚠️</span>
+              <div class="warning-text">
+                <strong>No rooms found for this hotel!</strong>
+                <span>Please configure rooms in the Rooms Management module before uploading room-specific photography.</span>
+              </div>
+            </div>
+          }
+          @if (uploadForm.get('roomType')?.invalid && uploadForm.get('roomType')?.touched) {
+            <small class="field-error">Please select a valid room type.</small>
+          }
+        </div>
+      }
+
+      <!-- 4. Display Sort Order -->
+      <div class="form-group full-width">
+        <label for="upload-form-sort" class="form-label required">Sort Order</label>
+        <p-inputNumber
+          id="upload-form-sort"
+          formControlName="sortOrder"
+          [min]="0"
+          [max]="9999"
+          class="w-full"
+          [disabled]="uploading()"
+          placeholder="0 (lower numbers appear first)"
+        />
+        <small class="field-hint">Images are ordered by sort order ascending (0 appears first).</small>
+      </div>
+
+      <!-- 5. Upload Progress State Banner -->
+      @if (uploading()) {
+        <div class="progress-section" aria-live="polite">
+          <div class="progress-header">
+            <span class="progress-step-msg">{{ uploadStepMessage() }}</span>
+            <span class="progress-percent">{{ uploadProgress() }}%</span>
+          </div>
+          <p-progressBar [value]="uploadProgress()" [showValue]="false" />
+        </div>
+      }
+
+      <!-- 6. Error Banner if Upload Fails -->
+      @if (uploadError()) {
+        <div class="form-error-banner" role="alert">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ uploadError() }}</span>
+        </div>
+      }
+
+      <!-- Dialog Action Buttons -->
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeUploadDialog()"
+          [disabled]="uploading()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn-dialog-submit"
+          [disabled]="uploading() || !selectedFile() || (uploadForm.get('categoryType')?.value === 'ROOM' && !availableRoomTypes().length)"
+        >
+          @if (uploading()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>Uploading…</span>
+          } @else {
+            <span>Upload &amp; Save Image</span>
+          }
+        </button>
+      </div>
+
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Dialog ───────────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '440px' }"
+    header="Confirm Image Deletion"
+    (onHide)="cancelDelete()"
+  >
+    <div class="delete-confirmation-body">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+
+      <p class="delete-confirmation-text">
+        Are you sure you want to permanently delete image
+        <strong>#{{ imageToDelete()?.id }}</strong>
+        @if (imageToDelete()?.roomType) {
+          (Room: {{ imageToDelete()?.roomType }})
+        } @else {
+          (Hotel Gallery)
+        }?
+      </p>
+
+      @if (imageToDelete()?.url) {
+        <div class="delete-preview-thumb">
+          <img [src]="imageToDelete()!.url | safeImageUrl" alt="Delete target preview" />
+        </div>
+      }
+
+      <p class="delete-subtext">
+        This will remove the photo from public customer galleries and room view cards.
+      </p>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="cancelDelete()"
+          [disabled]="deleting()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-dialog-danger"
+          (click)="executeDelete()"
+          [disabled]="deleting()"
+        >
+          @if (deleting()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>Deleting…</span>
+          } @else {
+            <span>Delete Image</span>
+          }
+        </button>
+      </div>
+    </div>
+  </p-dialog>
+
+</div>

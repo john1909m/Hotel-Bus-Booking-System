@@ -22,4 +22,9 @@ export interface HotelBookingListParams {
   size?: number;
   sortBy?: string;
   sortDirection?: string;
+  status?: string;
+  checkInAfter?: string;
+  checkInBefore?: string;
+  userId?: number;
+  hotelId?: number;
 }

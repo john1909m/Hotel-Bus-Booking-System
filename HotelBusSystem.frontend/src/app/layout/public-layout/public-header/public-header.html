@@ -15,7 +15,7 @@
     <!-- Desktop Navigation -->
     <nav class="nav-desktop" aria-label="Main navigation">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
-      <a href="#hotels" class="nav-link" (click)="smoothScroll($event, 'hotels')">Hotels</a>
+      <a routerLink="/hotels" class="nav-link" (click)="smoothScroll($event, 'hotels')">Hotels</a>
       <a href="#transportation" class="nav-link" (click)="smoothScroll($event, 'transportation')">Transportation</a>
       <a href="#about" class="nav-link" (click)="smoothScroll($event, 'about')">About Us</a>
       <a href="#contact" class="nav-link" (click)="smoothScroll($event, 'contact')">Contact</a>
@@ -42,7 +42,7 @@
         @if (currentUser()?.role === 'ADMIN') {
           <a routerLink="/admin" class="btn-ghost">Dashboard</a>
         } @else {
-          <a routerLink="/user/bus-bookings" class="btn-ghost">My Bookings</a>
+          <a routerLink="/user/hotel-bookings" class="btn-ghost">My Bookings</a>
         }
         <button type="button" (click)="logout()" class="btn-primary" aria-label="Sign out">Sign Out</button>
       } @else {
@@ -85,7 +85,7 @@
           @if (currentUser()?.role === 'ADMIN') {
             <a routerLink="/admin" class="btn-ghost w-full" (click)="closeMenu()">Dashboard</a>
           } @else {
-            <a routerLink="/user/bus-bookings" class="btn-ghost w-full" (click)="closeMenu()">My Bookings</a>
+            <a routerLink="/user/hotel-bookings" class="btn-ghost w-full" (click)="closeMenu()">My Bookings</a>
           }
           <button type="button" (click)="logout()" class="btn-primary w-full">Sign Out</button>
         } @else {

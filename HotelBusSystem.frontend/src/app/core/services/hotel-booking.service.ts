@@ -43,8 +43,20 @@ export class HotelBookingService {
     let httpParams = new HttpParams();
     if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
     if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
-    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
-    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
+
+    // Spring Data Pageable uses sort=property,asc|desc
+    const sortProp = params.sortBy || 'id';
+    const sortDir = params.sortDirection || 'desc';
+    httpParams = httpParams.set('sort', `${sortProp},${sortDir}`);
+
+    // Backend JPQL: WHERE (:status = 'ANY' OR hb.status = :status)
+    // If status is omitted/null, the query fails to match. Default to 'ANY'.
+    httpParams = httpParams.set('status', params.status || 'ANY');
+
+    if (params.checkInAfter) httpParams = httpParams.set('checkInAfter', params.checkInAfter);
+    if (params.checkInBefore) httpParams = httpParams.set('checkInBefore', params.checkInBefore);
+    if (params.userId) httpParams = httpParams.set('userId', params.userId);
+    if (params.hotelId) httpParams = httpParams.set('hotelId', params.hotelId);
 
     return this.http.get<PageHotelBookingDTO>(this.apiUrl, { params: httpParams }).pipe(
       catchError(handleError)
@@ -68,17 +80,11 @@ export class HotelBookingService {
   }
 
   /**
-   * GET /hotel-bookings/my-bookings
+   * GET /hotel-bookings/my
    * Get hotel bookings of the currently authenticated user
    */
-  getMyHotelBookings(params: HotelBookingListParams = {}): Observable<PageHotelBookingDTO> {
-    let httpParams = new HttpParams();
-    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
-    if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
-    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
-    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
-
-    return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/my-bookings`, { params: httpParams }).pipe(
+  getMyHotelBookings(): Observable<HotelBookingDTO[]> {
+    return this.http.get<HotelBookingDTO[]>(`${this.apiUrl}/my`).pipe(
       catchError(handleError)
     );
   }
@@ -119,16 +125,5 @@ export class HotelBookingService {
     );
   }
 
-  // private handleError(error: HttpErrorResponse) {
-  //   let message = 'Something went wrong';
 
-  //   if (error.error instanceof ErrorEvent) {
-  //     message = `Client Error: ${error.error.message}`;
-  //   } else {
-  //     message = `Server Error [${error.status}]: ${error.message}`;
-  //   }
-
-  //   console.error(message);
-  //   return throwError(() => new Error(message));
-  // }
 }

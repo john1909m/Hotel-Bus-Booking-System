@@ -1,3 +1,5 @@
+import {  RoomSummaryDto } from "../Room/room.model";
+
 export type status = 
 'PENDING' |
 'CONFIRMED' |
@@ -9,18 +11,24 @@ export interface HotelBookingDTO{
     checkIn : string;
     checkOut : string;
     guests : number;
+    adults?: number;
+    childAges?: number[];
     status : status;
     totalPrice : number;
     userId: number;
     roomId : number;
     hotelId: number;
     hotelName: string;
+    rooms?: RoomSummaryDto[];                
 }
 
 export interface HotelBookingRequestDTO{
     checkIn : string;
     checkOut : string;
     guests : number;
+    adults?: number;
+    childAges?: number[];
     roomId : number;
+    roomIds? : number[];
 }
 

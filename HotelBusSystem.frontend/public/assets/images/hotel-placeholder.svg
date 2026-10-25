@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4F1E7" />
+      <stop offset="100%" stop-color="#E2EBE8" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#009B77" />
+      <stop offset="100%" stop-color="#007D60" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)" />
+  <g transform="translate(400, 230)">
+    <!-- Hotel Building Silhouette -->
+    <rect x="-80" y="-70" width="160" height="150" rx="10" fill="#2E3A40" opacity="0.12" />
+    <circle cx="0" cy="-10" r="46" fill="url(#accent)" />
+    <!-- Hotel Bed / Building Icon -->
+    <path d="M-22,6 L-22,-14 C-22,-16 22,-16 22,-14 L22,6" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" fill="none" />
+    <path d="M-26,6 L26,6" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+    <circle cx="-10" cy="-6" r="4" fill="#FFFFFF" />
+    <path d="M-2,6 L-2,0 C-2,-3 14,-3 14,0 L14,6" fill="#FFFFFF" opacity="0.9" />
+    <!-- Label -->
+    <text x="0" y="80" text-anchor="middle" font-family="'Inter', sans-serif" font-size="16" font-weight="600" fill="#5A6870" letter-spacing="1.5">TRAVELEASE</text>
+    <text x="0" y="104" text-anchor="middle" font-family="'Inter', sans-serif" font-size="13" font-weight="500" fill="#8A9BA3">Image Not Available</text>
+  </g>
+</svg>

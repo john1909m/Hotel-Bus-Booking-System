@@ -9,6 +9,7 @@ export interface HotelDTO{
     rating: number;
     checkInTime: string;
     checkOutTime: string;
+    coverImageUrl: string;
 }
 
 export interface HotelRequestDTO{

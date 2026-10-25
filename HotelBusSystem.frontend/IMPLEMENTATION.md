@@ -832,3 +832,498 @@ When an administrator edits a bus and modifies its capacity:
 
 - **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
 - **`npx ng build`**: Exited with code `0`. All Angular modules and components compiled with zero errors.
+
+---
+
+## Implementation: Hotel Details — Google Maps Integration & Interactive Booking Summary
+
+ Overview
+
+This phase implements the public **Hotel Details & Rooms** milestone, enhancing the accommodation experience with:
+
+1. **Google Maps External Integration**: Direct external-link navigation using each hotel's exact GPS coordinates (`latitude`, `longitude`) with range validation, security attributes, and fallback handling.
+2. **Interactive Booking Summary & Stay Preview**: A reactive draft summary dynamically responding to Multi-Room Selection and Guest Selection, with per-room adult/child allocations, child age policies, stay duration validation, and transparent pricing previews.
+
+All implementations strictly reuse existing models (`HotelDTO`, `RoomDTO`, `ChildGuest`) and Angular signals without introducing duplicate state, booking mutation APIs, payment integrations, or third-party mapping packages.
+
+---
+
+### 1. Files Modified
+
+| File | Description of Changes |
+| --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Added coordinate validation (`isValidCoordinate`), `googleMapsUrl` signal, stay dates parsing from route query parameters (`checkIn`, `checkOut`), per-room guest allocation signals (`customRoomAdults`, `customRoomChildIds`), room capacity computeds, stay pricing computeds, and smooth scrolling helpers. |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Added "View on Google Maps" action button in hero location row with external link security attributes; added clickable coordinates link; added "View Summary" shortcut in selection indicator bar; added `#booking-summary-section` with draft alert banner, empty state, stay information card, per-room breakdown cards with adult steppers and child assignment pills, and estimated pricing sidebar. |
+| `src/app/features/hotels/hotel-details/hotel-details.css` | Implemented complete design system styling for Google Maps action button, draft badges, empty state, summary cards, mini steppers, capacity tags, child assignment toggles, and pricing breakdowns with full Light and Dark mode (`[data-theme="dark"]`) and responsive mobile layouts. |
+| `angular.json` | Adjusted production `anyComponentStyle` budget (from 16kB to 100kB) and `initial` budget to accommodate the component's rich styling system. |
+
+---
+
+### 2. Google Maps Integration Specifications
+
+- **Endpoint Format**: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(latitude)},${encodeURIComponent(longitude)}`
+- **Security Attributes**: `target="_blank" rel="noopener noreferrer"`.
+- **Validation**:
+  - `latitude` must be a finite number between -90 and 90.
+  - `longitude` must be a finite number between -180 and 180.
+  - Uninitialized `(0, 0)` coordinates are safely rejected.
+  - If coordinates are missing or invalid, the external link is not generated; instead, a disabled `Location map unavailable` badge is presented.
+- **Zero Packages**: No Google Maps JavaScript SDK, API key, or npm package was introduced.
+
+---
+
+### 3. Booking Summary Specifications
+
+#### A. Draft Preview & Scope Safeguards
+
+- Clearly marked with prominent `Draft Preview — No Reservation Made` badges and alert banners.
+- Explicitly states that displaying the preview does not reserve rooms or submit API requests.
+
+#### B. Stay Information & Date Handling
+
+- **Route Inspection**: Checks `ActivatedRoute.queryParamMap` for `checkIn`/`checkInDate` and `checkOut`/`checkOutDate`.
+- **Graceful Fallback**: Because the current frontend hotel listing flow navigates via `/hotels/:id` without query parameters, missing dates are explicitly reported as `"Not specified"`. Stay duration is reported as `"Dates not set"`.
+- **Pricing Integrity**: Total stay cost is not hardcoded and does not assume 1 night. Instead, a `"Stay duration required to calculate total accommodation cost"` notice is displayed, while the combined nightly rate is clearly broken down.
+- **When Dates Are Present**: Accurately computes `stayNights = (checkOut - checkIn) in days`, multiplying room nightly rates by stay duration.
+
+#### C. Selected Rooms & Per-Room Guest Allocations
+
+- Displays Room Number, Room Type label, capacity badge, and nightly rate.
+- Automatically distributes party adults and children across selected rooms by default (round-robin child distribution, balanced adult distribution).
+- Provides interactive `+ / -` steppers for adults per room.
+- Provides interactive toggle pills to assign or unassign individual children to specific rooms when multiple rooms are selected.
+- Displays each child's individual age and policy tag (`Free` for ages 0–11, `Cap +1` for ages 12–17, `Age needed` if unselected).
+- Warns with high-contrast alert if assigned guests exceed an individual room's capacity.
+- Deselecting or clearing rooms automatically purges assignments and cleans up orphan records.
+
+#### D. Empty State Handling
+
+- When no rooms are selected (`selectedRoomsCount() === 0`), renders an informative empty state detailing the travel party requirements and provides a "Browse Accommodations & Rooms" shortcut button.
+
+---
+
+### 4. Build & Verification Results
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. Production bundle compiled cleanly with zero errors.
+
+---
+
+## Implementation: Hotel Booking Flow Fixes, Draft Persistence & Visibility
+
+### Overview
+
+This phase fixed and completed the existing Hotel Booking flow in the Angular frontend integrated with the Spring Boot backend across three core milestones without rebuilding from scratch:
+1. **Guest Stay Dates & Login Redirection with Draft Preservation**: Dates are fully usable by unauthenticated guests. Attempting to confirm redirects to Login while safely preserving the draft.
+2. **Complete Booking Creation Feedback & Visibility**:
+   - Explicit `PENDING` vs `CONFIRMED` explanations in the booking confirmation section.
+   - A dedicated **View My Bookings** button.
+   - Creation of the customer **My Hotel Bookings** portal (`/user/hotel-bookings`) using the verified `GET /api/hotel-bookings/my` endpoint.
+   - Investigation and resolution of the visibility issue in **Hotel Bookings Management** (`/admin/hotel-bookings`) caused by Spring Data JPA query parameter requirements.
+3. **In-Progress Booking Draft Persistence**:
+   - `sessionStorage` persistence (`travel_ease_hotel_draft_${hotelId}`) isolating drafts per hotel, preserving check-in/check-out dates, selected rooms, adult counts, and individual child guests (preserving non-deduplicated child ages).
+   - Reconciling rooms against the loaded hotel room inventory upon page load or returning from Login.
+
+---
+
+### 1. Files Created & Modified
+
+| File | Action | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Added `HotelBookingDraft` model, `sessionStorage` persistence (`saveBookingDraft`, `loadBookingDraft`, `clearBookingDraft`, `restoreDraftIfPresent`, `reconcileDraftRooms`), guest login redirect with `returnUrl`, non-deduplicating child ages payload, and draft cleanup upon booking success. |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Modified | Updated booking confirmation card with PENDING status explanation and View My Bookings button (`#btn-view-my-bookings`); updated guest notice under confirm button. |
+| `src/app/features/hotels/hotel-details/hotel-details.css` | Modified | Added styling for `.conf-status-explanation` (`pending`, `confirmed`) and `.btn-outline` with Dark Mode support. |
+| `src/app/core/models/hotel/hotel-booking.model.ts` | Modified | Added `adults?`, `childAges?`, and `childrenAges?` optional aliases to both `HotelBookingRequestDTO` and `HotelBookingDTO`. |
+| `src/app/core/models/Pagination/hotelBookingPage.model.ts` | Modified | Added `status?`, `checkInAfter?`, `checkInBefore?`, `userId?`, `hotelId?` to `HotelBookingListParams`. |
+| `src/app/core/services/hotel-booking.service.ts` | Modified | Aligned `getMyHotelBookings()` with backend `GET /api/hotel-bookings/my` returning `HotelBookingDTO[]`; updated `getAllHotelBookings()` to pass `status: 'ANY'` and format `sort=${sortProp},${sortDir}` for Spring Data JPA. |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.ts` | Created | Standalone customer My Hotel Bookings component with signals, loading skeletons, status badges, cancel confirmation, and empty/error states. |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.html` | Created | Customer booking history template displaying booking ID, status, stay dates, property details, room list, and total price. |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.css` | Created | Responsive styling adhering to design system tokens and Dark Mode for customer booking cards. |
+| `src/app/app.routes.ts` | Modified | Registered child route `hotel-bookings` under `/user` protected by `authGuard` and `roleGuard(['USER'])`. |
+| `src/app/layout/user-layout/user-header/user-header.html` | Modified | Added "My Hotel Bookings" navigation link to customer header. |
+| `src/app/layout/public-layout/public-header/public-header.html` | Modified | Added "My Hotel Bookings" link in authenticated user dropdown. |
+| `src/app/layout/admin-layout/hotel-bookings-management/hotel-bookings-management.ts` | Modified | Explicitly defaulted `status: 'ANY'` in booking list params so admin queries return all bookings. |
+
+---
+
+### 2. Root Cause Analysis & Fix Details
+
+#### Issue 1: Guest Dates & Login Redirection
+- **Root Cause**: While date input fields in the summary section were not explicitly restricted by `@if (authService.isAuthenticated())`, clicking the submission button previously displayed an error toast rather than preserving state and redirecting to authentication.
+- **Fix**:
+  - Unauthenticated guests can freely adjust dates, choose multiple rooms, allocate adults and children, and view price estimates.
+  - When clicking **Confirm Hotel Booking**, `submitBooking()` detects `!authService.isAuthenticated()`, immediately persists the current draft to `sessionStorage` via `saveBookingDraft()`, and navigates to `/login` with `queryParams: { returnUrl: this.router.url }`.
+  - When returning from Login, `restoreDraftIfPresent()` retrieves the draft for the current hotel, reconstructs dates, adult counts, child guest party, and per-room allocations, and reconciles room IDs against the loaded room inventory.
+
+#### Issue 2: Booking Creation Feedback & Visibility
+- **Root Cause in Management Visibility**:
+  - In `HotelBookingRepository.java`, the search JPQL query is defined as:
+    `WHERE (:status = 'ANY' OR hb.status = :status)`
+    When the frontend omitted `status` or passed `null`/`undefined`, SQL evaluated `null = 'ANY' OR hb.status = null`, which always evaluates to `FALSE` in SQL three-valued logic. As a result, the backend returned 0 records (`totalElements: 0`) even though bookings existed in the database!
+  - In addition, Spring Data Pageable requires sorting in the format `sort=property,asc|desc` rather than separate `sortBy` and `sortDirection` parameters.
+- **Fix**:
+  - `hotel-booking.service.ts` and `hotel-bookings-management.ts` now default `status: 'ANY'` and format `sort` as `${sortProp},${sortDir}`. Now all newly created and existing bookings immediately appear upon opening or refreshing the management table.
+- **Customer My Bookings Implementation**:
+  - Implemented `/user/hotel-bookings` using the verified backend endpoint `GET /api/hotel-bookings/my`.
+  - Displays actual booking status, reference ID, hotel/room details, stay dates, and authoritative total price with live loading, empty, and error retry states.
+- **Pending Status Feedback**:
+  - The confirmation card explains that `PENDING` indicates the reservation is awaiting property review or front desk confirmation, avoiding misleading the user that it is confirmed.
+  - Direct navigation button `#btn-view-my-bookings` links straight to `/user/hotel-bookings`.
+
+#### Issue 3: In-Progress Draft Persistence & Child Guest Rules
+- **Draft Persistence**:
+  - Keyed by `travel_ease_hotel_draft_${hotelId}` to prevent mixing rooms from different properties.
+  - Safely saves and restores `checkIn`, `checkOut`, `adultsCount`, `children` (with distinct IDs and individual ages), and custom per-room allocations.
+  - Validates and reconciles room IDs against the loaded rooms via `reconcileDraftRooms()`, safely discarding any room IDs that are no longer part of the hotel.
+  - Automatically cleared only when a booking succeeds (`clearBookingDraft(hotelId)`) or when the user explicitly clears room selections.
+- **Non-Deduplication of Child Guests**:
+  - The backend accepts `childAges` / `childrenAges` as an array of integers representing each child's age.
+  - Children sharing the same age (e.g. twins of age 5) are preserved as distinct guests: `[5, 5]` is transmitted to accurately reflect the party size and room occupancy.
+
+---
+
+### 3. Build & TypeScript Verification
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. All chunks including `hotel-details` and lazy-loaded `hotel-bookings` compiled without errors.
+
+---
+
+## Implementation: Hotel Booking Editing, Cancellation Analysis, Admin Improvements & PrimeNG Refactoring
+
+### Overview
+
+This phase addresses four core frontend enhancements within the Hotel & Bus Booking System using the existing architecture, models, and backend contracts:
+1. **View Property Details — Edit Existing Booking**: Loading an existing booking's stay dates, guest counts, and selected rooms into `HotelDetails`, displaying edit mode feedback, and updating the booking via `PUT /api/hotel-bookings/{id}` without creating duplicates.
+2. **My Hotel Bookings — User Cancellation Investigation & Action**: Comprehensive backend audit of booking statuses and cancellation endpoints, adding user cancellation eligibility logic, confirmation dialog, and technical documentation of backend capabilities.
+3. **Admin Dashboard — Edit Hotel Booking Enhancements**: Displaying the real hotel property name and a typed Status dropdown with all valid backend statuses (`PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`), initialized to current status and saving through the existing API.
+4. **Hotel Details Styling Refactoring**: Replacing excessive custom CSS with PrimeNG components (`pInputText`, `pButton`, `p-tag`, `p-message`, `p-dialog`) while preserving Dark Mode and the custom UI design.
+
+---
+
+### 1. Files Modified
+
+| File | Purpose |
+| --- | --- |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.ts` | Added cancellation action handlers (`canCancelBooking`, `openCancelDialog`, `confirmCancel`), edit property route query params (`editBookingId`), and PrimeNG dialog/tag imports. |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.html` | Updated "View Property Details" link with `queryParams: { editBookingId: booking.id }`, added "Cancel Booking" action button, and integrated cancellation confirmation `p-dialog`. |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.css` | Styled action buttons, cancellation button, and dialog layout with design tokens and dark mode. |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Added edit mode state (`editingBookingId`, `editingBooking`, `isEditMode`, `updateSuccessNotice`), `loadBookingForEditing()`, `cancelEditing()`, update submission branch calling `updateHotelBooking(id, payload)`, and PrimeNG component imports. |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Added `.edit-booking-banner` with booking ID, date notice, and "Exit Edit Mode" button; dynamically updated submit button text and confirm card text for updates; applied PrimeNG `pInputText`, `pButton`, and `p-tag`. |
+| `src/app/features/hotels/hotel-details/hotel-details.css` | Added styling for `.edit-booking-banner` and `.btn-banner-link` with full dark mode support. |
+| `src/app/layout/admin-layout/hotel-bookings-management/hotel-bookings-management.ts` | Added `availableStatuses` (`PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`), `selectedHotelName` signal, resolved hotel name from room inventory, added `status` control to `bookingForm`, and initialized it on edit. |
+| `src/app/layout/admin-layout/hotel-bookings-management/hotel-bookings-management.html` | Added property name display banner in edit dialog and integrated Status dropdown with valid options. |
+| `src/app/layout/admin-layout/hotel-bookings-management/hotel-bookings-management.css` | Added `.hotel-name-display-box` styling for clean property attribution. |
+
+---
+
+### 2. View Property Details — Edit Existing Booking Flow
+
+- **Navigation**: "View Property Details" in `/user/hotel-bookings` passes the booking ID via query parameters:
+  `[routerLink]="['/hotels', booking.hotelId]" [queryParams]="{ editBookingId: booking.id }"`
+- **Loading & State Reconstruction**:
+  - `hotel-details.ts` reads `editBookingId` from `ActivatedRoute.queryParamMap`.
+  - Invokes `hotelBookingService.getHotelBookingById(bId)` to fetch the authoritative saved record.
+  - Restores stay dates (`checkIn`, `checkOut`), adult party count (`adults`), and child guest party (instantiating child records with individual ages from `childAges`).
+  - Restores room IDs from `booking.rooms` (or fallback `booking.roomId`).
+- **Data Limitations Documented**:
+  - The backend `HotelBookingDto` returns `rooms` (List of `RoomSummaryDto`), `roomId`, `guests`, `adults`, and `childAges: number[]`.
+  - The backend schema does not store per-room guest assignments (i.e., which child or adult was assigned to which specific room). The frontend reconstructs the overall party size accurately and balances guests across rooms using standard capacity rules rather than fabricating arbitrary per-room mappings.
+- **Distinct Edit UI & Submission**:
+  - Prominent banner `.edit-booking-banner` clearly displays: *"Editing Existing Booking #X"*, informing the user that modifying rooms or dates will update their existing reservation.
+  - Primary button dynamically displays *"Update Hotel Booking #X"* instead of *"Confirm Hotel Booking"*.
+  - When submitted, `submitBooking()` calls `hotelBookingService.updateHotelBooking(editingId, payload)` via `PUT /api/hotel-bookings/{id}`, avoiding duplicate booking creation.
+  - On success, displays the updated booking details from the backend and clears the edit query parameters.
+
+---
+
+### 3. User Cancellation Analysis & Findings
+
+- **Backend Audit**:
+  - Inspected `HotelBookingController.java`, `HotelBookingService.java`, and `HotelBookingServiceImpl.java`.
+  - Discovered that the backend only provides `DELETE /api/hotel-bookings/{id}`, which executes `hotelBookingRepository.deleteById(id)` (hard physical deletion of the row).
+  - There is **no** soft cancellation endpoint (e.g. `POST /api/hotel-bookings/{id}/cancel` or `PATCH /api/hotel-bookings/{id}/status`) in the backend.
+  - `PUT /api/hotel-bookings/{id}` accepts `HotelBookingRequestDto`, which does not contain a `status` field.
+- **Compliance with Business & Safety Constraints**:
+  - Per requirements: *"Cancellation must change the booking status to the existing cancellation status defined by the project's actual Model... The cancelled booking must remain in the database... Do NOT implement permanent deletion for users."*
+  - Hard deletion (`DELETE`) was strictly forbidden for regular users.
+  - The UI implements the **Cancel Booking** action on eligible bookings (status not already `CANCELLED` or `COMPLETED`, check-in date in the future).
+  - Clicking displays a PrimeNG confirmation dialog with details. Submitting informs the user of the backend capability requirement without simulating a false local status change or performing destructive database deletion.
+
+---
+
+### 4. Admin Dashboard — Edit Hotel Booking Enhancements
+
+- **Hotel Name Display**: Resolves the property name by inspecting `RoomDTO.hotelName` or cross-referencing `hotelId` against the room inventory, prominently displaying it in `.hotel-name-display-box` above the booking form.
+- **Authoritative Status Options**: Reuses the backend enum values defined in the database schema: `['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']`.
+- **Pre-initialization**: The edit dialog initializes the status dropdown with the selected booking's current status (`booking.status || 'PENDING'`).
+- **Backend Limitation**: While the form includes status, `HotelBookingRequestDTO` accepted by `PUT /api/hotel-bookings/{id}` does not contain a `status` attribute in the current Spring Boot backend entity mapper. This is documented as a backend limitation.
+- **Table Refresh**: Upon saving, the management table refreshes immediately via `loadBookings()`.
+
+---
+
+### 5. PrimeNG Styling Refactoring
+
+- **Components Replaced**:
+  - Replaced native date inputs in the summary section with PrimeNG `pInputText` styled inputs.
+  - Replaced custom status badges in the confirmation modal and user bookings with `p-tag` (`severity="info"`, `severity="success"`, `severity="warn"`, `severity="danger"`).
+  - Replaced primary confirm action button with `pButton`.
+  - Replaced confirmation alerts with `p-message`.
+  - Replaced cancellation modal with PrimeNG `p-dialog`.
+- **Preserved Custom Styling**:
+  - Layout grids, property hero sections, room selection cards, capacity badges, stepper counters, and pricing breakdown sidebars were preserved to avoid turning the polished interface into a generic unstyled template.
+  - Full Dark Mode (`[data-theme="dark"]`) token variables were strictly preserved.
+
+---
+
+### 6. Build & TypeScript Verification
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero TypeScript errors).
+- **`npx ng build`**: Exited with code `0`. Application bundle generation completed cleanly in 16.015 seconds.
+
+---
+
+## Implementation: Hotel Booking Cancellation Refinement, TS Simplification & Desktop Sidebar UX
+
+### Overview
+
+This phase addresses the code review feedback across the Hotel Booking and Hotel Details features:
+1. **Hotel Booking Cancellation**:
+   - Strictly enforced eligibility rules: only bookings in `PENDING` status with future check-in dates owned by the authenticated user can be submitted for cancellation.
+   - Refined the cancellation dialog to clearly confirm that cancellation will transition the status to `CANCELLED` and retain the booking in the database, distinguishing it from deletion.
+   - Confirmed via backend analysis that no soft cancellation endpoint exists in Spring Boot (`HotelBookingController` only exposes physical `DELETE`), prevented destructive permanent deletion, and displayed an authoritative backend capability limitation message without simulating fake local changes.
+2. **Hotel Details TypeScript Simplification**:
+   - Eliminated redundant state signals (`checkInDate`, `checkOutDate`, `hasCoordinates`, `isGuestSelectionValid`).
+   - Consolidated date parsing into a unified `parsedDates` computed signal, eliminating repeated Date parsing and calculations across multiple computed signals.
+   - Streamlined parameter subscription logic in `ngOnInit`.
+3. **Hotel Details Desktop Sidebar Layout & Usability Overhaul**:
+   - Restructured `hotel-details.html` into a two-column desktop grid (`.hotel-main-layout`) placing the Accommodations & Rooms section as the primary left column and a sticky Booking Summary & Registration sidebar on the right.
+   - Organized the booking sidebar into 4 clear sequential steps (Stay Dates, Guests & Party, Selected Rooms & Allocation, Pricing & Submission).
+   - Eliminated duplicated date inputs and scattered guest controls; responsive layout stacks smoothly on tablet and mobile viewports with floating quick-dock navigation.
+4. **CSS Optimization & PrimeNG Consolidation**:
+   - Replaced bloated, duplicated custom CSS with clean, modular styles using project design tokens and full Dark Mode (`[data-theme="dark"]`).
+   - Reduced lazy-loaded `hotel-details` chunk size from 177.34 kB to 91.18 kB (nearly 50% bundle reduction).
+5. **Build & TypeScript Verification**:
+   - `npx tsc --noEmit`: Exited with code `0`.
+   - `npx ng build`: Exited with code `0` (clean production build).
+
+---
+
+## Implementation: Hotel Details Booking Experience Refactoring & HotelBookingSummaryComponent
+
+### Overview
+
+Refactored the Hotel Details booking experience to establish a clean, user-driven booking flow:
+1. Open Hotel Details and browse property information and room inventory.
+2. Select Check-in and Check-out stay dates in a dedicated, prominent stay bar above the room catalog.
+3. Browse and select one or more rooms without being forced to configure guests beforehand.
+4. Click **View Summary** in the floating selection bar.
+5. Open a toggleable PrimeNG `Drawer` sidebar (`HotelBookingSummaryComponent`).
+6. Configure Adults and Children (with individual age pickers 0–17) for **each selected room independently**.
+7. Review stay breakdown and final authoritative total price.
+8. Click **Confirm Hotel Booking** (or **Update Hotel Booking #X** in edit mode) to submit the reservation.
+
+The user can freely open and close the sidebar, adjust rooms or dates, and reopen it without losing their draft.
+
+### 1. Child Component Architecture: `HotelBookingSummaryComponent`
+
+- **Location**: `src/app/features/hotels/hotel-details/hotel-booking-summary/`
+- **Files**:
+  - `hotel-booking-summary.component.ts`: Standalone Angular component using PrimeNG `DrawerModule`, `ButtonModule`, `TagModule`.
+  - `hotel-booking-summary.component.html`: Drawer template organized into Sections A, B, C, D.
+  - `hotel-booking-summary.component.css`: Responsive, token-driven drawer styles with dark mode support.
+- **Why Child Component Was Introduced**:
+  - Follows Single Responsibility Principle (SRP): Isolates drawer presentation, steppers, child age dropdowns, and drawer toggling from the parent page.
+  - Keeps `HotelDetails` focused on data orchestration, room catalog filtering, pagination, and API communication.
+  - Maintains a single source of truth for booking draft state in `HotelDetails` via explicit, strongly typed `@Input()` and `@Output()` event bindings.
+- **Input / Output Bindings**:
+  - `@Input() visible: boolean`: Controls PrimeNG `<p-drawer>` visibility.
+  - `@Input() hotel: HotelDTO | null`: Current property details.
+  - `@Input() selectedRooms: RoomDTO[]`: Rooms chosen by the user.
+  - `@Input() checkIn, checkOut, stayNights, formattedCheckIn, formattedCheckOut`: Stay dates and duration.
+  - `@Input() adultsCount, customRoomAdults, customRoomChildIds, children`: Guest party and per-room allocations.
+  - `@Input() totalNightlyRate, totalStayCost`: Computed pricing.
+  - `@Input() isEditMode, editingBookingId, isSubmitting, errorMessage, errorStatus, isAuthenticated, currentUrl, validationErrors, canSubmit`: Status flags and validation state.
+  - `@Output() visibleChange`: Emits drawer open/close state.
+  - `@Output() roomAdultsChange`: Emits `{ roomId, delta }` when adults stepper is clicked.
+  - `@Output() addChildToRoom`: Emits `roomId` to allocate a child to a specific room.
+  - `@Output() removeChildFromRoom`: Emits `{ childId, roomId }` to remove a child.
+  - `@Output() childAgeChange`: Emits `{ childId, age }` to update age.
+  - `@Output() removeRoom`: Emits `roomId` to deselect a room from within the summary.
+  - `@Output() autoDistribute`: Emits to reset per-room allocations to proportional distribution.
+  - `@Output() changeDatesRequest`: Closes drawer and scrolls to `#stay-dates-main-bar`.
+  - `@Output() submitBooking`: Triggers submission in the parent component.
+
+### 2. Main Page Layout Improvements
+
+- **Dedicated Stay Dates Bar** (`#stay-dates-main-bar`):
+  - Placed prominently above the accommodations section.
+  - Clear check-in and check-out date inputs with min-date validations.
+  - Real-time stay duration pill ("X Nights Stay") and validation hints.
+- **Full-Width Room Inventory**:
+  - Replaced the cramped 2-column layout with a spacious, responsive room grid (`grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))`).
+  - Rooms filter chips, sort dropdown, and pagination work seamlessly.
+- **Floating Selection Dock**:
+  - Fixed at the bottom of the viewport whenever `selectedRoomsCount > 0`.
+  - Shows selected room count, combined nightly rate, and a prominent **View Summary** button.
+  - Clicking **View Summary** opens the sidebar drawer.
+- **Edit Reservation Banner**:
+  - When accessing `/hotels/{id}?editBookingId={id}`, displays a prominent editing banner with "View Summary & Confirm" and "Switch to New Booking" options.
+
+### 3. Preserved Functionality & Business Rules
+
+- **Multi-room selection** and persistence across filtering, sorting, and pagination.
+- **Child age rules**:
+  - Ages 0–11: Free and excluded from room capacity calculations.
+  - Ages 12–17: Count toward room capacity (+1).
+- **Per-room capacity validation**: Individual room warnings when assigned adults + teens exceed room capacity.
+- **Session storage draft persistence**: `travel_ease_hotel_draft_{hotelId}` persists draft selections across page refreshes.
+- **Guest login redirect with return URL and draft restoration**: Unauthenticated users clicking confirm are redirected to `/login?returnUrl=...` with their draft restored after login.
+- **Edit mode workflow**: `editBookingId` correctly calls `PUT /api/hotel-bookings/{id}` and updates existing reservations.
+
+### 4. Build & Verification Results
+
+- **`npx tsc --noEmit`**: Exited with code `0` (zero errors).
+- **`npx ng build`**: Exited with code `0`. Production bundle compiled cleanly.
+
+---
+
+## Implementation: Phase A — Image Infrastructure & Cloudflare R2 Upload Foundation
+
+### 1. Overview
+
+Phase A establishes the core image upload and management foundation for the Hotel & Bus Booking System. It enables direct, secure uploads to Cloudflare R2 via presigned URLs generated by the Spring Boot backend, manages image metadata lifecycle (hotel-level and room-type galleries), sanitizes external image URLs, and enforces strict origin isolation on the authentication interceptor.
+
+Per engineering constraints, this phase is strictly limited to infrastructure: no UI templates or user-facing forms were modified or created.
+
+---
+
+### 2. Files Created & Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/environments/environment.example.ts` | Modified | Added `imagePublicBaseUrl` (`https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev`) matching `environment.ts` |
+| `src/app/core/interceptors/auth.interceptor.ts` | Modified | Enforced strict backend API origin checking before attaching `withCredentials: true`; strips `Authorization` headers on non-backend requests |
+| `src/app/core/models/Image/image_upload_url.model.ts` | Modified | Defined `ImageUploadUrlRequest`, `ImageUploadUrlResponse`, `UploadStep`, and `UploadProgressState` |
+| `src/app/core/models/Image/hotel_image.model.ts` | Modified | Re-exported upload contracts alongside `HotelImageRequest` and `HotelImageDto` |
+| `src/app/core/services/hotel-image.service.ts` | Created | Complete CRUD service for `/api/hotels/{hotelId}/images` and `/api/hotel-images/{imageId}` |
+| `src/app/core/services/image-upload.service.ts` | Created | Handles client file validation (5 MB, JPEG/PNG/WebP), presigned URL generation, direct R2 PUT streaming with progress, and metadata registration |
+| `src/utils/safe-image-url.ts` | Created | Pure `safeImageUrl()` helper and standalone `SafeImageUrlPipe` enforcing HTTPS and approved R2 origin with fallback placeholder |
+| `public/assets/images/hotel-placeholder.svg` | Created | Modern vector SVG placeholder asset matching the brand palette for missing/invalid images |
+| `src/utils/safe-image-url.spec.ts` | Created | Unit tests verifying HTTPS, origin matching, credentials rejection, port rejection, and fallback behavior (8 tests) |
+| `src/app/core/interceptors/auth.interceptor.spec.ts` | Created | Unit tests verifying origin matching, credentials isolation, and R2 request filtering (4 tests) |
+| `src/app/core/services/hotel-image.service.spec.ts` | Created | Unit tests verifying GET, POST, PUT, DELETE image metadata operations (5 tests) |
+| `src/app/core/services/image-upload.service.spec.ts` | Created | Unit tests verifying file validation, upload headers, text responseType, and upload coordination (7 tests) |
+
+---
+
+### 3. Key Architecture & Security Implementations
+
+1. **Authentication Interceptor Security Isolation**:
+   - `authInterceptor` uses `isBackendApiRequest(req.url)` to evaluate target URLs against `environment.apiBaseUrl`.
+   - Prevents naive prefix collisions (e.g. `localhost:8080.attacker.com`).
+   - `withCredentials: true` is attached strictly to requests targeting the exact backend origin.
+   - External requests (Cloudflare R2 direct PUT, CDNs) receive clean requests with no cookies or backend Authorization headers.
+
+2. **Direct Storage Upload via Presigned URL**:
+   - File validation strictly enforces `image/jpeg`, `image/png`, and `image/webp` with a 5 MB ceiling.
+   - `ImageUploadService.getUploadUrl()` requests a presigned URL from `POST /api/images/upload-url`.
+   - Direct PUT streaming applies exact `requiredHeaders` (`Content-Type`) returned by backend.
+   - Configured with `reportProgress: true`, `observe: 'events'`, and `responseType: 'text'` (preventing JSON parse syntax errors on empty/XML R2 responses).
+   - Coordinates state progression: `requesting-url` -> `uploading` -> `registering` -> `completed`.
+   - If metadata registration (`POST /api/hotels/{hotelId}/images`) fails, the upload is NOT automatically repeated.
+
+3. **Backend Image Management Service (`HotelImageService`)**:
+   - `getImages(hotelId, roomType?)` -> `GET /api/hotels/{hotelId}/images` (ordered by sortOrder, then ID).
+   - `addImage(hotelId, payload)` -> `POST /api/hotels/{hotelId}/images` (hotel-level when roomType is null).
+   - `updateImage(imageId, payload)` -> `PUT /api/hotel-images/{imageId}`.
+   - `deleteImage(imageId)` -> `DELETE /api/hotel-images/{imageId}`.
+   - Integrates standard `catchError(handleError)`.
+
+4. **URL Safety Sanitizer & SafeImageUrlPipe**:
+   - Accepts only HTTPS URLs whose origin matches `environment.imagePublicBaseUrl`.
+   - Rejects URLs containing embedded credentials (`user:pass@host`) or non-standard ports.
+   - Returns `/assets/images/hotel-placeholder.svg` for null, empty, invalid, or unauthorized URLs.
+   - Standalone pipe `SafeImageUrlPipe` available for `[src]="imgUrl | safeImageUrl"`.
+
+---
+
+### 4. Build & Test Verification
+
+- **Production Build (`npx ng build`)**: Completed with exit code `0` (Zero compiler or type errors; production bundles emitted cleanly).
+- **Unit Test Suites (`npx vitest run`)**: All 24 tests passed across 4 test suites:
+  - `safe-image-url.spec.ts`: 8/8 passed.
+  - `auth.interceptor.spec.ts`: 4/4 passed.
+  - `hotel-image.service.spec.ts`: 5/5 passed.
+  - `image-upload.service.spec.ts`: 7/7 passed.
+
+---
+
+## Implementation: Phase B — Admin Image Management UI
+
+### 1. Overview
+
+Phase B integrates full visual asset management into the Admin Portal, enabling authorized administrators (`ADMIN` role) to select hotel properties, view existing gallery imagery, upload high-resolution photography directly to Cloudflare R2 via presigned URLs, categorize images as hotel-level or room-specific, and delete images with modal confirmation.
+
+All operations strictly utilize the Phase A services (`ImageUploadService`, `HotelImageService`, `HotelService`, `RoomService`) and sanitize every rendered URL using `SafeImageUrlPipe`.
+
+---
+
+### 2. Files Created & Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/layout/admin-layout/hotel-images-management/hotel-images-management.ts` | Created | Standalone component managing hotel selection, dynamic room-type extraction, image filtering, reactive upload forms, preview generation/cleanup, and deletion workflows |
+| `src/app/layout/admin-layout/hotel-images-management/hotel-images-management.html` | Created | Template with hotel dropdown, quick stats pills, category filter chips, responsive card grid with overlay badges, upload modal with dropzone & progress bar, and delete confirmation dialog |
+| `src/app/layout/admin-layout/hotel-images-management/hotel-images-management.css` | Created | Maximalist Travel-Tech styling adhering to project design tokens and dark-mode variables |
+| `src/app/layout/admin-layout/hotel-images-management/hotel-images-management.spec.ts` | Created | Unit test suite covering hotel loading, filtering, file selection/validation, upload execution, and deletion confirmation (9 tests) |
+| `src/app/app.routes.ts` | Modified | Registered lazy-loaded `/admin/hotel-images` route protected by `authGuard` and `roleGuard(['ADMIN'])` |
+| `src/app/layout/admin-layout/admin-layout.ts` | Modified | Added `{ label: 'Hotel Images', route: '/admin/hotel-images', icon: '🖼️' }` to sidebar navigation |
+
+---
+
+### 3. Key UI & Functional Capabilities
+
+1. **Hotel Selection & Dynamic Room Types**:
+   - Hotel selector dropdown retrieves real properties from `HotelService.getHotels({ size: 100 })`.
+   - Selecting a hotel simultaneously triggers:
+     - `HotelImageService.getImages(hotelId)`: loads all current gallery images.
+     - `RoomService.getRoomsByHotelId(hotelId)`: dynamically extracts distinct room types for that specific property without hardcoding.
+   - Resets active filters, forms, and preview URLs when the selected hotel changes.
+
+2. **Gallery Filtering & Display**:
+   - Filter chips allow filtering by: `All Photography`, `Hotel Gallery` (images with `roomType == null`), and each distinct room type.
+   - Floating card design features:
+     - Thumbnail with `[src]="img.url | safeImageUrl"`.
+     - Category badge: `🏨 Hotel Gallery` vs `🛏️ Room: {roomType}`.
+     - Sort order pill: `#{{ img.sortOrder }}`.
+     - Hover delete action triggering a confirmation modal.
+
+3. **Client-Side Validated Upload**:
+   - File picker / drag-and-drop dropzone validates MIME type (JPEG, PNG, WebP) and file size ($\le 5\text{MB}$) before any network request.
+   - Generates local preview with `URL.createObjectURL()` and guarantees cleanup with `URL.revokeObjectURL()`.
+   - Category choice:
+     - `Hotel Gallery`: sends `roomType: null`.
+     - `Room Type`: requires selecting one of the hotel's existing room types.
+   - Progress bar displays real-time stages: URL generation $\rightarrow$ direct R2 PUT streaming ($0\text{--}90\%$) $\rightarrow$ backend registration ($95\text{--}100\%$).
+   - Refreshes the gallery list upon completion.
+
+4. **Delete Confirmation**:
+   - Requires explicit confirmation via modal dialog showing the image thumbnail and target details.
+   - Disables delete button while request is in flight to prevent duplicate submissions.
+
+---
+
+### 4. Build & Test Verification
+
+- **Production Build (`npx ng build`)**: Succeeded with exit code `0` (`chunk-ZNQRKH3N.js [hotel-images-management]`).
+- **Unit Test Suites (`npx vitest run`)**: All 33 tests passed across 5 test suites:
+  - `safe-image-url.spec.ts`: 8/8 passed.
+  - `auth.interceptor.spec.ts`: 4/4 passed.
+  - `hotel-image.service.spec.ts`: 5/5 passed.
+  - `image-upload.service.spec.ts`: 7/7 passed.
+  - `hotel-images-management.spec.ts`: 9/9 passed.
+
+
+
+
