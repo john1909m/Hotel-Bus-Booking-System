@@ -16,6 +16,7 @@
     <!-- Desktop Navigation -->
     <nav class="nav-desktop" aria-label="Customer navigation">
       <a routerLink="/" class="nav-link">Home</a>
+      <a routerLink="/user/hotel-bookings" routerLinkActive="active" class="nav-link">My Hotel Bookings</a>
       <a routerLink="/user/bus-bookings" routerLinkActive="active" class="nav-link">My Bus Bookings</a>
     </nav>
 
@@ -69,6 +70,7 @@
   >
     <nav class="mobile-nav">
       <a routerLink="/" class="mobile-link" (click)="closeMenu()">Home</a>
+      <a routerLink="/user/hotel-bookings" class="mobile-link" (click)="closeMenu()">My Hotel Bookings</a>
       <a routerLink="/user/bus-bookings" class="mobile-link" (click)="closeMenu()">My Bus Bookings</a>
       <div class="mobile-actions">
         @if (isAuthenticated()) {
