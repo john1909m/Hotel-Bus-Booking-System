@@ -59,6 +59,7 @@ public class HotelController {
         return new ResponseEntity<>(new PagedModel<>(hotels), HttpStatus.OK);
     }
 
+
     @GetMapping("/lookup")
     public ResponseEntity<List<HotelDto>> lookupHotels(@ParameterObject Pageable pageable,
                                                        @RequestParam(required = false) String q) {
