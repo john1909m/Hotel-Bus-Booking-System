@@ -32,3 +32,7 @@ export interface HotelBookingRequestDTO{
     roomIds? : number[];
 }
 
+export interface StatusUpdateRequestDTO {
+    status: status;
+}
+

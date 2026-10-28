@@ -292,4 +292,129 @@ describe('HotelDetails - Customer Gallery (Phase C)', () => {
     expect(mockImgElement.src).toBe(DEFAULT_IMAGE_PLACEHOLDER);
     expect(component.failedImageIds().has(201)).toBe(true);
   });
+
+  describe('Phase D: Room Images Integration', () => {
+    it('should match room images to the correct room type and exclude hotel-level images', () => {
+      component.ngOnInit();
+
+      const deluxePrimary = component.getRoomPrimaryImage('DELUXE');
+      expect(deluxePrimary).not.toBeNull();
+      expect(deluxePrimary?.id).toBe(202);
+      expect(deluxePrimary?.roomType).toBe('DELUXE');
+
+      const suitePrimary = component.getRoomPrimaryImage('SUITE');
+      expect(suitePrimary).not.toBeNull();
+      expect(suitePrimary?.id).toBe(204);
+
+      // Hotel-level images (roomType === null) must be excluded
+      expect(component.getRoomImages(null)).toEqual([]);
+      expect(component.getRoomPrimaryImage(null)).toBeNull();
+    });
+
+    it('should normalize case and whitespace when matching room types', () => {
+      component.ngOnInit();
+
+      // Variations of DELUXE
+      expect(component.getRoomPrimaryImage(' deluxe ')?.id).toBe(202);
+      expect(component.getRoomPrimaryImage('deluxe')?.id).toBe(202);
+      expect(component.getRoomPrimaryImage('Deluxe')?.id).toBe(202);
+
+      // Variations of SUITE
+      expect(component.getRoomPrimaryImage(' suite ')?.id).toBe(204);
+      expect(component.getRoomPrimaryImage('Suite')?.id).toBe(204);
+    });
+
+    it('should select the first matching image according to sortOrder ASC, then id ASC when multiple match', () => {
+      component.allHotelImages.set([
+        { id: 99, hotelId: 1, roomType: 'DOUBLE', url: 'double-high-sort.jpg', sortOrder: 10 },
+        { id: 50, hotelId: 1, roomType: 'DOUBLE', url: 'double-low-sort.jpg', sortOrder: 1 },
+        { id: 55, hotelId: 1, roomType: 'DOUBLE', url: 'double-low-sort-second.jpg', sortOrder: 1 },
+        { id: 10, hotelId: 1, roomType: null, url: 'lobby.jpg', sortOrder: 0 },
+      ]);
+
+      const primary = component.getRoomPrimaryImage('DOUBLE');
+      expect(primary).not.toBeNull();
+      expect(primary?.id).toBe(50); // sortOrder 1, id 50 < id 55
+
+      const allDouble = component.getRoomImages('DOUBLE');
+      expect(allDouble.map((img) => img.id)).toEqual([50, 55, 99]);
+    });
+
+    it('should return null and empty list when no matching image exists for a room type', () => {
+      component.ngOnInit();
+
+      expect(component.getRoomPrimaryImage('SINGLE')).toBeNull();
+      expect(component.getRoomImages('SINGLE')).toEqual([]);
+    });
+
+    it('should open the Lightbox containing ONLY the selected room type images', () => {
+      component.ngOnInit();
+
+      // Open room lightbox for DELUXE room #101
+      component.openRoomLightbox('DELUXE', '101');
+
+      expect(component.lightboxVisible()).toBe(true);
+      expect(component.lightboxIndex()).toBe(0);
+      expect(component.lightboxImages().length).toBe(1);
+      expect(component.lightboxImages()[0].id).toBe(202);
+      expect(component.lightboxTitle()).toContain('Room #101');
+      expect(component.lightboxTitle()).toContain('Deluxe');
+
+      component.closeLightbox();
+      expect(component.lightboxVisible()).toBe(false);
+    });
+
+    it('should keep Lightbox closed when room has no images', () => {
+      component.ngOnInit();
+
+      // SINGLE has 0 images
+      component.openRoomLightbox('SINGLE', '201');
+      expect(component.lightboxVisible()).toBe(false);
+    });
+
+    it('should avoid making additional API calls when querying room images or opening room Lightbox', () => {
+      component.ngOnInit();
+      expect(mockHotelImageService.getImages).toHaveBeenCalledTimes(1);
+
+      // Access primary images and open room lightbox
+      component.getRoomPrimaryImage('DELUXE');
+      component.getRoomImages('DELUXE');
+      component.openRoomLightbox('DELUXE', '101');
+
+      // Still exactly 1 call
+      expect(mockHotelImageService.getImages).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle room image loading errors by replacing src with placeholder without loop', () => {
+      component.ngOnInit();
+
+      const mockImg = { src: 'https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev/hotels/1/deluxe.jpg' } as HTMLImageElement;
+      const mockEvent = { target: mockImg } as unknown as Event;
+
+      component.onRoomImageError(202, mockEvent);
+
+      expect(mockImg.src).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+      expect(component.failedImageIds().has(202)).toBe(true);
+
+      // Trigger error again on placeholder: must not reassign or loop
+      mockImg.src = 'http://localhost:4200/assets/images/hotel-placeholder.svg';
+      component.onRoomImageError(202, mockEvent);
+      expect(mockImg.src).toBe('http://localhost:4200/assets/images/hotel-placeholder.svg');
+    });
+
+    it('should preserve hotel gallery behavior when opening hotel gallery Lightbox', () => {
+      component.ngOnInit();
+
+      // Open general hotel gallery lightbox
+      component.openLightbox(1);
+
+      expect(component.lightboxVisible()).toBe(true);
+      expect(component.lightboxIndex()).toBe(1);
+      // General gallery lightbox uses filteredGalleryImages (2 general images)
+      expect(component.lightboxImages().length).toBe(2);
+      expect(component.lightboxImages()[0].id).toBe(201);
+      expect(component.lightboxTitle()).toBe(mockHotel.name);
+    });
+  });
 });
+

@@ -143,11 +143,50 @@ export class HotelDetails implements OnInit, OnDestroy {
     return list[idx];
   });
 
+  readonly defaultPlaceholder = DEFAULT_IMAGE_PLACEHOLDER;
+
+  // ── Phase D: Room Images Normalized Map ─────────────────────
+  readonly roomImagesMap = computed<Map<string, HotelImageDto[]>>(() => {
+    const map = new Map<string, HotelImageDto[]>();
+    const all = this.allHotelImages();
+
+    for (const img of all) {
+      if (!img.roomType) continue;
+      const normalized = img.roomType.trim().toUpperCase();
+      if (!normalized) continue;
+
+      let list = map.get(normalized);
+      if (!list) {
+        list = [];
+        map.set(normalized, list);
+      }
+      list.push(img);
+    }
+
+    // Sort according to sortOrder ASC, then id ASC
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id);
+    }
+
+    return map;
+  });
+
   // ── Lightbox State ──────────────────────────────────────────
   readonly lightboxVisible = signal<boolean>(false);
   readonly lightboxIndex = signal<number>(0);
+  readonly activeLightboxImages = signal<HotelImageDto[] | null>(null);
+  readonly activeLightboxTitle = signal<string | null>(null);
+
+  readonly lightboxImages = computed<HotelImageDto[]>(() => {
+    return this.activeLightboxImages() ?? this.filteredGalleryImages();
+  });
+
+  readonly lightboxTitle = computed<string>(() => {
+    return this.activeLightboxTitle() ?? (this.hotel()?.name || 'Hotel Photos');
+  });
+
   readonly currentLightboxImage = computed<HotelImageDto | null>(() => {
-    const list = this.filteredGalleryImages();
+    const list = this.lightboxImages();
     const idx = this.lightboxIndex();
     return idx >= 0 && idx < list.length ? list[idx] : null;
   });
@@ -442,6 +481,8 @@ export class HotelDetails implements OnInit, OnDestroy {
         this.galleryFilter.set('GENERAL');
         this.activeImageIndex.set(0);
         this.lightboxVisible.set(false);
+        this.activeLightboxImages.set(null);
+        this.activeLightboxTitle.set(null);
         this.failedImageIds.set(new Set());
       }
 
@@ -589,32 +630,63 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   openLightbox(index?: number): void {
-    const list = this.galleryImages();
+    this.activeLightboxImages.set(null);
+    this.activeLightboxTitle.set(null);
+    const list = this.lightboxImages();
     if (list.length === 0) return;
     const targetIdx = index !== undefined ? index : this.activeImageIndex();
     this.lightboxIndex.set(Math.max(0, Math.min(targetIdx, list.length - 1)));
     this.lightboxVisible.set(true);
   }
 
+  openRoomLightbox(roomType: string | null | undefined, roomNumber?: string, index = 0): void {
+    if (!roomType) return;
+    const images = this.getRoomImages(roomType);
+    if (images.length === 0) return;
+    this.activeLightboxImages.set(images);
+    const label = this.getRoomTypeLabel(roomType as any);
+    const roomPrefix = roomNumber ? `Room #${roomNumber} - ` : '';
+    const hotelPrefix = this.hotel()?.name ? `${this.hotel()!.name} — ` : '';
+    this.activeLightboxTitle.set(`${hotelPrefix}${roomPrefix}${label} Photos`);
+    this.lightboxIndex.set(Math.max(0, Math.min(index, images.length - 1)));
+    this.lightboxVisible.set(true);
+  }
+
   closeLightbox(): void {
     this.lightboxVisible.set(false);
+    this.activeLightboxImages.set(null);
+    this.activeLightboxTitle.set(null);
   }
 
   nextLightboxImage(): void {
-    const total = this.galleryImages().length;
+    const total = this.lightboxImages().length;
     if (total <= 1) return;
     this.lightboxIndex.update((curr) => (curr + 1) % total);
   }
 
   prevLightboxImage(): void {
-    const total = this.galleryImages().length;
+    const total = this.lightboxImages().length;
     if (total <= 1) return;
     this.lightboxIndex.update((curr) => (curr - 1 + total) % total);
   }
 
+  // ── Phase D: Room Image Helpers ─────────────────────────────
+  getRoomPrimaryImage(roomType: string | null | undefined): HotelImageDto | null {
+    if (!roomType) return null;
+    const normalized = roomType.trim().toUpperCase();
+    const list = this.roomImagesMap().get(normalized);
+    return list && list.length > 0 ? list[0] : null;
+  }
+
+  getRoomImages(roomType: string | null | undefined): HotelImageDto[] {
+    if (!roomType) return [];
+    const normalized = roomType.trim().toUpperCase();
+    return this.roomImagesMap().get(normalized) ?? [];
+  }
+
   onImageError(imageId: number, event: Event): void {
     const imgEl = event.target as HTMLImageElement;
-    if (imgEl) {
+    if (imgEl && !imgEl.src.includes('hotel-placeholder.svg')) {
       imgEl.src = DEFAULT_IMAGE_PLACEHOLDER;
     }
     this.failedImageIds.update((set) => {
@@ -622,6 +694,10 @@ export class HotelDetails implements OnInit, OnDestroy {
       next.add(imageId);
       return next;
     });
+  }
+
+  onRoomImageError(imageId: number, event: Event): void {
+    this.onImageError(imageId, event);
   }
 
   @HostListener('window:keydown', ['$event'])

@@ -83,6 +83,26 @@
         </div>
       </div>
 
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label for="admin-hotel-booking-status" class="filter-label">Status</label>
+        <div class="input-wrapper">
+          <select
+            id="admin-hotel-booking-status"
+            class="filter-select"
+            [value]="statusFilter()"
+            (change)="onStatusFilterChange($any($event.target).value)"
+            aria-label="Filter by booking status"
+          >
+            <option value="ANY">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Sort Direction -->
       <div class="filter-field">
         <label for="admin-hotel-booking-dir" class="filter-label">Order</label>
@@ -153,7 +173,7 @@
           <th>Guests</th>
           <th>Total Cost</th>
           <th>Status</th>
-          <th style="width: 110px; text-align: right">Actions</th>
+          <th style="width: 140px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
@@ -192,6 +212,27 @@
           </td>
           <td>
             <div class="table-actions">
+              @if (b.status === 'PENDING') {
+                <button
+                  type="button"
+                  class="btn-action btn-action-confirm"
+                  (click)="confirmBookingStatus(b)"
+                  [disabled]="updatingStatusId() === b.id"
+                  [attr.aria-label]="'Confirm booking #' + b.id"
+                  title="Confirm Booking (PENDING -> CONFIRMED)"
+                  id="admin-confirm-hotel-booking-btn-{{ b.id }}"
+                >
+                  @if (updatingStatusId() === b.id) {
+                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                  } @else {
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                </button>
+              }
               <button
                 type="button"
                 class="btn-action btn-action-edit"
@@ -220,6 +261,7 @@
           </td>
         </tr>
       </ng-template>
+
 
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
@@ -346,10 +388,11 @@
               Booking Status <span class="required-star">*</span>
             </label>
             <select id="bookingStatus" class="form-select" formControlName="status">
-              @for (st of availableStatuses; track st) {
+              @for (st of getAllowedStatuses(initialEditingStatus()); track st) {
                 <option [value]="st">{{ st }}</option>
               }
             </select>
+
             @if (bookingForm.get('status')?.touched && bookingForm.get('status')?.errors?.['required']) {
               <span class="form-error">Status is required.</span>
             }

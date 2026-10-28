@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { HotelBookingDTO, HotelBookingRequestDTO } from '../models/Hotel/hotel-booking.model';
+import { HotelBookingDTO, HotelBookingRequestDTO, StatusUpdateRequestDTO, status } from '../models/Hotel/hotel-booking.model';
 import { PageHotelBookingDTO, HotelBookingListParams } from '../models/Pagination/hotelBookingPage.model';
 import { handleError } from '../../../utils/ErrorHandling';
 
@@ -65,16 +65,10 @@ export class HotelBookingService {
 
   /**
    * GET /hotel-bookings/user/{userId}
-   * Get hotel bookings by user ID paginated (Admin)
+   * Get hotel bookings by user ID (Admin or booking owner)
    */
-  getHotelBookingsByUserId(userId: number, params: HotelBookingListParams = {}): Observable<PageHotelBookingDTO> {
-    let httpParams = new HttpParams();
-    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
-    if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
-    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
-    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
-
-    return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/user/${userId}`, { params: httpParams }).pipe(
+  getHotelBookingsByUserId(userId: number): Observable<HotelBookingDTO[]> {
+    return this.http.get<HotelBookingDTO[]>(`${this.apiUrl}/user/${userId}`).pipe(
       catchError(handleError)
     );
   }
@@ -91,16 +85,10 @@ export class HotelBookingService {
 
   /**
    * GET /hotel-bookings/hotel/{hotelId}
-   * Get hotel bookings by hotel ID paginated
+   * Get hotel bookings by hotel ID
    */
-  getHotelBookingsByHotelId(hotelId: number, params: HotelBookingListParams = {}): Observable<PageHotelBookingDTO> {
-    let httpParams = new HttpParams();
-    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
-    if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
-    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
-    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
-
-    return this.http.get<PageHotelBookingDTO>(`${this.apiUrl}/hotel/${hotelId}`, { params: httpParams }).pipe(
+  getHotelBookingsByHotelId(hotelId: number): Observable<HotelBookingDTO[]> {
+    return this.http.get<HotelBookingDTO[]>(`${this.apiUrl}/hotel/${hotelId}`).pipe(
       catchError(handleError)
     );
   }
@@ -116,6 +104,17 @@ export class HotelBookingService {
   }
 
   /**
+   * PATCH /hotel-bookings/{id}/status
+   * Update hotel booking status (Admin only)
+   */
+  updateHotelBookingStatus(id: number, status: status | string): Observable<HotelBookingDTO> {
+    const payload: StatusUpdateRequestDTO = { status: status as status };
+    return this.http.patch<HotelBookingDTO>(`${this.apiUrl}/${id}/status`, payload).pipe(
+      catchError(handleError)
+    );
+  }
+
+  /**
    * DELETE /hotel-bookings/{id}
    * Delete a hotel booking
    */
@@ -125,5 +124,5 @@ export class HotelBookingService {
     );
   }
 
-
 }
+

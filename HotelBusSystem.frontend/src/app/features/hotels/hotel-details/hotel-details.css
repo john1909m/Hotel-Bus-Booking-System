@@ -1561,6 +1561,116 @@
   border: 1px solid var(--border-subtle);
 }
 
+/* ─── Room Card Image Frame (Phase D) ────────────────────── */
+.room-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.room-image-btn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  overflow: hidden;
+}
+
+.room-image-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.room-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.room-image-btn:hover .room-card-img {
+  transform: scale(1.05);
+}
+
+.room-card-img--placeholder {
+  opacity: 0.85;
+  filter: grayscale(15%);
+}
+
+.room-image-placeholder-frame {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+}
+
+.room-image-badge {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(18, 24, 27, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.room-image-badge--empty {
+  background: rgba(18, 24, 27, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.room-image-hover-cue {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: rgba(18, 24, 27, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.room-image-btn:hover .room-image-hover-cue,
+.room-image-btn:focus-visible .room-image-hover-cue {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .room-amenities {
   display: flex;
   flex-wrap: wrap;

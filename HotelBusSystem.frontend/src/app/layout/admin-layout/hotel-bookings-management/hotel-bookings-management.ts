@@ -80,7 +80,10 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   readonly deleteDialogVisible = signal<boolean>(false);
   readonly bookingToDelete = signal<HotelBookingDTO | null>(null);
 
-  readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
+  readonly totalElements = computed(() => {
+    const page = this.pageData();
+    return page?.page?.totalElements ?? page?.totalElements ?? 0;
+  });
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
 
   readonly displayedBookings = computed(() => {
@@ -98,6 +101,9 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
 
   readonly availableStatuses: readonly status[] = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
   readonly selectedHotelName = signal<string>('');
+  readonly statusFilter = signal<string>('ANY');
+  readonly updatingStatusId = signal<number | null>(null);
+  readonly initialEditingStatus = signal<status | string>('PENDING');
 
   // ── Reactive Form ──────────────────────────────────────────
   readonly bookingForm: FormGroup = this.fb.group({
@@ -137,7 +143,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
       size: this.pageSize(),
       sortBy: 'id',
       sortDirection: this.sortDirection(),
-      status: 'ANY',
+      status: this.statusFilter(),
     };
 
     this.bookingService
@@ -162,6 +168,74 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
         },
       });
   }
+
+  onStatusFilterChange(val: string): void {
+    this.statusFilter.set(val);
+    this.currentPage.set(0);
+    this.loadBookings();
+  }
+
+  confirmBookingStatus(booking: HotelBookingDTO): void {
+    if (this.updatingStatusId() !== null) return;
+    if (booking.status !== 'PENDING') {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Transition',
+        detail: `Cannot confirm booking #${booking.id} with status '${booking.status}'. Only PENDING bookings can be transitioned to CONFIRMED.`,
+        life: 4000,
+      });
+      return;
+    }
+
+    this.updatingStatusId.set(booking.id);
+
+    this.bookingService
+      .updateHotelBookingStatus(booking.id, 'CONFIRMED')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedBooking) => {
+          this.updatingStatusId.set(null);
+          const nextStatus = updatedBooking.status || 'CONFIRMED';
+          this.bookings.update((list) =>
+            list.map((item) =>
+              item.id === booking.id ? { ...item, status: nextStatus } : item
+            )
+          );
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Booking Confirmed',
+            detail: `Hotel booking #${booking.id} has been successfully transitioned to CONFIRMED.`,
+            life: 4000,
+          });
+        },
+        error: (err) => {
+          this.updatingStatusId.set(null);
+          const msg = err?.message || 'Failed to update hotel booking status.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Status Update Failed',
+            detail: msg,
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  getAllowedStatuses(currentStatus?: status | string): readonly status[] {
+    switch (currentStatus) {
+      case 'PENDING':
+        return ['PENDING', 'CONFIRMED', 'CANCELLED'];
+      case 'CONFIRMED':
+        return ['CONFIRMED', 'COMPLETED', 'CANCELLED'];
+      case 'COMPLETED':
+        return ['COMPLETED'];
+      case 'CANCELLED':
+        return ['CANCELLED'];
+      default:
+        return ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
+    }
+  }
+
 
   onSearchFilter(val: string): void {
     this.searchFilter.set(val);
@@ -226,6 +300,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   openEditDialog(b: HotelBookingDTO): void {
     this.isEditMode.set(true);
     this.editingBookingId.set(b.id);
+    this.initialEditingStatus.set(b.status || 'PENDING');
 
     // Resolve the hotel's actual name
     const foundRoom = this.rooms().find((r) => r.id === b.roomId);
@@ -296,20 +371,53 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
         return;
       }
 
+      const initialStatus = this.initialEditingStatus();
+      const statusChanged = formVal.status && formVal.status !== initialStatus;
+
       this.bookingService
         .updateHotelBooking(id, payload)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.saving.set(false);
-            this.dialogVisible.set(false);
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Booking Updated',
-              detail: `Hotel booking #${id} has been updated.`,
-              life: 4000,
-            });
-            this.loadBookings();
+            if (statusChanged) {
+              this.bookingService
+                .updateHotelBookingStatus(id, formVal.status)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe({
+                  next: (updatedWithStatus) => {
+                    this.saving.set(false);
+                    this.dialogVisible.set(false);
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Booking Updated',
+                      detail: `Hotel booking #${id} updated with status '${updatedWithStatus.status}'.`,
+                      life: 4000,
+                    });
+                    this.loadBookings();
+                  },
+                  error: (statusErr) => {
+                    this.saving.set(false);
+                    this.dialogVisible.set(false);
+                    this.messageService.add({
+                      severity: 'warn',
+                      summary: 'Partial Update',
+                      detail: `Booking fields saved, but status update failed: ${statusErr?.message || 'Invalid transition'}.`,
+                      life: 5000,
+                    });
+                    this.loadBookings();
+                  },
+                });
+            } else {
+              this.saving.set(false);
+              this.dialogVisible.set(false);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Booking Updated',
+                detail: `Hotel booking #${id} has been updated.`,
+                life: 4000,
+              });
+              this.loadBookings();
+            }
           },
           error: (err) => {
             this.saving.set(false);
@@ -352,6 +460,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
         });
     }
   }
+
 
   // ── Delete Handlers ────────────────────────────────────────
   openDeleteDialog(booking: HotelBookingDTO): void {
