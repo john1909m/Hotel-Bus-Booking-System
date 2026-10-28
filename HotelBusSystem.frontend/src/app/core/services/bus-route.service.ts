@@ -7,8 +7,6 @@ import { BusRouteDTO, BusRouteRequestDTO } from '../models/Bus/bus-route';
 import { BusRouteListParams, BusRouteLookupParams, PageBusRouteDTO } from '../models/Pagination/busRoutePage.model';
 import { handleError } from '../../../utils/ErrorHandling';
 
-
-
 @Injectable({
   providedIn: 'root',
 })
@@ -46,6 +44,8 @@ export class BusRouteService {
     if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
     if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
+    if (params.originStopId !== undefined) httpParams = httpParams.set('originStopId', params.originStopId);
+    if (params.destinationStopId !== undefined) httpParams = httpParams.set('destinationStopId', params.destinationStopId);
 
     return this.http.get<PageBusRouteDTO>(this.apiUrl, { params: httpParams }).pipe(
       catchError(handleError)
@@ -84,5 +84,4 @@ export class BusRouteService {
       catchError(handleError)
     );
   }
-
 }

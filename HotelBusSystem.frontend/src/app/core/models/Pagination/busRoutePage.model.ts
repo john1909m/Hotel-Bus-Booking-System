@@ -1,7 +1,7 @@
 import { BusRouteDTO } from "../Bus/bus-route";
 import { Pageable, Sort } from "./userPage.model";
 
-export interface PageBusRouteDTO{
+export interface PageBusRouteDTO {
     totalElements: number;
     totalPages: number;
     last: boolean;
@@ -21,6 +21,8 @@ export interface BusRouteListParams {
   size?: number;
   sortBy?: string;
   sortDirection?: string;
+  originStopId?: number;
+  destinationStopId?: number;
 }
 
 export interface BusRouteLookupParams {

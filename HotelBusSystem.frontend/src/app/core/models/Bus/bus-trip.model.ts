@@ -7,13 +7,15 @@ export type status =
 
 export interface BusTripDTO {
     id: number;
-    departure: string;
+    departure?: string;
+    departureTime?: string;
     arrivalTime: string;
     price: number;
     status: status;
     busId: number;
     routeId: number;
 }
+
 
 export interface BusTripRequestDTO {
     departure: string;

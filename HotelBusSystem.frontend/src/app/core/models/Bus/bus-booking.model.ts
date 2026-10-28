@@ -23,3 +23,7 @@ export interface BusBookingRequestDTO {
     busTripId : number;
     seatId : number;
 }
+
+export interface StatusUpdateRequestDTO {
+    status: Status;
+}

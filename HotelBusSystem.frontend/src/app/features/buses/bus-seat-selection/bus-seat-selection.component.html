@@ -1,0 +1,518 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '95vw', maxWidth: '880px', maxHeight: '92vh' }"
+  styleClass="seat-selection-dialog"
+  (onHide)="closeDialog()"
+>
+  <!-- Custom Dialog Header -->
+  <ng-template #header>
+    @if (trip) {
+      <div class="seat-dialog-header">
+        <div class="header-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+            <path d="M7 19v2"></path>
+            <path d="M17 19v2"></path>
+            <path d="M3 10h18"></path>
+            <circle cx="7.5" cy="14.5" r="1"></circle>
+            <circle cx="16.5" cy="14.5" r="1"></circle>
+          </svg>
+        </div>
+        <div class="header-titles">
+          <h2 class="dialog-main-title">
+            {{ trip.originStop?.city || 'Origin' }} &rarr; {{ trip.destinationStop?.city || 'Destination' }}
+          </h2>
+          <p class="dialog-sub-title">
+            {{ (trip.departureTime || trip.departure) | date:'mediumDate' }} at {{ (trip.departureTime || trip.departure) | date:'shortTime' }} · Coach #{{ trip.bus?.busNumber || trip.busId }}
+          </p>
+        </div>
+      </div>
+    }
+  </ng-template>
+
+  @if (trip) {
+    <!-- ═══════════════════════════════════════════════════════════
+         STATE 1: LOADING SPINNER
+    ════════════════════════════════════════════════════════════ -->
+    @if (loading()) {
+      <div class="seat-dialog-loading" aria-live="polite">
+        <div class="loading-spinner-ring" aria-hidden="true"></div>
+        <p class="loading-label">Loading coach seating arrangement & availability...</p>
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STATE 2: PAYMENT PLACEHOLDER / RESERVATION SUCCESS
+    ════════════════════════════════════════════════════════════ -->
+    @else if (showPaymentPlaceholder()) {
+      <div class="payment-placeholder-container" role="status">
+
+        <div class="success-top-badge">
+          <div class="success-icon-circle" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <p-tag value="STATUS: PENDING" severity="warn" styleClass="pending-status-tag" />
+        </div>
+
+        <h3 class="placeholder-title">Seat Reservation Created!</h3>
+        <p class="placeholder-subtitle">
+          Your seat reservation has been recorded in <strong>PENDING</strong> status and is waiting for administrator confirmation.
+        </p>
+
+        <!-- Informative Payment Gateway Notice Card -->
+        <div class="payment-notice-card" role="note">
+          <div class="notice-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+          </div>
+          <div class="notice-body">
+            <h4 class="notice-headline">Payment Gateway Integration Pending</h4>
+            <p class="notice-text">
+              Direct online credit/debit card processing is currently under integration. No immediate charge has been made to your account.
+              You may complete ticket payment at the departure terminal before boarding, or wait for customer support follow-up.
+            </p>
+          </div>
+        </div>
+
+        <!-- Reservation Details Summary Table -->
+        <div class="reservation-summary-card">
+          <div class="summary-row">
+            <span class="row-label">Booking Reference:</span>
+            <div class="row-value reference-chips">
+              @for (booking of createdBookings(); track booking.id) {
+                <span class="ref-badge">#{{ booking.id }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <span class="row-label">Journey Route:</span>
+            <span class="row-value font-medium">
+              {{ trip.originStop?.name || trip.originStop?.city }} &rarr; {{ trip.destinationStop?.name || trip.destinationStop?.city }}
+            </span>
+          </div>
+
+          <div class="summary-row">
+            <span class="row-label">Departure Schedule:</span>
+            <span class="row-value">
+              {{ (trip.departureTime || trip.departure) | date:'mediumDate' }} at {{ (trip.departureTime || trip.departure) | date:'shortTime' }}
+            </span>
+          </div>
+
+          <div class="summary-row">
+            <span class="row-label">Reserved Seat(s):</span>
+            <div class="row-value seat-chips-row">
+              @for (seat of selectedSeatsList(); track seat.id) {
+                <span class="confirmed-seat-chip">Seat {{ seat.seatNumber }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="summary-row total-highlight">
+            <span class="row-label">Total Reservation Fare:</span>
+            <span class="row-value fare-total">
+              {{ totalPrice() | number:'1.2-2' }} <small>EGP</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="placeholder-actions">
+          <a
+            routerLink="/user/bus-bookings"
+            class="btn btn-primary btn-history"
+            (click)="closeDialog()"
+            id="view-my-bus-bookings-btn"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>View My Bus Bookings</span>
+          </a>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeDialog()"
+            id="close-placeholder-btn"
+          >
+            Done
+          </button>
+        </div>
+
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STATE 3: SEAT MAP & SELECTION FLOW
+    ════════════════════════════════════════════════════════════ -->
+    @else {
+      <!-- Inline Error Feedback -->
+      @if (error()) {
+        <div class="selection-error-banner" role="alert">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <div class="seat-selection-grid">
+
+        <!-- ── Left Column: Coach Layout ─────────────────────── -->
+        <section class="coach-column" aria-label="Bus seat diagram">
+
+          <!-- Seat Status Legend -->
+          <div class="seat-legend-bar" aria-label="Seat map legend">
+            <div class="legend-item">
+              <span class="legend-box available-box" aria-hidden="true"></span>
+              <span class="legend-text">Available</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box selected-box" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </span>
+              <span class="legend-text">Selected</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box booked-box" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </span>
+              <span class="legend-text">Booked</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box premium-box" aria-hidden="true">★</span>
+              <span class="legend-text">Premium</span>
+            </div>
+          </div>
+
+          <!-- Realistic Coach Silhouette Frame -->
+          <div class="coach-frame-wrapper">
+            <div class="coach-body">
+
+              <!-- Curved Windshield Header -->
+              <div class="coach-windshield">
+                <div class="windshield-glass">
+                  <span class="wiper-left" aria-hidden="true"></span>
+                  <span class="wiper-right" aria-hidden="true"></span>
+                </div>
+                <div class="windshield-label">FRONT / WINDSHIELD</div>
+              </div>
+
+              <!-- Cockpit Strip: Driver on Left, Entrance on Right -->
+              <div class="coach-cockpit-strip">
+                <div class="driver-cab" aria-label="Driver cockpit area">
+                  <div class="driver-wheel-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <line x1="12" y1="2" x2="12" y2="9"></line>
+                      <line x1="4.93" y1="19.07" x2="9.88" y2="14.12"></line>
+                      <line x1="19.07" y1="19.07" x2="14.12" y2="14.12"></line>
+                    </svg>
+                  </div>
+                  <span class="cockpit-text">Driver</span>
+                </div>
+
+                <div class="aisle-direction-guide" aria-hidden="true">
+                  <span class="guide-line"></span>
+                  <span class="guide-arrow">&darr;</span>
+                  <span class="guide-line"></span>
+                </div>
+
+                <div class="passenger-door" aria-label="Passenger entrance door">
+                  <div class="door-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 21h18"></path>
+                      <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                      <path d="M14 12v.01"></path>
+                    </svg>
+                  </div>
+                  <span class="cockpit-text">Entrance</span>
+                </div>
+              </div>
+
+              <!-- Coach Passenger Deck Rows -->
+              <div class="passenger-deck" role="grid" aria-label="Coach passenger seating">
+                @for (row of seatRows(); track row.rowNumber) {
+                  <div class="coach-row" role="row">
+
+                    <!-- Left Side (Window & Aisle) -->
+                    <div class="seat-pair left-pair">
+                      @for (seat of row.leftSeats; track (seat ? seat.id : $index)) {
+                        @if (seat) {
+                          <button
+                            type="button"
+                            class="seat-btn"
+                            [class.selected]="isSeatSelected(seat.id)"
+                            [class.booked]="isSeatBooked(seat.id)"
+                            [class.premium]="seat.seatType === 'PREMIUM'"
+                            [disabled]="isSeatBooked(seat.id) || submitting()"
+                            (click)="onSeatClick(seat)"
+                            [attr.aria-label]="'Seat ' + seat.seatNumber + ', ' + (seat.seatType || 'Regular') + ', ' + (isSeatBooked(seat.id) ? 'Booked' : (isSeatSelected(seat.id) ? 'Selected' : 'Available'))"
+                            [pTooltip]="'Seat ' + seat.seatNumber + ' (' + (seat.seatType || 'Regular') + ')' + (isSeatBooked(seat.id) ? ' — Already Booked' : ' — ' + (trip.price | number:'1.2-2') + ' EGP')"
+                            tooltipPosition="top"
+                          >
+                            <span class="seat-top-cushion" aria-hidden="true"></span>
+                            <span class="seat-armrest left-armrest" aria-hidden="true"></span>
+                            <span class="seat-number-label">{{ seat.seatNumber }}</span>
+                            <span class="seat-armrest right-armrest" aria-hidden="true"></span>
+
+                            @if (seat.seatType === 'PREMIUM') {
+                              <span class="premium-star-badge" aria-hidden="true">★</span>
+                            }
+
+                            @if (isSeatSelected(seat.id)) {
+                              <span class="selected-check-badge" aria-hidden="true">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                              </span>
+                            }
+                          </button>
+                        } @else {
+                          <div class="seat-placeholder" aria-hidden="true"></div>
+                        }
+                      }
+                    </div>
+
+                    <!-- Center Walking Aisle -->
+                    <div class="center-aisle-corridor" aria-hidden="true">
+                      <span class="row-counter">{{ row.rowNumber }}</span>
+                    </div>
+
+                    <!-- Right Side (Aisle & Window) -->
+                    <div class="seat-pair right-pair">
+                      @for (seat of row.rightSeats; track (seat ? seat.id : $index)) {
+                        @if (seat) {
+                          <button
+                            type="button"
+                            class="seat-btn"
+                            [class.selected]="isSeatSelected(seat.id)"
+                            [class.booked]="isSeatBooked(seat.id)"
+                            [class.premium]="seat.seatType === 'PREMIUM'"
+                            [disabled]="isSeatBooked(seat.id) || submitting()"
+                            (click)="onSeatClick(seat)"
+                            [attr.aria-label]="'Seat ' + seat.seatNumber + ', ' + (seat.seatType || 'Regular') + ', ' + (isSeatBooked(seat.id) ? 'Booked' : (isSeatSelected(seat.id) ? 'Selected' : 'Available'))"
+                            [pTooltip]="'Seat ' + seat.seatNumber + ' (' + (seat.seatType || 'Regular') + ')' + (isSeatBooked(seat.id) ? ' — Already Booked' : ' — ' + (trip.price | number:'1.2-2') + ' EGP')"
+                            tooltipPosition="top"
+                          >
+                            <span class="seat-top-cushion" aria-hidden="true"></span>
+                            <span class="seat-armrest left-armrest" aria-hidden="true"></span>
+                            <span class="seat-number-label">{{ seat.seatNumber }}</span>
+                            <span class="seat-armrest right-armrest" aria-hidden="true"></span>
+
+                            @if (seat.seatType === 'PREMIUM') {
+                              <span class="premium-star-badge" aria-hidden="true">★</span>
+                            }
+
+                            @if (isSeatSelected(seat.id)) {
+                              <span class="selected-check-badge" aria-hidden="true">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                              </span>
+                            }
+                          </button>
+                        } @else {
+                          <div class="seat-placeholder" aria-hidden="true"></div>
+                        }
+                      }
+                    </div>
+
+                  </div>
+                }
+              </div>
+
+              <!-- Rear Coach Bumper Base -->
+              <div class="coach-rear-bumper">
+                <span class="bumper-label">REAR</span>
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ── Right Column: Trip & Reservation Summary ──────── -->
+        <aside class="summary-column" aria-label="Reservation summary panel">
+
+          <!-- Trip Overview Card -->
+          <div class="journey-overview-card">
+            <h4 class="sidebar-heading">Trip Details</h4>
+
+            <div class="overview-stations">
+              <div class="station-item">
+                <span class="station-bullet origin-bullet"></span>
+                <div class="station-info">
+                  <span class="station-city">{{ trip.originStop?.city }}</span>
+                  <span class="station-name">{{ trip.originStop?.name || 'Main Bus Terminal' }}</span>
+                </div>
+              </div>
+
+              <div class="station-item">
+                <span class="station-bullet dest-bullet"></span>
+                <div class="station-info">
+                  <span class="station-city">{{ trip.destinationStop?.city }}</span>
+                  <span class="station-name">{{ trip.destinationStop?.name || 'Central Bus Terminal' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="trip-meta-list">
+              <div class="meta-item">
+                <span class="meta-icon">📅</span>
+                <span>{{ (trip.departureTime || trip.departure) | date:'mediumDate' }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">🕒</span>
+                <span>Departure: <strong>{{ (trip.departureTime || trip.departure) | date:'shortTime' }}</strong></span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">🚌</span>
+                <span>Coach: <strong>{{ trip.bus?.company || 'Express Carrier' }} (#{{ trip.bus?.busNumber || trip.busId }})</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Seats Box -->
+          <div class="selected-seats-card">
+            <div class="card-head-row">
+              <h4 class="sidebar-heading">Selected Seats</h4>
+              <span class="count-badge" [class.highlight]="selectedSeatsCount() > 0">
+                {{ selectedSeatsCount() }} / {{ maxSeatsLimit }}
+              </span>
+            </div>
+
+            @if (selectedSeatsCount() === 0) {
+              <div class="empty-seats-hint">
+                <p>Click on any available seat on the coach map to select it for your journey.</p>
+                <small>You can reserve up to {{ maxSeatsLimit }} seats in one booking.</small>
+              </div>
+            } @else {
+              <div class="selected-chips-grid">
+                @for (seat of selectedSeatsList(); track seat.id) {
+                  <div class="seat-badge-chip">
+                    <span class="chip-number">Seat {{ seat.seatNumber }}</span>
+                    @if (seat.seatType && seat.seatType !== 'REGULAR') {
+                      <span class="chip-type">({{ seat.seatType }})</span>
+                    }
+                    <button
+                      type="button"
+                      class="btn-remove-seat"
+                      (click)="removeSeat(seat.id)"
+                      [disabled]="submitting()"
+                      [attr.aria-label]="'Remove seat ' + seat.seatNumber"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Price & Fare Calculation Breakdown -->
+          <div class="fare-calculation-card">
+            <h4 class="sidebar-heading">Fare Summary</h4>
+
+            <div class="fare-row">
+              <span>Fare per seat:</span>
+              <span class="fare-num">{{ trip.price | number:'1.2-2' }} EGP</span>
+            </div>
+
+            <div class="fare-row">
+              <span>Selected seats:</span>
+              <span class="fare-num">&times; {{ selectedSeatsCount() }}</span>
+            </div>
+
+            <div class="fare-divider"></div>
+
+            <div class="fare-row fare-total-row">
+              <span>Total Price:</span>
+              <span class="grand-total">{{ totalPrice() | number:'1.2-2' }} <small>EGP</small></span>
+            </div>
+          </div>
+
+          <!-- Guest Warning / Auth Notice -->
+          @if (!isAuthenticated() && selectedSeatsCount() > 0) {
+            <div class="guest-login-notice" role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <div>
+                <strong>Sign In to Complete</strong>
+                <p>Booking requires authentication. Your selected seats will be saved so you can resume immediately after logging in.</p>
+              </div>
+            </div>
+          }
+
+          <!-- Booking Submission Action Button -->
+          <div class="action-submit-block">
+            @if (isAuthenticated()) {
+              <button
+                type="button"
+                class="btn btn-primary w-full btn-confirm-booking"
+                [disabled]="selectedSeatsCount() === 0 || submitting()"
+                (click)="submitBookings()"
+                id="confirm-bus-booking-btn"
+              >
+                @if (submitting()) {
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                  <span>Reserving Seats...</span>
+                } @else {
+                  <span>
+                    Confirm Reservation
+                    @if (selectedSeatsCount() > 0) {
+                      ({{ selectedSeatsCount() }} {{ selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} · {{ totalPrice() | number:'1.2-2' }} EGP)
+                    }
+                  </span>
+                }
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-primary w-full btn-guest-login"
+                [disabled]="selectedSeatsCount() === 0"
+                (click)="proceedAsGuest()"
+                id="guest-login-book-btn"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                <span>Log In to Reserve Seats</span>
+              </button>
+            }
+
+            <p class="terms-secure-hint">
+              🔒 Pessimistic seat locking protects your reservation against double booking.
+            </p>
+          </div>
+
+        </aside>
+
+      </div>
+    }
+  }
+</p-dialog>
+

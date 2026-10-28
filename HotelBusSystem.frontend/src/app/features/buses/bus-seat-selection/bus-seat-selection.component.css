@@ -1,0 +1,1072 @@
+/* ═════════════════════════════════════════════════════════════
+   TravelEase — Coach Bus Seat Selection Styles
+   Inspired by modern luxury coach passenger layouts.
+══════════════════════════════════════════════════════════════ */
+
+/* ── Custom Dialog Header ───────────────────────────────── */
+.seat-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.25rem 0;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 12px);
+  background-color: var(--color-primary-light, #e0f5ef);
+  color: var(--color-primary, #009B77);
+  flex-shrink: 0;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-main-title {
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #2E3A40);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dialog-sub-title {
+  font-size: 0.825rem;
+  color: var(--text-secondary, #5a6870);
+  margin: 0.15rem 0 0 0;
+}
+
+/* ── Dialog Loading State ────────────────────────────────── */
+.seat-dialog-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1rem;
+  gap: 1.25rem;
+}
+
+.loading-spinner-ring {
+  width: 46px;
+  height: 46px;
+  border: 4px solid var(--border-color, #dde4e6);
+  border-top-color: var(--color-primary, #009B77);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-label {
+  font-size: 0.95rem;
+  color: var(--text-secondary, #5a6870);
+  font-weight: 500;
+}
+
+/* ── Error Banner ────────────────────────────────────────── */
+.selection-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  border-radius: var(--radius-md, 12px);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .selection-error-banner {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* ── Grid Layout (Desktop & Mobile) ──────────────────────── */
+.seat-selection-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .seat-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* ── Seat Map Legend ─────────────────────────────────────── */
+.seat-legend-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-surface, #F4F1E7);
+  border-radius: var(--radius-md, 12px);
+  margin-bottom: 1.25rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #5a6870);
+}
+
+.legend-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.legend-box.available-box {
+  background-color: var(--bg-elevated, #FFFFFF);
+  border: 1.5px solid var(--border-color, #dde4e6);
+}
+
+.legend-box.selected-box {
+  background-color: var(--color-primary, #009B77);
+  border: 1.5px solid var(--color-primary-hover, #007d60);
+  color: #FFFFFF;
+}
+
+.legend-box.booked-box {
+  background-color: #e5e7eb;
+  border: 1.5px solid #d1d5db;
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .legend-box.booked-box {
+  background-color: #2e3a40;
+  border-color: #3d4f56;
+  color: #6b7280;
+}
+
+.legend-box.premium-box {
+  background-color: #fef3c7;
+  border: 1.5px solid #f59e0b;
+  color: #d97706;
+}
+
+[data-theme="dark"] .legend-box.premium-box {
+  background-color: rgba(245, 158, 11, 0.18);
+  border-color: #d97706;
+  color: #fbbf24;
+}
+
+/* ── Realistic Coach Silhouette Frame ────────────────────── */
+.coach-frame-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.coach-body {
+  width: 100%;
+  max-width: 380px;
+  background-color: var(--bg-surface, #F4F1E7);
+  border: 2px solid var(--border-color, #dde4e6);
+  border-radius: 36px 36px 20px 20px;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(46,58,64,.10));
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme="dark"] .coach-body {
+  background-color: var(--bg-surface, #222F33);
+  border-color: var(--border-color, #3d4f56);
+}
+
+/* ── Coach Windshield ────────────────────────────────────── */
+.coach-windshield {
+  background: linear-gradient(180deg, #d8ece8 0%, #c4e2db 100%);
+  border-bottom: 2px solid var(--border-color, #dde4e6);
+  padding: 1rem 1rem 0.5rem 1rem;
+  text-align: center;
+  position: relative;
+}
+
+[data-theme="dark"] .coach-windshield {
+  background: linear-gradient(180deg, #1b3530 0%, #172d28 100%);
+  border-bottom-color: var(--border-color, #3d4f56);
+}
+
+.windshield-glass {
+  height: 24px;
+  border-radius: 20px 20px 4px 4px;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+[data-theme="dark"] .windshield-glass {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15);
+}
+
+.wiper-left, .wiper-right {
+  width: 22px;
+  height: 2px;
+  background-color: var(--text-muted, #8a9ba3);
+  transform: rotate(-18deg);
+  border-radius: 2px;
+}
+
+.wiper-right {
+  transform: rotate(18deg);
+}
+
+.windshield-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--color-primary, #009B77);
+  margin-top: 0.45rem;
+  text-transform: uppercase;
+}
+
+/* ── Cockpit Strip ───────────────────────────────────────── */
+.coach-cockpit-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.25rem;
+  background-color: var(--bg-elevated, #FFFFFF);
+  border-bottom: 2px dashed var(--border-color, #dde4e6);
+}
+
+[data-theme="dark"] .coach-cockpit-strip {
+  background-color: var(--bg-elevated, #2E3A40);
+  border-bottom-color: var(--border-color, #3d4f56);
+}
+
+.driver-cab, .passenger-door {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary, #5a6870);
+}
+
+.driver-wheel-icon {
+  color: var(--color-charcoal, #2E3A40);
+}
+
+[data-theme="dark"] .driver-wheel-icon {
+  color: var(--text-primary, #F4F1E7);
+}
+
+.passenger-door {
+  color: #0284c7;
+}
+
+[data-theme="dark"] .passenger-door {
+  color: #38bdf8;
+}
+
+.aisle-direction-guide {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted, #8a9ba3);
+  font-size: 0.75rem;
+}
+
+.guide-line {
+  width: 14px;
+  height: 1px;
+  background-color: var(--border-color, #dde4e6);
+}
+
+.guide-arrow {
+  font-weight: 800;
+  animation: bounceDown 1.5s infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+/* ── Passenger Deck & Seat Rows ──────────────────────────── */
+.passenger-deck {
+  padding: 1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.coach-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.seat-pair {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.center-aisle-corridor {
+  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-counter {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted, #8a9ba3);
+  background-color: var(--bg-page, #FFFFFF);
+  border: 1px solid var(--border-subtle, #edf0f1);
+  border-radius: var(--radius-full, 9999px);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .row-counter {
+  background-color: var(--bg-page, #182326);
+  border-color: var(--border-subtle, #2e3d42);
+}
+
+/* ── Realistic Bus Seat Button ───────────────────────────── */
+.seat-btn {
+  position: relative;
+  width: 44px;
+  height: 46px;
+  border-radius: 9px 9px 6px 6px;
+  background-color: var(--bg-elevated, #FFFFFF);
+  border: 1.5px solid var(--border-color, #dde4e6);
+  color: var(--text-primary, #2E3A40);
+  font-family: var(--font-sans, sans-serif);
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  padding: 0;
+  user-select: none;
+}
+
+[data-theme="dark"] .seat-btn {
+  background-color: var(--bg-elevated, #2E3A40);
+  border-color: var(--border-color, #3d4f56);
+  color: var(--text-primary, #F4F1E7);
+}
+
+/* Headrest cushion strip on top of seat */
+.seat-top-cushion {
+  position: absolute;
+  top: 2px;
+  width: 28px;
+  height: 4px;
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .seat-top-cushion {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Armrest bars on sides */
+.seat-armrest {
+  position: absolute;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background-color: var(--border-color, #dde4e6);
+}
+
+[data-theme="dark"] .seat-armrest {
+  background-color: var(--border-color, #3d4f56);
+}
+
+.left-armrest { left: 2px; }
+.right-armrest { right: 2px; }
+
+.seat-number-label {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 3px;
+}
+
+.seat-placeholder {
+  width: 44px;
+  height: 46px;
+  visibility: hidden;
+}
+
+/* Hover state on available seat */
+.seat-btn:hover:not(:disabled) {
+  border-color: var(--color-primary, #009B77);
+  background-color: var(--color-primary-light, #e0f5ef);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 155, 119, 0.2);
+}
+
+[data-theme="dark"] .seat-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-light, #1a3d35);
+  border-color: var(--color-primary, #35C6A0);
+}
+
+/* ── Selected Seat Style ─────────────────────────────────── */
+.seat-btn.selected {
+  background-color: var(--color-primary, #009B77) !important;
+  border-color: var(--color-primary-hover, #007d60) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 0 3px rgba(0, 155, 119, 0.35), 0 4px 12px rgba(0, 155, 119, 0.25) !important;
+  transform: translateY(-2px) scale(1.04);
+}
+
+[data-theme="dark"] .seat-btn.selected {
+  background-color: var(--color-primary, #35C6A0) !important;
+  border-color: #28a886 !important;
+  color: #182326 !important;
+  box-shadow: 0 0 0 3px rgba(53, 198, 160, 0.35) !important;
+}
+
+.selected-check-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  background-color: #007d60;
+  color: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .selected-check-badge {
+  background-color: #182326;
+  color: #35C6A0;
+}
+
+/* ── Booked / Occupied Seat Style ────────────────────────── */
+.seat-btn.booked,
+.seat-btn:disabled {
+  background-color: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.65;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+[data-theme="dark"] .seat-btn.booked,
+[data-theme="dark"] .seat-btn:disabled {
+  background-color: #1f2a2e !important;
+  border-color: #2e3d42 !important;
+  color: #5a6870 !important;
+}
+
+.seat-btn.booked .seat-top-cushion,
+.seat-btn.booked .seat-armrest {
+  background-color: #d1d5db !important;
+}
+
+[data-theme="dark"] .seat-btn.booked .seat-top-cushion,
+[data-theme="dark"] .seat-btn.booked .seat-armrest {
+  background-color: #374151 !important;
+}
+
+/* ── Premium Seat Accent ─────────────────────────────────── */
+.premium-star-badge {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 0.55rem;
+  color: #f59e0b;
+}
+
+.seat-btn.premium:not(.selected):not(.booked) {
+  border-color: #fcd34d;
+}
+
+/* ── Rear Bumper ─────────────────────────────────────────── */
+.coach-rear-bumper {
+  background-color: var(--border-color, #dde4e6);
+  padding: 0.45rem;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle, #edf0f1);
+}
+
+[data-theme="dark"] .coach-rear-bumper {
+  background-color: var(--border-color, #3d4f56);
+  border-top-color: var(--border-subtle, #2e3d42);
+}
+
+.bumper-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-muted, #8a9ba3);
+  text-transform: uppercase;
+}
+
+/* ── Right Column: Summary Panel ─────────────────────────── */
+.summary-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar-heading {
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #2E3A40);
+  margin: 0 0 0.75rem 0;
+}
+
+.journey-overview-card,
+.selected-seats-card,
+.fare-calculation-card {
+  background-color: var(--bg-surface, #F4F1E7);
+  border: 1px solid var(--border-color, #dde4e6);
+  border-radius: var(--radius-md, 12px);
+  padding: 1rem;
+}
+
+[data-theme="dark"] .journey-overview-card,
+[data-theme="dark"] .selected-seats-card,
+[data-theme="dark"] .fare-calculation-card {
+  background-color: var(--bg-surface, #222F33);
+  border-color: var(--border-color, #3d4f56);
+}
+
+/* Station Route Flow */
+.overview-stations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  position: relative;
+  padding-left: 0.25rem;
+}
+
+.station-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.station-bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.origin-bullet {
+  background-color: var(--color-primary, #009B77);
+  box-shadow: 0 0 0 2px var(--color-primary-light, #e0f5ef);
+}
+
+.dest-bullet {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 2px #fee2e2;
+}
+
+.station-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.station-city {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-primary, #2E3A40);
+}
+
+.station-name {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #5a6870);
+}
+
+.trip-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 1px solid var(--border-color, #dde4e6);
+  padding-top: 0.65rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #5a6870);
+}
+
+[data-theme="dark"] .trip-meta-list {
+  border-top-color: var(--border-color, #3d4f56);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Selected Seats Box */
+.card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
+  background-color: var(--border-color, #dde4e6);
+  color: var(--text-secondary, #5a6870);
+}
+
+.count-badge.highlight {
+  background-color: var(--color-primary-light, #e0f5ef);
+  color: var(--color-primary, #009B77);
+}
+
+[data-theme="dark"] .count-badge.highlight {
+  background-color: var(--color-primary-light, #1a3d35);
+  color: var(--color-primary, #35C6A0);
+}
+
+.empty-seats-hint {
+  font-size: 0.825rem;
+  color: var(--text-muted, #8a9ba3);
+  text-align: center;
+  padding: 0.75rem 0.25rem;
+  border: 1px dashed var(--border-color, #dde4e6);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.empty-seats-hint p {
+  margin: 0 0 0.25rem 0;
+}
+
+.selected-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.seat-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  background-color: var(--color-primary-light, #e0f5ef);
+  border: 1px solid var(--color-primary, #009B77);
+  color: var(--color-primary, #009B77);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .seat-badge-chip {
+  background-color: var(--color-primary-light, #1a3d35);
+  border-color: var(--color-primary, #35C6A0);
+  color: var(--color-primary, #35C6A0);
+}
+
+.chip-type {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.btn-remove-seat {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-remove-seat:hover {
+  color: #ef4444;
+}
+
+/* Fare Calculation Box */
+.fare-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #5a6870);
+  margin-bottom: 0.35rem;
+}
+
+.fare-num {
+  font-weight: 600;
+  color: var(--text-primary, #2E3A40);
+}
+
+.fare-divider {
+  height: 1px;
+  background-color: var(--border-color, #dde4e6);
+  margin: 0.5rem 0;
+}
+
+[data-theme="dark"] .fare-divider {
+  background-color: var(--border-color, #3d4f56);
+}
+
+.fare-total-row {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #2E3A40);
+  margin-bottom: 0;
+}
+
+.grand-total {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary, #009B77);
+}
+
+[data-theme="dark"] .grand-total {
+  color: var(--color-primary, #35C6A0);
+}
+
+/* Guest Login Notice */
+.guest-login-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background-color: #e0f2fe;
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius-md, 12px);
+  color: #0369a1;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .guest-login-notice {
+  background-color: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #7dd3fc;
+}
+
+.guest-login-notice strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.15rem;
+}
+
+.guest-login-notice p {
+  margin: 0;
+}
+
+/* Submission Action Buttons */
+.action-submit-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-confirm-booking,
+.btn-guest-login {
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md, 12px);
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.terms-secure-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a9ba3);
+  text-align: center;
+  margin: 0;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   STATE 2: PAYMENT PLACEHOLDER UI STYLES
+══════════════════════════════════════════════════════════════ */
+.payment-placeholder-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.success-top-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.success-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light, #e0f5ef);
+  color: var(--color-primary, #009B77);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 155, 119, 0.25);
+}
+
+[data-theme="dark"] .success-icon-circle {
+  background-color: var(--color-primary-light, #1a3d35);
+  color: var(--color-primary, #35C6A0);
+}
+
+.pending-status-tag {
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em;
+}
+
+.placeholder-title {
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary, #2E3A40);
+  margin: 0 0 0.35rem 0;
+}
+
+.placeholder-subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary, #5a6870);
+  max-width: 520px;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Payment Gateway In-Progress Notice Card */
+.payment-notice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  background-color: #fefce8;
+  border: 1.5px solid #fde047;
+  border-radius: var(--radius-md, 12px);
+  text-align: left;
+  max-width: 640px;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .payment-notice-card {
+  background-color: rgba(254, 240, 138, 0.1);
+  border-color: rgba(253, 224, 71, 0.3);
+}
+
+.notice-icon {
+  color: #ca8a04;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .notice-icon {
+  color: #facc15;
+}
+
+.notice-headline {
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #854d0e;
+  margin: 0 0 0.3rem 0;
+}
+
+[data-theme="dark"] .notice-headline {
+  color: #fef08a;
+}
+
+.notice-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #713f12;
+  margin: 0;
+}
+
+[data-theme="dark"] .notice-text {
+  color: #fef9c3;
+}
+
+/* Reservation Summary Card */
+.reservation-summary-card {
+  width: 100%;
+  max-width: 640px;
+  background-color: var(--bg-surface, #F4F1E7);
+  border: 1px solid var(--border-color, #dde4e6);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .reservation-summary-card {
+  background-color: var(--bg-surface, #222F33);
+  border-color: var(--border-color, #3d4f56);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.row-label {
+  color: var(--text-secondary, #5a6870);
+}
+
+.row-value {
+  font-weight: 600;
+  color: var(--text-primary, #2E3A40);
+}
+
+.reference-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ref-badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--bg-elevated, #FFFFFF);
+  border: 1px solid var(--border-color, #dde4e6);
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-primary, #009B77);
+}
+
+[data-theme="dark"] .ref-badge {
+  background-color: var(--bg-elevated, #2E3A40);
+  border-color: var(--border-color, #3d4f56);
+  color: var(--color-primary, #35C6A0);
+}
+
+.seat-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.confirmed-seat-chip {
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full, 9999px);
+  background-color: var(--color-primary, #009B77);
+  color: #FFFFFF;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .confirmed-seat-chip {
+  background-color: var(--color-primary, #35C6A0);
+  color: #182326;
+}
+
+.total-highlight {
+  border-top: 1px solid var(--border-color, #dde4e6);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+}
+
+[data-theme="dark"] .total-highlight {
+  border-top-color: var(--border-color, #3d4f56);
+}
+
+.fare-total {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary, #009B77);
+}
+
+[data-theme="dark"] .fare-total {
+  color: var(--color-primary, #35C6A0);
+}
+
+/* Actions in Placeholder */
+.placeholder-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  max-width: 640px;
+  justify-content: center;
+}
+
+.btn-history {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: var(--radius-md, 12px);
+}
+

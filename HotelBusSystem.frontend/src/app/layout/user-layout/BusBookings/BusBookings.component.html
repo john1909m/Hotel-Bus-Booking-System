@@ -1,3 +1,331 @@
-<p>
-  BusBookings works!
-</p>
+<div class="my-bookings-container container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── PAGE HEADER ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <div class="header-badge-row">
+        <span class="header-category-badge">Passenger Portal</span>
+        <span class="header-count-badge" id="bus-bookings-count-badge">
+          {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+        </span>
+      </div>
+      <h1 class="page-title">My Bus Bookings</h1>
+      <p class="page-subtitle">
+        Review your intercity bus tickets, travel schedules, seat allocations, and reservation statuses.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-secondary btn-refresh"
+        [disabled]="loading()"
+        (click)="loadMyBookings()"
+        id="refresh-bus-bookings-btn"
+        aria-label="Refresh my bus bookings list"
+      >
+        <svg
+          class="refresh-icon"
+          [class.spin]="loading()"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <a routerLink="/" class="btn btn-primary" id="explore-trips-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Explore Trips</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ─── LOADING SKELETON ─────────────────────────────────── -->
+  @if (loading()) {
+    <div class="bookings-skeleton-grid" aria-busy="true" aria-label="Loading bus bookings">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="booking-skeleton-card"></div>
+      }
+    </div>
+  }
+
+  <!-- ─── ERROR STATE ──────────────────────────────────────── -->
+  @if (!loading() && error()) {
+    <section class="state-card error-card" role="alert">
+      <div class="state-icon error-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2>Unable to Load Bus Bookings</h2>
+      <p class="error-msg">{{ error() }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadMyBookings()" id="retry-bus-bookings-btn">
+        Try Again
+      </button>
+    </section>
+  }
+
+  <!-- ─── EMPTY STATE ──────────────────────────────────────── -->
+  @if (!loading() && !error() && bookings().length === 0) {
+    <section class="state-card empty-card" role="status">
+      <div class="state-icon empty-icon" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+          <path d="M7 19v2"></path>
+          <path d="M17 19v2"></path>
+          <path d="M3 10h18"></path>
+          <circle cx="7.5" cy="14.5" r="1"></circle>
+          <circle cx="16.5" cy="14.5" r="1"></circle>
+        </svg>
+      </div>
+      <h2>No Bus Bookings Yet</h2>
+      <p class="empty-desc">
+        You haven't reserved any bus tickets yet. Browse available intercity routes and reserve your preferred seat.
+      </p>
+      <a routerLink="/" class="btn btn-primary" id="empty-state-browse-trips-btn">
+        Browse Available Bus Trips
+      </a>
+    </section>
+  }
+
+  <!-- ─── BOOKINGS LIST ────────────────────────────────────── -->
+  @if (!loading() && !error() && bookings().length > 0) {
+    <div class="bookings-grid" role="list" aria-label="Customer bus bookings list">
+      @for (booking of bookings(); track booking.id) {
+        <article class="booking-card" role="listitem" id="bus-booking-card-{{ booking.id }}">
+
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="header-left">
+              <span class="booking-ref-badge">#{{ booking.id }}</span>
+              <h2 class="card-route-title">
+                {{ getRouteDisplayName(booking.busTripId) }}
+              </h2>
+            </div>
+
+            <div class="header-right">
+              <div class="status-wrap">
+                <p-tag
+                  [value]="booking.status"
+                  [severity]="getStatusSeverity(booking.status)"
+                  styleClass="booking-status-tag"
+                />
+                <span class="status-hint">{{ getStatusDescription(booking.status) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+
+            <!-- Route & Schedule Strip -->
+            <div class="schedule-strip">
+              <!-- Origin Departure -->
+              <div class="terminal-box origin-box">
+                <span class="terminal-type">Origin / Departure</span>
+                <span class="terminal-name">
+                  {{ getOriginStop(booking.busTripId)?.name || getOriginStop(booking.busTripId)?.city || 'Origin Terminal' }}
+                </span>
+                @if (getDepartureTime(booking.busTripId); as depTime) {
+                  <span class="terminal-time">{{ depTime | date:'mediumDate' }} · {{ depTime | date:'shortTime' }}</span>
+                } @else {
+                  <span class="terminal-time text-muted">Trip #{{ booking.busTripId }}</span>
+                }
+              </div>
+
+              <!-- Journey Indicator -->
+              <div class="journey-indicator" aria-hidden="true">
+                <div class="journey-line">
+                  <span class="journey-dot start-dot"></span>
+                  <span class="journey-arrow">&rarr;</span>
+                  <span class="journey-dot end-dot"></span>
+                </div>
+                @if (formatDuration(getRouteForTrip(booking.busTripId)?.duration); as dur) {
+                  <span class="duration-badge">{{ dur }}</span>
+                }
+              </div>
+
+              <!-- Destination Arrival -->
+              <div class="terminal-box dest-box">
+                <span class="terminal-type">Destination / Arrival</span>
+                <span class="terminal-name">
+                  {{ getDestinationStop(booking.busTripId)?.name || getDestinationStop(booking.busTripId)?.city || 'Destination Terminal' }}
+                </span>
+                @if (getArrivalTime(booking.busTripId); as arrTime) {
+                  <span class="terminal-time">{{ arrTime | date:'mediumDate' }} · {{ arrTime | date:'shortTime' }}</span>
+                } @else {
+                  <span class="terminal-time text-muted">Scheduled Arrival</span>
+                }
+              </div>
+            </div>
+
+            <!-- Booking Details Grid -->
+            <div class="booking-details-grid">
+              <!-- Seat Allocation -->
+              <div class="detail-item">
+                <span class="detail-label">Assigned Seat</span>
+                <span class="detail-val seat-highlight">
+                  💺 {{ getSeatDisplayName(booking.seatId) }}
+                </span>
+              </div>
+
+              <!-- Bus & Service -->
+              <div class="detail-item">
+                <span class="detail-label">Bus &amp; Operator</span>
+                <span class="detail-val">
+                  🚌 {{ getBusDisplayName(booking.busTripId) }}
+                </span>
+              </div>
+
+              <!-- Booking Date -->
+              <div class="detail-item">
+                <span class="detail-label">Booked On</span>
+                <span class="detail-val">
+                  📅 {{ booking.bookingDate | date:'mediumDate' }}
+                </span>
+              </div>
+
+              <!-- Ticket Price -->
+              <div class="detail-item total-price-item">
+                <span class="detail-label">Fare Price</span>
+                <span class="detail-val price-highlight">
+                  {{ booking.price | number:'1.2-2' }} <small>EGP</small>
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <span class="footer-note">
+              @if (booking.status === 'CONFIRMED') {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Confirmed travel ticket. Please present booking reference #{{ booking.id }} when boarding.</span>
+              } @else if (booking.status === 'PENDING') {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Reservation pending review or payment confirmation.</span>
+              } @else if (booking.status === 'CANCELLED') {
+                <span class="cancelled-text">This reservation has been cancelled. Seat assignment was released.</span>
+              } @else if (booking.status === 'COMPLETED') {
+                <span>Travel completed. Thank you for choosing TravelEase.</span>
+              }
+            </span>
+
+            @if (canCancelBooking(booking)) {
+              <div class="card-action-group">
+                <button
+                  type="button"
+                  class="btn-card-cancel"
+                  (click)="openCancelDialog(booking)"
+                  id="cancel-bus-booking-btn-{{ booking.id }}"
+                  aria-label="Cancel bus ticket"
+                >
+                  Cancel Ticket
+                </button>
+              </div>
+            }
+          </div>
+
+        </article>
+      }
+    </div>
+  }
+
+  <!-- ─── CANCELLATION CONFIRMATION MODAL ───────────────────── -->
+  <p-dialog
+    [(visible)]="cancelDialogVisible"
+    [modal]="true"
+    header="Cancel Travel Reservation"
+    [style]="{ width: '92vw', maxWidth: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeCancelDialog()"
+  >
+    <div class="cancel-dialog-content">
+      <div class="cancel-warning-icon" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+
+      <h3 class="cancel-modal-title">Cancel Bus Booking?</h3>
+      <p class="cancel-modal-desc">
+        Are you sure you want to cancel booking
+        <strong class="cancel-highlight">#{{ bookingToCancel()?.id }}</strong>
+        for
+        <strong>{{ getRouteDisplayName(bookingToCancel()?.busTripId || 0) }}</strong>?
+      </p>
+
+      <div class="cancel-info-box">
+        <div class="info-row">
+          <span>Assigned Seat:</span>
+          <strong>{{ getSeatDisplayName(bookingToCancel()?.seatId || 0) }}</strong>
+        </div>
+        <div class="info-row">
+          <span>Total Fare:</span>
+          <strong>${{ bookingToCancel()?.price | number:'1.2-2' }} EGP</strong>
+        </div>
+        <p class="cancel-warning-note">
+          ⚠️ Your seat assignment will be immediately released for other passengers. This action cannot be reversed.
+        </p>
+      </div>
+
+      @if (cancelErrorMessage()) {
+        <div class="modal-error-banner" role="alert">
+          <span>{{ cancelErrorMessage() }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-back"
+        (click)="closeCancelDialog()"
+        [disabled]="isCancelling()"
+      >
+        Keep Ticket
+      </button>
+
+      <button
+        type="button"
+        class="btn-dialog-confirm"
+        (click)="confirmCancel()"
+        [disabled]="isCancelling()"
+        id="confirm-cancel-bus-booking-btn"
+      >
+        {{ isCancelling() ? 'Cancelling…' : 'Confirm Cancellation' }}
+      </button>
+    </div>
+  </p-dialog>
+
+</div>

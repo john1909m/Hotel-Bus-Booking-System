@@ -13,7 +13,7 @@
       </nav>
       <h1 class="page-title">Bus Bookings</h1>
       <p class="page-subtitle">
-        Review and manage customer bus travel reservations, booked seat assignments, trip references, and reservation statuses.
+        Review and manage customer bus travel reservations, booked seat assignments, route journeys, and status lifecycle transitions.
       </p>
     </div>
 
@@ -75,7 +75,7 @@
             id="admin-bus-booking-search"
             type="search"
             class="filter-input"
-            placeholder="Search by ID, Trip ID, or User ID…"
+            placeholder="Search by ID, Customer, Route, Seat, or Status…"
             [value]="searchFilter()"
             (input)="onSearchFilter($any($event.target).value)"
             aria-label="Filter bookings"
@@ -83,9 +83,29 @@
         </div>
       </div>
 
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label for="admin-bus-booking-status" class="filter-label">Status Filter</label>
+        <div class="input-wrapper">
+          <select
+            id="admin-bus-booking-status"
+            class="filter-select"
+            [value]="statusFilter()"
+            (change)="onStatusFilterChange($any($event.target).value)"
+            aria-label="Filter by booking status"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Sort Direction -->
       <div class="filter-field">
-        <label for="admin-bus-booking-dir" class="filter-label">Order</label>
+        <label for="admin-bus-booking-dir" class="filter-label">Sort Order</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">↕</span>
           <select
@@ -146,39 +166,63 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>Booking Date</th>
-          <th>Trip Reference</th>
+          <th style="width: 75px">ID</th>
+          <th>Customer</th>
+          <th>Route &amp; Journey</th>
           <th>Seat Assigned</th>
-          <th>User ID</th>
+          <th>Booking Date</th>
           <th>Fare Price</th>
           <th>Status</th>
-          <th style="width: 110px; text-align: right">Actions</th>
+          <th style="width: 175px; text-align: right">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-b>
         <tr>
+          <!-- Reference ID -->
           <td>
             <span class="entity-id-badge">#{{ b.id }}</span>
           </td>
+
+          <!-- Customer Name & ID -->
+          <td>
+            <div class="customer-cell">
+              <span class="table-cell-title">{{ getCustomerName(b.userId) }}</span>
+              <span class="table-cell-subtitle">{{ getCustomerEmail(b.userId) }}</span>
+            </div>
+          </td>
+
+          <!-- Route & Trip Journey -->
+          <td>
+            <div class="trip-cell">
+              <span class="route-title-badge">🛣 {{ getTripRouteLabel(b.busTripId) }}</span>
+              <span class="table-cell-subtitle">
+                Trip #{{ b.busTripId }} · {{ getTripDeparture(b.busTripId) | date:'shortTime' }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Seat Assigned -->
+          <td>
+            <div class="seat-cell">
+              <span class="pill-badge">💺 Seat {{ getSeatNumber(b.seatId) }}</span>
+              <span class="seat-type-sub">{{ getSeatType(b.seatId) }}</span>
+            </div>
+          </td>
+
+          <!-- Booking Date -->
           <td>
             <span class="date-text">
-              {{ b.bookingDate | date:'mediumDate' }} {{ b.bookingDate | date:'shortTime' }}
+              {{ b.bookingDate | date:'mediumDate' }}
             </span>
           </td>
+
+          <!-- Fare Price in EGP -->
           <td>
-            <span class="pill-badge">🛣 Trip #{{ b.busTripId }}</span>
+            <span class="price-text">{{ b.price | number:'1.2-2' }} <small>EGP</small></span>
           </td>
-          <td>
-            <span class="pill-badge">💺 Seat #{{ b.seatId }}</span>
-          </td>
-          <td>
-            <span>User #{{ b.userId }}</span>
-          </td>
-          <td>
-            <span class="price-text">${{ b.price | number:'1.2-2' }}</span>
-          </td>
+
+          <!-- Status Tag -->
           <td>
             <p-tag
               [value]="b.status"
@@ -186,26 +230,89 @@
               styleClass="booking-status-tag"
             />
           </td>
+
+          <!-- Actions -->
           <td>
             <div class="table-actions">
+              <!-- View Details -->
+              <button
+                type="button"
+                class="btn-action btn-action-view"
+                (click)="openDetailsDialog(b)"
+                [attr.aria-label]="'View details for booking #' + b.id"
+                title="View Booking Details"
+                id="admin-view-bus-booking-btn-{{ b.id }}"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+
+              <!-- Quick Confirm for PENDING bookings -->
+              @if (b.status === 'PENDING') {
+                <button
+                  type="button"
+                  class="btn-action btn-action-confirm"
+                  (click)="confirmBookingQuick(b)"
+                  [disabled]="updatingStatusId() === b.id"
+                  [attr.aria-label]="'Confirm bus booking #' + b.id"
+                  title="Confirm Booking (PENDING → CONFIRMED)"
+                  id="admin-confirm-bus-booking-btn-{{ b.id }}"
+                >
+                  @if (updatingStatusId() === b.id) {
+                    <svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                  } @else {
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                </button>
+              }
+
+              <!-- Status Transition Dialog Trigger (for non-terminal bookings) -->
+              @if (!isTerminalStatus(b.status)) {
+                <button
+                  type="button"
+                  class="btn-action btn-action-status"
+                  (click)="openStatusChangeDialog(b)"
+                  [attr.aria-label]="'Change status for booking #' + b.id"
+                  title="Change Status (Lifecycle Transition)"
+                  id="admin-status-bus-booking-btn-{{ b.id }}"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="16 3 21 3 21 8"></polyline>
+                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                    <polyline points="21 16 21 21 16 21"></polyline>
+                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                    <line x1="4" y1="4" x2="9" y2="9"></line>
+                  </svg>
+                </button>
+              }
+
+              <!-- Edit Booking Parameters -->
               <button
                 type="button"
                 class="btn-action btn-action-edit"
                 (click)="openEditDialog(b)"
                 [attr.aria-label]="'Edit bus booking #' + b.id"
-                title="Edit booking"
+                title="Edit booking parameters"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </button>
+
+              <!-- Permanent Database Record Deletion -->
               <button
                 type="button"
                 class="btn-action btn-action-delete"
                 (click)="openDeleteDialog(b)"
-                [attr.aria-label]="'Delete bus booking #' + b.id"
-                title="Delete booking"
+                [attr.aria-label]="'Permanently delete bus booking #' + b.id"
+                title="Permanent Record Deletion (Administrative Purge)"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"></polyline>
@@ -225,7 +332,7 @@
               <div class="empty-icon" aria-hidden="true">🎟</div>
               <h3 class="empty-title">No bus bookings found</h3>
               <p class="empty-desc">
-                No customer bus bookings have been recorded yet. Click "New Booking" to create one.
+                No customer bus travel reservations matched the current filters. Adjust your criteria or click "New Booking".
               </p>
             </div>
           </td>
@@ -234,7 +341,259 @@
     </p-table>
   </section>
 
-  <!-- ─── Create / Edit Bus Booking Modal Dialog ───────────── -->
+  <!-- ═══════════════════════════════════════════════════════════
+       1. VIEW BOOKING DETAILS MODAL DIALOG
+  ════════════════════════════════════════════════════════════ -->
+  <p-dialog
+    [(visible)]="detailsDialogVisible"
+    [modal]="true"
+    [header]="'Bus Booking Details — #' + selectedBookingForDetails()?.id"
+    [style]="{ width: '92vw', maxWidth: '640px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDetailsDialog()"
+  >
+    @if (selectedBookingForDetails(); as b) {
+      <div class="details-modal-content">
+
+        <!-- Status & Reference Header Banner -->
+        <div class="details-header-card">
+          <div class="reference-box">
+            <span class="ref-sub">Booking Reference</span>
+            <span class="ref-main">#{{ b.id }}</span>
+          </div>
+          <div class="status-box">
+            <p-tag [value]="b.status" [severity]="getStatusSeverity(b.status)" styleClass="details-status-tag" />
+          </div>
+        </div>
+
+        <!-- Section 1: Customer Information -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">👤</span> Customer Information
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field">
+              <span class="field-label">Customer Name:</span>
+              <span class="field-value">{{ getCustomerName(b.userId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Account ID:</span>
+              <span class="field-value font-mono">User #{{ b.userId }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Email Address:</span>
+              <span class="field-value">{{ getCustomerEmail(b.userId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Phone Contact:</span>
+              <span class="field-value">{{ getCustomerPhone(b.userId) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Trip & Route Journey -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">🛣</span> Journey &amp; Trip Details
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field full-row">
+              <span class="field-label">Route:</span>
+              <span class="field-value route-highlight">{{ getTripRouteLabel(b.busTripId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Departure Terminal:</span>
+              <span class="field-value">{{ getOriginStop(b.busTripId)?.name || getOriginStop(b.busTripId)?.city || 'Origin Terminal' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Arrival Terminal:</span>
+              <span class="field-value">{{ getDestinationStop(b.busTripId)?.name || getDestinationStop(b.busTripId)?.city || 'Destination Terminal' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Departure Time:</span>
+              <span class="field-value">{{ getTripDeparture(b.busTripId) | date:'mediumDate' }} at {{ getTripDeparture(b.busTripId) | date:'shortTime' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Carrier &amp; Coach:</span>
+              <span class="field-value">{{ getBusCarrier(b.busTripId) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Seat Assignment & Fare -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">💺</span> Seat &amp; Fare Information
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field">
+              <span class="field-label">Seat Number:</span>
+              <span class="field-value seat-highlight">Seat {{ getSeatNumber(b.seatId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Seat Category:</span>
+              <span class="field-value">{{ getSeatType(b.seatId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Reservation Date:</span>
+              <span class="field-value">{{ b.bookingDate | date:'mediumDate' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">Ticket Fare:</span>
+              <span class="field-value fare-highlight">{{ b.price | number:'1.2-2' }} EGP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Lifecycle Status Actions -->
+        <div class="details-actions-banner">
+          <div class="actions-header">
+            <span class="actions-label">Lifecycle Status Transitions:</span>
+          </div>
+
+          <div class="actions-buttons-row">
+            @if (b.status === 'PENDING') {
+              <button
+                type="button"
+                class="btn-transition btn-confirm"
+                (click)="executeStatusUpdate(b.id, 'CONFIRMED')"
+                [disabled]="updatingStatusId() === b.id"
+              >
+                Confirm Booking (PENDING &rarr; CONFIRMED)
+              </button>
+              <button
+                type="button"
+                class="btn-transition btn-cancel"
+                (click)="openStatusChangeDialog(b, 'CANCELLED')"
+                [disabled]="updatingStatusId() === b.id"
+              >
+                Cancel Booking (PENDING &rarr; CANCELLED)
+              </button>
+            } @else if (b.status === 'CONFIRMED') {
+              <button
+                type="button"
+                class="btn-transition btn-complete"
+                (click)="executeStatusUpdate(b.id, 'COMPLETED')"
+                [disabled]="updatingStatusId() === b.id"
+              >
+                Mark Completed (CONFIRMED &rarr; COMPLETED)
+              </button>
+              <button
+                type="button"
+                class="btn-transition btn-cancel"
+                (click)="openStatusChangeDialog(b, 'CANCELLED')"
+                [disabled]="updatingStatusId() === b.id"
+              >
+                Cancel Booking (CONFIRMED &rarr; CANCELLED)
+              </button>
+            } @else {
+              <div class="terminal-state-note">
+                🔒 Booking is in terminal state <strong>{{ b.status }}</strong>. No further status transitions are permitted.
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDetailsDialog()">
+          Close
+        </button>
+      </div>
+    }
+  </p-dialog>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       2. STATUS TRANSITION CONFIRMATION DIALOG
+  ════════════════════════════════════════════════════════════ -->
+  <p-dialog
+    [(visible)]="statusDialogVisible"
+    [modal]="true"
+    header="Update Booking Status"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeStatusChangeDialog()"
+  >
+    @if (bookingForStatusChange(); as b) {
+      <div class="status-change-dialog-content">
+        <p class="dialog-intro">
+          Select an allowed target status for bus booking <strong>#{{ b.id }}</strong> (Customer: {{ getCustomerName(b.userId) }}).
+        </p>
+
+        <div class="current-status-strip">
+          <span>Current Status:</span>
+          <p-tag [value]="b.status" [severity]="getStatusSeverity(b.status)" />
+        </div>
+
+        <div class="transition-selector-group">
+          <label class="group-label">Permitted Target Status:</label>
+          <div class="options-radio-list">
+            @for (st of getAllowedTransitions(b.status); track st) {
+              <label class="radio-option-card" [class.selected]="selectedNewStatus() === st">
+                <input
+                  type="radio"
+                  name="targetStatus"
+                  [value]="st"
+                  [checked]="selectedNewStatus() === st"
+                  (change)="selectedNewStatus.set(st)"
+                />
+                <div class="option-info">
+                  <div class="option-title-row">
+                    <p-tag [value]="st" [severity]="getStatusSeverity(st)" />
+                    <span class="transition-arrow">&larr; {{ b.status }} to {{ st }}</span>
+                  </div>
+                  @if (st === 'CONFIRMED') {
+                    <small class="option-desc">Secures and confirms the customer reservation.</small>
+                  } @else if (st === 'COMPLETED') {
+                    <small class="option-desc">Finalizes the journey after departure has finished.</small>
+                  } @else if (st === 'CANCELLED') {
+                    <small class="option-desc text-danger">Releases the assigned seat back to inventory.</small>
+                  }
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+        @if (selectedNewStatus() === 'CANCELLED') {
+          <div class="cancellation-warning-card" role="alert">
+            <span class="warning-icon">⚠️</span>
+            <div class="warning-text">
+              <strong>Seat Release Notice:</strong>
+              <p>Cancelling this booking will immediately release Seat {{ getSeatNumber(b.seatId) }} on Trip #{{ b.busTripId }}, allowing other passengers to book it. This status transition is terminal.</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeStatusChangeDialog()"
+          [disabled]="statusChanging()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-dialog-save"
+          [disabled]="statusChanging() || !selectedNewStatus()"
+          (click)="submitStatusChange()"
+          id="admin-confirm-status-change-btn"
+        >
+          {{ statusChanging() ? 'Updating Status…' : 'Apply Status Change' }}
+        </button>
+      </div>
+    }
+  </p-dialog>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       3. CREATE / EDIT BUS BOOKING MODAL DIALOG
+  ════════════════════════════════════════════════════════════ -->
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
@@ -256,7 +615,9 @@
             <select id="bookingBusTripId" class="form-select" formControlName="busTripId">
               <option [ngValue]="null" disabled>Select Bus Trip</option>
               @for (t of trips(); track t.id) {
-                <option [ngValue]="t.id">Trip #{{ t.id }} — Route #{{ t.routeId }} ({{ t.departure | date:'short' }})</option>
+                <option [ngValue]="t.id">
+                  Trip #{{ t.id }} — {{ getTripRouteLabel(t.id) }} ({{ (t.departureTime || t.departure) | date:'short' }})
+                </option>
               }
             </select>
           } @else {
@@ -309,10 +670,10 @@
           }
         </div>
 
-        <!-- Ticket Price -->
+        <!-- Ticket Price in EGP -->
         <div class="form-group">
           <label for="bookingPrice" class="form-label">
-            Ticket Price ($) <span class="required-star">*</span>
+            Ticket Price (EGP) <span class="required-star">*</span>
           </label>
           <input
             id="bookingPrice"
@@ -321,7 +682,7 @@
             formControlName="price"
             min="0"
             step="0.01"
-            placeholder="e.g. 25.00"
+            placeholder="e.g. 250.00"
           />
           @if (bookingForm.get('price')?.touched && bookingForm.get('price')?.errors) {
             <span class="form-error">Valid fare price is required.</span>
@@ -334,10 +695,15 @@
             Booking Status <span class="required-star">*</span>
           </label>
           <select id="bookingStatus" class="form-select" formControlName="status">
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="PENDING">Pending</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="COMPLETED">Completed</option>
+            @if (isEditMode()) {
+              <option [value]="initialEditingStatus()">{{ initialEditingStatus() }} (Current)</option>
+              @for (st of getAllowedTransitions(initialEditingStatus()); track st) {
+                <option [value]="st">{{ st }}</option>
+              }
+            } @else {
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="PENDING">PENDING</option>
+            }
           </select>
           @if (bookingForm.get('status')?.touched && bookingForm.get('status')?.errors?.['required']) {
             <span class="form-error">Booking status is required.</span>
@@ -356,7 +722,7 @@
             formControlName="bookingDate"
           />
           @if (bookingForm.get('bookingDate')?.touched && bookingForm.get('bookingDate')?.errors?.['required']) {
-            <span class="form-error">Booking date &amp; time is required.</span>
+            <span class="form-error">Booking timestamp is required.</span>
           }
         </div>
 
@@ -383,12 +749,14 @@
     </form>
   </p-dialog>
 
-  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
+  <!-- ═══════════════════════════════════════════════════════════
+       4. PERMANENT RECORD DELETION CONFIRMATION MODAL
+  ════════════════════════════════════════════════════════════ -->
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
-    header="Confirm Bus Booking Deletion"
-    [style]="{ width: '90vw', maxWidth: '440px' }"
+    header="Permanent Record Deletion"
+    [style]="{ width: '90vw', maxWidth: '460px' }"
     [draggable]="false"
     [resizable]="false"
     (onHide)="closeDeleteDialog()"
@@ -401,14 +769,17 @@
           <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-      <h3 class="delete-title">Delete Bus Booking?</h3>
+      <h3 class="delete-title">Permanently Delete Record?</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete bus booking
+        Are you sure you want to permanently delete booking record
         <strong class="delete-entity-name">
-          #{{ bookingToDelete()?.id }} (Trip #{{ bookingToDelete()?.busTripId }}, Seat #{{ bookingToDelete()?.seatId }})
+          #{{ bookingToDelete()?.id }} ({{ getTripRouteLabel(bookingToDelete()?.busTripId || 0) }}, Seat #{{ bookingToDelete()?.seatId }})
         </strong>?
-        This action cannot be undone.
       </p>
+      <div class="permanent-purge-notice">
+        <strong>⚠️ Administrative Notice:</strong>
+        To cancel a customer's booking according to standard business rules, close this dialog and use <em>Change Status &rarr; CANCELLED</em>. Direct deletion permanently purges the record from the database.
+      </div>
     </div>
 
     <div class="dialog-footer">
@@ -427,7 +798,7 @@
         [disabled]="deleting()"
         id="admin-confirm-delete-bus-booking-btn"
       >
-        {{ deleting() ? 'Deleting…' : 'Delete Booking' }}
+        {{ deleting() ? 'Deleting…' : 'Permanently Delete' }}
       </button>
     </div>
   </p-dialog>

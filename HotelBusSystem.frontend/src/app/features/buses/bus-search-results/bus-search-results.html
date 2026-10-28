@@ -1,0 +1,248 @@
+<div class="search-results-page container">
+
+  <!-- Toast Notification Feedback -->
+  <p-toast position="top-right" />
+
+  <!-- Breadcrumb Navigation -->
+  <nav class="results-breadcrumb" aria-label="Breadcrumb">
+    <a routerLink="/" class="breadcrumb-link">Home</a>
+    <span class="breadcrumb-separator">/</span>
+    <a routerLink="/" fragment="transportation" class="breadcrumb-link">Bus Travel</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">Search Results</span>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SEARCH CRITERIA HEADER BANNER
+  ════════════════════════════════════════════════════════ -->
+  <header class="criteria-header-card">
+    <div class="header-left-col">
+      <div class="header-badge-row">
+        <span class="route-type-badge">Intercity Express</span>
+        @if (!loading() && !paramError() && !error()) {
+          <span class="trip-count-badge">
+            {{ trips().length }} {{ trips().length === 1 ? 'Trip Available' : 'Trips Available' }}
+          </span>
+        }
+      </div>
+
+      <h1 class="route-heading">
+        @if (origin() && destination()) {
+          <span>{{ origin() }}</span>
+          <span class="route-arrow" aria-hidden="true">&rarr;</span>
+          <span>{{ destination() }}</span>
+        } @else {
+          <span>Bus Trip Search</span>
+        }
+      </h1>
+
+      @if (departureDate()) {
+        <p class="departure-date-sub">
+          📅 Scheduled departures for <strong>{{ departureDate() | date:'fullDate' }}</strong>
+        </p>
+      }
+    </div>
+
+    <div class="header-action-col">
+      <button
+        type="button"
+        class="btn-modify-search"
+        (click)="modifySearch()"
+        id="modify-search-top-btn"
+        aria-label="Modify search criteria on the landing page"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>Modify Search</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PARAMETER VALIDATION ERROR
+  ════════════════════════════════════════════════════════ -->
+  @if (paramError()) {
+    <section class="state-card error-card" role="alert">
+      <div class="state-icon error-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2>Invalid Search Criteria</h2>
+      <p class="error-msg">{{ paramError() }}</p>
+      <a routerLink="/" fragment="transportation" class="btn btn-primary" id="return-search-form-btn">
+        Return to Bus Search Form
+      </a>
+    </section>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════
+       LOADING SKELETONS
+  ════════════════════════════════════════════════════════ -->
+  @if (loading() && !paramError()) {
+    <div class="trips-skeleton-list" aria-busy="true" aria-label="Loading scheduled bus trips">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="trip-skeleton-card"></div>
+      }
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════
+       NETWORK / API ERROR STATE
+  ════════════════════════════════════════════════════════ -->
+  @if (!loading() && error()) {
+    <section class="state-card error-card" role="alert">
+      <div class="state-icon error-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2>Unable to Load Bus Trips</h2>
+      <p class="error-msg">{{ error() }}</p>
+      <div class="error-actions">
+        <button type="button" class="btn btn-primary" (click)="retrySearch()" id="retry-search-btn">
+          Try Again
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="modifySearch()">
+          Change Route
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════
+       EMPTY STATE
+  ════════════════════════════════════════════════════════ -->
+  @if (!loading() && !error() && !paramError() && trips().length === 0) {
+    <section class="state-card empty-card" role="status">
+      <div class="state-icon empty-icon" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+          <path d="M7 19v2"></path>
+          <path d="M17 19v2"></path>
+          <path d="M3 10h18"></path>
+          <circle cx="7.5" cy="14.5" r="1"></circle>
+          <circle cx="16.5" cy="14.5" r="1"></circle>
+        </svg>
+      </div>
+      <h2>No Bus Trips Found</h2>
+      <p class="empty-desc">
+        We couldn't find any scheduled trips connecting <strong>{{ origin() }}</strong> to <strong>{{ destination() }}</strong> on {{ departureDate() | date:'mediumDate' }}.
+      </p>
+      <p class="empty-hint">
+        Bus lines may run on alternate days, or you can try swapping your origin and destination cities.
+      </p>
+      <button type="button" class="btn btn-primary" (click)="modifySearch()" id="empty-modify-search-btn">
+        Modify Search Criteria
+      </button>
+    </section>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════
+       RESULTS TRIP LIST
+  ════════════════════════════════════════════════════════ -->
+  @if (!loading() && !error() && !paramError() && trips().length > 0) {
+    <div class="trips-grid" role="list" aria-label="Available scheduled bus trips">
+      @for (trip of trips(); track trip.id) {
+        <article class="trip-card" role="listitem" id="bus-trip-card-{{ trip.id }}">
+
+          <!-- Schedule & Stations Strip -->
+          <div class="trip-schedule-strip">
+
+            <!-- Origin Terminal -->
+            <div class="terminal-col origin-col">
+              <span class="terminal-label">Departure</span>
+              <span class="terminal-time">
+                {{ (trip.departureTime || trip.departure) | date:'shortTime' }}
+              </span>
+              <span class="terminal-name">
+                {{ trip.originStop?.name || trip.originStop?.city || 'Origin Terminal' }}
+              </span>
+              <span class="terminal-city">{{ trip.originStop?.city }}</span>
+            </div>
+
+            <!-- Journey Track -->
+            <div class="journey-indicator-col" aria-hidden="true">
+              <div class="journey-track">
+                <span class="track-dot start-dot"></span>
+                <span class="track-line"></span>
+                <span class="track-arrow">&rarr;</span>
+                <span class="track-dot end-dot"></span>
+              </div>
+              <span class="duration-pill">{{ trip.formattedDuration }}</span>
+              @if (trip.isOvernight) {
+                <span class="overnight-badge">+1 Day Arrival</span>
+              }
+            </div>
+
+            <!-- Destination Terminal -->
+            <div class="terminal-col dest-col">
+              <span class="terminal-label">Arrival</span>
+              <span class="terminal-time">
+                {{ trip.arrivalTime | date:'shortTime' }}
+              </span>
+              <span class="terminal-name">
+                {{ trip.destinationStop?.name || trip.destinationStop?.city || 'Destination Terminal' }}
+              </span>
+              <span class="terminal-city">{{ trip.destinationStop?.city }}</span>
+            </div>
+
+          </div>
+
+          <!-- Trip Details & Booking Action Bar -->
+          <div class="trip-footer-bar">
+            <div class="trip-carrier-info">
+              <span class="carrier-badge">
+                🚌 {{ trip.bus?.company || 'Express Coach' }}
+              </span>
+              <span class="bus-model-text">
+                Coach #{{ trip.bus?.busNumber || trip.busId }}
+              </span>
+              <p-tag [value]="trip.status" severity="success" styleClass="trip-status-tag" />
+            </div>
+
+            <div class="trip-fare-action">
+              <div class="fare-box">
+                <span class="fare-label">Fare Price</span>
+                <span class="fare-amount">
+                  {{ trip.price | number:'1.2-2' }} <small>EGP</small>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="btn-select-trip"
+                (click)="onSelectSeats(trip)"
+                id="select-seats-btn-{{ trip.id }}"
+                aria-label="Select seats for trip departing at {{ (trip.departureTime || trip.departure) | date:'shortTime' }}"
+              >
+                <span>Select Seats</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14m-7-7l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </article>
+      }
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE 3 INTERACTIVE SEAT SELECTION & RESERVATION MODAL
+  ════════════════════════════════════════════════════════ -->
+  <app-bus-seat-selection
+    [trip]="selectedTripForSeats()"
+    [(visible)]="seatDialogVisible"
+    (bookingComplete)="onBookingComplete($event)"
+  />
+
+</div>
+
