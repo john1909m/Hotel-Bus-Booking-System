@@ -3,7 +3,9 @@ package com.spring.boot.service.impl;
 import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.dto.BusBookingRequestDto;
 import com.spring.boot.enums.BookingStatus;
+import com.spring.boot.enums.BusTripStatus;
 import com.spring.boot.exception.BookingConflictException;
+import com.spring.boot.exception.BusTripUnavailableException;
 import com.spring.boot.exception.InvalidSeatException;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.exception.SeatAlreadyBookedException;
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +57,8 @@ public class BusBookingServiceImpl implements BusBookingService {
     private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
 
+    private static final ZoneId CAIRO_ZONE = ZoneId.of("Africa/Cairo");
+
     public void validateStatusTransition(BookingStatus current, BookingStatus requested) {
         if (requested == null || current == requested) {
             return;
@@ -65,38 +71,113 @@ public class BusBookingServiceImpl implements BusBookingService {
         }
     }
 
+    /**
+     * Resolves the effective user ID for the booking.
+     * Customers are locked to their authenticated JWT identity and cannot book on behalf of another user.
+     * Admins can book on behalf of another user if provided in the request DTO.
+     */
+    private Long resolveUserId(Long requestedUserId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (SecurityUtils.isCurrentUserAdmin() && requestedUserId != null) {
+            return requestedUserId;
+        }
+        if (currentUserId != null) {
+            return currentUserId;
+        }
+        // Fallback for tests or invocations outside of SecurityContext
+        return requestedUserId;
+    }
+
+    /**
+     * Cheap validations executed BEFORE taking the pessimistic lock (fail fast).
+     */
+    private void validateBookableBeforeLock(Long userId, Long busTripId, Long seatId) {
+        if (busTripId == null) {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found"));
+        }
+        if (seatId == null) {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found"));
+        }
+        if (userId == null || !userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found"));
+        }
+
+        // Fast read-only trip existence and status check
+        BusTrip trip = busTripRepository.findById(busTripId)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+
+        validateTripBookable(trip);
+
+        // Fast read-only seat existence and bus ownership check
+        BusSeat seat = busSeatRepository.findById(seatId)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
+
+        if (trip.getBus() == null || seat.getBus() == null || !seat.getBus().getId().equals(trip.getBus().getId())) {
+            throw new InvalidSeatException(bundleMessageService.getMessage("error.seat_does_not_belong_to_bus"));
+        }
+    }
+
+    /**
+     * Validates that the trip is in SCHEDULED status and its departure time is in the future (Africa/Cairo).
+     */
+    private void validateTripBookable(BusTrip trip) {
+        if (trip.getStatus() != null && trip.getStatus() != BusTripStatus.SCHEDULED) {
+            throw new BusTripUnavailableException(bundleMessageService.getMessage("error.trip_not_bookable"));
+        }
+        LocalDateTime nowCairo = LocalDateTime.now(CAIRO_ZONE);
+        if (trip.getDepartureTime() != null && trip.getDepartureTime().isBefore(nowCairo)) {
+            throw new BusTripUnavailableException(bundleMessageService.getMessage("error.trip_departed"));
+        }
+    }
+
     @Override
     @Transactional
     public BusBookingDto createBusBooking(BusBookingRequestDto busBookingRequestDto) {
-        // Validate that user exists
-        User user = userRepository.findById(busBookingRequestDto.getUserId())
+        Long effectiveUserId = resolveUserId(busBookingRequestDto.getUserId());
+        if (effectiveUserId == null) {
+            throw new AccessDeniedException(bundleMessageService.getMessage("error.access_denied"));
+        }
+
+        // 1. Cheap validations before taking the lock (fail fast)
+        validateBookableBeforeLock(effectiveUserId, busBookingRequestDto.getBusTripId(), busBookingRequestDto.getSeatId());
+
+        User user = userRepository.findById(effectiveUserId)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
 
-        // Pessimistic lock on the BusTrip row to serialize concurrent seat bookings on this trip
+        // 2. Pessimistic lock on the BusTrip row to serialize concurrent seat bookings on this trip
         BusTrip busTrip = busTripRepository.findByIdForUpdate(busBookingRequestDto.getBusTripId())
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
 
-        // Validate that seat exists
+        // 3. Re-validate trip state and seat ownership under the lock
+        validateTripBookable(busTrip);
+
         BusSeat seat = busSeatRepository.findById(busBookingRequestDto.getSeatId())
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
 
-        // Validate that seat belongs to the bus assigned to the trip
-        if (!seat.getBus().getId().equals(busTrip.getBus().getId())) {
+        if (busTrip.getBus() == null || seat.getBus() == null || !seat.getBus().getId().equals(busTrip.getBus().getId())) {
             throw new InvalidSeatException(bundleMessageService.getMessage("error.seat_does_not_belong_to_bus"));
         }
 
-        // Check seat availability under the pessimistic lock
+        // 4. Check seat availability under the pessimistic lock
         if (!isSeatAvailable(busBookingRequestDto.getBusTripId(), busBookingRequestDto.getSeatId())) {
-            throw new SeatAlreadyBookedException(bundleMessageService.getMessage("error.seat_already_booked"));
+            throw new SeatAlreadyBookedException(
+                    bundleMessageService.getMessage("error.seat_already_booked_number", new Object[]{seat.getSeatNumber()})
+            );
         }
 
-        // Map DTO to entity
+        // 5. Map DTO to entity
         BusBooking busBooking = busBookingMapper.busBookingRequestDtoToBusBooking(busBookingRequestDto);
         busBooking.setUser(user);
         busBooking.setBusTrip(busTrip);
         busBooking.setSeat(seat);
         if (busBooking.getStatus() == null) {
             busBooking.setStatus(BookingStatus.PENDING);
+        }
+        if (busBooking.getBookingDate() == null) {
+            busBooking.setBookingDate(LocalDate.now(CAIRO_ZONE));
+        }
+        if (busBooking.getPrice() == null) {
+            busBooking.setPrice(busTrip.getPrice());
         }
 
         // Save booking
@@ -218,26 +299,42 @@ public class BusBookingServiceImpl implements BusBookingService {
 
         BusTrip busTrip = existingBusBooking.getBusTrip();
         if (tripOrSeatChanged) {
-            // Lock target trip row with pessimistic lock
+            Long ownerUserId = existingBusBooking.getUser() != null ? existingBusBooking.getUser().getId() : null;
+
+            // 1. Cheap validations before taking the lock (fail fast)
+            validateBookableBeforeLock(ownerUserId, targetTripId, targetSeatId);
+
+            // 2. Lock target trip row with pessimistic lock
             busTrip = busTripRepository.findByIdForUpdate(targetTripId)
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+
+            // 3. Re-validate trip state and seat ownership under the lock
+            validateTripBookable(busTrip);
 
             BusSeat seat = busSeatRepository.findById(targetSeatId)
                     .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
 
-            if (!seat.getBus().getId().equals(busTrip.getBus().getId())) {
+            if (busTrip.getBus() == null || seat.getBus() == null || !seat.getBus().getId().equals(busTrip.getBus().getId())) {
                 throw new InvalidSeatException(bundleMessageService.getMessage("error.seat_does_not_belong_to_bus"));
             }
 
+            // 4. Check seat availability under the pessimistic lock
             if (!isSeatAvailableExcludingSelf(targetTripId, targetSeatId, id)) {
-                throw new SeatAlreadyBookedException(bundleMessageService.getMessage("error.seat_already_booked"));
+                throw new SeatAlreadyBookedException(
+                        bundleMessageService.getMessage("error.seat_already_booked_number", new Object[]{seat.getSeatNumber()})
+                );
             }
 
             existingBusBooking.setBusTrip(busTrip);
             existingBusBooking.setSeat(seat);
         }
 
-        existingBusBooking.setBookingDate(busBookingRequestDto.getBookingDate());
+        if (busBookingRequestDto.getBookingDate() != null) {
+            existingBusBooking.setBookingDate(busBookingRequestDto.getBookingDate());
+        }
+        if (busBookingRequestDto.getPrice() != null) {
+            existingBusBooking.setPrice(busBookingRequestDto.getPrice());
+        }
 
         BusBooking updatedBusBooking = busBookingRepository.save(existingBusBooking);
         return busBookingMapper.busBookingToBusBookingDto(updatedBusBooking);
