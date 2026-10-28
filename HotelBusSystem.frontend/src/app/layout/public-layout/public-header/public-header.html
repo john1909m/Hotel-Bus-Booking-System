@@ -15,7 +15,7 @@
     <!-- Desktop Navigation -->
     <nav class="nav-desktop" aria-label="Main navigation">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
-      <a routerLink="/hotels" class="nav-link" (click)="smoothScroll($event, 'hotels')">Hotels</a>
+      <a routerLink="/hotels" routerLinkActive="active" class="nav-link">Hotels</a>
       <a href="#transportation" class="nav-link" (click)="smoothScroll($event, 'transportation')">Transportation</a>
       <a href="#about" class="nav-link" (click)="smoothScroll($event, 'about')">About Us</a>
       <a href="#contact" class="nav-link" (click)="smoothScroll($event, 'contact')">Contact</a>
@@ -75,7 +75,7 @@
   >
     <nav class="mobile-nav">
       <a routerLink="/" class="mobile-link" (click)="closeMenu()">Home</a>
-      <a href="#hotels" class="mobile-link" (click)="smoothScroll($event, 'hotels'); closeMenu()">Hotels</a>
+      <a routerLink="/hotels" routerLinkActive="active" class="mobile-link" (click)="closeMenu()">Hotels</a>
       <a href="#transportation" class="mobile-link" (click)="smoothScroll($event, 'transportation'); closeMenu()">Transportation</a>
       <a href="#about" class="mobile-link" (click)="smoothScroll($event, 'about'); closeMenu()">About Us</a>
       <a href="#contact" class="mobile-link" (click)="smoothScroll($event, 'contact'); closeMenu()">Contact</a>
