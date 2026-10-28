@@ -1,4 +1,5 @@
-export interface AIMessage{
-    role: string;
-    text: string;
+export interface AiMessageDto {
+  role: 'user' | 'assistant' | 'system' | string;
+  text: string;
 }
+

@@ -4,7 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AiChatRequest, AiChatResponse } from '../models/AI Assistant/AIChat.model';
-import { AIMessage } from '../models/AI Assistant/AIMessage.model';
+import { AiMessageDto } from '../models/AI Assistant/AIMessage.model';
 import { BookingDraftRequest, BookingDraftResponse } from '../models/AI Assistant/BookingDraft.model';
 import { handleError } from '../../../utils/ErrorHandling';
 @Injectable({
@@ -28,8 +28,8 @@ export class AiService {
    * GET /ai/conversations/{id}
    * Get a conversation by ID (owner only).
    */
-  getConversation(id: string): Observable<AIMessage[]> {
-    return this.http.get<AIMessage[]>(`${this.apiUrl}/conversations/${id}`).pipe(
+  getConversation(id: string): Observable<AiMessageDto[]> {
+    return this.http.get<AiMessageDto[]>(`${this.apiUrl}/conversations/${id}`).pipe(
       catchError(handleError)
     );
   }

@@ -1,0 +1,755 @@
+<!-- Floating AI Assistant Launcher Button -->
+<aside class="ai-widget-wrapper" aria-label="AI Travel Assistant">
+  <button
+    type="button"
+    class="ai-launcher-btn"
+    [class.active]="isOpen()"
+    (click)="toggleOpen()"
+    [attr.aria-expanded]="isOpen()"
+    aria-controls="ai-chat-dialog"
+    aria-label="Toggle TravelEase AI Assistant"
+  >
+    <div class="launcher-icon-wrapper">
+      @if (isOpen()) {
+        <svg class="launcher-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      } @else {
+        <svg class="launcher-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="22"></line>
+          <line x1="8" y1="22" x2="16" y2="22"></line>
+        </svg>
+      }
+    </div>
+    <span class="launcher-badge" [class.badge-mock]="aiChatService.isMockMode()" title="AI Assistant Status">
+      <span class="pulse-dot"></span>
+    </span>
+    <span class="launcher-label">Ask AI</span>
+  </button>
+
+  <!-- Expandable Chat Panel Window -->
+  @if (isOpen()) {
+    <section
+      id="ai-chat-dialog"
+      class="ai-chat-panel"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="ai-chat-header-title"
+    >
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="header-bot-info">
+          <div class="avatar-ring">
+            <svg class="bot-avatar-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+              <line x1="8" y1="22" x2="16" y2="22"></line>
+            </svg>
+            <span class="online-dot"></span>
+          </div>
+          <div>
+            <h2 id="ai-chat-header-title" class="header-title">TravelEase AI</h2>
+            <div class="header-status-row">
+              <span class="status-indicator">{{ aiChatService.isMockMode() ? 'Offline Mode' : 'Online' }}</span>
+              <span class="dot-separator">•</span>
+              <button
+                type="button"
+                class="mock-toggle-pill"
+                [class.pill-mock]="aiChatService.isMockMode()"
+                [class.pill-live]="!aiChatService.isMockMode()"
+                (click)="toggleMockMode()"
+                [title]="aiChatService.isMockMode() ? 'Switch to Live API Mode' : 'Switch to Local Mock Mode'"
+              >
+                {{ aiChatService.isMockMode() ? 'Mock Mode' : 'Live API' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button
+            type="button"
+            class="header-action-btn"
+            (click)="clearHistory()"
+            title="Start new conversation"
+            aria-label="Start new conversation"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="header-action-btn close-btn"
+            (click)="close()"
+            title="Minimize Chat"
+            aria-label="Close chat"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Mock Mode Banner Alert (Dev/Testing Notice) -->
+      @if (aiChatService.isMockMode()) {
+        <div class="mock-info-banner">
+          <span class="banner-icon">⚡</span>
+          <span class="banner-text">Mock Mode active. Using simulated travel responses for UI preview.</span>
+        </div>
+      }
+
+      <!-- Guest Login Alert Banner (Live mode only) -->
+      @if (!aiChatService.isMockMode() && !authService.isAuthenticated()) {
+        <div class="auth-warning-banner">
+          <div class="auth-warning-content">
+            <span class="auth-warning-icon">🔒</span>
+            <span>Sign in to complete bookings and access personalized features.</span>
+          </div>
+          <button type="button" class="btn-signin-link" (click)="redirectToLogin()">
+            Sign In
+          </button>
+        </div>
+      }
+
+      <!-- Error Banner with Explicit Retry Option -->
+      @if (aiChatService.lastError()) {
+        <div class="error-banner">
+          <div class="error-text">
+            <strong>Notice:</strong> {{ aiChatService.lastError() }}
+          </div>
+          <div class="error-actions">
+            @if (aiChatService.lastErrorCode() === 503 && !aiChatService.isMockMode()) {
+              <button type="button" class="btn-error-action" (click)="toggleMockMode()">
+                Switch to Mock Mode
+              </button>
+            }
+            @if (aiChatService.failedMessage()) {
+              <button type="button" class="btn-error-action retry-btn" (click)="retry()">
+                Retry
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ─── Interactive Hotel Booking Overlay ─── -->
+      @if (hotelBookingState(); as hbs) {
+        <div class="inchat-wizard-overlay">
+          <div class="inchat-wizard-header">
+            <div class="wizard-title-block">
+              <span class="wizard-badge">Hotel Reservation</span>
+              <h3 class="wizard-title">{{ hbs.hotel.name }}</h3>
+            </div>
+            <button type="button" class="wizard-close-btn" (click)="cancelHotelBooking()" title="Cancel Booking">✕</button>
+          </div>
+
+          <!-- Wizard Breadcrumbs -->
+          <div class="wizard-steps-nav">
+            <span class="step-dot" [class.active]="hbs.step === 'dates'" [class.done]="hbs.step !== 'dates'">1. Dates</span>
+            <span class="step-sep">›</span>
+            <span class="step-dot" [class.active]="hbs.step === 'rooms'" [class.done]="hbs.step === 'summary' || hbs.step === 'confirmed'">2. Room</span>
+            <span class="step-sep">›</span>
+            <span class="step-dot" [class.active]="hbs.step === 'summary'" [class.done]="hbs.step === 'confirmed'">3. Summary</span>
+            <span class="step-sep">›</span>
+            <span class="step-dot" [class.active]="hbs.step === 'confirmed'">4. Confirmed</span>
+          </div>
+
+          <!-- Wizard Error -->
+          @if (hbs.error) {
+            <div class="wizard-error-banner">{{ hbs.error }}</div>
+          }
+
+          <!-- Step 1: Dates & Guests -->
+          @if (hbs.step === 'dates') {
+            <div class="wizard-step-body">
+              <div class="wizard-form-group">
+                <label class="wizard-label">Check-in Date</label>
+                <input
+                  type="date"
+                  class="wizard-input"
+                  [ngModel]="hbs.checkIn"
+                  (ngModelChange)="setHotelCheckIn($event)"
+                  [min]="getTodayDateString()"
+                />
+              </div>
+
+              <div class="wizard-form-group">
+                <label class="wizard-label">Check-out Date</label>
+                <input
+                  type="date"
+                  class="wizard-input"
+                  [ngModel]="hbs.checkOut"
+                  (ngModelChange)="setHotelCheckOut($event)"
+                  [min]="hbs.checkIn"
+                />
+              </div>
+
+              <div class="wizard-row-2">
+                <div class="wizard-form-group">
+                  <label class="wizard-label">Adults</label>
+                  <input
+                    type="number"
+                    class="wizard-input"
+                    [ngModel]="hbs.adults"
+                    (ngModelChange)="setHotelAdults($event)"
+                    min="1"
+                    max="10"
+                  />
+                </div>
+                <div class="wizard-form-group">
+                  <label class="wizard-label">Children</label>
+                  <select
+                    class="wizard-input"
+                    [ngModel]="hbs.childCount"
+                    (ngModelChange)="setHotelChildCount($event)"
+                  >
+                    <option [value]="0">0 Children</option>
+                    <option [value]="1">1 Child</option>
+                    <option [value]="2">2 Children</option>
+                    <option [value]="3">3 Children</option>
+                    <option [value]="4">4 Children</option>
+                  </select>
+                </div>
+              </div>
+
+              @if (hbs.childCount > 0) {
+                <div class="wizard-children-ages">
+                  <span class="wizard-hint">Child ages (children under 12 are free):</span>
+                  <div class="child-ages-row">
+                    @for (age of hbs.childAges; track $index) {
+                      <div class="child-age-item">
+                        <label>Child #{{ $index + 1 }}</label>
+                        <select
+                          class="wizard-select-sm"
+                          [ngModel]="age"
+                          (ngModelChange)="setHotelChildAge($index, $event)"
+                        >
+                          <option *ngFor="let a of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]" [value]="a">{{ a }} yrs</option>
+                        </select>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div class="wizard-actions">
+                <button
+                  type="button"
+                  class="btn-wizard-primary"
+                  [disabled]="hbs.loading"
+                  (click)="loadHotelRooms()"
+                >
+                  {{ hbs.loading ? 'Searching Rooms...' : 'Find Available Rooms →' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 2: Room Selection -->
+          @if (hbs.step === 'rooms') {
+            <div class="wizard-step-body">
+              <span class="wizard-subhead">Select a Room for {{ hbs.adults }} Adult(s):</span>
+              <div class="wizard-rooms-list">
+                @for (room of hbs.availableRooms; track (room.id ?? $index)) {
+                  <div
+                    class="wizard-room-card"
+                    [class.selected]="hbs.selectedRoom?.id === room.id"
+                    (click)="selectHotelRoom(room)"
+                  >
+                    <div class="room-card-top">
+                      <span class="room-type-name">{{ room.roomType || 'Room ' + room.roomNumber }}</span>
+                      <span class="room-rate">EGP {{ room.pricePerNight }} / night</span>
+                    </div>
+                    <div class="room-card-details">
+                      <span>👥 Capacity: {{ room.capacity }} guests</span>
+                      @if (room.roomNumber) {
+                        <span>🚪 Room #{{ room.roomNumber }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="wizard-actions-split">
+                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingDates()">← Change Dates</button>
+                <button
+                  type="button"
+                  class="btn-wizard-primary"
+                  [disabled]="!hbs.selectedRoom || hbs.loading"
+                  (click)="createHotelBookingDraft()"
+                >
+                  {{ hbs.loading ? 'Creating Draft...' : 'Review Summary →' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 3: Booking Summary (Draft) -->
+          @if (hbs.step === 'summary' && hbs.draft) {
+            <div class="wizard-step-body">
+              <span class="wizard-subhead">Booking Summary & Price Review:</span>
+              <div class="wizard-summary-card">
+                <div class="summary-line">
+                  <span class="lbl">Hotel:</span>
+                  <span class="val">{{ hbs.draft.hotelName }}</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Room:</span>
+                  <span class="val">{{ hbs.draft.roomType }} (Room {{ hbs.draft.roomNumber }})</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Dates:</span>
+                  <span class="val">{{ hbs.draft.checkInDate }} to {{ hbs.draft.checkOutDate }} ({{ hbs.draft.nights }} nights)</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Guests:</span>
+                  <span class="val">{{ hbs.draft.adults }} Adults{{ (hbs.draft.childAges?.length || 0) > 0 ? ', ' + hbs.draft.childAges?.length + ' Children' : '' }}</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-line">
+                  <span class="lbl">Nightly Rate:</span>
+                  <span class="val">EGP {{ hbs.draft.pricePerNight }}</span>
+                </div>
+                <div class="summary-line total-line">
+                  <span class="lbl">Total Price:</span>
+                  <span class="val highlight">EGP {{ hbs.draft.totalPrice }}</span>
+                </div>
+                <div class="draft-ttl-note">⏱️ Draft reserved. Price is guaranteed upon confirmation.</div>
+              </div>
+
+              <div class="wizard-actions-split">
+                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingRoom()">← Change Room</button>
+                <button
+                  type="button"
+                  class="btn-wizard-confirm"
+                  [disabled]="hbs.loading"
+                  (click)="confirmHotelBooking()"
+                >
+                  {{ hbs.loading ? 'Confirming...' : 'Confirm Hotel Booking ✓' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 4: Confirmed State -->
+          @if (hbs.step === 'confirmed' && hbs.confirmedBooking) {
+            <div class="wizard-step-body confirmed-step">
+              <div class="success-icon-badge">✓</div>
+              <h4 class="confirmed-title">Booking Confirmed!</h4>
+              <p class="confirmed-ref">Reference: <strong>#{{ hbs.confirmedBooking.bookingId || hbs.confirmedBooking.id }}</strong></p>
+              
+              <div class="confirmed-details-box">
+                <div>🏨 {{ hbs.confirmedBooking.hotelName }}</div>
+                <div>📅 {{ hbs.confirmedBooking.checkInDate }} to {{ hbs.confirmedBooking.checkOutDate }}</div>
+                <div>🛏️ {{ hbs.confirmedBooking.roomType }}</div>
+                <div>💳 Paid Total: <strong>EGP {{ hbs.confirmedBooking.totalPrice }}</strong></div>
+              </div>
+
+              <div class="wizard-actions-split">
+                <a routerLink="/user/hotel-bookings" class="btn-wizard-primary" (click)="cancelHotelBooking(); close()">
+                  View in My Bookings →
+                </a>
+                <button type="button" class="btn-wizard-secondary" (click)="cancelHotelBooking()">
+                  Back to Chat
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ─── Interactive Bus Booking Overlay ─── -->
+      @if (busBookingState(); as bbs) {
+        <div class="inchat-wizard-overlay">
+          <div class="inchat-wizard-header">
+            <div class="wizard-title-block">
+              <span class="wizard-badge bus-badge">Bus Trip Booking</span>
+              <h3 class="wizard-title">{{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</h3>
+            </div>
+            <button type="button" class="wizard-close-btn" (click)="cancelBusBooking()" title="Cancel Booking">✕</button>
+          </div>
+
+          <!-- Step 1: Seat Map Selection -->
+          @if (bbs.step === 'seats') {
+            <div class="wizard-step-body">
+              <div class="bus-seat-legend">
+                <span class="legend-item"><span class="legend-box available"></span> Available</span>
+                <span class="legend-item"><span class="legend-box selected"></span> Selected</span>
+                <span class="legend-item"><span class="legend-box booked"></span> Booked</span>
+              </div>
+
+              <div class="bus-cockpit">
+                <span>🚌 Front / Windshield</span>
+              </div>
+
+              @if (bbs.loading) {
+                <div class="wizard-loading-indicator">Loading seat map...</div>
+              } @else {
+                <div class="bus-seats-grid">
+                  @for (seat of bbs.allSeats; track seat.id) {
+                    <button
+                      type="button"
+                      class="seat-btn"
+                      [class.seat-booked]="bbs.bookedSeatIds.has(seat.id)"
+                      [class.seat-selected]="bbs.selectedSeat?.id === seat.id"
+                      [disabled]="bbs.bookedSeatIds.has(seat.id)"
+                      (click)="selectBusSeat(seat)"
+                      [title]="'Seat ' + seat.seatNumber + (bbs.bookedSeatIds.has(seat.id) ? ' (Occupied)' : '')"
+                    >
+                      {{ seat.seatNumber }}
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (bbs.selectedSeat) {
+                <div class="selected-seat-badge">
+                  Selected Seat: <strong>{{ bbs.selectedSeat.seatNumber }}</strong> • Rate: <strong>EGP {{ bbs.trip.price }}</strong>
+                </div>
+              }
+
+              <div class="wizard-actions">
+                <button
+                  type="button"
+                  class="btn-wizard-primary"
+                  [disabled]="!bbs.selectedSeat || bbs.loading"
+                  (click)="proceedToBusSummary()"
+                >
+                  Review Booking Details →
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 2: Bus Summary -->
+          @if (bbs.step === 'summary' && bbs.selectedSeat) {
+            <div class="wizard-step-body">
+              <span class="wizard-subhead">Trip Summary & Price:</span>
+              <div class="wizard-summary-card">
+                <div class="summary-line">
+                  <span class="lbl">Route:</span>
+                  <span class="val">{{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Departure:</span>
+                  <span class="val">{{ bbs.trip.departureTime | date:'medium' }}</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Bus Company:</span>
+                  <span class="val">{{ bbs.trip.routeName || bbs.trip.busCompany || 'TravelEase Express' }}</span>
+                </div>
+                <div class="summary-line">
+                  <span class="lbl">Seat Number:</span>
+                  <span class="val highlight">Seat {{ bbs.selectedSeat.seatNumber }} ({{ bbs.selectedSeat.seatType || 'Standard' }})</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-line total-line">
+                  <span class="lbl">Total Ticket Price:</span>
+                  <span class="val highlight">EGP {{ bbs.trip.price }}</span>
+                </div>
+              </div>
+
+              <div class="wizard-actions-split">
+                <button type="button" class="btn-wizard-secondary" (click)="editBusSeatSelection()">← Change Seat</button>
+                <button
+                  type="button"
+                  class="btn-wizard-confirm"
+                  [disabled]="bbs.loading"
+                  (click)="confirmBusBooking()"
+                >
+                  {{ bbs.loading ? 'Confirming Ticket...' : 'Confirm Ticket ✓' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 3: Bus Confirmed State -->
+          @if (bbs.step === 'confirmed' && bbs.confirmedBooking) {
+            <div class="wizard-step-body confirmed-step">
+              <div class="success-icon-badge">✓</div>
+              <h4 class="confirmed-title">Bus Ticket Confirmed!</h4>
+              <p class="confirmed-ref">Ticket ID: <strong>#{{ bbs.confirmedBooking.id }}</strong></p>
+
+              <div class="confirmed-details-box">
+                <div>🚌 {{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</div>
+                <div>💺 Seat: <strong>{{ bbs.selectedSeat?.seatNumber }}</strong></div>
+                <div>🕒 {{ bbs.trip.departureTime | date:'short' }}</div>
+                <div>💳 Amount: <strong>EGP {{ bbs.trip.price }}</strong></div>
+              </div>
+
+              <div class="wizard-actions-split">
+                <a routerLink="/user/bus-bookings" class="btn-wizard-primary" (click)="cancelBusBooking(); close()">
+                  View My Bus Bookings →
+                </a>
+                <button type="button" class="btn-wizard-secondary" (click)="cancelBusBooking()">
+                  Back to Chat
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Message History Container -->
+      <div class="messages-container" #messagesContainer>
+        @for (msg of aiChatService.messages(); track msg.id) {
+          <div class="message-row" [class.user-row]="msg.sender === 'user'" [class.assistant-row]="msg.sender === 'assistant'">
+            @if (msg.sender === 'assistant') {
+              <div class="msg-bot-avatar" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                </svg>
+              </div>
+            }
+
+            <div class="msg-bubble-wrap">
+              <!-- Text Bubble with Safe Markdown Formatting -->
+              <div class="msg-bubble" [class.user-bubble]="msg.sender === 'user'" [class.assistant-bubble]="msg.sender === 'assistant'" [class.error-bubble]="msg.isError">
+                <p class="msg-text">{{ formatMessageText(msg.text, msg.results && msg.results.length > 0) }}</p>
+                @if (msg.isMock) {
+                  <span class="mock-tag" title="Generated in mock dev mode">Mock</span>
+                }
+              </div>
+
+              <!-- Structured Hotel Cards (HOTEL or HOTEL_DETAILS) -->
+              @if (msg.results && msg.results.length > 0) {
+                @for (res of msg.results; track $index) {
+                  @if ((res.type === 'HOTEL' || res.type === 'HOTEL_DETAILS') && res.data) {
+                    <div class="structured-cards-deck">
+                      <div class="cards-deck-title">Hotel Recommendations:</div>
+                      <div class="cards-deck-grid">
+                        @for (hotel of getHotelList(res.data); track (hotel.id ?? $index)) {
+                          <div class="card-item hotel-result-card">
+                            <div class="card-item-header">
+                              <span class="card-item-title">{{ hotel.name }}</span>
+                              @if (hotel.rating) {
+                                <span class="card-badge rating-badge">★ {{ hotel.rating }}</span>
+                              }
+                            </div>
+                            <div class="card-item-meta">
+                              @if (hotel.city) {
+                                <span class="meta-city">📍 {{ hotel.city }}</span>
+                              }
+                              @if (hotel.address) {
+                                <span class="meta-address">{{ hotel.address }}</span>
+                              }
+                              @if (hotel.minPrice) {
+                                <span class="meta-price">from <strong>EGP {{ hotel.minPrice }}</strong> / night</span>
+                              }
+                            </div>
+                            <div class="card-item-footer">
+                              <button
+                                type="button"
+                                class="btn-card-action-btn primary"
+                                (click)="startHotelBooking(hotel)"
+                              >
+                                Book Now
+                              </button>
+                              <a
+                                [routerLink]="['/hotels', hotel.id]"
+                                class="btn-card-action-btn secondary"
+                                (click)="close()"
+                              >
+                                View Hotel & Rooms →
+                              </a>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Structured Bus Search Cards (BUS_SEARCH or BUS_TRIP) -->
+                  @if ((res.type === 'BUS_SEARCH' || res.type === 'BUS_TRIP') && res.data) {
+                    <div class="structured-cards-deck">
+                      <div class="cards-deck-title">Available Bus Trips:</div>
+                      <div class="cards-deck-grid">
+                        @for (trip of getBusTripList(res.data); track (trip.id ?? trip.tripId ?? $index)) {
+                          <div class="card-item bus-result-card">
+                            <div class="card-item-header">
+                              <span class="card-item-title">{{ getTripOrigin(trip) }} ➔ {{ getTripDestination(trip) }}</span>
+                              @if (trip.price) {
+                                <span class="card-badge bus-badge">EGP {{ trip.price }}</span>
+                              }
+                            </div>
+                            <div class="card-item-meta">
+                              @if (trip.departureTime) {
+                                <span>🕒 Departs: {{ trip.departureTime | date:'shortTime' }}</span>
+                              }
+                              @if (trip.routeName || trip.busCompany) {
+                                <span>🚌 {{ trip.routeName || trip.busCompany }}</span>
+                              }
+                            </div>
+                            <div class="card-item-footer">
+                              <button
+                                type="button"
+                                class="btn-card-action-btn primary"
+                                (click)="startBusBooking(trip)"
+                              >
+                                Select Seat & Book
+                              </button>
+                              <a
+                                [routerLink]="['/buses/results']"
+                                [queryParams]="getBusSearchParams(trip)"
+                                class="btn-card-action-btn secondary"
+                                (click)="close()"
+                              >
+                                View Trips →
+                              </a>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Structured Available Room Cards (ROOM) -->
+                  @if (res.type === 'ROOM' && res.data) {
+                    <div class="structured-cards-deck">
+                      <div class="cards-deck-title">Available Rooms:</div>
+                      <div class="cards-deck-grid">
+                        @for (room of getRoomList(res.data); track (room.id ?? $index)) {
+                          <div class="card-item room-result-card">
+                            <div class="card-item-header">
+                              <span class="card-item-title">{{ room.roomType || room.roomNumber || 'Room' }}</span>
+                              @if (room.pricePerNight) {
+                                <span class="card-badge bus-badge">EGP {{ room.pricePerNight }} / night</span>
+                              }
+                            </div>
+                            <div class="card-item-meta">
+                              @if (room.hotelName) {
+                                <span>🏨 {{ room.hotelName }}</span>
+                              }
+                              @if (room.capacity) {
+                                <span>👥 Capacity: {{ room.capacity }} guests</span>
+                              }
+                            </div>
+                            @if (room.hotelId) {
+                              <div class="card-item-footer">
+                                <a
+                                  [routerLink]="['/hotels', room.hotelId]"
+                                  class="btn-card-action-btn secondary"
+                                  (click)="close()"
+                                >
+                                  View Hotel Details →
+                                </a>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              }
+
+              <!-- Missing Information Prompt Chips -->
+              @if (msg.missingInformation && msg.missingInformation.length > 0) {
+                <div class="missing-info-block">
+                  <span class="missing-info-label">Please specify:</span>
+                  <div class="missing-chips">
+                    @for (info of msg.missingInformation; track info) {
+                      <button
+                        type="button"
+                        class="missing-chip"
+                        (click)="appendChipText(info)"
+                      >
+                        + {{ info }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <span class="msg-timestamp">{{ msg.timestamp | date:'shortTime' }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- Loading Dots (Typing Indicator) -->
+        @if (aiChatService.isLoading()) {
+          <div class="message-row assistant-row typing-row">
+            <div class="msg-bot-avatar" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              </svg>
+            </div>
+            <div class="typing-indicator" aria-label="AI Assistant is thinking...">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+        }
+
+        <!-- Suggested Prompt Chips (when few messages) -->
+        @if (aiChatService.messages().length <= 1) {
+          <div class="suggested-prompts-section">
+            <span class="suggested-title">Try asking:</span>
+            <div class="suggested-chips-grid">
+              @for (prompt of suggestedPrompts; track prompt) {
+                <button
+                  type="button"
+                  class="suggested-chip"
+                  (click)="sendSuggested(prompt)"
+                >
+                  {{ prompt }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Chat Footer / Input Form -->
+      <footer class="chat-footer">
+        <form class="chat-input-form" (ngSubmit)="send()">
+          <div class="input-container">
+            <textarea
+              #messageInput
+              class="chat-textarea"
+              placeholder="Ask about hotels, buses, or trips..."
+              rows="1"
+              maxlength="2000"
+              [ngModel]="currentInput()"
+              (ngModelChange)="currentInput.set($event)"
+              name="chatInput"
+              (keydown)="onKeyDown($event)"
+              [disabled]="aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
+              aria-label="Message TravelEase AI Assistant"
+            ></textarea>
+            
+            <button
+              type="submit"
+              class="send-btn"
+              [disabled]="!currentInput().trim() || aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
+              aria-label="Send message"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+
+          <div class="input-footer-row">
+            <span class="footer-hint">Press Enter to send, Shift+Enter for new line</span>
+            <span class="char-counter" [class.char-counter-warn]="currentInput().length > 1800">
+              {{ currentInput().length }}/2000
+            </span>
+          </div>
+        </form>
+      </footer>
+    </section>
+  }
+</aside>
