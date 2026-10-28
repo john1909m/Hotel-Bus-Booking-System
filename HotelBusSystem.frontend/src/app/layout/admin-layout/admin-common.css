@@ -390,6 +390,30 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+.btn-action-confirm {
+  color: #10b981;
+}
+
+.btn-action-confirm:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
 /* Empty State inside Table */
 .empty-state {
   display: flex;

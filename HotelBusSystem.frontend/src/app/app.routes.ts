@@ -28,6 +28,12 @@ export const routes: Routes = [
           import('./features/hotels/hotel-details/hotel-details').then(m => m.HotelDetails),
         title: 'TravelEase — Hotel Details & Rooms',
       },
+      {
+        path: 'buses/results',
+        loadComponent: () =>
+          import('./features/buses/bus-search-results/bus-search-results').then(m => m.BusSearchResultsComponent),
+        title: 'TravelEase — Bus Search Results',
+      },
     ],
   },
 

@@ -61,7 +61,12 @@ export class PublicHeader implements OnInit {
 
   smoothScroll(event: Event, id: string): void {
     event.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      this.router.navigate(['/'], { fragment: id });
+    }
     this.menuOpen.set(false);
   }
 }

@@ -6,22 +6,21 @@
   <section class="hero-section" aria-labelledby="hero-headline">
     <div class="hero-content container">
       <div class="hero-text">
-        <p class="hero-eyebrow">Hotels &amp; Bus Travel</p>
+        <p class="hero-eyebrow">Hotels &amp; Intercity Bus Travel</p>
         <h1 id="hero-headline" class="hero-title">
           Your Next Stay<br>
           <span class="hero-title-accent">&amp; Journey Awaits</span>
         </h1>
         <p class="hero-description">
-          Discover amazing hotels and plan your travel with ease.
-          Comfort, convenience and unforgettable experiences —
-          all in one place.
+          Discover vetted hotels and reserve intercity coach trips across Egypt with ease.
+          Comfort, convenience and transparent travel planning — all in one place.
         </p>
         <div class="hero-cta-group">
-          <a href="#hotels" class="cta-primary" (click)="smoothScroll($event, 'hotels')">
+          <a routerLink="/hotels" class="cta-primary">
             Explore Hotels
           </a>
           <a href="#transportation" class="cta-secondary" (click)="smoothScroll($event, 'transportation')">
-            Explore Travel Options
+            Search Bus Trips
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
           </a>
         </div>
@@ -38,95 +37,172 @@
         >
         <div class="hero-img-badge">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          <span>Top Destinations</span>
+          <span>Top Destinations in Egypt</span>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════════
-       HOTEL SEARCH FORM
+       BUS SEARCH FORM (PUBLIC SEARCH EXPERIENCE)
   ════════════════════════════════════════════════════════ -->
-  <section class="search-section" id="hotels" aria-label="Hotel search">
+  <section class="search-section" id="transportation" aria-label="Intercity bus trip search">
     <div class="container">
       <div class="search-card">
-        <form class="search-form" (ngSubmit)="onSearch()" [formGroup]="searchForm" novalidate>
-          <div class="search-field">
-            <label for="destination" class="search-label">Destination</label>
-            <div class="search-input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-              <input
-                id="destination"
-                type="text"
-                class="search-input"
-                placeholder="Where are you going?"
-                formControlName="destination"
-                autocomplete="off"
-                aria-label="Enter your destination"
-              >
-            </div>
+
+        <!-- Form Top Bar -->
+        <div class="search-card-header">
+          <div class="search-tab-pill">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="15" rx="2"></rect>
+              <path d="M7 19v2"></path>
+              <path d="M17 19v2"></path>
+              <path d="M3 10h18"></path>
+              <circle cx="7.5" cy="14.5" r="1"></circle>
+              <circle cx="16.5" cy="14.5" r="1"></circle>
+            </svg>
+            <span>Intercity Bus Schedules</span>
           </div>
+          @if (loadingStops()) {
+            <span class="loading-stops-indicator">Loading destinations…</span>
+          }
+        </div>
 
-          <div class="search-divider" aria-hidden="true"></div>
+        <form class="search-form" (ngSubmit)="onSearch()" [formGroup]="searchForm" novalidate id="bus-search-form">
 
+          <!-- 1. Origin City -->
           <div class="search-field">
-            <label for="checkin" class="search-label">Check-in Date</label>
+            <label for="origin-city" class="search-label">From (Origin)</label>
             <div class="search-input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <input
-                id="checkin"
-                type="date"
-                class="search-input"
-                placeholder="Select date"
-                formControlName="checkIn"
-                aria-label="Check-in date"
-                [min]="today"
-              >
-            </div>
-          </div>
-
-          <div class="search-divider" aria-hidden="true"></div>
-
-          <div class="search-field">
-            <label for="checkout" class="search-label">Check-out Date</label>
-            <div class="search-input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <input
-                id="checkout"
-                type="date"
-                class="search-input"
-                placeholder="Select date"
-                formControlName="checkOut"
-                aria-label="Check-out date"
-                [min]="today"
-              >
-            </div>
-          </div>
-
-          <div class="search-divider" aria-hidden="true"></div>
-
-          <div class="search-field">
-            <label for="guests" class="search-label">Guests</label>
-            <div class="search-input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
               <select
-                id="guests"
+                id="origin-city"
                 class="search-input search-select"
-                formControlName="guests"
-                aria-label="Number of guests"
+                formControlName="originCity"
+                aria-label="Select origin departure city"
+                [disabled]="loadingStops()"
               >
-                @for (opt of guestOptions; track opt.value) {
-                  <option [value]="opt.value">{{ opt.label }}</option>
+                <option value="" disabled selected>Select origin city</option>
+                @for (city of cities(); track city) {
+                  <option [value]="city">{{ city }}</option>
                 }
               </select>
             </div>
           </div>
 
-          <button type="submit" class="search-btn" id="hotel-search-btn" aria-label="Search available hotels">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Search
+          <!-- Swap Cities Button -->
+          <div class="swap-action-wrap">
+            <button
+              type="button"
+              class="btn-swap-cities"
+              (click)="swapCities()"
+              title="Swap origin and destination cities"
+              aria-label="Swap origin and destination cities"
+              [disabled]="loadingStops()"
+              id="swap-cities-btn"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="search-divider" aria-hidden="true"></div>
+
+          <!-- 2. Destination City -->
+          <div class="search-field">
+            <label for="destination-city" class="search-label">To (Destination)</label>
+            <div class="search-input-wrap">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="12 8 8 12 12 16 12 8"></polygon>
+              </svg>
+              <select
+                id="destination-city"
+                class="search-input search-select"
+                formControlName="destinationCity"
+                aria-label="Select destination arrival city"
+                [disabled]="loadingStops()"
+              >
+                <option value="" disabled selected>Select destination city</option>
+                @for (city of cities(); track city) {
+                  <option [value]="city">{{ city }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="search-divider" aria-hidden="true"></div>
+
+          <!-- 3. Departure Date -->
+          <div class="search-field">
+            <label for="departure-date" class="search-label">Departure Date</label>
+            <div class="search-input-wrap">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <input
+                id="departure-date"
+                type="date"
+                class="search-input"
+                formControlName="departureDate"
+                aria-label="Select trip departure date"
+                [min]="today"
+              >
+            </div>
+          </div>
+
+          <!-- 4. Submit Search Button -->
+          <button
+            type="submit"
+            class="search-btn"
+            id="bus-search-submit-btn"
+            aria-label="Find scheduled bus trips"
+            [disabled]="loadingStops()"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span>Find Bus Trips</span>
           </button>
         </form>
+
+        <!-- Inline Validation Alert Banners -->
+        @if (searchForm.errors?.['sameCity'] && (searchForm.get('originCity')?.touched || searchForm.get('destinationCity')?.touched)) {
+          <div class="validation-banner" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Origin and destination cannot be the same city. Please select different cities.</span>
+          </div>
+        }
+
+        @if (searchForm.get('departureDate')?.touched && searchForm.get('departureDate')?.errors?.['pastDate']) {
+          <div class="validation-banner" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Please select a valid departure date on or after today.</span>
+          </div>
+        }
+
+        @if (stopsError()) {
+          <div class="validation-banner error-banner" role="alert">
+            <span>{{ stopsError() }}</span>
+            <button type="button" class="btn-retry-stops" (click)="loadBusStops()">Retry</button>
+          </div>
+        }
+
       </div>
     </div>
   </section>
@@ -160,8 +236,8 @@
           <h2 id="destinations-heading" class="section-title">Popular Destinations</h2>
           <p class="section-subtitle">Explore top destinations and find your perfect getaway.</p>
         </div>
-        <a href="#" class="view-all-link" aria-label="View all popular destinations">
-          View All
+        <a routerLink="/hotels" class="view-all-link" aria-label="View all popular destinations">
+          View All Hotels
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
         </a>
       </div>
@@ -169,7 +245,7 @@
       <div class="destinations-grid" role="list" aria-label="Popular travel destinations">
         @for (dest of destinations; track dest.name) {
           <article class="destination-card" role="listitem">
-            <a href="#" class="destination-card-link" [attr.aria-label]="'Explore ' + dest.name">
+            <a routerLink="/hotels" class="destination-card-link" [attr.aria-label]="'Explore hotels in ' + dest.name">
               <div class="destination-img-wrap">
                 <img
                   [src]="dest.image"
@@ -198,7 +274,7 @@
   <!-- ═══════════════════════════════════════════════════════
        HOTEL + BUS TRAVEL PROMO
   ════════════════════════════════════════════════════════ -->
-  <section class="promo-section" id="transportation" aria-labelledby="promo-heading">
+  <section class="promo-section" aria-labelledby="promo-heading">
     <div class="container">
       <div class="promo-card">
         <div class="promo-content">
@@ -208,11 +284,11 @@
             <span class="promo-title-accent">It's a Complete Journey</span>
           </h2>
           <p class="promo-desc">
-            Book your hotel and bus tickets together for a smoother,
-            easier and more convenient travel experience.
+            Book your hotel accommodations and intercity bus tickets together for a smoother,
+            more convenient travel experience across Egypt.
           </p>
-          <a href="#" class="cta-primary promo-cta">
-            Explore Travel Options
+          <a href="#transportation" class="cta-primary promo-cta" (click)="smoothScroll($event, 'transportation')">
+            Explore Bus Schedules
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
           </a>
         </div>
@@ -253,7 +329,7 @@
         Find the perfect hotel, plan your journey and create
         memories that last a lifetime.
       </p>
-      <a href="#hotels" class="cta-primary" (click)="smoothScroll($event, 'hotels')">
+      <a routerLink="/hotels" class="cta-primary">
         Explore Hotels
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
       </a>
