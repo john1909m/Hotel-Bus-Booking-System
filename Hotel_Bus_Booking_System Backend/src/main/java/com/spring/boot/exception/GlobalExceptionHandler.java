@@ -256,6 +256,21 @@ public class GlobalExceptionHandler {
                 .body(body);
     }
 
+    @ExceptionHandler(AnalyticsValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Map<String, Object>> handleAnalyticsValidationException(AnalyticsValidationException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        Map<String, String> errors = new LinkedHashMap<>();
+        String message = bundleMessageService.getMessage(ex.getMessageKey());
+        errors.put(ex.getField(), message);
+        body.put("message", message);
+        body.put("errors", errors);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {

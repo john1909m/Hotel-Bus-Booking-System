@@ -62,6 +62,17 @@ public class SecurityConfig {
                                     response.getWriter().write(String.format("{\"error\":\"Unauthorized\",\"message\":\"%s\"}", message));
                                 }
                         )
+                        .accessDeniedHandler(
+                                (request, response, accessDeniedException) -> {
+                                    String message = bundleMessageService.getMessage("error.access_denied");
+                                    if (message == null || "error.access_denied".equals(message)) {
+                                        message = bundleMessageService.getMessage("Access denied");
+                                    }
+                                    response.setStatus(HttpStatus.FORBIDDEN.value());
+                                    response.setContentType("application/json;charset=UTF-8");
+                                    response.getWriter().write(String.format("{\"error\":\"Forbidden\",\"message\":\"%s\"}", message));
+                                }
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
