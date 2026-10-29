@@ -1,11 +1,13 @@
 package com.spring.boot.config;
 
 import com.spring.boot.service.ai.AiTools;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,13 +22,29 @@ public class AiConfig {
                 .build();
     }
 
+
     // ChatClient.Builder bey-etbena automatic mn el Gemini starter
+//    @Bean
+//    public ChatClient chatClient(ChatClient.Builder builder,
+//                                 ChatMemory chatMemory,
+//                                 AiTools aiTools) {
+//        return builder
+//                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+//                .defaultTools(aiTools)
+//                .build();
+//    }
+
+
     @Bean
-    public ChatClient chatClient(ChatClient.Builder builder,
-                                 ChatMemory chatMemory,
-                                 AiTools aiTools) {
-        return builder
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+    public ChatClient chatClient(
+            @Qualifier("openAiChatModel") ChatModel chatModel,
+            ChatMemory chatMemory,
+            AiTools aiTools) {
+
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor.builder(chatMemory).build()
+                )
                 .defaultTools(aiTools)
                 .build();
     }
