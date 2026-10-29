@@ -42,6 +42,7 @@ public class CacheConfig {
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(cacheConfiguration())
+                .withCacheConfiguration("bus-features", cacheConfiguration().entryTtl(Duration.ofMinutes(5)))
                 .build();
     }
 }

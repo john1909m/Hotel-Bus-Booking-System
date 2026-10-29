@@ -71,6 +71,9 @@ class BusBookingServiceTest {
     @Mock
     private BundleMessageService bundleMessageService;
 
+    @Mock
+    private com.spring.boot.service.interfaces.PricingService pricingService;
+
     @InjectMocks
     private BusBookingServiceImpl busBookingService;
 
@@ -92,6 +95,12 @@ class BusBookingServiceTest {
                 return key + " [" + args[0] + "]";
             }
             return key;
+        });
+
+        lenient().when(pricingService.calculateBusTripPrice(any())).thenAnswer(inv -> {
+            BusTrip t = inv.getArgument(0);
+            BigDecimal price = (t != null && t.getPrice() != null) ? t.getPrice() : BigDecimal.valueOf(100.00);
+            return com.spring.boot.dto.BusTripPriceBreakdownDto.builder().total(price).build();
         });
 
         userCustomer = new User();

@@ -67,6 +67,19 @@ public class BusController {
         return new ResponseEntity<>(updatedBus, HttpStatus.OK);
     }
 
+    @PutMapping("/{id}/pricing")
+    @PreAuthorize("hasRole('ADMIN')")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Update bus pricing configuration",
+            description = "Updates the priceFactor (0.50 to 3.00) and assigned features for a bus. Replaces existing feature set. Changes do not affect existing bookings (snapshot rule). Evicts 'buses' and 'bus-trips' cache."
+    )
+    public ResponseEntity<BusDto> updateBusPricing(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.spring.boot.dto.BusPricingUpdateRequestDto pricingDto) {
+        BusDto updatedBus = busService.updateBusPricing(id, pricingDto);
+        return new ResponseEntity<>(updatedBus, HttpStatus.OK);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBus(@PathVariable Long id) {

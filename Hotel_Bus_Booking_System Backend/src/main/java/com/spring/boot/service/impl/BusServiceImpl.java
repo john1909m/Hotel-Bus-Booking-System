@@ -24,10 +24,15 @@ import java.util.List;
 public class BusServiceImpl implements BusService {
 
     private final BusRepository busRepository;
+    private final com.spring.boot.repository.BusFeatureRepository busFeatureRepository;
     private final BusMapper busMapper;
     private final BundleMessageService bundleMessageService;
 
     @Override
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "buses", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusDto createBus(BusRequestDto busRequestDto) {
         Bus bus = busMapper.busRequestDtoToBus(busRequestDto);
         Bus savedBus = busRepository.save(bus);
@@ -36,7 +41,7 @@ public class BusServiceImpl implements BusService {
 
     @Override
     public BusDto getBusById(Long id) {
-        Bus bus = busRepository.findById(id)
+        Bus bus = busRepository.findByIdWithFeatures(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
         return busMapper.busToBusDto(bus);
     }
@@ -75,6 +80,10 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "buses", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public BusDto updateBus(Long id, BusRequestDto busRequestDto) {
         Bus existingBus = busRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
@@ -93,6 +102,48 @@ public class BusServiceImpl implements BusService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "buses", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "bus-trips", allEntries = true)
+    })
+    public BusDto updateBusPricing(Long id, com.spring.boot.dto.BusPricingUpdateRequestDto pricingDto) {
+        Bus existingBus = busRepository.findByIdWithFeatures(id)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
+
+        if (pricingDto.getPriceFactor() == null ||
+                pricingDto.getPriceFactor().compareTo(new java.math.BigDecimal("0.50")) < 0 ||
+                pricingDto.getPriceFactor().compareTo(new java.math.BigDecimal("3.00")) > 0) {
+            throw new com.spring.boot.exception.AnalyticsValidationException("priceFactor", "error.price_factor_range");
+        }
+
+        existingBus.setPriceFactor(pricingDto.getPriceFactor());
+
+        // Replace feature set
+        java.util.Set<com.spring.boot.model.BusFeature> updatedFeatures = new java.util.HashSet<>();
+        if (pricingDto.getFeatureIds() != null && !pricingDto.getFeatureIds().isEmpty()) {
+            for (Long featureId : pricingDto.getFeatureIds()) {
+                com.spring.boot.model.BusFeature feature = busFeatureRepository.findById(featureId)
+                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.feature_not_found")));
+
+                if (!feature.isActive()) {
+                    throw new com.spring.boot.exception.AnalyticsValidationException("featureIds",
+                            bundleMessageService.getMessage("error.feature_inactive", new Object[]{feature.getCode()}));
+                }
+                updatedFeatures.add(feature);
+            }
+        }
+        existingBus.setFeatures(updatedFeatures);
+
+        Bus savedBus = busRepository.save(existingBus);
+        return busMapper.busToBusDto(savedBus);
+    }
+
+    @Override
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "buses", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "bus-trips", allEntries = true)
+    })
     public void deleteBus(Long id) {
         if (!busRepository.existsById(id)) {
             throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found"));

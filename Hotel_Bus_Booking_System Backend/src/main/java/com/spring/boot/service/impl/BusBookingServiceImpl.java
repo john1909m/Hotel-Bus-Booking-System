@@ -56,6 +56,7 @@ public class BusBookingServiceImpl implements BusBookingService {
     private final BusRepository busRepository;
     private final UserRepository userRepository;
     private final BundleMessageService bundleMessageService;
+    private final com.spring.boot.service.interfaces.PricingService pricingService;
 
     private static final ZoneId CAIRO_ZONE = ZoneId.of("Africa/Cairo");
 
@@ -176,9 +177,9 @@ public class BusBookingServiceImpl implements BusBookingService {
         if (busBooking.getBookingDate() == null) {
             busBooking.setBookingDate(LocalDate.now(CAIRO_ZONE));
         }
-        if (busBooking.getPrice() == null) {
-            busBooking.setPrice(busTrip.getPrice());
-        }
+        // Compute price using PricingService (snapshot rule: ignore client-provided price)
+        java.math.BigDecimal computedPrice = pricingService.calculateBusTripPrice(busTrip).getTotal();
+        busBooking.setPrice(computedPrice);
 
         // Save booking
         BusBooking savedBusBooking = busBookingRepository.save(busBooking);
@@ -327,14 +328,15 @@ public class BusBookingServiceImpl implements BusBookingService {
 
             existingBusBooking.setBusTrip(busTrip);
             existingBusBooking.setSeat(seat);
+            // Recompute price snapshot when trip or seat changes
+            java.math.BigDecimal recomputedPrice = pricingService.calculateBusTripPrice(busTrip).getTotal();
+            existingBusBooking.setPrice(recomputedPrice);
         }
 
         if (busBookingRequestDto.getBookingDate() != null) {
             existingBusBooking.setBookingDate(busBookingRequestDto.getBookingDate());
         }
-        if (busBookingRequestDto.getPrice() != null) {
-            existingBusBooking.setPrice(busBookingRequestDto.getPrice());
-        }
+        // Retain stored price snapshot if trip and seat did not change; ignore client price override
 
         BusBooking updatedBusBooking = busBookingRepository.save(existingBusBooking);
         return busBookingMapper.busBookingToBusBookingDto(updatedBusBooking);

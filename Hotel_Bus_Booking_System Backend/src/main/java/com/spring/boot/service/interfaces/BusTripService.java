@@ -18,6 +18,8 @@ public interface BusTripService {
 
     BusTripDto getBusTripById(Long id);
 
+    com.spring.boot.dto.BusTripPriceBreakdownDto getBusTripPriceQuote(Long id);
+
     List<BusTripDto> getAllBusTrips();
 
     List<BusTripDto> getBusTripsByBusId(Long busId);

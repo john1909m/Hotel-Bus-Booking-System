@@ -34,7 +34,19 @@ public class Bus extends BaseEntity {
     @Column(name = "bus_type")
     private String busType;
 
+    @Column(name = "price_factor", nullable = false, precision = 4, scale = 2)
+    private java.math.BigDecimal priceFactor = new java.math.BigDecimal("1.00");
+
     // Relationships
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "bus_features_link",
+            joinColumns = @JoinColumn(name = "bus_id"),
+            inverseJoinColumns = @JoinColumn(name = "feature_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"bus_id", "feature_id"})
+    )
+    private java.util.Set<BusFeature> features = new java.util.HashSet<>();
+
     @OneToMany(mappedBy = "bus")
     private List<BusSeat> busSeats;
 

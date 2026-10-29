@@ -25,5 +25,7 @@ public interface BusService {
 
     BusDto updateBus(Long id, BusRequestDto busRequestDto);
 
+    BusDto updateBusPricing(Long id, com.spring.boot.dto.BusPricingUpdateRequestDto pricingDto);
+
     void deleteBus(Long id);
 }

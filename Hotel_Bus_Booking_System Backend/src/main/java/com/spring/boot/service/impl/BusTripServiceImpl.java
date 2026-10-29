@@ -42,6 +42,7 @@ public class BusTripServiceImpl implements BusTripService {
     private final BusRouteRepository busRouteRepository;
     private final BusBookingRepository busBookingRepository;
     private final BundleMessageService bundleMessageService;
+    private final com.spring.boot.service.interfaces.PricingService pricingService;
 
     @Override
     @Transactional
@@ -70,6 +71,13 @@ public class BusTripServiceImpl implements BusTripService {
         BusTrip busTrip = busTripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
         return busTripMapper.busTripToBusTripDto(busTrip);
+    }
+
+    @Override
+    public com.spring.boot.dto.BusTripPriceBreakdownDto getBusTripPriceQuote(Long id) {
+        BusTrip busTrip = busTripRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+        return pricingService.calculateBusTripPrice(busTrip);
     }
 
     @Override
@@ -175,15 +183,7 @@ public class BusTripServiceImpl implements BusTripService {
     @Override
     public java.util.List<BusTripDto> findSuitableOutgoingTrips(Long hotelId, java.time.LocalDate checkInDate,
                                                                 String checkInTime, int timeBufferHours) {
-        // This is a simplified implementation
-        // In a real system, we would:
-        // 1. Find hotel bus stops to get nearby bus stops
-        // 2. Find bus routes that stop at those bus stops
-        // 3. Find bus trips on those routes
-        // 4. Filter trips that arrive early enough for check-in with buffer
-
-        // For now, we'll return all trips as a placeholder
-        return getAllBusTrips().stream()
+        return busTripRepository.findAll().stream()
                 .filter(trip -> {
                     // Simple time check: trip should arrive before check-in time minus buffer
                     LocalTime tripArrivalTime = trip.getArrivalTime().toLocalTime();
@@ -192,21 +192,18 @@ public class BusTripServiceImpl implements BusTripService {
 
                     return !tripArrivalTime.isAfter(latestArrivalTime);
                 })
+                .map(trip -> {
+                    BusTripDto dto = busTripMapper.busTripToBusTripDto(trip);
+                    dto.setPrice(pricingService.calculateBusTripPrice(trip).getTotal());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
     public java.util.List<BusTripDto> findSuitableReturnTrips(Long hotelId, java.time.LocalDate checkOutDate,
                                                               String checkOutTime, int timeBufferHours) {
-        // This is a simplified implementation
-        // In a real system, we would:
-        // 1. Find hotel bus stops to get nearby bus stops
-        // 2. Find bus routes that stop at those bus stops
-        // 3. Find bus trips on those routes
-        // 4. Filter trips that depart after check-out time plus buffer
-
-        // For now, we'll return all trips as a placeholder
-        return getAllBusTrips().stream()
+        return busTripRepository.findAll().stream()
                 .filter(trip -> {
                     // Simple time check: trip should depart after check-out time plus buffer
                     LocalTime tripDepartureTime = trip.getDepartureTime().toLocalTime();
@@ -214,6 +211,11 @@ public class BusTripServiceImpl implements BusTripService {
                     LocalTime earliestDepartureTime = checkOutTimeParsed.plusHours(timeBufferHours);
 
                     return !tripDepartureTime.isBefore(earliestDepartureTime);
+                })
+                .map(trip -> {
+                    BusTripDto dto = busTripMapper.busTripToBusTripDto(trip);
+                    dto.setPrice(pricingService.calculateBusTripPrice(trip).getTotal());
+                    return dto;
                 })
                 .collect(Collectors.toList());
     }
@@ -240,7 +242,7 @@ public class BusTripServiceImpl implements BusTripService {
                         bt.getRoute() != null && bt.getRoute().getDestinationStop() != null ? bt.getRoute().getDestinationStop().getName() : null,
                         bt.getDepartureTime(),
                         bt.getArrivalTime(),
-                        bt.getPrice(),
+                        pricingService.calculateBusTripPrice(bt).getTotal(),
                         bt.getStatus()
                 ))
                 .toList();

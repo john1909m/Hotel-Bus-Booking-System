@@ -19,4 +19,6 @@ public class BusDto {
     private String company;
     private Integer capacity;
     private String busType;
+    private java.math.BigDecimal priceFactor;
+    private java.util.Set<BusFeatureDto> features;
 }

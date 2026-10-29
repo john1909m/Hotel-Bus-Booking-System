@@ -41,6 +41,16 @@ public class BusTripController {
         return new ResponseEntity<>(busTrip, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}/price")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Get dynamic bus trip price quote breakdown",
+            description = "Calculates the dynamic price quote for a bus trip using bus priceFactor and active onboard feature surcharges. Formula: round2(trip.basePrice * bus.priceFactor + sum(active_feature.surcharge)). Rounding rule: BigDecimal HALF_UP, scale 2. This is a live quote, not a booking snapshot, and is not cached."
+    )
+    public ResponseEntity<com.spring.boot.dto.BusTripPriceBreakdownDto> getBusTripPriceQuote(@PathVariable Long id) {
+        com.spring.boot.dto.BusTripPriceBreakdownDto quote = busTripService.getBusTripPriceQuote(id);
+        return new ResponseEntity<>(quote, HttpStatus.OK);
+    }
+
     @GetMapping
     public ResponseEntity<org.springframework.data.web.PagedModel<BusTripDto>> getAllBusTrips(@ParameterObject Pageable pageable,
                                                            @RequestParam(required = false) Long busId,

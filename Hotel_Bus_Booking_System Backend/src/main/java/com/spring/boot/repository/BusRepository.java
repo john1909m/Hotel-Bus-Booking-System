@@ -36,4 +36,8 @@ public interface BusRepository extends JpaRepository<Bus, Long> {
         WHERE (:query = '' OR LOWER(b.busNumber) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(b.company) LIKE LOWER(CONCAT('%', :query, '%')))
         """)
     Page<Bus> findByQueryLimit(@Param("query") String query, @Param("pageable") Pageable pageable);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"features"})
+    @Query("SELECT b FROM Bus b WHERE b.id = :id")
+    java.util.Optional<Bus> findByIdWithFeatures(@Param("id") Long id);
 }
