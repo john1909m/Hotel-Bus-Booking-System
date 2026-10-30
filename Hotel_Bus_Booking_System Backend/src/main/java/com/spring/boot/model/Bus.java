@@ -38,7 +38,7 @@ public class Bus extends BaseEntity {
     private java.math.BigDecimal priceFactor = new java.math.BigDecimal("1.00");
 
     // Relationships
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "bus_features_link",
             joinColumns = @JoinColumn(name = "bus_id"),
