@@ -55,8 +55,14 @@ public class AiAssistantController {
     /**
      * Create a booking draft from the user's chosen selections.
      */
-    @io.swagger.v3.oas.annotations.Operation(summary = "Create a booking draft",
-               description = "Creates a draft reservation for hotel and optional bus transport. Enforces capacity rules (children under 12 are free).")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Create a booking draft",
+            description = "Creates a draft reservation for multiple hotel rooms (up to 10 in the same hotel) and optional bus transport seats. " +
+                    "Room capacity rule: children under 12 do not count towards hotel room capacity. " +
+                    "Bus transport rule: the number of seats per direction must equal the number of transport passengers, " +
+                    "and transport passengers must not exceed total hotel guests (adults + all children). " +
+                    "Children under 12 still occupy a seat on the bus and must be counted."
+    )
     @PostMapping("/bookings/drafts")
     public ResponseEntity<BookingDraftResponse> createBookingDraft(@Valid @RequestBody BookingDraftRequest draftRequest) {
         Long userId = currentUserId();

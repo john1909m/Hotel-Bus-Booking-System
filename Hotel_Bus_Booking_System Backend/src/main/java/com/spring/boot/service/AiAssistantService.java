@@ -90,6 +90,8 @@ public class AiAssistantService {
     private AiResponse buildResponse(String conversationId, String answer, AiToolContext context) {
         List<AiResult> results = context.getResults();
         List<String> missingInformation = context.getMissingInformation();
+        boolean selectionRequired = results.stream()
+                .anyMatch(r -> "ROOM".equals(r.type()) || "SEAT_MAP".equals(r.type()));
 
         return new AiResponse(
                 conversationId,
@@ -98,7 +100,8 @@ public class AiAssistantService {
                 results,                         // built from real tool outputs
                 missingInformation,              // reported by the reportMissingInformation tool
                 false,                           // drafts are created through the REST endpoint
-                null
+                null,
+                selectionRequired
         );
     }
 

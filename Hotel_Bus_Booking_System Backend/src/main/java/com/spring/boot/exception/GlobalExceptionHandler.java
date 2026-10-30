@@ -127,6 +127,38 @@ public class GlobalExceptionHandler {
                 .body(bundleMessageService.getMessage(ex.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(bundleMessageService.getMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DraftExpiredException.class)
+    @ResponseStatus(HttpStatus.GONE)
+    public ResponseEntity<String> handleDraftExpiredException(DraftExpiredException ex) {
+        return ResponseEntity
+                .status(HttpStatus.GONE)
+                .body(bundleMessageService.getMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DraftNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleDraftNotFoundException(DraftNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(bundleMessageService.getMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(PriceChangedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<String> handlePriceChangedException(PriceChangedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(bundleMessageService.getMessage(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<String> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {

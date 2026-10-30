@@ -1,37 +1,38 @@
 package com.spring.boot.service.impl;
 
-import com.spring.boot.dto.ai.BookingDraftRequest;
-import com.spring.boot.dto.ai.BookingDraftResponse;
-import com.spring.boot.dto.HotelBookingRequestDto;
-import com.spring.boot.dto.BusBookingRequestDto;
+import com.spring.boot.dto.ai.*;
 import com.spring.boot.dto.PaymentRequestDto;
-import com.spring.boot.dto.HotelBookingDto;
-import com.spring.boot.dto.BusBookingDto;
 import com.spring.boot.enums.BookingStatus;
+import com.spring.boot.enums.BusTripStatus;
+import com.spring.boot.enums.DraftSource;
 import com.spring.boot.enums.DraftStatus;
 import com.spring.boot.enums.PaymentMethod;
 import com.spring.boot.enums.PaymentStatus;
-import com.spring.boot.enums.SeatType;
 import com.spring.boot.exception.*;
+import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.*;
 import com.spring.boot.repository.*;
-import com.spring.boot.service.interfaces.*;
-import com.spring.boot.helper.BundleMessageService;
-import lombok.AllArgsConstructor;
+import com.spring.boot.service.interfaces.BookingDraftService;
+import com.spring.boot.service.interfaces.BusBookingService;
+import com.spring.boot.service.interfaces.HotelBookingService;
+import com.spring.boot.service.interfaces.PaymentService;
+import com.spring.boot.service.interfaces.PricingService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingDraftServiceImpl implements BookingDraftService {
+
+    private static final ZoneId CAIRO_ZONE = ZoneId.of("Africa/Cairo");
 
     private final BookingDraftRepository bookingDraftRepository;
     private final HotelRepository hotelRepository;
@@ -40,9 +41,12 @@ public class BookingDraftServiceImpl implements BookingDraftService {
     private final BusSeatRepository busSeatRepository;
     private final BusBookingRepository busBookingRepository;
     private final HotelBookingRepository hotelBookingRepository;
+    private final HotelBookingRoomRepository hotelBookingRoomRepository;
+    private final UserRepository userRepository;
     private final HotelBookingService hotelBookingService;
     private final BusBookingService busBookingService;
     private final PaymentService paymentService;
+    private final PricingService pricingService;
     private final BundleMessageService bundleMessageService;
 
     @Value("${ai.draft.ttl-minutes:30}")
@@ -55,9 +59,12 @@ public class BookingDraftServiceImpl implements BookingDraftService {
                                    BusSeatRepository busSeatRepository,
                                    BusBookingRepository busBookingRepository,
                                    HotelBookingRepository hotelBookingRepository,
+                                   HotelBookingRoomRepository hotelBookingRoomRepository,
+                                   UserRepository userRepository,
                                    HotelBookingService hotelBookingService,
                                    BusBookingService busBookingService,
                                    PaymentService paymentService,
+                                   PricingService pricingService,
                                    BundleMessageService bundleMessageService) {
         this.bookingDraftRepository = bookingDraftRepository;
         this.hotelRepository = hotelRepository;
@@ -66,54 +73,79 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         this.busSeatRepository = busSeatRepository;
         this.busBookingRepository = busBookingRepository;
         this.hotelBookingRepository = hotelBookingRepository;
+        this.hotelBookingRoomRepository = hotelBookingRoomRepository;
+        this.userRepository = userRepository;
         this.hotelBookingService = hotelBookingService;
         this.busBookingService = busBookingService;
         this.paymentService = paymentService;
+        this.pricingService = pricingService;
         this.bundleMessageService = bundleMessageService;
     }
 
     @Override
+    @Transactional
     public BookingDraftResponse createDraft(Long userId, BookingDraftRequest request) {
-        // Validate hotel exists
+        // 1. Validate hotel exists
         Hotel hotel = hotelRepository.findById(request.hotelId())
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
 
-        // Validate room exists and belongs to the hotel
-        Room room = roomRepository.findById(request.roomId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
-        if (!room.getHotel().getId().equals(hotel.getId())) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
+        // 2. Validate room selections (multiple rooms in the same hotel, max 10, no duplicates)
+        List<Long> requestedRoomIds = request.roomIds();
+        if (requestedRoomIds == null || requestedRoomIds.isEmpty()) {
+            throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.rooms_required"));
+        }
+        if (requestedRoomIds.size() > 10) {
+            throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.rooms_required"));
         }
 
-        // Validate dates
+        Set<Long> uniqueRoomIds = new HashSet<>(requestedRoomIds);
+        if (uniqueRoomIds.size() != requestedRoomIds.size()) {
+            throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.duplicate_selection"));
+        }
+
+        List<Room> rooms = roomRepository.findAllById(requestedRoomIds);
+        if (rooms.size() != requestedRoomIds.size()) {
+            throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.room_not_in_hotel"));
+        }
+
+        // All rooms must belong to the specified hotel
+        for (Room room : rooms) {
+            if (!room.getHotel().getId().equals(hotel.getId())) {
+                throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.room_not_in_hotel"));
+            }
+        }
+
+        // 3. Validate stay dates
         LocalDate checkIn = request.checkInDate();
         LocalDate checkOut = request.checkOutDate();
-        if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
+        if (checkOut == null || checkIn == null || checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
             throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_out_before_check_in"));
         }
         if (checkIn.isBefore(LocalDate.now())) {
             throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_in_past"));
         }
 
-        // Validate capacity with adults and child ages (free-under-12 rule)
-        hotelBookingService.validateRoomCapacity(room.getCapacity(),
-                request.adults(),
-                request.childAges(),
-                request.guests());
-
-        // Validate room availability (using the same logic as the booking flow)
-        if (!isRoomAvailable(room.getId(), checkIn, checkOut)) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_available"));
+        // 4. Validate per-room availability (reuse existing availability logic)
+        for (Room room : rooms) {
+            if (!hotelBookingService.isRoomAvailable(hotel.getId(), checkIn, checkOut, room.getId())) {
+                throw new RoomUnavailableException(
+                        bundleMessageService.getMessage("error.draft.room_unavailable", new Object[]{room.getRoomNumber()})
+                );
+            }
         }
 
-        // Validate transport (if present)
-        validateTransport(request, hotel);
-
-        // Calculate prices
-        BigDecimal hotelTotal = calculateHotelTotal(room, checkIn, checkOut);
-        BigDecimal goingTransportPrice = request.goingTripId() != null ? calculateTransportPrice(request.goingTripId()) : BigDecimal.ZERO;
-        BigDecimal returnTransportPrice = request.returnTripId() != null ? calculateTransportPrice(request.returnTripId()) : BigDecimal.ZERO;
-        BigDecimal totalPrice = hotelTotal.add(goingTransportPrice).add(returnTransportPrice);
+        // 5. Validate total capacity against required guest capacity
+        int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
+        int requiredCapacity = hotelBookingService.calculateRequiredCapacity(
+                request.adults(),
+                request.childAges(),
+                request.guests()
+        );
+        if (requiredCapacity > totalCapacity) {
+            throw new InvalidGuestCountException(
+                    bundleMessageService.getMessage("error.draft.capacity_exceeded", new Object[]{requiredCapacity, totalCapacity})
+            );
+        }
 
         int effectiveAdults = request.adults() != null
                 ? request.adults()
@@ -121,60 +153,197 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         List<Integer> effectiveChildAges = request.childAges() != null
                 ? request.childAges()
                 : Collections.emptyList();
-        int totalOccupants = effectiveAdults + effectiveChildAges.size();
+        int totalHotelGuests = effectiveAdults + effectiveChildAges.size();
 
-        // Create draft with snapshot
+        // 6. Validate transport selections (if present)
+        int transportPassengers = request.transportPassengers() != null
+                ? request.transportPassengers()
+                : totalHotelGuests;
+
+        BusTrip goingTrip = null;
+        List<BusSeat> goingSeatsList = new ArrayList<>();
+        BigDecimal goingTransportPrice = BigDecimal.ZERO;
+        if (request.goingTripId() != null) {
+            goingTrip = busTripRepository.findById(request.goingTripId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+            validateTripBookable(goingTrip);
+
+            List<Long> goingSeatIds = request.goingSeatIds();
+            if (goingSeatIds == null || goingSeatIds.isEmpty()) {
+                throw new InvalidSeatException(bundleMessageService.getMessage("error.invalid_seat"));
+            }
+            Set<Long> uniqueGoingSeats = new HashSet<>(goingSeatIds);
+            if (uniqueGoingSeats.size() != goingSeatIds.size()) {
+                throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.duplicate_selection"));
+            }
+
+            // Transport rule: seats per direction == transport passengers, and transport passengers <= total hotel guests
+            if (goingSeatIds.size() != transportPassengers || transportPassengers > totalHotelGuests) {
+                throw new InvalidSeatException(
+                        bundleMessageService.getMessage("error.draft.seat_count_mismatch", new Object[]{transportPassengers, goingSeatIds.size()})
+                );
+            }
+
+            for (Long seatId : goingSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId)
+                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
+                if (seat.getBus() == null || goingTrip.getBus() == null || !seat.getBus().getId().equals(goingTrip.getBus().getId())) {
+                    throw new InvalidSeatException(bundleMessageService.getMessage("error.draft.seat_from_other_bus"));
+                }
+                if (!busBookingService.isSeatAvailable(goingTrip.getId(), seatId)) {
+                    throw new SeatAlreadyBookedException(
+                            bundleMessageService.getMessage("error.draft.seat_unavailable", new Object[]{seat.getSeatNumber()})
+                    );
+                }
+                goingSeatsList.add(seat);
+            }
+
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(goingTrip).getTotal();
+            goingTransportPrice = pricePerSeat.multiply(BigDecimal.valueOf(goingSeatIds.size()));
+        }
+
+        BusTrip returnTrip = null;
+        List<BusSeat> returnSeatsList = new ArrayList<>();
+        BigDecimal returnTransportPrice = BigDecimal.ZERO;
+        if (request.returnTripId() != null) {
+            returnTrip = busTripRepository.findById(request.returnTripId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+            validateTripBookable(returnTrip);
+
+            List<Long> returnSeatIds = request.returnSeatIds();
+            if (returnSeatIds == null || returnSeatIds.isEmpty()) {
+                throw new InvalidSeatException(bundleMessageService.getMessage("error.invalid_seat"));
+            }
+            Set<Long> uniqueReturnSeats = new HashSet<>(returnSeatIds);
+            if (uniqueReturnSeats.size() != returnSeatIds.size()) {
+                throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.duplicate_selection"));
+            }
+
+            // Transport rule
+            if (returnSeatIds.size() != transportPassengers || transportPassengers > totalHotelGuests) {
+                throw new InvalidSeatException(
+                        bundleMessageService.getMessage("error.draft.seat_count_mismatch", new Object[]{transportPassengers, returnSeatIds.size()})
+                );
+            }
+
+            for (Long seatId : returnSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId)
+                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
+                if (seat.getBus() == null || returnTrip.getBus() == null || !seat.getBus().getId().equals(returnTrip.getBus().getId())) {
+                    throw new InvalidSeatException(bundleMessageService.getMessage("error.draft.seat_from_other_bus"));
+                }
+                if (!busBookingService.isSeatAvailable(returnTrip.getId(), seatId)) {
+                    throw new SeatAlreadyBookedException(
+                            bundleMessageService.getMessage("error.draft.seat_unavailable", new Object[]{seat.getSeatNumber()})
+                    );
+                }
+                returnSeatsList.add(seat);
+            }
+
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(returnTrip).getTotal();
+            returnTransportPrice = pricePerSeat.multiply(BigDecimal.valueOf(returnSeatIds.size()));
+        }
+
+        // 7. Calculate hotel price: nights * pricePerNight for each room
+        long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
+        BigDecimal hotelTotal = BigDecimal.ZERO;
+        List<DraftRoomSnapshot> roomSnapshots = new ArrayList<>();
+        for (Room room : rooms) {
+            BigDecimal roomTotal = BigDecimal.valueOf(room.getPricePerNight()).multiply(BigDecimal.valueOf(nights));
+            hotelTotal = hotelTotal.add(roomTotal);
+
+            roomSnapshots.add(DraftRoomSnapshot.builder()
+                    .roomId(room.getId())
+                    .roomNumber(room.getRoomNumber())
+                    .roomType(room.getRoomType() != null ? room.getRoomType().name() : null)
+                    .capacity(room.getCapacity())
+                    .pricePerNight(BigDecimal.valueOf(room.getPricePerNight()))
+                    .build());
+        }
+
+        BigDecimal totalPrice = hotelTotal.add(goingTransportPrice).add(returnTransportPrice);
+
+        // 8. Build Seat Snapshots
+        List<DraftSeatSnapshot> goingSeatSnapshots = goingSeatsList.stream()
+                .map(s -> DraftSeatSnapshot.builder()
+                        .seatId(s.getId())
+                        .seatNumber(s.getSeatNumber())
+                        .seatType(s.getSeatType() != null ? s.getSeatType().name() : null)
+                        .build())
+                .collect(Collectors.toList());
+
+        List<DraftSeatSnapshot> returnSeatSnapshots = returnSeatsList.stream()
+                .map(s -> DraftSeatSnapshot.builder()
+                        .seatId(s.getId())
+                        .seatNumber(s.getSeatNumber())
+                        .seatType(s.getSeatType() != null ? s.getSeatType().name() : null)
+                        .build())
+                .collect(Collectors.toList());
+
+        Room firstRoom = rooms.get(0);
+
+        // 9. Create draft entity
         BookingDraft draft = BookingDraft.builder()
                 .userId(userId)
                 .hotelId(hotel.getId())
                 .hotelName(hotel.getName())
-                .roomId(room.getId())
-                .roomNumber(room.getRoomNumber())
-                .roomCapacity(room.getCapacity())
-                .roomPricePerNight(BigDecimal.valueOf(room.getPricePerNight()))
+                // Legacy single-room fallback
+                .roomId(firstRoom.getId())
+                .roomNumber(firstRoom.getRoomNumber())
+                .roomCapacity(firstRoom.getCapacity())
+                .roomPricePerNight(BigDecimal.valueOf(firstRoom.getPricePerNight()))
+                .rooms(roomSnapshots)
                 .checkIn(checkIn)
                 .checkOut(checkOut)
-                .guests(totalOccupants)
+                .guests(totalHotelGuests)
+                .adults(effectiveAdults)
+                .childAges(new ArrayList<>(effectiveChildAges))
+                .transportPassengers(transportPassengers)
                 .outgoingTripId(request.goingTripId())
                 .returnTripId(request.returnTripId())
-                .outgoingSeatId(request.goingSeatId())
-                .returnSeatId(request.returnSeatId())
+                .outgoingSeatId(!goingSeatsList.isEmpty() ? goingSeatsList.get(0).getId() : null)
+                .returnSeatId(!returnSeatsList.isEmpty() ? returnSeatsList.get(0).getId() : null)
+                .goingSeats(goingSeatSnapshots)
+                .returnSeats(returnSeatSnapshots)
                 .hotelTotal(hotelTotal)
                 .goingTransportPrice(goingTransportPrice)
                 .returnTransportPrice(returnTransportPrice)
                 .totalPrice(totalPrice)
                 .status(DraftStatus.CREATED)
+                .source(DraftSource.USER_SELECTED)
                 .expiresAt(LocalDateTime.now().plusMinutes(draftTtlMinutes))
                 .deleted(false)
                 .build();
 
-        // Set transport snapshots
-        if (request.goingTripId() != null) {
-            TransportSnapshot goingSnapshot = validateAndGetGoingTransportSnapshot(request, hotel);
-            draft.setGoingSeatNumber(goingSnapshot.getSeatNumber());
-            draft.setGoingSeatType(goingSnapshot.getSeatType().toString());
-            draft.setGoingTripPrice(goingSnapshot.getTripPrice());
-            draft.setGoingTripOrigin(goingSnapshot.getOrigin());
-            draft.setGoingTripDestination(goingSnapshot.getDestination());
-            draft.setGoingTripDepartureTime(goingSnapshot.getDepartureTime());
-            draft.setGoingTripArrivalTime(goingSnapshot.getArrivalTime());
+        // Legacy transport snapshots
+        if (goingTrip != null && !goingSeatsList.isEmpty()) {
+            BusSeat firstGoingSeat = goingSeatsList.get(0);
+            draft.setGoingSeatNumber(firstGoingSeat.getSeatNumber());
+            draft.setGoingSeatType(firstGoingSeat.getSeatType() != null ? firstGoingSeat.getSeatType().toString() : null);
+            draft.setGoingTripPrice(pricingService.calculateBusTripPrice(goingTrip).getTotal());
+            if (goingTrip.getRoute() != null) {
+                draft.setGoingTripOrigin(goingTrip.getRoute().getOriginStop() != null ? goingTrip.getRoute().getOriginStop().getName() : null);
+                draft.setGoingTripDestination(goingTrip.getRoute().getDestinationStop() != null ? goingTrip.getRoute().getDestinationStop().getName() : null);
+            }
+            draft.setGoingTripDepartureTime(goingTrip.getDepartureTime());
+            draft.setGoingTripArrivalTime(goingTrip.getArrivalTime());
         }
-        if (request.returnTripId() != null) {
-            TransportSnapshot returnSnapshot = validateAndGetReturnTransportSnapshot(request, hotel);
-            draft.setReturnSeatNumber(returnSnapshot.getSeatNumber());
-            draft.setReturnSeatType(returnSnapshot.getSeatType().toString());
-            draft.setReturnTripPrice(returnSnapshot.getTripPrice());
-            draft.setReturnTripOrigin(returnSnapshot.getOrigin());
-            draft.setReturnTripDestination(returnSnapshot.getDestination());
-            draft.setReturnTripDepartureTime(returnSnapshot.getDepartureTime());
-            draft.setReturnTripArrivalTime(returnSnapshot.getArrivalTime());
+
+        if (returnTrip != null && !returnSeatsList.isEmpty()) {
+            BusSeat firstReturnSeat = returnSeatsList.get(0);
+            draft.setReturnSeatNumber(firstReturnSeat.getSeatNumber());
+            draft.setReturnSeatType(firstReturnSeat.getSeatType() != null ? firstReturnSeat.getSeatType().toString() : null);
+            draft.setReturnTripPrice(pricingService.calculateBusTripPrice(returnTrip).getTotal());
+            if (returnTrip.getRoute() != null) {
+                draft.setReturnTripOrigin(returnTrip.getRoute().getOriginStop() != null ? returnTrip.getRoute().getOriginStop().getName() : null);
+                draft.setReturnTripDestination(returnTrip.getRoute().getDestinationStop() != null ? returnTrip.getRoute().getDestinationStop().getName() : null);
+            }
+            draft.setReturnTripDepartureTime(returnTrip.getDepartureTime());
+            draft.setReturnTripArrivalTime(returnTrip.getArrivalTime());
         }
 
         BookingDraft savedDraft = bookingDraftRepository.save(draft);
-        BookingDraftResponse response = mapToResponse(savedDraft);
-        response.setAdults(effectiveAdults);
-        response.setChildAges(effectiveChildAges);
-        return response;
+        return mapToResponse(savedDraft);
     }
 
     @Override
@@ -182,14 +351,11 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         Optional<BookingDraft> draftOpt = bookingDraftRepository.findByIdAndUserId(draftId, userId);
         if (draftOpt.isPresent()) {
             BookingDraft draft = draftOpt.get();
-            // If expired, mark as expired and return empty
             if (draft.getExpiresAt().isBefore(LocalDateTime.now()) && draft.getStatus() == DraftStatus.CREATED) {
                 draft.setStatus(DraftStatus.EXPIRED);
                 bookingDraftRepository.save(draft);
                 return Optional.empty();
             }
-            // For other statuses (including CONFIRMED, CANCELLED) we still return the draft
-            // so the frontend can view the summary.
             return Optional.of(mapToResponse(draft));
         }
         return Optional.empty();
@@ -198,283 +364,339 @@ public class BookingDraftServiceImpl implements BookingDraftService {
     @Override
     @Transactional
     public BookingDraftResponse confirm(Long userId, Long draftId, String idempotencyKey) {
-        // Lock the draft for update
+        // 1. Lock the draft row for update
         BookingDraft draft = bookingDraftRepository.findByIdAndUserIdForUpdate(draftId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.draft_not_found")));
 
-        // Check if expired
+        // 2. Check expiry
         if (draft.getExpiresAt().isBefore(LocalDateTime.now()) && draft.getStatus() == DraftStatus.CREATED) {
             draft.setStatus(DraftStatus.EXPIRED);
             bookingDraftRepository.save(draft);
             throw new DraftExpiredException(bundleMessageService.getMessage("error.draft_expired"));
         }
 
-        // Check if already confirmed
+        // 3. Idempotency check: if already confirmed, return current state
         if (draft.getStatus() == DraftStatus.CONFIRMED) {
-            // Return the same result (we would need to store the previous response, but for simplicity we return current state)
-            // In a full implementation, we would store the confirmation result and return it.
             return mapToResponse(draft);
         }
 
-        // Check if expired or cancelled
         if (draft.getStatus() == DraftStatus.EXPIRED || draft.getStatus() == DraftStatus.CANCELLED) {
             throw new DraftExpiredException(bundleMessageService.getMessage("error.draft_expired"));
         }
 
-        // Re-validate room availability and transport availability
-        if (!isRoomAvailable(draft.getRoomId(), draft.getCheckIn(), draft.getCheckOut())) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_available"));
+        // 4. Source guard: only user-initiated drafts can be confirmed
+        if (draft.getSource() != DraftSource.USER_SELECTED) {
+            throw new AccessDeniedException(bundleMessageService.getMessage("error.access_denied"));
         }
-        validateTransportForConfirm(draft);
 
-        // Re-calculate total from database and compare with snapshot
-        BigDecimal recalculatedTotal = recalculateTotal(draft);
+        // 5. Re-check and lock rooms in ascending ID order
+        List<Long> roomIds = draft.getRoomIds();
+        if (roomIds.isEmpty()) {
+            throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.rooms_required"));
+        }
+        List<Long> sortedRoomIds = roomIds.stream().sorted().toList();
+        List<Room> rooms = roomRepository.findAllByIdsForUpdate(sortedRoomIds);
+        if (rooms.size() != sortedRoomIds.size()) {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found"));
+        }
+
+        for (Room room : rooms) {
+            if (!room.getHotel().getId().equals(draft.getHotelId())) {
+                throw new IllegalArgumentException(bundleMessageService.getMessage("error.draft.room_not_in_hotel"));
+            }
+            if (!hotelBookingService.isRoomAvailable(draft.getHotelId(), draft.getCheckIn(), draft.getCheckOut(), room.getId())) {
+                throw new RoomUnavailableException(
+                        bundleMessageService.getMessage("error.draft.room_unavailable", new Object[]{room.getRoomNumber()})
+                );
+            }
+        }
+
+        int totalCapacity = rooms.stream().mapToInt(Room::getCapacity).sum();
+        int requiredCapacity = hotelBookingService.calculateRequiredCapacity(
+                draft.getAdults(),
+                draft.getChildAges(),
+                draft.getGuests()
+        );
+        if (requiredCapacity > totalCapacity) {
+            throw new InvalidGuestCountException(
+                    bundleMessageService.getMessage("error.draft.capacity_exceeded", new Object[]{requiredCapacity, totalCapacity})
+            );
+        }
+
+        // 6. Re-check and lock bus trips / seats (trip locked once per direction)
+        BusTrip goingTrip = null;
+        List<Long> goingSeatIds = draft.getOutgoingSeatIds();
+        if (draft.getOutgoingTripId() != null && !goingSeatIds.isEmpty()) {
+            goingTrip = busTripRepository.findByIdForUpdate(draft.getOutgoingTripId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+            validateTripBookable(goingTrip);
+
+            int expectedPassengers = draft.getTransportPassengers() != null ? draft.getTransportPassengers() : draft.getGuests();
+            if (goingSeatIds.size() != expectedPassengers || goingSeatIds.size() > draft.getGuests()) {
+                throw new InvalidSeatException(
+                        bundleMessageService.getMessage("error.draft.seat_count_mismatch", new Object[]{expectedPassengers, goingSeatIds.size()})
+                );
+            }
+
+            for (Long seatId : goingSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId)
+                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
+                if (seat.getBus() == null || goingTrip.getBus() == null || !seat.getBus().getId().equals(goingTrip.getBus().getId())) {
+                    throw new InvalidSeatException(bundleMessageService.getMessage("error.draft.seat_from_other_bus"));
+                }
+                if (!busBookingService.isSeatAvailable(goingTrip.getId(), seatId)) {
+                    throw new SeatAlreadyBookedException(
+                            bundleMessageService.getMessage("error.draft.seat_unavailable", new Object[]{seat.getSeatNumber()})
+                    );
+                }
+            }
+        }
+
+        BusTrip returnTrip = null;
+        List<Long> returnSeatIds = draft.getReturnSeatIds();
+        if (draft.getReturnTripId() != null && !returnSeatIds.isEmpty()) {
+            returnTrip = busTripRepository.findByIdForUpdate(draft.getReturnTripId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+            validateTripBookable(returnTrip);
+
+            int expectedPassengers = draft.getTransportPassengers() != null ? draft.getTransportPassengers() : draft.getGuests();
+            if (returnSeatIds.size() != expectedPassengers || returnSeatIds.size() > draft.getGuests()) {
+                throw new InvalidSeatException(
+                        bundleMessageService.getMessage("error.draft.seat_count_mismatch", new Object[]{expectedPassengers, returnSeatIds.size()})
+                );
+            }
+
+            for (Long seatId : returnSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId)
+                        .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_seat_not_found")));
+                if (seat.getBus() == null || returnTrip.getBus() == null || !seat.getBus().getId().equals(returnTrip.getBus().getId())) {
+                    throw new InvalidSeatException(bundleMessageService.getMessage("error.draft.seat_from_other_bus"));
+                }
+                if (!busBookingService.isSeatAvailable(returnTrip.getId(), seatId)) {
+                    throw new SeatAlreadyBookedException(
+                            bundleMessageService.getMessage("error.draft.seat_unavailable", new Object[]{seat.getSeatNumber()})
+                    );
+                }
+            }
+        }
+
+        // 7. Fresh price recalculation against snapshot
+        long nights = java.time.temporal.ChronoUnit.DAYS.between(draft.getCheckIn(), draft.getCheckOut());
+        BigDecimal recalculatedHotelTotal = BigDecimal.ZERO;
+        for (Room room : rooms) {
+            BigDecimal roomTotal = BigDecimal.valueOf(room.getPricePerNight()).multiply(BigDecimal.valueOf(nights));
+            recalculatedHotelTotal = recalculatedHotelTotal.add(roomTotal);
+        }
+
+        BigDecimal recalculatedGoingPrice = BigDecimal.ZERO;
+        if (goingTrip != null && !goingSeatIds.isEmpty()) {
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(goingTrip).getTotal();
+            recalculatedGoingPrice = pricePerSeat.multiply(BigDecimal.valueOf(goingSeatIds.size()));
+        }
+
+        BigDecimal recalculatedReturnPrice = BigDecimal.ZERO;
+        if (returnTrip != null && !returnSeatIds.isEmpty()) {
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(returnTrip).getTotal();
+            recalculatedReturnPrice = pricePerSeat.multiply(BigDecimal.valueOf(returnSeatIds.size()));
+        }
+
+        BigDecimal recalculatedTotal = recalculatedHotelTotal.add(recalculatedGoingPrice).add(recalculatedReturnPrice);
         if (recalculatedTotal.compareTo(draft.getTotalPrice()) != 0) {
-            // Update the draft snapshot with new prices in a new transaction (requires_new)
-            updateDraftSnapshot(draft, recalculatedTotal);
-            throw new PriceChangedException(bundleMessageService.getMessage("error.price_changed"),
-                    recalculatedTotal);
+            draft.setTotalPrice(recalculatedTotal);
+            draft.setHotelTotal(recalculatedHotelTotal);
+            draft.setGoingTransportPrice(recalculatedGoingPrice);
+            draft.setReturnTransportPrice(recalculatedReturnPrice);
+            bookingDraftRepository.save(draft);
+            throw new PriceChangedException(bundleMessageService.getMessage("error.price_changed"), recalculatedTotal);
         }
 
-        // Create hotel booking
-        Long hotelBookingId = null;
-        if (draft.getRoomId() != null) {
-            HotelBookingRequestDto hbRequest = new HotelBookingRequestDto(
-                    draft.getCheckIn(),
-                    draft.getCheckOut(),
-                    draft.getGuests(),
-                    draft.getRoomId()
-            );
-            HotelBookingDto hotelBookingDto = hotelBookingService.createHotelBooking(hbRequest, userId);
-            hotelBookingId = hotelBookingDto.getId();
-            draft.setConfirmedBookingId(hotelBookingId);
+        // 8. Create all bookings in ONE atomic transaction
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
+        Hotel hotel = rooms.get(0).getHotel();
+
+        // Hotel booking
+        HotelBooking hotelBooking = new HotelBooking();
+        hotelBooking.setUser(user);
+        hotelBooking.setHotel(hotel);
+        hotelBooking.setRoom(rooms.get(0)); // Backward compatibility
+        hotelBooking.setCheckIn(draft.getCheckIn());
+        hotelBooking.setCheckOut(draft.getCheckOut());
+        hotelBooking.setGuests(draft.getGuests());
+        hotelBooking.setTotalPrice(recalculatedHotelTotal);
+        hotelBooking.setStatus(BookingStatus.PENDING);
+        HotelBooking savedHotelBooking = hotelBookingRepository.save(hotelBooking);
+
+        List<HotelBookingRoom> bookingRooms = new ArrayList<>();
+        for (Room room : rooms) {
+            HotelBookingRoom bookingRoom = new HotelBookingRoom();
+            bookingRoom.setHotelBooking(savedHotelBooking);
+            bookingRoom.setRoom(room);
+            bookingRoom.setPricePerNight(room.getPricePerNight());
+            bookingRooms.add(hotelBookingRoomRepository.save(bookingRoom));
+        }
+        savedHotelBooking.setBookingRooms(bookingRooms);
+        draft.setConfirmedBookingId(savedHotelBooking.getId());
+
+        // Bus bookings: one row PER seat
+        List<Long> busBookingIds = new ArrayList<>();
+        if (goingTrip != null) {
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(goingTrip).getTotal();
+            for (Long seatId : goingSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId).orElseThrow();
+                BusBooking busBooking = new BusBooking();
+                busBooking.setUser(user);
+                busBooking.setBusTrip(goingTrip);
+                busBooking.setSeat(seat);
+                busBooking.setStatus(BookingStatus.PENDING);
+                busBooking.setBookingDate(LocalDate.now(CAIRO_ZONE));
+                busBooking.setPrice(pricePerSeat);
+                BusBooking savedBb = busBookingRepository.save(busBooking);
+                busBookingIds.add(savedBb.getId());
+            }
         }
 
-        // Create going bus booking
-        Long goingBusBookingId = null;
-        if (draft.getOutgoingTripId() != null && draft.getOutgoingSeatId() != null) {
-            BusTrip trip = busTripRepository.findById(draft.getOutgoingTripId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-            BusBookingRequestDto bbRequest = new BusBookingRequestDto(
-                    LocalDate.now(),
-                    BookingStatus.PENDING,
-                    trip.getPrice(),
-                    userId,
-                    draft.getOutgoingTripId(),
-                    draft.getOutgoingSeatId()
-            );
-            BusBookingDto busBookingDto = busBookingService.createBusBooking(bbRequest);
-            goingBusBookingId = busBookingDto.getId();
+        if (returnTrip != null) {
+            BigDecimal pricePerSeat = pricingService.calculateBusTripPrice(returnTrip).getTotal();
+            for (Long seatId : returnSeatIds) {
+                BusSeat seat = busSeatRepository.findById(seatId).orElseThrow();
+                BusBooking busBooking = new BusBooking();
+                busBooking.setUser(user);
+                busBooking.setBusTrip(returnTrip);
+                busBooking.setSeat(seat);
+                busBooking.setStatus(BookingStatus.PENDING);
+                busBooking.setBookingDate(LocalDate.now(CAIRO_ZONE));
+                busBooking.setPrice(pricePerSeat);
+                BusBooking savedBb = busBookingRepository.save(busBooking);
+                busBookingIds.add(savedBb.getId());
+            }
         }
 
-        // Create return bus booking
-        Long returnBusBookingId = null;
-        if (draft.getReturnTripId() != null && draft.getReturnSeatId() != null) {
-            BusTrip trip = busTripRepository.findById(draft.getReturnTripId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-            BusBookingRequestDto bbRequest = new BusBookingRequestDto(
-                    LocalDate.now(),
-                    BookingStatus.PENDING,
-                    trip.getPrice(),
-                    userId,
-                    draft.getReturnTripId(),
-                    draft.getReturnSeatId()
-            );
-            BusBookingDto busBookingDto = busBookingService.createBusBooking(bbRequest);
-            returnBusBookingId = busBookingDto.getId();
+        // Payments
+        PaymentRequestDto hpRequest = new PaymentRequestDto();
+        hpRequest.setAmount(recalculatedHotelTotal);
+        hpRequest.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+        hpRequest.setPaymentStatus(PaymentStatus.PENDING);
+        hpRequest.setTransactionDate(LocalDateTime.now());
+        hpRequest.setHotelBookingId(savedHotelBooking.getId());
+        paymentService.createPayment(hpRequest);
+
+        for (Long bbId : busBookingIds) {
+            BusBooking bb = busBookingRepository.findById(bbId).orElseThrow();
+            PaymentRequestDto bpRequest = new PaymentRequestDto();
+            bpRequest.setAmount(bb.getPrice());
+            bpRequest.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+            bpRequest.setPaymentStatus(PaymentStatus.PENDING);
+            bpRequest.setTransactionDate(LocalDateTime.now());
+            bpRequest.setBusBookingId(bbId);
+            paymentService.createPayment(bpRequest);
         }
 
-        // Create payments
-        if (hotelBookingId != null) {
-            PaymentRequestDto pRequest = new PaymentRequestDto();
-            pRequest.setAmount(draft.getHotelTotal());
-            pRequest.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-            pRequest.setPaymentStatus(PaymentStatus.PENDING);
-            pRequest.setTransactionDate(LocalDateTime.now());
-            pRequest.setHotelBookingId(hotelBookingId);
-            paymentService.createPayment(pRequest);
-        }
-        if (goingBusBookingId != null) {
-            PaymentRequestDto pRequest = new PaymentRequestDto();
-            pRequest.setAmount(draft.getGoingTransportPrice());
-            pRequest.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-            pRequest.setPaymentStatus(PaymentStatus.PENDING);
-            pRequest.setTransactionDate(LocalDateTime.now());
-            pRequest.setBusBookingId(goingBusBookingId);
-            paymentService.createPayment(pRequest);
-        }
-        if (returnBusBookingId != null) {
-            PaymentRequestDto pRequest = new PaymentRequestDto();
-            pRequest.setAmount(draft.getReturnTransportPrice());
-            pRequest.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-            pRequest.setPaymentStatus(PaymentStatus.PENDING);
-            pRequest.setTransactionDate(LocalDateTime.now());
-            pRequest.setBusBookingId(returnBusBookingId);
-            paymentService.createPayment(pRequest);
-        }
-
-        // Mark draft as confirmed
+        // Mark draft confirmed
         draft.setStatus(DraftStatus.CONFIRMED);
-        // Store idempotency key if provided
-        if (idempotencyKey != null && !idempotencyKey.isEmpty()) {
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             draft.setIdempotencyKey(idempotencyKey);
         }
         bookingDraftRepository.save(draft);
 
-        // Return the draft response (which now includes confirmed booking ID)
-        return mapToResponse(draft);
+        BookingDraftResponse response = mapToResponse(draft);
+        response.setBusBookingIds(busBookingIds);
+        return response;
     }
 
-    // Helper methods
-
-    private boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut) {
-        // Use the same logic as in HotelBookingServiceImpl.isRoomAvailable
-        // We'll delegate to the hotel booking service or replicate the logic.
-        // For simplicity, we'll use the repository method if available, but we don't have one.
-        // We'll replicate the logic from HotelBookingServiceImpl.isRoomAvailable and isRoomAvailableExcludingSelf.
-        // Since we are in a draft, we don't exclude any booking.
-        Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
-        List<HotelBooking> overlapping = hotelBookingRepository.findOverlappingBookings(roomId, checkIn, checkOut);
-        return overlapping.isEmpty();
-    }
-
-    private BigDecimal calculateHotelTotal(Room room, LocalDate checkIn, LocalDate checkOut) {
-        long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
-        return BigDecimal.valueOf(room.getPricePerNight()).multiply(BigDecimal.valueOf(nights));
-    }
-
-    private BigDecimal calculateTransportPrice(Long tripId) {
-        BusTrip trip = busTripRepository.findById(tripId).orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-        // Assuming the price is per seat
-        return trip.getPrice();
-    }
-
-    private void validateTransport(BookingDraftRequest request, Hotel hotel) {
-        if (request.goingTripId() != null) {
-            validateGoingTransport(request.goingTripId(), request.goingSeatId(), hotel);
+    private void validateTripBookable(BusTrip trip) {
+        if (trip.getStatus() != null && trip.getStatus() != BusTripStatus.SCHEDULED) {
+            throw new BusTripUnavailableException(bundleMessageService.getMessage("error.trip_not_bookable"));
         }
-        if (request.returnTripId() != null) {
-            validateReturnTransport(request.returnTripId(), request.returnSeatId(), hotel);
+        LocalDateTime nowCairo = LocalDateTime.now(CAIRO_ZONE);
+        if (trip.getDepartureTime() != null && trip.getDepartureTime().isBefore(nowCairo)) {
+            throw new BusTripUnavailableException(bundleMessageService.getMessage("error.trip_departed"));
         }
-    }
-
-    private void validateGoingTransport(Long tripId, Long seatId, Hotel hotel) {
-        BusTrip trip = busTripRepository.findById(tripId).orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-        BusSeat seat = busSeatRepository.findById(seatId).orElseThrow(() -> new ResourceNotFoundException("Seat not found"));
-        // Validate seat belongs to the bus of the trip
-        if (!Objects.equals(seat.getBus().getId(), trip.getBus().getId())) {
-            throw new InvalidSeatException(bundleMessageService.getMessage("error.seat_not_belong_to_trip"));
-        }
-        // Validate seat is not taken (using the same logic as bus booking flow)
-        if (isSeatTaken(tripId, seatId)) {
-            throw new SeatAlreadyBookedException(bundleMessageService.getMessage("error.seat_already_booked"));
-        }
-        // Additional validation: trip should be suitable for the hotel and dates? We'll skip for simplicity.
-    }
-
-    private void validateReturnTransport(Long tripId, Long seatId, Hotel hotel) {
-        BusTrip trip = busTripRepository.findById(tripId).orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-        BusSeat seat = busSeatRepository.findById(seatId).orElseThrow(() -> new ResourceNotFoundException("Seat not found"));
-        if (!Objects.equals(seat.getBus().getId(), trip.getBus().getId())) {
-            throw new InvalidSeatException(bundleMessageService.getMessage("error.seat_not_belong_to_trip"));
-        }
-        if (isSeatTaken(tripId, seatId)) {
-            throw new SeatAlreadyBookedException(bundleMessageService.getMessage("error.seat_already_booked"));
-        }
-    }
-
-    private boolean isSeatTaken(Long tripId, Long seatId) {
-        // Use the same logic as in BusBookingService: check if the seat is booked for the trip
-        List<Long> bookedSeatIds = busBookingRepository.findBookedSeatIdsByTripId(tripId);
-        return bookedSeatIds.contains(seatId);
-    }
-
-    private void validateTransportForConfirm(BookingDraft draft) {
-        if (draft.getOutgoingTripId() != null) {
-            validateGoingTransport(draft.getOutgoingTripId(), draft.getOutgoingSeatId(), null);
-        }
-        if (draft.getReturnTripId() != null) {
-            validateReturnTransport(draft.getReturnTripId(), draft.getReturnSeatId(), null);
-        }
-    }
-
-    private BigDecimal recalculateTotal(BookingDraft draft) {
-        BigDecimal hotelTotal = BigDecimal.ZERO;
-        if (draft.getRoomId() != null) {
-            Room room = roomRepository.findById(draft.getRoomId()).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
-            hotelTotal = calculateHotelTotal(room, draft.getCheckIn(), draft.getCheckOut());
-        }
-        BigDecimal goingTransportPrice = draft.getOutgoingTripId() != null ? calculateTransportPrice(draft.getOutgoingTripId()) : BigDecimal.ZERO;
-        BigDecimal returnTransportPrice = draft.getReturnTripId() != null ? calculateTransportPrice(draft.getReturnTripId()) : BigDecimal.ZERO;
-        return hotelTotal.add(goingTransportPrice).add(returnTransportPrice);
-    }
-
-    @Transactional
-    public void updateDraftSnapshot(BookingDraft draft, BigDecimal newTotalPrice) {
-        // This method would be called in a new transaction (requires_new) to update the draft snapshot
-        // when the price has changed and we want to update the draft for the user to see the new price.
-        // For simplicity, we'll update the draft in the same transaction and rely on the outer transaction to rollback if needed.
-        // But the requirement says to update in a separate transaction so that the main transaction can rollback.
-        // We'll use a TransactionTemplate with PROPAGATION_REQUIRES_NEW.
-        // However, we don't have a TransactionTemplate injected. We'll simplify and update in the same transaction.
-        // In a real implementation, we would use a separate transaction.
-        draft.setTotalPrice(newTotalPrice);
-        // Also update the components if needed? We'll just update the total for now.
-        bookingDraftRepository.save(draft);
-    }
-
-    private TransportSnapshot validateAndGetGoingTransportSnapshot(BookingDraftRequest request, Hotel hotel) {
-        // This method validates and returns a snapshot of the going transport
-        validateGoingTransport(request.goingTripId(), request.goingSeatId(), hotel);
-        BusTrip trip = busTripRepository.findById(request.goingTripId()).orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-        BusSeat seat = busSeatRepository.findById(request.goingSeatId()).orElseThrow(() -> new ResourceNotFoundException("Seat not found"));
-        return new TransportSnapshot(
-                seat.getSeatNumber(),
-                seat.getSeatType(),
-                trip.getPrice(),
-                trip.getRoute().getOriginStop().getName(),
-                trip.getRoute().getDestinationStop().getName(),
-                trip.getDepartureTime(),
-                trip.getArrivalTime()
-        );
-    }
-
-    private TransportSnapshot validateAndGetReturnTransportSnapshot(BookingDraftRequest request, Hotel hotel) {
-        validateReturnTransport(request.returnTripId(), request.returnSeatId(), hotel);
-        BusTrip trip = busTripRepository.findById(request.returnTripId()).orElseThrow(() -> new ResourceNotFoundException("Trip not found"));
-        BusSeat seat = busSeatRepository.findById(request.returnSeatId()).orElseThrow(() -> new ResourceNotFoundException("Seat not found"));
-        return new TransportSnapshot(
-                seat.getSeatNumber(),
-                seat.getSeatType(),
-                trip.getPrice(),
-                trip.getRoute().getOriginStop().getName(),
-                trip.getRoute().getDestinationStop().getName(),
-                trip.getDepartureTime(),
-                trip.getArrivalTime()
-        );
     }
 
     private BookingDraftResponse mapToResponse(BookingDraft draft) {
-        // Map the draft to the response DTO
-        // We'll build the response with the required fields.
-        // For simplicity, we'll map only the basic fields and leave the transport details as null if not set.
-        // In a real implementation, we would map all the snapshot fields.
-        BookingDraftResponse response = BookingDraftResponse.builder()
+        List<DraftRoomSnapshotDto> roomDtos = new ArrayList<>();
+        if (draft.getRooms() != null && !draft.getRooms().isEmpty()) {
+            for (DraftRoomSnapshot r : draft.getRooms()) {
+                roomDtos.add(DraftRoomSnapshotDto.builder()
+                        .roomId(r.getRoomId())
+                        .roomNumber(r.getRoomNumber())
+                        .roomType(r.getRoomType())
+                        .capacity(r.getCapacity())
+                        .pricePerNight(r.getPricePerNight())
+                        .build());
+            }
+        } else if (draft.getRoomId() != null) {
+            roomDtos.add(DraftRoomSnapshotDto.builder()
+                    .roomId(draft.getRoomId())
+                    .roomNumber(draft.getRoomNumber())
+                    .roomType(null)
+                    .capacity(draft.getRoomCapacity())
+                    .pricePerNight(draft.getRoomPricePerNight())
+                    .build());
+        }
+
+        List<DraftSeatSnapshotDto> goingSeatDtos = new ArrayList<>();
+        if (draft.getGoingSeats() != null && !draft.getGoingSeats().isEmpty()) {
+            for (DraftSeatSnapshot s : draft.getGoingSeats()) {
+                goingSeatDtos.add(DraftSeatSnapshotDto.builder()
+                        .seatId(s.getSeatId())
+                        .seatNumber(s.getSeatNumber())
+                        .seatType(s.getSeatType())
+                        .build());
+            }
+        } else if (draft.getOutgoingSeatId() != null) {
+            goingSeatDtos.add(DraftSeatSnapshotDto.builder()
+                    .seatId(draft.getOutgoingSeatId())
+                    .seatNumber(draft.getGoingSeatNumber())
+                    .seatType(draft.getGoingSeatType())
+                    .build());
+        }
+
+        List<DraftSeatSnapshotDto> returnSeatDtos = new ArrayList<>();
+        if (draft.getReturnSeats() != null && !draft.getReturnSeats().isEmpty()) {
+            for (DraftSeatSnapshot s : draft.getReturnSeats()) {
+                returnSeatDtos.add(DraftSeatSnapshotDto.builder()
+                        .seatId(s.getSeatId())
+                        .seatNumber(s.getSeatNumber())
+                        .seatType(s.getSeatType())
+                        .build());
+            }
+        } else if (draft.getReturnSeatId() != null) {
+            returnSeatDtos.add(DraftSeatSnapshotDto.builder()
+                    .seatId(draft.getReturnSeatId())
+                    .seatNumber(draft.getReturnSeatNumber())
+                    .seatType(draft.getReturnSeatType())
+                    .build());
+        }
+
+        long nights = (draft.getCheckIn() != null && draft.getCheckOut() != null)
+                ? java.time.temporal.ChronoUnit.DAYS.between(draft.getCheckIn(), draft.getCheckOut())
+                : 0;
+
+        return BookingDraftResponse.builder()
                 .id(draft.getId())
                 .status(draft.getStatus())
                 .expiresAt(draft.getExpiresAt())
                 .hotelId(draft.getHotelId())
                 .hotelName(draft.getHotelName())
+                // Legacy single-room info
                 .roomId(draft.getRoomId())
                 .roomNumber(draft.getRoomNumber())
                 .roomCapacity(draft.getRoomCapacity())
                 .pricePerNight(draft.getRoomPricePerNight())
+                // Multi-room info
+                .roomIds(draft.getRoomIds())
+                .rooms(roomDtos)
+                // Dates and occupants
                 .checkInDate(draft.getCheckIn())
                 .checkOutDate(draft.getCheckOut())
-                .nights(java.time.temporal.ChronoUnit.DAYS.between(draft.getCheckIn(), draft.getCheckOut()))
+                .nights(nights)
                 .guests(draft.getGuests())
-                .adults(draft.getGuests())
-                .childAges(Collections.emptyList())
+                .adults(draft.getAdults() != null ? draft.getAdults() : draft.getGuests())
+                .childAges(draft.getChildAges() != null ? draft.getChildAges() : Collections.emptyList())
+                .transportPassengers(draft.getTransportPassengers())
+                // Going trip
                 .goingTripId(draft.getOutgoingTripId())
                 .goingSeatId(draft.getOutgoingSeatId())
                 .goingSeatNumber(draft.getGoingSeatNumber())
@@ -484,6 +706,9 @@ public class BookingDraftServiceImpl implements BookingDraftService {
                 .goingTripDestination(draft.getGoingTripDestination())
                 .goingTripDepartureTime(draft.getGoingTripDepartureTime())
                 .goingTripArrivalTime(draft.getGoingTripArrivalTime())
+                .goingSeatIds(draft.getOutgoingSeatIds())
+                .goingSeats(goingSeatDtos)
+                // Return trip
                 .returnTripId(draft.getReturnTripId())
                 .returnSeatId(draft.getReturnSeatId())
                 .returnSeatNumber(draft.getReturnSeatNumber())
@@ -493,20 +718,15 @@ public class BookingDraftServiceImpl implements BookingDraftService {
                 .returnTripDestination(draft.getReturnTripDestination())
                 .returnTripDepartureTime(draft.getReturnTripDepartureTime())
                 .returnTripArrivalTime(draft.getReturnTripArrivalTime())
+                .returnSeatIds(draft.getReturnSeatIds())
+                .returnSeats(returnSeatDtos)
+                // Pricing breakdown
                 .hotelTotal(draft.getHotelTotal())
                 .goingTransportPrice(draft.getGoingTransportPrice())
                 .returnTransportPrice(draft.getReturnTransportPrice())
                 .totalPrice(draft.getTotalPrice())
                 .bookingId(draft.getConfirmedBookingId())
                 .build();
-
-        // If we have room ID, we can fetch the room to get the room type
-        if (draft.getRoomId() != null) {
-            Room room = roomRepository.findById(draft.getRoomId()).orElseThrow();
-            response.setRoomType(room.getRoomType().toString());
-        }
-
-        return response;
     }
 
     @Override
@@ -528,61 +748,11 @@ public class BookingDraftServiceImpl implements BookingDraftService {
 
     @Override
     public void deleteDraft(Long id) {
-        // Soft delete using the repository's delete method (which uses @SQLDelete)
         bookingDraftRepository.deleteById(id);
     }
 
     @Override
     public BookingDraft updateDraft(BookingDraft draft) {
         return bookingDraftRepository.save(draft);
-    }
-
-    // Helper class for transport snapshot
-    private static class TransportSnapshot {
-        private final String seatNumber;
-        private final SeatType seatType;
-        private final BigDecimal tripPrice;
-        private final String origin;
-        private final String destination;
-        private final LocalDateTime departureTime;
-        private final LocalDateTime arrivalTime;
-
-        public TransportSnapshot(String seatNumber, SeatType seatType, BigDecimal tripPrice, String origin, String destination, LocalDateTime departureTime, LocalDateTime arrivalTime) {
-            this.seatNumber = seatNumber;
-            this.seatType = seatType;
-            this.tripPrice = tripPrice;
-            this.origin = origin;
-            this.destination = destination;
-            this.departureTime = departureTime;
-            this.arrivalTime = arrivalTime;
-        }
-
-        public String getSeatNumber() {
-            return seatNumber;
-        }
-
-        public SeatType getSeatType() {
-            return seatType;
-        }
-
-        public BigDecimal getTripPrice() {
-            return tripPrice;
-        }
-
-        public String getOrigin() {
-            return origin;
-        }
-
-        public String getDestination() {
-            return destination;
-        }
-
-        public LocalDateTime getDepartureTime() {
-            return departureTime;
-        }
-
-        public LocalDateTime getArrivalTime() {
-            return arrivalTime;
-        }
     }
 }
