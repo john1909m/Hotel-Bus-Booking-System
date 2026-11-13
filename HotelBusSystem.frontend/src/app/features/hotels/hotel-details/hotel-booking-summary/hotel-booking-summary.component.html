@@ -1,5 +1,5 @@
 <p-drawer
-  [(visible)]="visible"
+  [visible]="bookingState.summaryOpen()"
   (visibleChange)="onDrawerVisibleChange($event)"
   position="right"
   [modal]="true"
@@ -21,11 +21,11 @@
       </div>
       <div class="drawer-header-titles">
         <h2 class="drawer-title">Booking Summary</h2>
-        <span class="drawer-hotel-name">{{ hotel?.name || 'Hotel Reservation' }}</span>
+        <span class="drawer-hotel-name">{{ effectiveHotel()?.name || 'Hotel Reservation' }}</span>
       </div>
-      @if (selectedRooms.length > 0) {
+      @if (effectiveRooms().length > 0) {
         <span class="drawer-rooms-badge">
-          {{ selectedRooms.length }} {{ selectedRooms.length === 1 ? 'Room' : 'Rooms' }}
+          {{ effectiveRooms().length }} {{ effectiveRooms().length === 1 ? 'Room' : 'Rooms' }}
         </span>
       }
     </div>
@@ -55,22 +55,75 @@
           type="button"
           class="btn-change-dates"
           (click)="onChangeDates()"
-          title="Return to room catalog to change dates">
+          [attr.aria-expanded]="isEditingDates()"
+          title="Change stay dates inline">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <span>Change Dates</span>
+          <span>{{ isEditingDates() ? 'Done' : 'Change Dates' }}</span>
         </button>
       </div>
+
+      <!-- INLINE DATE PICKERS EDITOR -->
+      @if (isEditingDates()) {
+        <div class="inline-date-editor-card" role="region" aria-label="Inline Stay Date Editor">
+          <div class="editor-header">
+            <span class="editor-title">Update Stay Dates</span>
+            <span class="editor-sub">Dates are updated across your stay, room validity, and transportation options.</span>
+          </div>
+
+          <div class="editor-inputs-grid">
+            <div class="editor-field">
+              <label for="drawer-checkin-picker" class="editor-label">Check-in Date</label>
+              <p-datepicker
+                id="drawer-checkin-picker"
+                [ngModel]="editCheckInDate()"
+                (ngModelChange)="onCheckInSelect($event)"
+                [minDate]="minCheckInDate()"
+                dateFormat="yy-mm-dd"
+                [showIcon]="true"
+                iconDisplay="input"
+                appendTo="body"
+                styleClass="drawer-inline-datepicker"
+                [style]="{ width: '100%' }"
+                ariaLabel="Check-in Date">
+              </p-datepicker>
+            </div>
+
+            <div class="editor-field">
+              <label for="drawer-checkout-picker" class="editor-label">Check-out Date</label>
+              <p-datepicker
+                id="drawer-checkout-picker"
+                [ngModel]="editCheckOutDate()"
+                (ngModelChange)="onCheckOutSelect($event)"
+                [minDate]="minCheckOutDate()"
+                dateFormat="yy-mm-dd"
+                [showIcon]="true"
+                iconDisplay="input"
+                appendTo="body"
+                styleClass="drawer-inline-datepicker"
+                [style]="{ width: '100%' }"
+                ariaLabel="Check-out Date">
+              </p-datepicker>
+            </div>
+          </div>
+
+          @if (dateErrorMessage()) {
+            <div class="editor-error-row">
+              <p-message severity="error" [text]="dateErrorMessage()!"></p-message>
+            </div>
+          }
+        </div>
+      }
 
       <div class="stay-info-card">
         <div class="stay-dates-row">
           <div class="stay-date-block">
             <span class="date-label">Check-in</span>
-            <span class="date-val">{{ formattedCheckIn || checkIn || 'Not selected' }}</span>
+            <span class="date-val">{{ effectiveCheckIn() || 'Not selected' }}</span>
           </div>
 
           <div class="stay-arrow" aria-hidden="true">
@@ -82,17 +135,17 @@
 
           <div class="stay-date-block">
             <span class="date-label">Check-out</span>
-            <span class="date-val">{{ formattedCheckOut || checkOut || 'Not selected' }}</span>
+            <span class="date-val">{{ effectiveCheckOut() || 'Not selected' }}</span>
           </div>
         </div>
 
         <div class="stay-duration-row">
-          @if (stayNights !== null && stayNights > 0) {
+          @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
             <span class="stay-nights-badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
-              {{ stayNights }} {{ stayNights === 1 ? 'Night' : 'Nights' }} Stay
+              {{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }} Stay
             </span>
           } @else {
             <span class="stay-nights-badge stay-nights-badge--warning">
@@ -103,28 +156,424 @@
       </div>
     </section>
 
+    <!-- ── OPTIONAL TRANSPORTATION RECOMMENDATIONS (SHOWN AFTER STAGE A & BEFORE STAGE B) ── -->
+    <section class="drawer-section transport-recommendations-section" aria-labelledby="transport-recom-heading">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="step-tag step-tag--transport">🚌</span>
+          <h3 id="transport-recom-heading" class="section-title">Transportation Recommendations</h3>
+        </div>
+        <span class="transport-optional-pill">Optional Add-On</span>
+      </div>
+
+      <!-- Destination Bus Stop Info -->
+      @if (hotelBusStop()) {
+        <div class="resolved-dest-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>
+            Hotel Arrival Stop: <strong>{{ hotelBusStop()?.name }}</strong> ({{ hotelBusStop()?.city }})
+            @if (hotelBusDistance() !== null) {
+              &bull; {{ hotelBusDistance() | number:'1.1-2' }} km to hotel
+            }
+          </span>
+        </div>
+      }
+
+      <!-- Selected Transportation Banners -->
+      @if (bookingState.hasOutgoingTrip()) {
+        <div class="selected-transport-card">
+          <div class="transport-card-main">
+            <div class="selected-tag-row">
+              <span class="badge-direction">Outgoing Trip</span>
+              <strong class="carrier-name">{{ bookingState.transportationBooking()?.outgoing?.trip?.bus?.company || 'Bus Carrier' }}</strong>
+            </div>
+            <p class="transport-route-line">
+              {{ bookingState.transportationBooking()?.outgoing?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.outgoing?.destinationStop?.name }}
+            </p>
+            <div class="transport-details-row">
+              <span>Dep: {{ bookingState.transportationBooking()?.outgoing?.trip?.departureTime | date:'shortTime' }}</span>
+              <span>&bull;</span>
+              <span>Arr: {{ bookingState.transportationBooking()?.outgoing?.trip?.arrivalTime | date:'shortTime' }}</span>
+              <span>&bull;</span>
+              <span>{{ bookingState.transportationBooking()?.outgoing?.selectedSeats?.length }} Seats</span>
+            </div>
+          </div>
+          <div class="transport-card-aside">
+            <span class="transport-price-amount">{{ bookingState.outgoingTripPrice() | number:'1.2-2' }} EGP</span>
+            <button
+              type="button"
+              class="btn-remove-transport-item"
+              (click)="onRemoveOutgoingTrip()"
+              aria-label="Remove Outgoing Bus Trip">
+              &times; Remove
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (bookingState.hasReturnTrip()) {
+        <div class="selected-transport-card">
+          <div class="transport-card-main">
+            <div class="selected-tag-row">
+              <span class="badge-direction badge-direction--return">Return Trip</span>
+              <strong class="carrier-name">{{ bookingState.transportationBooking()?.returnTrip?.trip?.bus?.company || 'Bus Carrier' }}</strong>
+            </div>
+            <p class="transport-route-line">
+              {{ bookingState.transportationBooking()?.returnTrip?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.returnTrip?.destinationStop?.name }}
+            </p>
+            <div class="transport-details-row">
+              <span>Dep: {{ bookingState.transportationBooking()?.returnTrip?.trip?.departureTime | date:'shortTime' }}</span>
+              <span>&bull;</span>
+              <span>Arr: {{ bookingState.transportationBooking()?.returnTrip?.trip?.arrivalTime | date:'shortTime' }}</span>
+              <span>&bull;</span>
+              <span>{{ bookingState.transportationBooking()?.returnTrip?.selectedSeats?.length }} Seats</span>
+            </div>
+          </div>
+          <div class="transport-card-aside">
+            <span class="transport-price-amount">{{ bookingState.returnTripPrice() | number:'1.2-2' }} EGP</span>
+            <button
+              type="button"
+              class="btn-remove-transport-item"
+              (click)="onRemoveReturnTrip()"
+              aria-label="Remove Return Bus Trip">
+              &times; Remove
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Origin Bus Stop Dropdown -->
+      <div class="transport-origin-box">
+        <label for="drawerDepartureBusStop" class="origin-input-label">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+          <span>Select Your Departure Bus Stop:</span>
+        </label>
+
+        @if (isLoadingStops()) {
+          <p-skeleton width="100%" height="2.5rem" borderRadius="8px"></p-skeleton>
+        } @else {
+          <p-select
+            id="drawerDepartureBusStop"
+            [options]="busStopOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="selectedOriginStopId()"
+            (ngModelChange)="onOriginStopChange($event)"
+            placeholder="Choose departure terminal or city..."
+            [filter]="true"
+            filterPlaceholder="Search by terminal or city..."
+            styleClass="drawer-bus-select"
+            [style]="{ width: '100%' }"
+            aria-label="Departure Bus Stop">
+          </p-select>
+        }
+
+        @if (stopsLoadError()) {
+          <div class="transport-alert transport-alert--error" role="alert">
+            <span>{{ stopsLoadError() }}</span>
+          </div>
+        }
+
+        @if (destinationStopError()) {
+          <div class="transport-alert transport-alert--warn" role="alert">
+            <span>{{ destinationStopError() }}</span>
+          </div>
+        }
+
+        <!-- Date-based recommendations notice -->
+        <div class="transport-date-notice mt-2">
+          <p-message severity="info" text="Recommendations are based on your stay dates" styleClass="w-full"></p-message>
+        </div>
+      </div>
+
+      <!-- No Origin Selected Guide -->
+      @if (!selectedOriginStopId()) {
+        <div class="empty-transport-guide">
+          <div class="guide-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="6" width="18" height="12" rx="2"></rect>
+              <circle cx="7" cy="18" r="2"></circle>
+              <circle cx="17" cy="18" r="2"></circle>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+          </div>
+          <div class="guide-text">
+            <strong>Choose your departure stop above</strong>
+            <p>Select where you will travel from to view recommended bus trips that arrive on {{ effectiveCheckIn() || 'your stay date' }}.</p>
+          </div>
+        </div>
+      }
+
+      <!-- Direction Switcher Tabs -->
+      @if (selectedOriginStopId() && hotelBusStop()) {
+        <div class="direction-tabs-row" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="direction-tab"
+            [class.direction-tab--active]="activeTransportTab() === 'outgoing'"
+            [attr.aria-selected]="activeTransportTab() === 'outgoing'"
+            (click)="activeTransportTab.set('outgoing')">
+            <span>Outgoing Trips</span>
+            @if (outgoingTrips().length > 0) {
+              <span class="tab-badge">{{ outgoingTrips().length }}</span>
+            }
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="direction-tab"
+            [class.direction-tab--active]="activeTransportTab() === 'return'"
+            [attr.aria-selected]="activeTransportTab() === 'return'"
+            (click)="activeTransportTab.set('return')">
+            <span>Return Trips</span>
+            @if (returnTrips().length > 0) {
+              <span class="tab-badge">{{ returnTrips().length }}</span>
+            }
+          </button>
+        </div>
+
+        <!-- Trips Loading Skeleton -->
+        @if (isLoadingTrips()) {
+          <div class="trips-loading-skeleton" aria-busy="true" aria-label="Loading bus trips">
+            <p-skeleton width="100%" height="80px" borderRadius="10px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="100%" height="80px" borderRadius="10px"></p-skeleton>
+          </div>
+        }
+
+        <!-- Trips Search Error -->
+        @if (!isLoadingTrips() && tripsSearchError()) {
+          <div class="transport-alert transport-alert--error" role="alert">
+            <span>{{ tripsSearchError() }}</span>
+          </div>
+        }
+
+        <!-- OUTGOING TRIPS TAB CONTENT -->
+        @if (!isLoadingTrips() && activeTransportTab() === 'outgoing') {
+          @if (outgoingTrips().length > 0) {
+            <div class="trips-list-container">
+              @for (trip of outgoingTrips(); track trip.id) {
+                <div class="trip-summary-card" [class.card--preferred]="trip.isPreferredTiming">
+                  <div class="trip-card-top-row">
+                    @if (trip.timingBadgeLabel) {
+                      <span
+                        class="timing-pill"
+                        [class.timing-pill--preferred]="trip.isPreferredTiming"
+                        [class.timing-pill--standard]="!trip.isPreferredTiming">
+                        {{ trip.timingBadgeLabel }}
+                      </span>
+                    }
+                    <span class="trip-company-name">{{ trip.bus?.company || 'Express Coach' }}</span>
+                  </div>
+
+                  <div class="trip-times-grid">
+                    <div class="time-col">
+                      <span class="time-sub">Departure</span>
+                      <strong class="time-val">{{ trip.departureTime | date:'shortTime' }}</strong>
+                      <span class="stop-sub">{{ trip.originStop?.name }}</span>
+                    </div>
+                    <div class="duration-col">
+                      <span class="duration-tag">{{ trip.formattedDuration }}</span>
+                      <span class="arrow-indicator">&rarr;</span>
+                    </div>
+                    <div class="time-col">
+                      <span class="time-sub">Arrival</span>
+                      <strong class="time-val">{{ trip.arrivalTime | date:'shortTime' }}</strong>
+                      <span class="stop-sub">{{ trip.destinationStop?.name }}</span>
+                    </div>
+                  </div>
+
+                  <div class="trip-meta-line">
+                    @if (trip.distanceFromHotel !== null) {
+                      <span>📍 {{ trip.distanceFromHotel | number:'1.1-2' }} km to hotel</span>
+                    }
+                    <span>💺 {{ trip.availableSeatsCount }} seats available</span>
+                  </div>
+
+                  <div class="trip-card-bottom-row">
+                    <div class="price-stack">
+                      <strong class="ticket-price">{{ trip.price | number:'1.2-2' }} EGP</strong>
+                      <small class="ticket-sub">/ seat</small>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="btn-select-trip-action"
+                      [disabled]="trip.availableSeatsCount === 0"
+                      (click)="onSelectTrip(trip, 'outgoing')">
+                      {{ trip.availableSeatsCount === 0 ? 'Sold Out' : 'Select Trip' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (hasSearchedTrips()) {
+            <div class="empty-transport-state">
+              <p>No outgoing bus trips available arriving on {{ effectiveCheckIn() }}.</p>
+            </div>
+          }
+        }
+
+        <!-- RETURN TRIPS TAB CONTENT -->
+        @if (!isLoadingTrips() && activeTransportTab() === 'return') {
+          @if (returnTrips().length > 0) {
+            <div class="trips-list-container">
+              @for (trip of returnTrips(); track trip.id) {
+                <div class="trip-summary-card">
+                  <div class="trip-card-top-row">
+                    @if (trip.timingBadgeLabel) {
+                      <span class="timing-pill timing-pill--standard">
+                        {{ trip.timingBadgeLabel }}
+                      </span>
+                    }
+                    <span class="trip-company-name">{{ trip.bus?.company || 'Express Coach' }}</span>
+                  </div>
+
+                  <div class="trip-times-grid">
+                    <div class="time-col">
+                      <span class="time-sub">Departure</span>
+                      <strong class="time-val">{{ trip.departureTime | date:'shortTime' }}</strong>
+                      <span class="stop-sub">{{ trip.originStop?.name }}</span>
+                    </div>
+                    <div class="duration-col">
+                      <span class="duration-tag">{{ trip.formattedDuration }}</span>
+                      <span class="arrow-indicator">&rarr;</span>
+                    </div>
+                    <div class="time-col">
+                      <span class="time-sub">Arrival</span>
+                      <strong class="time-val">{{ trip.arrivalTime | date:'shortTime' }}</strong>
+                      <span class="stop-sub">{{ trip.destinationStop?.name }}</span>
+                    </div>
+                  </div>
+
+                  <div class="trip-meta-line">
+                    <span>💺 {{ trip.availableSeatsCount }} seats available</span>
+                  </div>
+
+                  <div class="trip-card-bottom-row">
+                    <div class="price-stack">
+                      <strong class="ticket-price">{{ trip.price | number:'1.2-2' }} EGP</strong>
+                      <small class="ticket-sub">/ seat</small>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="btn-select-trip-action"
+                      [disabled]="trip.availableSeatsCount === 0"
+                      (click)="onSelectTrip(trip, 'return')">
+                      {{ trip.availableSeatsCount === 0 ? 'Sold Out' : 'Select Trip' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (hasSearchedTrips()) {
+            <div class="empty-transport-state">
+              <p>No return bus trips available departing on {{ effectiveCheckOut() }}.</p>
+            </div>
+          }
+        }
+      }
+    </section>
+
     <!-- ── SECTION B: ROOM & GUEST ALLOCATION ── -->
     <section class="drawer-section rooms-allocation-section" aria-labelledby="rooms-alloc-heading">
       <div class="section-top-bar">
         <div class="section-title-wrap">
           <span class="step-tag">B</span>
           <h3 id="rooms-alloc-heading" class="section-title">
-            Room & Guest Allocation ({{ selectedRooms.length }})
+            Room & Guest Allocation ({{ effectiveRooms().length }})
           </h3>
         </div>
-        @if (selectedRooms.length > 1) {
+        @if (effectiveRooms().length > 1) {
           <button
             type="button"
             class="btn-auto-distribute"
-            (click)="autoDistribute.emit()"
+            (click)="onAutoDistribute()"
             title="Reset to automatic guest distribution across selected rooms">
             Auto-Distribute
           </button>
         }
       </div>
 
+      <!-- Synchronized Overall Reservation Guests Card -->
+      <div class="drawer-stay-guests-card">
+        <div class="drawer-guests-header">
+          <span class="drawer-guests-title">Reservation Guests</span>
+          <span class="drawer-guests-badge">
+            {{ effectiveAdultsCount() + effectiveChildren().length }} {{ (effectiveAdultsCount() + effectiveChildren().length) === 1 ? 'Guest' : 'Guests' }}
+          </span>
+        </div>
+        <div class="drawer-guest-selectors-row">
+          <div class="drawer-guest-ctrl">
+            <span class="ctrl-label">Adults (18+)</span>
+            <div class="drawer-stepper-mini">
+              <button
+                type="button"
+                class="btn-stepper-mini"
+                [disabled]="effectiveAdultsCount() <= (effectiveRooms().length > 0 ? effectiveRooms().length : 1)"
+                (click)="onDecreaseTotalAdults()"
+                aria-label="Decrease total adults">
+                &minus;
+              </button>
+              <span class="stepper-val">{{ effectiveAdultsCount() }}</span>
+              <button
+                type="button"
+                class="btn-stepper-mini"
+                [disabled]="isAdultsIncreaseDisabled"
+                (click)="onIncreaseTotalAdults()"
+                aria-label="Increase total adults">
+                &plus;
+              </button>
+            </div>
+          </div>
+
+          <div class="drawer-guest-ctrl">
+            <span class="ctrl-label">Children (0–17)</span>
+            <div class="drawer-stepper-mini">
+              <button
+                type="button"
+                class="btn-stepper-mini"
+                [disabled]="effectiveChildren().length === 0"
+                (click)="onDecreaseTotalChildren()"
+                aria-label="Decrease total children">
+                &minus;
+              </button>
+              <span class="stepper-val">{{ effectiveChildren().length }}</span>
+              <button
+                type="button"
+                class="btn-stepper-mini"
+                (click)="onIncreaseTotalChildren()"
+                aria-label="Increase total children">
+                &plus;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (effectiveRooms().length > 0) {
+          <div class="drawer-capacity-summary-line" [class.line--exceeded]="effectiveRequiredCapacity() > effectiveTotalRoomCapacity()">
+            @if (effectiveRequiredCapacity() > effectiveTotalRoomCapacity()) {
+              <span class="cap-warning-badge">
+                ⚠ Exceeds Combined Capacity: {{ effectiveRequiredCapacity() }} / {{ effectiveTotalRoomCapacity() }}
+              </span>
+            } @else {
+              <span class="cap-ok-badge">
+                ✓ Combined Capacity: {{ effectiveRequiredCapacity() }} / {{ effectiveTotalRoomCapacity() }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+
       <!-- Empty State -->
-      @if (selectedRooms.length === 0) {
+      @if (effectiveRooms().length === 0) {
         <div class="drawer-empty-rooms" role="status">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -132,14 +581,14 @@
           </svg>
           <h4>No Rooms Selected</h4>
           <p>Please browse the available rooms catalog and select at least one room to continue.</p>
-          <button type="button" class="btn btn-secondary btn-sm" (click)="closeDrawer()">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="onReturnToBrowsingRooms()">
             Browse Rooms
           </button>
         </div>
       } @else {
         <!-- Per-Room Cards -->
         <div class="drawer-rooms-list">
-          @for (room of selectedRooms; track room.id) {
+          @for (room of effectiveRooms(); track room.id) {
             <article class="drawer-room-card" [class.drawer-room-card--overload]="isRoomOverCapacity(room)">
               <!-- Room Card Header -->
               <div class="room-card-head">
@@ -170,7 +619,7 @@
                 </div>
               </div>
 
-              <!-- Capacity Indicator -->
+              <!-- Capacity Status -->
               <div class="room-occupancy-status" [class.status--overload]="isRoomOverCapacity(room)">
                 @if (isRoomOverCapacity(room)) {
                   <span class="occupancy-pill pill--danger">
@@ -183,7 +632,7 @@
                 }
               </div>
 
-              <!-- Adults Allocation for this Room -->
+              <!-- Adults Allocation -->
               <div class="room-allocation-block">
                 <div class="alloc-row">
                   <div class="alloc-meta">
@@ -194,7 +643,7 @@
                     <button
                       type="button"
                       class="btn-stepper-mini"
-                      [disabled]="getRoomAdults(room.id) <= 1"
+                      [disabled]="!canDecreaseAdults(room)"
                       (click)="onDecreaseAdults(room.id)"
                       [attr.aria-label]="'Decrease adults in room ' + room.roomNumber">
                       &minus;
@@ -203,6 +652,7 @@
                     <button
                       type="button"
                       class="btn-stepper-mini"
+                      [disabled]="!canIncreaseAdults(room)"
                       (click)="onIncreaseAdults(room.id)"
                       [attr.aria-label]="'Increase adults in room ' + room.roomNumber">
                       &plus;
@@ -211,7 +661,7 @@
                 </div>
               </div>
 
-              <!-- Children Allocation for this Room -->
+              <!-- Children Allocation -->
               <div class="room-children-block">
                 <div class="children-block-header">
                   <div>
@@ -221,6 +671,7 @@
                   <button
                     type="button"
                     class="btn-add-child-room"
+                    [disabled]="!canAddChild(room)"
                     (click)="onAddChild(room.id)"
                     [attr.aria-label]="'Add child to room ' + room.roomNumber">
                     + Add Child
@@ -242,9 +693,9 @@
                             [attr.aria-label]="'Select age for Child ' + (cIdx + 1) + ' in room ' + room.roomNumber">
                             <option value="" disabled [selected]="child.age === null">Select Age (0–17)</option>
                             @for (age of availableChildAges; track age) {
-                              <option [value]="age" [selected]="child.age === age">
+                              <option [value]="age" [selected]="child.age === age" [disabled]="isChildAgeDisabled(child, age, room)">
                                 {{ age === 0 ? 'Under 1 (0 yrs)' : age + ' yrs' }}
-                                {{ age <= 11 ? '— Free' : '— Capacity +1' }}
+                                {{ age <= 11 ? '— Free' : (isChildAgeDisabled(child, age, room) ? '— Capacity Full' : '— Capacity +1') }}
                               </option>
                             }
                           </select>
@@ -263,10 +714,10 @@
                 }
               </div>
 
-              <!-- Stay Cost Subtotal for this Room -->
+              <!-- Stay Cost Subtotal -->
               @if (getRoomStayCost(room); as roomCost) {
                 <div class="room-stay-subtotal">
-                  <span>Room Stay Subtotal ({{ stayNights }} nights):</span>
+                  <span>Room Stay Subtotal ({{ effectiveStayNights() }} nights):</span>
                   <strong>{{ roomCost | number:'1.2-2' }} EGP</strong>
                 </div>
               }
@@ -285,7 +736,7 @@
 
       <div class="pricing-card">
         <div class="pricing-rows-group">
-          @for (room of selectedRooms; track room.id) {
+          @for (room of effectiveRooms(); track room.id) {
             <div class="price-line">
               <span class="price-line-title">Room #{{ room.roomNumber }} ({{ room.roomType }})</span>
               <span class="price-line-val">{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
@@ -294,29 +745,78 @@
 
           <div class="price-line total-nightly-line">
             <span>Combined Nightly Rate:</span>
-            <strong>{{ totalNightlyRate | number:'1.2-2' }} EGP</strong>
+            <strong>{{ effectiveTotalNightlyRate() | number:'1.2-2' }} EGP</strong>
           </div>
 
           <div class="price-line duration-line">
             <span>Stay Duration:</span>
-            @if (stayNights !== null && stayNights > 0) {
-              <span>{{ stayNights }} {{ stayNights === 1 ? 'Night' : 'Nights' }}</span>
+            @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
+              <span>{{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }}</span>
             } @else {
               <span class="text-pending">Select valid dates</span>
             }
           </div>
+
+          <div class="price-line hotel-subtotal-line">
+            <span>Hotel Subtotal:</span>
+            <strong>{{ (effectiveTotalStayCost() || 0) | number:'1.2-2' }} EGP</strong>
+          </div>
         </div>
+
+        <!-- Optional Transportation Breakdown Rows (only shown when selected) -->
+        @if (bookingState.hasTransportation()) {
+          <div class="price-separator"></div>
+
+          <div class="transportation-breakdown-section">
+            <span class="transport-breakdown-heading">Optional Transportation:</span>
+
+            @if (bookingState.hasOutgoingTrip()) {
+              <div class="transport-subtotal-row">
+                <div class="transport-breakdown-info">
+                  <span class="badge badge-mini">Outgoing</span>
+                  <span>{{ bookingState.transportationBooking()?.outgoing?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.outgoing?.destinationStop?.name }} ({{ bookingState.transportationBooking()?.outgoing?.selectedSeats?.length }} seats)</span>
+                </div>
+                <div class="transport-breakdown-price">
+                  <strong>{{ bookingState.outgoingTripPrice() | number:'1.2-2' }} EGP</strong>
+                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveOutgoingTrip()" aria-label="Remove Outgoing Bus">&times;</button>
+                </div>
+              </div>
+            }
+
+            @if (bookingState.hasReturnTrip()) {
+              <div class="transport-subtotal-row">
+                <div class="transport-breakdown-info">
+                  <span class="badge badge-mini badge-mini--return">Return</span>
+                  <span>{{ bookingState.transportationBooking()?.returnTrip?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.returnTrip?.destinationStop?.name }} ({{ bookingState.transportationBooking()?.returnTrip?.selectedSeats?.length }} seats)</span>
+                </div>
+                <div class="transport-breakdown-price">
+                  <strong>{{ bookingState.returnTripPrice() | number:'1.2-2' }} EGP</strong>
+                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveReturnTrip()" aria-label="Remove Return Bus">&times;</button>
+                </div>
+              </div>
+            }
+
+            <div class="transport-subtotal-total">
+              <span>Transportation Subtotal:</span>
+              <strong>{{ bookingState.transportationPrice() | number:'1.2-2' }} EGP</strong>
+            </div>
+          </div>
+        }
 
         <div class="price-separator"></div>
 
         <div class="grand-total-block">
           <div class="grand-total-labels">
-            <span class="total-label">Total Estimated Stay</span>
-            <small class="total-note">All selected rooms for full stay</small>
+            <span class="total-label">
+              {{ bookingState.hasTransportation() ? 'Grand Total' : 'Total Estimated Stay' }}
+            </span>
+            <small class="total-note">
+              {{ bookingState.hasTransportation() ? 'Hotel accommodation plus bus transportation' : 'All selected rooms for full stay' }}
+            </small>
           </div>
           <div class="grand-total-amount">
-            @if (totalStayCost !== null && totalStayCost > 0) {
-              <span class="total-number">{{ totalStayCost | number:'1.2-2' }}</span>
+            @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0 && effectiveTotalStayCost() !== null) {
+              <span class="total-number">{{ (effectiveTotalStayCost()! + bookingState.transportationPrice()) | number:'1.2-2' }}</span>
               <span class="total-currency">EGP</span>
             } @else {
               <span class="total-pending">Dates Required</span>
@@ -326,7 +826,7 @@
       </div>
     </section>
 
-    <!-- ── SECTION D: BOOKING CONFIRMATION ── -->
+    <!-- ── SECTION D: CONFIRMATION ── -->
     <section class="drawer-section confirmation-section" aria-labelledby="confirmation-heading">
       <div class="section-title-wrap">
         <span class="step-tag">D</span>
@@ -334,7 +834,7 @@
       </div>
 
       <!-- Validation Errors Checklist -->
-      @if (validationErrors.length > 0 && selectedRooms.length > 0) {
+      @if (validationErrors.length > 0 && effectiveRooms().length > 0) {
         <div class="validation-box" role="alert">
           <div class="validation-box-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -352,7 +852,7 @@
         </div>
       }
 
-      <!-- Backend / Submission Error Callout -->
+      <!-- Backend Error Callout -->
       @if (errorMessage) {
         <div class="error-callout" role="alert">
           <strong>Notice:</strong>
@@ -366,38 +866,69 @@
       }
 
       <!-- Unauthenticated Guest Note -->
-      @if (!isAuthenticated) {
+      @if (!isAuthenticated && !authService.isAuthenticated()) {
         <div class="guest-notice" role="note">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <span>You will be redirected to sign in. Your booking selections will be securely preserved.</span>
+          <span>You can proceed to payment. If not signed in, you'll be prompted during checkout.</span>
         </div>
       }
 
-      <!-- Primary Confirmation Button -->
-      <button
-        pButton
-        type="button"
-        id="btn-drawer-confirm-booking"
-        class="btn-drawer-submit"
-        [disabled]="!canSubmit || isSubmitting"
-        (click)="onSubmit()"
-        [attr.aria-busy]="isSubmitting">
-        @if (isSubmitting) {
-          <span>{{ isEditMode ? 'Updating Reservation...' : 'Creating Reservation...' }}</span>
-        } @else {
-          <span>{{ isEditMode ? 'Update Hotel Booking #' + editingBookingId : 'Confirm Hotel Booking' }}</span>
-        }
-      </button>
+      <!-- Action Buttons -->
+      <div class="drawer-actions-stack">
+        <button
+          pButton
+          type="button"
+          id="btn-drawer-continue-payment"
+          class="btn-drawer-submit"
+          severity="primary"
+          [disabled]="effectiveRooms().length === 0 || !canSubmit || isSubmitting || validationErrors.length > 0"
+          (click)="onContinueToPayment()"
+          aria-label="Continue to payment page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <span>Continue to Payment</span>
+        </button>
 
-      <button
-        type="button"
-        class="btn-drawer-keep-browsing"
-        (click)="closeDrawer()">
-        Return to Browsing Rooms
-      </button>
+        <button
+          pButton
+          type="button"
+          id="btn-drawer-clear-summary"
+          class="btn-drawer-clear"
+          severity="danger"
+          [outlined]="true"
+          (click)="onClearSummary()"
+          aria-label="Clear all hotel and transportation selections">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Clear Summary</span>
+        </button>
+
+        <button
+          pButton
+          type="button"
+          id="btn-drawer-keep-browsing"
+          class="btn-drawer-keep-browsing"
+          severity="secondary"
+          [outlined]="true"
+          (click)="onReturnToBrowsingRooms()"
+          aria-label="Return to browsing rooms">
+          Return to Browsing Rooms
+        </button>
+      </div>
     </section>
   </div>
 </p-drawer>
+
+<!-- ── SEAT SELECTION MODAL INTEGRATION ── -->
+<app-bus-seat-selection
+  [trip]="activeTripForSeats()"
+  [(visible)]="seatDialogVisible"
+  (bookingComplete)="onSeatsConfirmed($event)">
+</app-bus-seat-selection>

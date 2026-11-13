@@ -9,6 +9,7 @@ import { RoomService } from '../../../core/services/room.service';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { HotelImageService } from '../../../core/services/hotel-image.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { BookingStateService } from '../../../core/services/booking-state.service';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
 
@@ -108,6 +109,7 @@ describe('HotelDetails - Customer Gallery (Phase C)', () => {
         { provide: HotelBookingService, useValue: mockHotelBookingService },
         { provide: HotelImageService, useValue: mockHotelImageService },
         { provide: AuthService, useValue: mockAuthService },
+        BookingStateService,
       ],
     });
 

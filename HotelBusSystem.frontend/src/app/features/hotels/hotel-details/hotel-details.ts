@@ -7,6 +7,8 @@ import {
   inject,
   signal,
   computed,
+  effect,
+  untracked,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
@@ -28,15 +30,13 @@ import { RoomDTO, roomType } from '../../../core/models/Room/room.model';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
 import { PagedModelRoomDto } from '../../../core/models/Pagination/roomPage.model';
 import { HotelBookingDTO, HotelBookingRequestDTO } from '../../../core/models/Hotel/hotel-booking.model';
-import { HotelBookingSummaryComponent } from './hotel-booking-summary/hotel-booking-summary.component';
 import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
 
 import { ImageLightboxComponent } from '../../../shared/components/image-lightbox/image-lightbox.component';
+import { BookingStateService, ChildGuestState } from '../../../core/services/booking-state.service';
+import { HotelTransportationRecommendationsComponent } from './hotel-transportation-recommendations/hotel-transportation-recommendations.component';
 
-export interface ChildGuest {
-  id: number;
-  age: number | null;
-}
+export type ChildGuest = ChildGuestState;
 
 export interface HotelBookingDraft {
   hotelId: number;
@@ -67,7 +67,7 @@ type CapacityValidationStatus = 'no-rooms' | 'missing-age' | 'exceeded' | 'valid
     MessageModule,
     DialogModule,
     ProgressSpinnerModule,
-    HotelBookingSummaryComponent,
+    HotelTransportationRecommendationsComponent,
     SafeImageUrlPipe,
     ImageLightboxComponent,
   ],
@@ -83,6 +83,7 @@ export class HotelDetails implements OnInit, OnDestroy {
   private readonly hotelImageService = inject(HotelImageService);
   readonly hotelBookingService = inject(HotelBookingService);
   readonly authService = inject(AuthService);
+  readonly bookingStateService = inject(BookingStateService);
   private readonly destroy$ = new Subject<void>();
 
   // ── Hotel State ─────────────────────────────────────────────
@@ -201,20 +202,20 @@ export class HotelDetails implements OnInit, OnDestroy {
   readonly sidebarVisible = signal<boolean>(false);
 
   // ── Stay Dates State ─────────────────────────────────────────
-  readonly checkInInput = signal<string>('');
-  readonly checkOutInput = signal<string>('');
+  readonly checkInInput = this.bookingStateService.checkIn;
+  readonly checkOutInput = this.bookingStateService.checkOut;
   readonly minCheckInDate = signal<string>(this.getTodayString());
 
   // Unified Parsed Stay Dates computation
   readonly parsedDates = computed(() => {
-    const inStr = this.checkInInput();
-    const outStr = this.checkOutInput();
+    const inStr = this.checkInInput().trim();
+    const outStr = this.checkOutInput().trim();
     const dIn = this.parseLocalDate(inStr);
     const dOut = this.parseLocalDate(outStr);
     const today = this.parseLocalDate(this.getTodayString());
-    const isValid = !!(dIn && dOut && today && dIn >= today && dOut > dIn);
+    const isValid = !!(dIn && dOut && today && dIn.getTime() >= today.getTime() && dOut.getTime() > dIn.getTime());
     const nights =
-      dIn && dOut && dOut > dIn
+      dIn && dOut && dOut.getTime() > dIn.getTime()
         ? Math.round((dOut.getTime() - dIn.getTime()) / (1000 * 60 * 60 * 24))
         : null;
     return { inStr, outStr, dIn, dOut, today, isValid, nights };
@@ -246,6 +247,130 @@ export class HotelDetails implements OnInit, OnDestroy {
     return d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null;
   });
 
+  // ── Booked Rooms & Availability State ───────────────────────
+  readonly hotelBookings = signal<HotelBookingDTO[]>([]);
+  readonly isBookingsLoading = signal<boolean>(true);
+
+  normalizeDate(val: unknown): string {
+    if (!val) return '';
+    if (typeof val === 'string') {
+      return val.includes('T') ? val.split('T')[0] : val.trim();
+    }
+    if (Array.isArray(val) && val.length >= 3) {
+      const y = val[0];
+      const m = String(val[1]).padStart(2, '0');
+      const d = String(val[2]).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return '';
+  }
+
+  readonly activeBookedRoomIds = computed<Set<number>>(() => {
+    const booked = new Set<number>();
+    const inStr = this.checkInInput().trim();
+    const outStr = this.checkOutInput().trim();
+    const bookings = this.hotelBookings();
+    const currentRooms = this.rooms();
+
+    // Map roomNumber to room.id so we accurately link bookings by room number as well as ID
+    const roomNumberToId = new Map<string, number>();
+    for (const rm of currentRooms) {
+      if (rm.roomNumber) {
+        roomNumberToId.set(String(rm.roomNumber).trim().toLowerCase(), rm.id);
+      }
+    }
+
+    for (const b of bookings) {
+      const status = String(b.status || '').trim().toUpperCase();
+      // Only CONFIRMED and PENDING bookings occupy rooms according to backend rules (exclude CANCELLED & COMPLETED)
+      if (status !== 'CONFIRMED' && status !== 'PENDING') continue;
+
+      const bIn = this.normalizeDate(b.checkIn);
+      const bOut = this.normalizeDate(b.checkOut);
+      if (!bIn || !bOut) continue;
+
+      let overlaps = false;
+      if (inStr && outStr) {
+        // Requested stay [inStr, outStr) overlaps existing booking [bIn, bOut)
+        // iff existingCheckIn < requestedCheckOut && existingCheckOut > requestedCheckIn
+        overlaps = bIn < outStr && bOut > inStr;
+      } else {
+        // If dates are not yet selected, detect bookings that are currently occupied today
+        const today = this.getTodayString();
+        overlaps = bIn <= today && bOut > today;
+      }
+
+      if (overlaps) {
+        // 1. Process multi-room booking list
+        if (b.rooms && b.rooms.length > 0) {
+          for (const r of b.rooms) {
+            const rId = Number(r.roomId ?? r.id);
+            if (rId) booked.add(rId);
+            if (r.roomNumber) {
+              const mapped = roomNumberToId.get(String(r.roomNumber).trim().toLowerCase());
+              if (mapped) booked.add(mapped);
+            }
+          }
+        }
+
+        // 2. Process legacy single room reference (b.roomId)
+        if (b.roomId) {
+          const rId = Number(b.roomId);
+          booked.add(rId);
+          const mapped = roomNumberToId.get(String(b.roomId).trim().toLowerCase());
+          if (mapped) booked.add(mapped);
+        }
+
+        // 3. Process direct room object if present
+        const directRoom = (b as any).room;
+        if (directRoom) {
+          const dId = Number(directRoom.id);
+          if (dId) booked.add(dId);
+          if (directRoom.roomNumber) {
+            const mapped = roomNumberToId.get(String(directRoom.roomNumber).trim().toLowerCase());
+            if (mapped) booked.add(mapped);
+          }
+        }
+
+        // 4. Process direct roomNumber if present on booking
+        const directNum = (b as any).roomNumber;
+        if (directNum) {
+          const mapped = roomNumberToId.get(String(directNum).trim().toLowerCase());
+          if (mapped) booked.add(mapped);
+        }
+      }
+    }
+
+    return booked;
+  });
+
+  isRoomBooked(roomId: number, roomNumber?: string): boolean {
+    const booked = this.activeBookedRoomIds();
+    const id = Number(roomId);
+    if (booked.has(id)) return true;
+    if (roomNumber) {
+      const match = this.rooms().find(
+        (r) => String(r.roomNumber).trim().toLowerCase() === String(roomNumber).trim().toLowerCase()
+      );
+      if (match && booked.has(match.id)) return true;
+    }
+    return false;
+  }
+
+  reconcileSelectedRoomsAvailability(): void {
+    const booked = this.activeBookedRoomIds();
+    const current = this.selectedRooms();
+    const availableOnly = current.filter((r) => !this.isRoomBooked(r.id, r.roomNumber));
+    if (availableOnly.length !== current.length) {
+      this.selectedRooms.set(availableOnly);
+      this.syncAdultsAllocationToRooms(this.adultsCount());
+      this.saveBookingDraft();
+    }
+  }
+
+  // ── Confirmed Room Allocations (For Reservation Confirmation Card) ──
+  readonly confirmedRoomAllocations = signal<{ roomNumber: string; adults: number; children: number }[]>([]);
+
   // ── Rooms State ─────────────────────────────────────────────
   readonly rooms = signal<RoomDTO[]>([]);
   readonly roomsPageData = signal<PagedModelRoomDto | null>(null);
@@ -264,8 +389,8 @@ export class HotelDetails implements OnInit, OnDestroy {
   readonly selectedRoomsCount = computed(() => this.selectedRooms().length);
 
   // ── Guest Selection State ───────────────────────────────────
-  readonly adultsCount = signal<number>(2);
-  readonly children = signal<ChildGuest[]>([]);
+  readonly adultsCount = this.bookingStateService.adults;
+  readonly children = this.bookingStateService.children;
   private nextChildId = 1;
   readonly availableChildAges: readonly number[] = Array.from({ length: 18 }, (_, i) => i);
 
@@ -296,6 +421,24 @@ export class HotelDetails implements OnInit, OnDestroy {
   readonly remainingCapacity = computed(() =>
     this.totalRoomCapacity() - this.requiredCapacity()
   );
+
+  readonly isCapacityExceeded = computed(() => {
+    return this.selectedRooms().length > 0 && this.requiredCapacity() > this.totalRoomCapacity();
+  });
+
+  isAdultsIncreaseDisabled(): boolean {
+    if (this.selectedRooms().length === 0) return false;
+    return this.requiredCapacity() >= this.totalRoomCapacity();
+  }
+
+  isChildAgeDisabled(child: ChildGuest, age: number): boolean {
+    if (age < 12) return false; // Ages 0-11 free, never restricted
+    if (this.selectedRooms().length === 0) return false;
+    if (child.age !== null && child.age >= 12 && child.age === age) return false;
+    const currentTakesCapacity = child.age !== null && child.age >= 12;
+    const delta = currentTakesCapacity ? 0 : 1;
+    return this.requiredCapacity() + delta > this.totalRoomCapacity();
+  }
 
   readonly allChildAgesValid = computed(() => {
     const list = this.children();
@@ -441,11 +584,17 @@ export class HotelDetails implements OnInit, OnDestroy {
     }
 
     if (this.selectedRooms().length > 0) {
+      if (this.requiredCapacity() > this.totalRoomCapacity()) {
+        errors.push(`The selected rooms cannot accommodate the current guest allocation (required: ${this.requiredCapacity()}, capacity: ${this.totalRoomCapacity()}).`);
+      }
       if (this.selectedRooms().some((r) => this.isRoomOverCapacity(r))) {
         errors.push('One or more selected rooms exceed maximum capacity.');
       }
       if (this.selectedRooms().some((r) => this.getAssignedAdults(r.id) < 1)) {
         errors.push('Each selected room must have at least one adult assigned.');
+      }
+      if (this.selectedRooms().some((r) => this.isRoomBooked(r.id))) {
+        errors.push('One or more selected rooms are already booked for the chosen dates.');
       }
     }
 
@@ -462,6 +611,23 @@ export class HotelDetails implements OnInit, OnDestroy {
 
   // ── Lifecycle ───────────────────────────────────────────────
   ngOnInit(): void {
+    this.bookingStateService.stayDatesChanged$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.syncDatesToQueryParams();
+        const hId = this.hotelId();
+        if (hId) {
+          this.loadBookedRooms(hId);
+          this.reconcileSelectedRoomsAvailability();
+        }
+      });
+
+    this.bookingStateService.guestsChanged$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ adults }) => {
+        this.syncAdultsAllocationToRooms(adults);
+      });
+
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       const idParam = params.get('id');
       const id = idParam ? parseInt(idParam, 10) : NaN;
@@ -502,15 +668,45 @@ export class HotelDetails implements OnInit, OnDestroy {
         this.restoreDraftIfPresent(id);
       }
 
-      // Check for stay dates in query parameters
+      // Check for stay dates in query parameters or saved session
       const inParam = qMap.get('checkIn') || qMap.get('checkInDate');
       const outParam = qMap.get('checkOut') || qMap.get('checkOutDate');
-      if (inParam) this.checkInInput.set(inParam);
-      if (outParam) this.checkOutInput.set(outParam);
+      if (inParam && outParam) {
+        this.bookingStateService.setStayDates(inParam, outParam);
+      } else if (inParam) {
+        this.bookingStateService.setStayDates(inParam, this.checkOutInput());
+      } else if (outParam) {
+        this.bookingStateService.setStayDates(this.checkInInput(), outParam);
+      } else if (!this.checkInInput() || !this.checkOutInput()) {
+        try {
+          const savedDatesJson = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(`hotel_stay_dates_${id}`) : null;
+          if (savedDatesJson) {
+            const saved = JSON.parse(savedDatesJson);
+            const inVal = saved?.inVal || this.checkInInput();
+            const outVal = saved?.outVal || this.checkOutInput();
+            if (inVal && outVal) {
+              this.bookingStateService.setStayDates(inVal, outVal);
+            }
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+      this.syncDatesToQueryParams();
 
       this.loadHotel(id);
       this.loadRooms(id);
       this.loadGalleryImages(id);
+      this.loadBookedRooms(id);
+
+      // Ensure that if auth state is hydrating asynchronously, we re-verify bookings
+      if (typeof this.authService.ensureInitialized === 'function') {
+        this.authService.ensureInitialized().then((user) => {
+          if (user && this.hotelId() === id) {
+            this.loadBookedRooms(id);
+          }
+        });
+      }
     });
   }
 
@@ -556,6 +752,7 @@ export class HotelDetails implements OnInit, OnDestroy {
           this.rooms.set(content);
           this.roomsState.set(content.length === 0 ? 'empty' : 'success');
           this.reconcileDraftRooms(id, content);
+          this.reconcileSelectedRoomsAvailability();
         },
         error: (err) => {
           this.roomService
@@ -567,6 +764,7 @@ export class HotelDetails implements OnInit, OnDestroy {
                 this.rooms.set(list);
                 this.roomsState.set(list.length === 0 ? 'empty' : 'success');
                 this.reconcileDraftRooms(id, list);
+                this.reconcileSelectedRoomsAvailability();
               },
               error: () => {
                 this.roomsError.set(err?.message || 'Failed to load rooms for this hotel. Please try again later.');
@@ -601,6 +799,31 @@ export class HotelDetails implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Loads confirmed/pending bookings for the hotel to identify booked/unavailable rooms from the backend.
+   */
+  loadBookedRooms(hotelId: number): void {
+    if (!this.hotelBookingService || typeof this.hotelBookingService.getHotelBookingsByHotelId !== 'function') {
+      this.isBookingsLoading.set(false);
+      return;
+    }
+    this.isBookingsLoading.set(true);
+    this.hotelBookingService
+      .getHotelBookingsByHotelId(hotelId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (bookings) => {
+          this.hotelBookings.set(bookings || []);
+          this.isBookingsLoading.set(false);
+          this.reconcileSelectedRoomsAvailability();
+        },
+        error: () => {
+          this.hotelBookings.set([]);
+          this.isBookingsLoading.set(false);
+        },
+      });
+  }
+
   setGalleryFilter(filter: string): void {
     this.galleryFilter.set(filter.trim().toUpperCase());
     this.activeImageIndex.set(0);
@@ -619,6 +842,7 @@ export class HotelDetails implements OnInit, OnDestroy {
       this.loadHotel(id);
       this.loadRooms(id);
       this.loadGalleryImages(id);
+      this.loadBookedRooms(id);
     }
   }
 
@@ -792,6 +1016,7 @@ export class HotelDetails implements OnInit, OnDestroy {
 
   toggleRoomSelection(room: RoomDTO): void {
     if (!room) return;
+    if (this.isRoomBooked(room.id)) return;
     const currentHotelId = this.hotelId();
     if (currentHotelId !== null && room.hotelId !== currentHotelId) return;
 
@@ -801,13 +1026,31 @@ export class HotelDetails implements OnInit, OnDestroy {
     if (isAlreadySelected) {
       this.deselectRoom(room.id);
     } else {
-      this.selectedRooms.set([...current, room]);
+      const roomCapacity = room.capacity || 2;
+      const alreadyAssignedAdults = current.reduce((sum, r) => sum + this.getAssignedAdults(r.id), 0);
+      const neededAdults = Math.max(1, this.adultsCount() - alreadyAssignedAdults);
+      const initialAdults = Math.min(roomCapacity, neededAdults);
+
+      this.customRoomAdults.update((map) => ({ ...map, [room.id]: initialAdults }));
+      this.customRoomChildIds.update((map) => ({ ...map, [room.id]: [] }));
+      const updatedRooms = [...current, room];
+      this.selectedRooms.set(updatedRooms);
+
+      // Ensure adultsCount matches total assigned adults across all selected rooms (at least 1 adult per room)
+      const totalAssigned = updatedRooms.reduce((sum, r) => sum + this.getAssignedAdults(r.id), 0);
+      if (totalAssigned > this.adultsCount()) {
+        this.bookingStateService.setAdults(totalAssigned);
+      }
       this.saveBookingDraft();
     }
   }
 
   deselectRoom(roomId: number): void {
-    this.selectedRooms.set(this.selectedRooms().filter((r) => r.id !== roomId));
+    const remainingRooms = this.selectedRooms().filter((r) => r.id !== roomId);
+    this.selectedRooms.set(remainingRooms);
+
+    // Re-assign any children from the removed room to remaining rooms
+    const removedChildIds = this.customRoomChildIds()[roomId] || [];
     this.customRoomAdults.update((map) => {
       const next = { ...map };
       delete next[roomId];
@@ -816,8 +1059,14 @@ export class HotelDetails implements OnInit, OnDestroy {
     this.customRoomChildIds.update((map) => {
       const next = { ...map };
       delete next[roomId];
+      if (remainingRooms.length > 0 && removedChildIds.length > 0) {
+        const firstRemainingId = remainingRooms[0].id;
+        const currentFirst = next[firstRemainingId] || [];
+        next[firstRemainingId] = [...currentFirst, ...removedChildIds];
+      }
       return next;
     });
+
     this.saveBookingDraft();
   }
 
@@ -826,21 +1075,90 @@ export class HotelDetails implements OnInit, OnDestroy {
     this.customRoomAdults.set({});
     this.customRoomChildIds.set({});
     this.clearBookingDraft();
+    this.bookingStateService.clearHotelSelection();
+  }
+
+  // ── Synchronize Adults Allocation Across Rooms ───────────────
+  syncAdultsAllocationToRooms(targetAdults: number): void {
+    const rooms = this.selectedRooms();
+    if (rooms.length === 0) return;
+
+    const currentMap = { ...this.customRoomAdults() };
+    for (const r of rooms) {
+      if (currentMap[r.id] === undefined || currentMap[r.id] < 1) {
+        currentMap[r.id] = 1;
+      }
+    }
+
+    let currentSum = rooms.reduce((sum, r) => sum + currentMap[r.id], 0);
+
+    if (targetAdults > currentSum) {
+      let toAdd = targetAdults - currentSum;
+      for (const r of rooms) {
+        if (toAdd <= 0) break;
+        const cap = r.capacity || 2;
+        const assigned = currentMap[r.id];
+        const space = Math.max(0, cap - assigned);
+        const add = Math.min(toAdd, space);
+        currentMap[r.id] += add;
+        toAdd -= add;
+      }
+      if (toAdd > 0) {
+        currentMap[rooms[0].id] += toAdd;
+      }
+    } else if (targetAdults < currentSum) {
+      let toRemove = currentSum - targetAdults;
+      for (let i = rooms.length - 1; i >= 0; i--) {
+        if (toRemove <= 0) break;
+        const r = rooms[i];
+        const assigned = currentMap[r.id];
+        const canRemove = Math.max(0, assigned - 1);
+        const rem = Math.min(toRemove, canRemove);
+        currentMap[r.id] -= rem;
+        toRemove -= rem;
+      }
+    }
+
+    this.customRoomAdults.set(currentMap);
   }
 
   // ── Guest Selection Actions ────────────────────────────────
   increaseAdults(): void {
-    this.adultsCount.update((count) => count + 1);
+    if (this.isAdultsIncreaseDisabled()) return;
+    this.bookingStateService.setAdults(this.adultsCount() + 1);
+    this.syncAdultsAllocationToRooms(this.adultsCount());
     this.saveBookingDraft();
   }
 
   decreaseAdults(): void {
-    this.adultsCount.update((count) => Math.max(1, count - 1));
+    const minAdults = Math.max(1, this.selectedRooms().length);
+    if (this.adultsCount() <= minAdults) return;
+    this.bookingStateService.setAdults(Math.max(1, this.adultsCount() - 1));
+    this.syncAdultsAllocationToRooms(this.adultsCount());
     this.saveBookingDraft();
   }
 
   addChild(): void {
-    this.children.update((list) => [...list, { id: this.nextChildId++, age: null }]);
+    const newChildId = this.bookingStateService.addChild(null);
+
+    const rooms = this.selectedRooms();
+    if (rooms.length > 0) {
+      let targetRoomId = rooms[0].id;
+      let minChildren = this.getAssignedChildren(rooms[0].id).length;
+      for (const r of rooms) {
+        const count = this.getAssignedChildren(r.id).length;
+        if (count < minChildren) {
+          minChildren = count;
+          targetRoomId = r.id;
+        }
+      }
+      this.customRoomChildIds.update((map) => {
+        const existing = map[targetRoomId] !== undefined
+          ? map[targetRoomId]
+          : this.getAssignedChildren(targetRoomId).map((c) => c.id);
+        return { ...map, [targetRoomId]: [...existing, newChildId] };
+      });
+    }
     this.saveBookingDraft();
   }
 
@@ -852,7 +1170,7 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   removeChild(childId: number): void {
-    this.children.update((list) => list.filter((c) => c.id !== childId));
+    this.bookingStateService.removeChild(childId);
     this.customRoomChildIds.update((map) => {
       const next: Record<number, number[]> = {};
       for (const [k, v] of Object.entries(map)) {
@@ -864,9 +1182,7 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   updateChildAge(childId: number, age: number | null): void {
-    this.children.update((list) =>
-      list.map((c) => (c.id === childId ? { ...c, age } : c))
-    );
+    this.bookingStateService.setChildAge(childId, age);
     this.saveBookingDraft();
   }
 
@@ -881,29 +1197,16 @@ export class HotelDetails implements OnInit, OnDestroy {
   getAssignedAdults(roomId: number): number {
     const custom = this.customRoomAdults()[roomId];
     if (custom !== undefined) return custom;
-    const rooms = this.selectedRooms();
-    const count = rooms.length;
-    if (count <= 1) return this.adultsCount();
-    const idx = rooms.findIndex((r) => r.id === roomId);
-    if (idx === -1) return 0;
-    const total = this.adultsCount();
-    const base = Math.floor(total / count);
-    const rem = total % count;
-    return base + (idx < rem ? 1 : 0);
+    return 1;
   }
 
   getAssignedChildren(roomId: number): ChildGuest[] {
     const customIds = this.customRoomChildIds()[roomId];
-    const allChildren = this.children();
     if (customIds !== undefined) {
+      const allChildren = this.children();
       return allChildren.filter((c) => customIds.includes(c.id));
     }
-    const rooms = this.selectedRooms();
-    const count = rooms.length;
-    if (count <= 1) return [...allChildren];
-    const idx = rooms.findIndex((r) => r.id === roomId);
-    if (idx === -1) return [];
-    return allChildren.filter((_, i) => i % count === idx);
+    return [];
   }
 
   getRoomCapacityChildren(roomId: number): number {
@@ -921,15 +1224,27 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   increaseRoomAdults(roomId: number): void {
+    const room = this.selectedRooms().find((r) => r.id === roomId);
+    if (!room) return;
+    const capacity = room.capacity || 1;
+    const currentRequired = this.getRoomRequiredCapacity(roomId);
+    if (currentRequired >= capacity) return; // Respect capacity
+
     const current = this.getAssignedAdults(roomId);
     this.customRoomAdults.update((map) => ({ ...map, [roomId]: current + 1 }));
+
+    // Immediately synchronize overall adultsCount to total assigned adults across all rooms
+    const totalAdults = this.selectedRooms().reduce((sum, r) => sum + this.getAssignedAdults(r.id), 0);
+    this.bookingStateService.setAdults(totalAdults);
     this.saveBookingDraft();
   }
 
   decreaseRoomAdults(roomId: number): void {
     const current = this.getAssignedAdults(roomId);
-    if (current > 0) {
+    if (current > 1) { // Each room must have at least 1 adult
       this.customRoomAdults.update((map) => ({ ...map, [roomId]: current - 1 }));
+      const totalAdults = this.selectedRooms().reduce((sum, r) => sum + this.getAssignedAdults(r.id), 0);
+      this.bookingStateService.setAdults(totalAdults);
       this.saveBookingDraft();
     }
   }
@@ -965,39 +1280,72 @@ export class HotelDetails implements OnInit, OnDestroy {
   resetRoomAssignments(): void {
     this.customRoomAdults.set({});
     this.customRoomChildIds.set({});
+    this.syncAdultsAllocationToRooms(this.adultsCount());
     this.saveBookingDraft();
   }
 
   // ── Booking Summary Sidebar Handlers ────────────────────────
   openSidebar(): void {
     this.sidebarVisible.set(true);
+    this.saveBookingDraft();
+    this.bookingStateService.openSummary();
   }
 
   closeSidebar(): void {
     this.sidebarVisible.set(false);
+    this.bookingStateService.closeSummary();
   }
 
   onSidebarVisibleChange(visible: boolean): void {
     this.sidebarVisible.set(visible);
   }
 
-  onSidebarRoomAdultsChange(event: { roomId: number; delta: number }): void {
-    const current = this.getAssignedAdults(event.roomId);
-    const updated = Math.max(1, current + event.delta);
-    this.customRoomAdults.update((map) => ({ ...map, [event.roomId]: updated }));
+  onContinueToPayment(): void {
+    const currentHotel = this.hotel();
+    if (!currentHotel) return;
+    const nights = this.stayNights() || 1;
+    const nightlyTotal = this.totalNightlyRate();
+    const totalStay = this.totalStayCost() || nightlyTotal * nights;
 
-    const totalAssigned = this.selectedRooms().reduce((sum, r) => {
-      if (r.id === event.roomId) return sum + updated;
-      return sum + this.getAssignedAdults(r.id);
-    }, 0);
-    this.adultsCount.set(totalAssigned);
-    this.saveBookingDraft();
+    this.bookingStateService.setHotelSelection({
+      hotel: currentHotel,
+      selectedRooms: this.selectedRooms(),
+      checkIn: this.checkInInput(),
+      checkOut: this.checkOutInput(),
+      stayNights: nights,
+      adultsCount: this.adultsCount(),
+      children: this.children().map((c) => ({ id: c.id, age: c.age })),
+      customRoomAdults: this.customRoomAdults(),
+      customRoomChildIds: this.customRoomChildIds(),
+      totalHotelPrice: totalStay,
+    });
+    this.sidebarVisible.set(false);
+    this.router.navigate(['/payment']);
+  }
+
+  onClearSummary(): void {
+    this.clearSelectedRooms();
+    this.bookingStateService.clearSummary();
+    const hId = this.hotelId();
+    if (hId) {
+      this.clearBookingDraft(hId);
+    }
+    this.sidebarVisible.set(false);
+  }
+
+  onSidebarRoomAdultsChange(event: { roomId: number; delta: number }): void {
+    if (event.delta > 0) {
+      this.increaseRoomAdults(event.roomId);
+    } else if (event.delta < 0) {
+      this.decreaseRoomAdults(event.roomId);
+    }
   }
 
   onSidebarAddChild(roomId: number): void {
-    const newChildId = this.nextChildId++;
-    const newChild: ChildGuest = { id: newChildId, age: null };
-    this.children.update((list) => [...list, newChild]);
+    const room = this.selectedRooms().find((r) => r.id === roomId);
+    if (!room) return;
+
+    const newChildId = this.bookingStateService.addChild(null);
     this.customRoomChildIds.update((map) => {
       const existing = map[roomId] !== undefined
         ? map[roomId]
@@ -1046,7 +1394,9 @@ export class HotelDetails implements OnInit, OnDestroy {
 
   parseLocalDate(str: string): Date | null {
     if (!str) return null;
-    const parts = str.split('-');
+    const trimmed = str.trim();
+    const datePart = trimmed.includes('T') ? trimmed.split('T')[0] : trimmed;
+    const parts = datePart.split('-');
     if (parts.length !== 3) return null;
     const y = parseInt(parts[0], 10);
     const m = parseInt(parts[1], 10) - 1;
@@ -1066,37 +1416,70 @@ export class HotelDetails implements OnInit, OnDestroy {
 
   onCheckInInputChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const val = target.value;
-    this.checkInInput.set(val);
+    const val = target.value ? target.value.trim() : '';
+    this.onCheckInChange(val);
+  }
 
-    const currentOut = this.checkOutInput();
-    if (currentOut && val) {
-      const parsedIn = this.parseLocalDate(val);
-      const parsedOut = this.parseLocalDate(currentOut);
+  onCheckInChange(val: string): void {
+    const clean = val ? val.trim() : '';
+    let targetOut = this.checkOutInput().trim();
+    if (targetOut && clean) {
+      const parsedIn = this.parseLocalDate(clean);
+      const parsedOut = this.parseLocalDate(targetOut);
       if (parsedIn && parsedOut && parsedOut.getTime() <= parsedIn.getTime()) {
-        this.checkOutInput.set('');
+        const next = new Date(parsedIn);
+        next.setDate(next.getDate() + 1);
+        targetOut = this.formatDateToIso(next);
       }
     }
+    this.bookingStateService.setStayDates(clean, targetOut);
     this.syncDatesToQueryParams();
     this.saveBookingDraft();
+    const hId = this.hotelId();
+    if (hId) {
+      this.loadBookedRooms(hId);
+      this.reconcileSelectedRoomsAvailability();
+    }
   }
 
   onCheckOutInputChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.checkOutInput.set(target.value);
+    const val = target.value ? target.value.trim() : '';
+    this.onCheckOutChange(val);
+  }
+
+  onCheckOutChange(val: string): void {
+    const clean = val ? val.trim() : '';
+    const currentIn = this.checkInInput().trim();
+    this.bookingStateService.setStayDates(currentIn, clean);
     this.syncDatesToQueryParams();
     this.saveBookingDraft();
+    const hId = this.hotelId();
+    if (hId) {
+      this.loadBookedRooms(hId);
+      this.reconcileSelectedRoomsAvailability();
+    }
   }
 
   syncDatesToQueryParams(): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {
-        checkIn: this.checkInInput() || null,
-        checkOut: this.checkOutInput() || null,
-      },
-      queryParamsHandling: 'merge',
-    });
+    if (typeof window === 'undefined' || !window.location) return;
+    try {
+      const url = new URL(window.location.href);
+      const inVal = this.checkInInput().trim();
+      const outVal = this.checkOutInput().trim();
+      if (inVal) url.searchParams.set('checkIn', inVal);
+      else url.searchParams.delete('checkIn');
+      if (outVal) url.searchParams.set('checkOut', outVal);
+      else url.searchParams.delete('checkOut');
+      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+
+      const hId = this.hotelId();
+      if (hId && typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(`hotel_stay_dates_${hId}`, JSON.stringify({ inVal, outVal }));
+      }
+    } catch {
+      // Fallback in environments without full window.location
+    }
   }
 
   // ── Booking Creation / Edit Action ──────────────────────────
@@ -1119,6 +1502,11 @@ export class HotelDetails implements OnInit, OnDestroy {
       return;
     }
 
+    if (rooms.some((r) => this.isRoomBooked(r.id))) {
+      this.bookingErrorMessage.set('One or more of the selected rooms are no longer available for the specified stay dates.');
+      return;
+    }
+
     const roomIds = Array.from(new Set(rooms.map((r) => r.id)));
     if (roomIds.length === 0) {
       this.bookingErrorMessage.set('Please select at least one room.');
@@ -1130,13 +1518,19 @@ export class HotelDetails implements OnInit, OnDestroy {
       .filter((c) => c.age !== null && c.age !== undefined && c.age >= 0)
       .map((c) => Number(c.age));
 
-    const checkIn = this.checkInInput();
-    const checkOut = this.checkOutInput();
+    const checkIn = this.checkInInput().trim();
+    const checkOut = this.checkOutInput().trim();
 
     if (!checkIn || !checkOut || !this.areStayDatesValid()) {
       this.bookingErrorMessage.set('Please provide valid check-in and check-out dates.');
       return;
     }
+
+    const allocations = rooms.map((r) => ({
+      roomNumber: r.roomNumber,
+      adults: this.getAssignedAdults(r.id),
+      children: this.getAssignedChildren(r.id).length,
+    }));
 
     const totalGuests = totalAssignedAdults + childAges.length;
     const payload: HotelBookingRequestDTO = {
@@ -1167,6 +1561,9 @@ export class HotelDetails implements OnInit, OnDestroy {
                 updatedBooking.hotelName = currentHotel.name;
               }
               this.confirmedBooking.set(updatedBooking);
+              this.confirmedRoomAllocations.set(allocations);
+              this.sidebarVisible.set(false); // Close summary automatically
+              this.loadBookedRooms(currentHotelId);
               this.updateSuccessNotice.set(
                 `Reservation #${editingId} has been successfully updated with your revised stay dates, room selections, and guest party.`
               );
@@ -1211,12 +1608,17 @@ export class HotelDetails implements OnInit, OnDestroy {
             booking.hotelName = currentHotel.name;
           }
           this.confirmedBooking.set(booking);
+          this.confirmedRoomAllocations.set(allocations);
+          this.sidebarVisible.set(false); // Close summary automatically
+          this.loadBookedRooms(currentHotelId);
           this.clearSelectedRooms();
           this.clearBookingDraft(currentHotelId);
-          setTimeout(() => {
-            const el = document.getElementById('booking-confirmation-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 80);
+          if (typeof document !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('booking-confirmation-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+          }
         },
         error: (err: any) => {
           this.isSubmittingBooking.set(false);
@@ -1261,11 +1663,16 @@ export class HotelDetails implements OnInit, OnDestroy {
           this.editingBookingId.set(booking.id);
           this.editingBooking.set(booking);
 
-          if (booking.checkIn) this.checkInInput.set(booking.checkIn);
-          if (booking.checkOut) this.checkOutInput.set(booking.checkOut);
+          if (booking.checkIn && booking.checkOut) {
+            this.bookingStateService.setStayDates(booking.checkIn, booking.checkOut);
+          } else if (booking.checkIn) {
+            this.bookingStateService.setStayDates(booking.checkIn, this.checkOutInput());
+          } else if (booking.checkOut) {
+            this.bookingStateService.setStayDates(this.checkInInput(), booking.checkOut);
+          }
 
           const adults = booking.adults || booking.guests || 1;
-          this.adultsCount.set(Math.max(1, adults));
+          this.bookingStateService.setAdults(Math.max(1, adults));
 
           if (booking.childAges && Array.isArray(booking.childAges) && booking.childAges.length > 0) {
             const restoredChildren: ChildGuest[] = booking.childAges.map((age, i) => ({
@@ -1338,6 +1745,26 @@ export class HotelDetails implements OnInit, OnDestroy {
     } catch (e) {
       console.warn('Failed to save hotel booking draft to sessionStorage', e);
     }
+
+    const currentHotel = this.hotel();
+    if (currentHotel && this.selectedRooms().length > 0) {
+      const nights = this.stayNights() || 1;
+      const hotelTotal = this.totalStayCost() !== null ? this.totalStayCost()! : (this.totalNightlyRate() * nights);
+      this.bookingStateService.setHotelSelection({
+        hotel: currentHotel,
+        selectedRooms: this.selectedRooms(),
+        checkIn: this.checkInInput(),
+        checkOut: this.checkOutInput(),
+        stayNights: nights,
+        adultsCount: this.adultsCount(),
+        children: this.children().map((c) => ({ id: c.id, age: c.age })),
+        customRoomAdults: this.customRoomAdults(),
+        customRoomChildIds: this.customRoomChildIds(),
+        totalHotelPrice: hotelTotal,
+      });
+    } else {
+      this.bookingStateService.clearHotelSelection();
+    }
   }
 
   loadBookingDraft(hotelId: number): HotelBookingDraft | null {
@@ -1376,13 +1803,14 @@ export class HotelDetails implements OnInit, OnDestroy {
       const dOut = this.parseLocalDate(draft.checkOut);
       const today = this.parseLocalDate(this.getTodayString());
       if (dIn && dOut && dOut.getTime() > dIn.getTime() && today && dIn.getTime() >= today.getTime()) {
-        if (!this.checkInInput()) this.checkInInput.set(draft.checkIn);
-        if (!this.checkOutInput()) this.checkOutInput.set(draft.checkOut);
+        if (!this.checkInInput() || !this.checkOutInput()) {
+          this.bookingStateService.setStayDates(draft.checkIn, draft.checkOut);
+        }
       }
     }
 
-    if (draft.adultsCount && draft.adultsCount >= 1) {
-      this.adultsCount.set(draft.adultsCount);
+    if (draft.adultsCount && draft.adultsCount >= 1 && this.bookingStateService.adults() === 2) {
+      this.bookingStateService.setAdults(draft.adultsCount);
     }
 
     if (Array.isArray(draft.children)) {
@@ -1408,6 +1836,7 @@ export class HotelDetails implements OnInit, OnDestroy {
       this.selectedRooms.set(presentInPage);
       this.cleanupCustomAssignments(presentInPage);
       this.pendingDraftRoomIds = [];
+      this.reconcileSelectedRoomsAvailability();
       this.saveBookingDraft();
     } else {
       this.roomService
@@ -1421,6 +1850,7 @@ export class HotelDetails implements OnInit, OnDestroy {
             this.selectedRooms.set(validMatching);
             this.cleanupCustomAssignments(validMatching);
             this.pendingDraftRoomIds = [];
+            this.reconcileSelectedRoomsAvailability();
             this.saveBookingDraft();
           },
           error: () => {

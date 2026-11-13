@@ -1511,15 +1511,31 @@
 
 .room-card-header {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.room-header-top {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  width: 100%;
 }
 
 .room-identity {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
+}
+
+.room-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .room-number {
@@ -1529,13 +1545,17 @@
 }
 
 .room-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.2rem 0.5rem;
+  padding: 0.22rem 0.55rem;
   border-radius: var(--radius-full);
+  line-height: 1.2;
 }
 
 .badge-single { background: #e0f2fe; color: #0369a1; }
@@ -2469,4 +2489,279 @@
   padding: 0.4rem 0.65rem;
   border-radius: var(--radius-md);
   cursor: pointer;
+}
+
+/* ─── Confirmed Rooms & Guest Allocations (Confirmation Card) ─── */
+.conf-rooms-summary-wrap {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .conf-rooms-summary-wrap {
+  background: var(--bg-surface);
+}
+
+.conf-rooms-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conf-rooms-title svg {
+  color: var(--color-primary);
+}
+
+.conf-rooms-chips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.conf-room-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.conf-room-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.conf-room-sep {
+  color: var(--text-muted);
+}
+
+.conf-room-allocation {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ─── Guest Selectors in Stay Dates Bar ──────────────────────── */
+.stay-guests-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.guest-selector-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem 1rem;
+}
+
+.guest-group-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.guest-group-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.guest-group-label svg {
+  color: var(--color-primary);
+}
+
+.guest-group-sub {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.guest-counter-control {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.btn-guest-counter {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-guest-counter:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.btn-guest-counter:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.guest-counter-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 22px;
+  text-align: center;
+}
+
+/* Child Ages Bar */
+.child-ages-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(0, 155, 119, 0.05);
+  border: 1px solid rgba(0, 155, 119, 0.2);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+}
+
+.child-ages-prompt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.child-ages-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.child-age-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.child-age-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.child-age-select {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ─── Booked Room State ──────────────────────────────────────── */
+.room-card--booked {
+  opacity: 0.8;
+  border-color: var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.badge-booked {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .badge-booked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.btn-room-select--booked {
+  background: rgba(100, 116, 139, 0.1) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-subtle) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* ─── Capacity Warning Banner ────────────────────────────────── */
+.capacity-warning-banner {
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+[data-theme="dark"] .capacity-warning-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+.capacity-warning-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: #d97706;
+}
+
+[data-theme="dark"] .capacity-warning-icon {
+  color: #fbbf24;
+}
+
+.capacity-warning-content {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.capacity-warning-content strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: inherit;
+}
+
+.capacity-warning-content p {
+  margin: 0;
+  color: inherit;
 }

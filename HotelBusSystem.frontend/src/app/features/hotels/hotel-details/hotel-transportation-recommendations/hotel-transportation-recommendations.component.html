@@ -1,0 +1,237 @@
+<section class="transportation-recommendations-section" aria-label="Optional Transportation Recommendations">
+  <div class="recommendations-header">
+    <div class="header-badges">
+      <span class="badge badge-optional">Optional Add-On</span>
+      @if (hotelBusStop()) {
+        <span class="badge badge-destination">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Arrival Stop: {{ hotelBusStop()?.name }}
+          @if (hotelBusDistance() !== null) {
+            ({{ hotelBusDistance() | number:'1.1-2' }} km to hotel)
+          }
+        </span>
+      }
+    </div>
+
+    <h2 class="recommendations-title">Trips That Fit Your Stay</h2>
+    <p class="recommendations-subtitle">
+      Select your departure stop to view verified bus trips arriving on <strong>{{ checkInDate }}</strong>.
+    </p>
+  </div>
+
+  <!-- ── CURRENTLY RESERVED TRANSPORTATION BANNER ── -->
+  @if (currentSelectedTransportation(); as currentTransport) {
+    <div class="selected-transport-banner">
+      <div class="selected-transport-info">
+        <div class="selected-badge-cluster">
+          <span class="badge badge-success">Bus Selected</span>
+          <span class="transport-company">{{ currentTransport.trip?.bus?.company || 'Bus Carrier' }}</span>
+        </div>
+        <p class="selected-route-desc">
+          Route: <strong>{{ currentTransport.originStop?.name }}</strong> → <strong>{{ currentTransport.destinationStop?.name }}</strong>
+          ({{ currentTransport?.trip?.departureTime | date:'shortTime' }} – {{ currentTransport?.trip?.arrivalTime | date:'shortTime' }})
+        </p>
+        <div class="selected-seats-row">
+          <span>Reserved Seats:</span>
+          @for (seat of currentTransport.selectedSeats; track seat.id) {
+            <span class="seat-tag">Seat {{ seat.seatNumber }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="selected-transport-cost">
+        <span class="cost-amount">{{ currentTransport.totalBusPrice | number:'1.2-2' }} EGP</span>
+        <button
+          type="button"
+          class="btn-remove-transport"
+          (click)="onRemoveTransportation()"
+          aria-label="Remove Bus Selection">
+          Remove Bus
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── ORIGIN BUS STOP SELECTOR ── -->
+  <div class="origin-selection-container">
+    <div class="origin-input-group">
+      <label for="departureBusStop" class="origin-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>
+        <span>Select Your Departure Bus Stop:</span>
+      </label>
+
+      <div class="select-wrapper">
+        <p-select
+          id="departureBusStop"
+          [options]="busStopOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedOriginStopId()"
+          (ngModelChange)="onOriginStopChange($event)"
+          placeholder="Choose departure terminal or city..."
+          [filter]="true"
+          filterPlaceholder="Search by terminal or city..."
+          styleClass="bus-origin-select"
+          [style]="{ width: '100%' }"
+          aria-label="Departure Bus Stop Selection">
+        </p-select>
+      </div>
+    </div>
+
+    @if (destinationStopError()) {
+      <div class="stop-warning-alert" role="alert">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ destinationStopError() }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- ── LOADING SKELETON ── -->
+  @if (isLoadingTrips()) {
+    <div class="trips-loading-skeleton" aria-busy="true" aria-label="Loading bus recommendations">
+      @for (i of [1, 2]; track i) {
+        <div class="trip-card-skeleton">
+          <p-skeleton width="60%" height="1.5rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="90%" height="1rem" styleClass="mb-3"></p-skeleton>
+          <div class="skeleton-footer">
+            <p-skeleton width="30%" height="1.25rem"></p-skeleton>
+            <p-skeleton width="25%" height="2.25rem" borderRadius="2rem"></p-skeleton>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── SEARCH ERROR ── -->
+  @if (!isLoadingTrips() && searchError()) {
+    <div class="trip-error-alert" role="alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ searchError() }}</span>
+    </div>
+  }
+
+  <!-- ── RECOMMENDATIONS GRID ── -->
+  @if (!isLoadingTrips() && hasSearched() && recommendedTrips().length > 0) {
+    <div class="recommended-trips-grid">
+      @for (trip of recommendedTrips(); track trip.id) {
+        <article class="bus-recommendation-card" [class.card--preferred]="trip.isPreferredTiming">
+          <!-- Card Header & Timing Badge -->
+          <div class="trip-card-top">
+            <span
+              class="timing-badge"
+              [class.timing-badge--preferred]="trip.isPreferredTiming"
+              [class.timing-badge--early]="!trip.isPreferredTiming">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>{{ trip.timingBadgeLabel }}</span>
+            </span>
+
+            <span class="bus-company-tag">{{ trip.bus?.company || 'Express Bus' }}</span>
+          </div>
+
+          <!-- Schedule & Route Details -->
+          <div class="trip-schedule-section">
+            <div class="time-block departure">
+              <span class="time-label">Departure</span>
+              <strong class="time-val">{{ trip.departureTime | date:'shortTime' }}</strong>
+              <span class="stop-name">{{ trip.originStop?.name }}</span>
+            </div>
+
+            <div class="route-visual">
+              <span class="duration-text">{{ trip.formattedDuration }}</span>
+              <div class="route-line" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="line"></span>
+                <span class="arrow">›</span>
+              </div>
+            </div>
+
+            <div class="time-block arrival">
+              <span class="time-label">Arrival</span>
+              <strong class="time-val">{{ trip.arrivalTime | date:'shortTime' }}</strong>
+              <span class="stop-name">{{ trip.destinationStop?.name }}</span>
+            </div>
+          </div>
+
+          <!-- Proximity & Available Seats -->
+          <div class="trip-meta-row">
+            @if (trip.distanceFromHotel !== null) {
+              <div class="meta-item distance">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span><strong>{{ trip.distanceFromHotel | number:'1.1-2' }} km</strong> from hotel</span>
+              </div>
+            }
+
+            <div class="meta-item seats">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span><strong>{{ trip.availableSeatsCount }}</strong> seats available</span>
+            </div>
+          </div>
+
+          <!-- Footer & Action -->
+          <div class="trip-card-footer">
+            <div class="trip-pricing">
+              <span class="price-val">{{ trip.price | number:'1.2-2' }} EGP</span>
+              <span class="price-unit">per seat</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn-select-trip"
+              [disabled]="trip.availableSeatsCount === 0"
+              (click)="onSelectTrip(trip)">
+              <span>{{ trip.availableSeatsCount === 0 ? 'Sold Out' : 'Select Trip' }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <!-- ── EMPTY RESULTS STATE ── -->
+  @if (!isLoadingTrips() && hasSearched() && recommendedTrips().length === 0 && !searchError()) {
+    <div class="empty-recommendations-card">
+      <div class="empty-bus-icon">🚌</div>
+      <h3 class="empty-title">No Matching Trips Found</h3>
+      <p class="empty-desc">
+        There are no scheduled bus trips from your selected departure stop that arrive on {{ checkInDate }}.
+      </p>
+      <p class="empty-sub">
+        You may select another departure stop, or continue booking your hotel without bus transportation.
+      </p>
+    </div>
+  }
+</section>
+
+<!-- ── SEAT SELECTION MODAL INTEGRATION ── -->
+<app-bus-seat-selection
+  [trip]="tripForSeatSelection()"
+  [(visible)]="seatDialogVisible"
+  (bookingComplete)="onSeatsConfirmed($event)">
+</app-bus-seat-selection>
+

@@ -55,6 +55,8 @@ describe('HotelListing - Cover Images & Listing Integration', () => {
     },
   ];
 
+
+
   const mockPageResponse: PageHotelDTO = {
     content: mockHotels,
     empty: false,
@@ -245,6 +247,100 @@ describe('HotelListing - Cover Images & Listing Integration', () => {
       expect(component.getStarArray(4.8)).toEqual([1, 1, 1, 1, 1]);
       expect(component.getStarArray(3.2)).toEqual([1, 1, 1, 0, 0]);
       expect(component.getStarArray(0)).toEqual([0, 0, 0, 0, 0]);
+    });
+  });
+
+  describe('Hotel Listing Improvements: Dynamic Cities, Search, and Google Maps', () => {
+    it('should dynamically populate availableCities from actual hotel data on load', () => {
+      component.ngOnInit();
+
+      // mockHotels have Luxor, Hurghada, Giza -> sorted alphabetically
+      expect(component.availableCities()).toEqual(['Giza', 'Hurghada', 'Luxor']);
+    });
+
+    it('should clear city filter when All Cities (empty string) is selected', () => {
+      component.cityFilter.set('Luxor');
+      component.onCityChange('');
+
+      expect(component.cityFilter()).toBe('');
+      expect(component.currentPage()).toBe(0);
+      expect(mockHotelService.getHotels).toHaveBeenCalledWith({
+        page: 0,
+        size: 12,
+      });
+    });
+
+    it('should combine City, Rating, and Search filters when loading hotels', () => {
+      component.searchQuery.set('Palace');
+      component.cityFilter.set('Luxor');
+      component.minRatingFilter.set(4.5);
+      component.sortFilter.set('rating,desc');
+
+      component.loadHotels();
+
+      expect(mockHotelService.getHotels).toHaveBeenCalledWith({
+        page: 0,
+        size: 12,
+        q: 'Palace',
+        city: 'Luxor',
+        minRating: 4.5,
+        sort: 'rating,desc',
+      });
+    });
+
+    it('should validate coordinates correctly with hasValidCoordinates()', () => {
+      const validHotel: HotelDTO = {
+        ...mockHotels[0],
+        latitude: 25.68,
+        longitude: 32.63,
+      };
+      const invalidLatHotel: HotelDTO = {
+        ...mockHotels[0],
+        latitude: 95.0, // Out of bounds
+        longitude: 32.63,
+      };
+      const nullCoordsHotel: HotelDTO = {
+        ...mockHotels[0],
+        latitude: null as any,
+        longitude: null as any,
+      };
+
+      expect(component.hasValidCoordinates(validHotel)).toBe(true);
+      expect(component.hasValidCoordinates(invalidLatHotel)).toBe(false);
+      expect(component.hasValidCoordinates(nullCoordsHotel)).toBe(false);
+    });
+
+    it('should build Google Maps search URL from coordinates and preserve them without rendering raw numbers', () => {
+      const hotel: HotelDTO = {
+        ...mockHotels[0],
+        latitude: 25.68,
+        longitude: 32.63,
+      };
+      const url = component.getGoogleMapsUrl(hotel);
+
+      expect(url).toBe('https://www.google.com/maps/search/?api=1&query=25.68,32.63');
+
+      // Invalid hotel returns empty URL
+      const invalidHotel: HotelDTO = {
+        ...mockHotels[0],
+        latitude: NaN,
+        longitude: NaN,
+      };
+      expect(component.getGoogleMapsUrl(invalidHotel)).toBe('');
+    });
+
+    it('should clear search input and reset pagination with clearSearchInput()', () => {
+      component.searchQuery.set('Resort');
+      component.currentPage.set(3);
+
+      component.clearSearchInput();
+
+      expect(component.searchQuery()).toBe('');
+      expect(component.currentPage()).toBe(0);
+      expect(mockHotelService.getHotels).toHaveBeenCalledWith({
+        page: 0,
+        size: 12,
+      });
     });
   });
 });

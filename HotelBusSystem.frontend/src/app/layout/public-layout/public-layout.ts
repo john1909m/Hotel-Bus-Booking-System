@@ -3,11 +3,18 @@ import { RouterOutlet } from '@angular/router';
 import { PublicHeader } from './public-header/public-header';
 import { PublicFooter } from './public-footer/public-footer';
 import { AiChatWidgetComponent } from '../../shared/components/ai-chat-widget/ai-chat-widget.component';
+import { GlobalBookingTriggerComponent } from '../../shared/components/global-booking-trigger/global-booking-trigger.component';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterOutlet, PublicHeader, PublicFooter, AiChatWidgetComponent],
+  imports: [
+    RouterOutlet,
+    PublicHeader,
+    PublicFooter,
+    AiChatWidgetComponent,
+    GlobalBookingTriggerComponent,
+  ],
   template: `
     <app-public-header />
     <main class="public-main" id="main-content">
@@ -15,6 +22,7 @@ import { AiChatWidgetComponent } from '../../shared/components/ai-chat-widget/ai
     </main>
     <app-public-footer />
     <app-ai-chat-widget />
+    <app-global-booking-trigger />
   `,
   styles: [`
     :host { display: block; }

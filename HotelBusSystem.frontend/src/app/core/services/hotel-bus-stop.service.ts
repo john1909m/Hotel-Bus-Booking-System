@@ -3,9 +3,8 @@ import { environment } from '../../../environments/environment';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 import { PageHotelBusStopDTO, HotelBusStopListParams } from '../models/Pagination/hotelBusStopPage.model';
+import { HotelBusStopDTO } from '../models/Hotel/hotel-bus-stop.model';
 import { handleError } from '../../../utils/ErrorHandling';
-
-
 
 @Injectable({
   providedIn: 'root',
@@ -15,10 +14,10 @@ export class HotelBusStopService {
   private readonly apiUrl = `${environment.apiBaseUrl}/hotel-bus-stops`;
   private readonly http = inject(HttpClient);
 
-  //GET /hotel-bus-stops
+  // GET /hotel-bus-stops
   getHotelBusStops(params: HotelBusStopListParams = {}): Observable<PageHotelBusStopDTO>{
     let httpParams = new HttpParams();
-        if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
+    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
     if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
     if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
     if (params.q) httpParams = httpParams.set('q', params.q);
@@ -28,7 +27,13 @@ export class HotelBusStopService {
 
     return this.http.get<PageHotelBusStopDTO>(this.apiUrl, { params: httpParams }).pipe(
       catchError(handleError)
-    )
+    );
   }
 
+  // GET /hotel-bus-stops/hotel/{hotelId}
+  getHotelBusStopsByHotelId(hotelId: number): Observable<HotelBusStopDTO[]> {
+    return this.http.get<HotelBusStopDTO[]>(`${this.apiUrl}/hotel/${hotelId}`).pipe(
+      catchError(handleError)
+    );
+  }
 }

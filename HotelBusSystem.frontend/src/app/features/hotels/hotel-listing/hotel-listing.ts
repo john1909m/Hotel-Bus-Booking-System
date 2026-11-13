@@ -11,6 +11,9 @@ import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
 import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { PageHotelDTO,  HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
@@ -21,7 +24,15 @@ type PageState = 'loading' | 'success' | 'empty' | 'error';
 @Component({
   selector: 'app-hotel-listing',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink, SafeImageUrlPipe],
+  imports: [
+    FormsModule,
+    DecimalPipe,
+    RouterLink,
+    SafeImageUrlPipe,
+    ButtonModule,
+    TagModule,
+    SkeletonModule,
+  ],
   templateUrl: './hotel-listing.html',
   styleUrl: './hotel-listing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +56,29 @@ export class HotelListing implements OnInit, OnDestroy {
   readonly sortFilter = signal<string>('');
   readonly currentPage = signal<number>(0); // API is 0-based (Spring Data default)
   readonly pageSize = 12;
+
+  // ── Dynamic cities from actual hotel data ──────────────────
+  readonly availableCities = signal<string[]>([]);
+
+  readonly cityOptions = computed(() => [
+    { label: 'All Cities', value: '' },
+    ...this.availableCities().map((c) => ({ label: c, value: c })),
+  ]);
+
+  readonly ratingOptions = [
+    { label: 'All Ratings', value: '' },
+    { label: '4.5★ & above', value: '4.5' },
+    { label: '4.0★ & above', value: '4' },
+    { label: '3.5★ & above', value: '3.5' },
+    { label: '3.0★ & above', value: '3' },
+  ];
+
+  readonly sortOptions = [
+    { label: 'Default Sorting', value: '' },
+    { label: 'Highest Rated', value: 'rating,desc' },
+    { label: 'Name: A–Z', value: 'name,asc' },
+    { label: 'Name: Z–A', value: 'name,desc' },
+  ];
 
   // ── Computed ───────────────────────────────────────────────
   readonly totalPages = computed(() => this.pageData()?.totalPages ?? 0);
@@ -78,9 +112,9 @@ export class HotelListing implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Debounce search input to avoid excess API calls
+    // Debounce search input to avoid excess API calls while updating as user types
     this.searchSubject$
-      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.currentPage.set(0);
         this.loadHotels();
@@ -121,8 +155,23 @@ export class HotelListing implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.pageData.set(response);
-          this.hotels.set(response.content);
+          this.hotels.set(response.content ?? []);
           this.pageState.set(response.empty ? 'empty' : 'success');
+
+          // Dynamically populate available cities from actual hotel data
+          if (response.content && response.content.length > 0) {
+            this.collectCities(response.content);
+          }
+
+          // Fetch complete city catalog if more hotels exist and not already filtered
+          if (
+            response.totalElements > this.pageSize &&
+            !this.searchQuery() &&
+            !this.cityFilter() &&
+            this.currentPage() === 0
+          ) {
+            this.loadAllCities(response.totalElements);
+          }
         },
         error: (err) => {
           this.errorMessage.set(err?.message ?? 'Failed to load hotels. Please try again.');
@@ -131,10 +180,43 @@ export class HotelListing implements OnInit, OnDestroy {
       });
   }
 
+  private collectCities(hotels: HotelDTO[]): void {
+    const set = new Set(this.availableCities());
+    for (const h of hotels) {
+      if (h.city && typeof h.city === 'string' && h.city.trim().length > 0) {
+        set.add(h.city.trim());
+      }
+    }
+    const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
+    this.availableCities.set(sorted);
+  }
+
+  private loadAllCities(total: number): void {
+    this.hotelService
+      .getHotels({ page: 0, size: Math.min(total, 100) })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (allData) => {
+          if (allData?.content) {
+            this.collectCities(allData.content);
+          }
+        },
+        error: () => {
+          // Fallback gracefully to current page cities
+        },
+      });
+  }
+
   // ── Filter handlers ────────────────────────────────────────
   onSearchInput(value: string): void {
     this.searchQuery.set(value);
     this.searchSubject$.next(value);
+  }
+
+  clearSearchInput(): void {
+    this.searchQuery.set('');
+    this.currentPage.set(0);
+    this.loadHotels();
   }
 
   onCityChange(value: string): void {
@@ -183,6 +265,19 @@ export class HotelListing implements OnInit, OnDestroy {
 
   nextPage(): void {
     this.goToPage(this.currentPage() + 1);
+  }
+
+  // ── Location & Maps ───────────────────────────────────────
+  hasValidCoordinates(hotel: HotelDTO): boolean {
+    const lat = hotel.latitude;
+    const lng = hotel.longitude;
+    if (lat === null || lat === undefined || lng === null || lng === undefined) return false;
+    return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
+  getGoogleMapsUrl(hotel: HotelDTO): string {
+    if (!this.hasValidCoordinates(hotel)) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.latitude)},${encodeURIComponent(hotel.longitude)}`;
   }
 
   // ── Helpers ────────────────────────────────────────────────
