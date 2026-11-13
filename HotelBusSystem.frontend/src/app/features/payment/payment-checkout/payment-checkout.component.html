@@ -1,0 +1,490 @@
+<div class="checkout-page">
+  <!-- ── Page Hero Banner ── -->
+  <header class="checkout-hero">
+    <div class="checkout-container">
+      <div class="hero-content">
+        <span class="hero-eyebrow">Booking Finalization</span>
+        <h1 class="hero-title">Review & Payment</h1>
+        <p class="hero-subtitle">
+          Review your reserved itinerary details and select your preferred payment method to finalize your journey.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Checkout Content ── -->
+  <main class="checkout-container checkout-main">
+    @if (state.hasAnySelection()) {
+      <div class="checkout-layout">
+        <!-- ── Left Column: Reserved Itinerary & Payment Options ── -->
+        <div class="checkout-content-column">
+          
+          <!-- ── Section 1: Hotel Reservation ── -->
+          @if (state.hasHotel()) {
+            <section class="checkout-section-card" aria-labelledby="hotel-details-heading">
+              <div class="section-card-header">
+                <div class="header-badge-group">
+                  <span class="section-badge badge--hotel">Hotel Stay</span>
+                  <div class="hotel-rating-chip" title="Hotel Star Rating">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" aria-hidden="true">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>{{ state.hotelBooking()?.hotel?.rating || 4.5 }}</span>
+                  </div>
+                </div>
+                <h2 id="hotel-details-heading" class="section-card-title">
+                  {{ state.hotelBooking()?.hotel?.name }}
+                </h2>
+                <p class="section-card-location">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span>{{ state.hotelBooking()?.hotel?.city }} • {{ state.hotelBooking()?.hotel?.address }}</span>
+                </p>
+              </div>
+
+              <!-- Itinerary Info Pills -->
+              <div class="itinerary-grid">
+                <div class="itinerary-cell">
+                  <span class="cell-label">Check-in</span>
+                  <strong class="cell-value">{{ state.hotelBooking()?.checkIn }}</strong>
+                  <small class="cell-sub">After 14:00</small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Check-out</span>
+                  <strong class="cell-value">{{ state.hotelBooking()?.checkOut }}</strong>
+                  <small class="cell-sub">Before 11:00</small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Duration</span>
+                  <strong class="cell-value">{{ state.hotelBooking()?.stayNights }} Nights</strong>
+                  <small class="cell-sub">Length of stay</small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Guests</span>
+                  <strong class="cell-value">
+                    {{ state.hotelBooking()?.adultsCount }} {{ state.hotelBooking()?.adultsCount === 1 ? 'Adult' : 'Adults' }}
+                    @if (state.hotelBooking()?.children && (state.hotelBooking()?.children)!.length > 0) {
+                      , {{ (state.hotelBooking()?.children)!.length }} {{ (state.hotelBooking()?.children)!.length === 1 ? 'Child' : 'Children' }}
+                    }
+                  </strong>
+                  <small class="cell-sub">Total occupants</small>
+                </div>
+              </div>
+
+              <!-- Selected Rooms Table -->
+              <div class="rooms-container">
+                <h3 class="subsection-title">Selected Accommodations</h3>
+                <div class="rooms-list">
+                  @for (room of state.hotelBooking()?.selectedRooms; track room.id) {
+                    <div class="room-item-row">
+                      <div class="room-item-main">
+                        <div class="room-item-title-wrap">
+                          <span class="room-item-number">Room #{{ room.roomNumber }}</span>
+                          <span class="room-type-tag">{{ getRoomTypeLabel(room.roomType) }}</span>
+                        </div>
+                        <div class="room-meta-info">
+                          <span>Max {{ room.capacity }} guests</span>
+                          <span>&bull;</span>
+                          <span>{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
+                        </div>
+                      </div>
+
+                      <div class="room-item-pricing">
+                        <div class="room-price-stack">
+                          <span class="room-total-cost">
+                            {{ ((room.pricePerNight || 0) * (state.hotelBooking()?.stayNights || 1)) | number:'1.2-2' }} EGP
+                          </span>
+                          <small class="room-cost-breakdown">for {{ state.hotelBooking()?.stayNights }} nights</small>
+                        </div>
+                        <button
+                          type="button"
+                          class="btn-icon-remove"
+                          (click)="onRemoveRoom(room.id)"
+                          title="Remove this room"
+                          aria-label="Remove room">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Subtotal Footer -->
+              <div class="section-subtotal-footer">
+                <span class="subtotal-label">Hotel Accommodation Subtotal</span>
+                <strong class="subtotal-amount">{{ state.hotelPrice() | number:'1.2-2' }} EGP</strong>
+              </div>
+            </section>
+          }
+
+          <!-- ── Section 2: Transportation (Optional Bus) ── -->
+          @if (state.hasTransportation()) {
+            <section class="checkout-section-card" aria-labelledby="transport-details-heading">
+              <div class="section-card-header">
+                <div class="header-badge-group">
+                  <span class="section-badge badge--transport">Bus Transportation</span>
+                  <span class="carrier-tag">{{ state.transportationBooking()?.trip?.bus?.company || 'Bus Carrier' }}</span>
+                </div>
+                <h2 id="transport-details-heading" class="section-card-title">
+                  {{ state.transportationBooking()?.originStop?.name }} &rarr; {{ state.transportationBooking()?.destinationStop?.name }}
+                </h2>
+                @if (state.transportationBooking()?.distanceFromHotel !== null) {
+                  <p class="section-card-location">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Arrival station is <strong>{{ state.transportationBooking()?.distanceFromHotel | number:'1.1-2' }} km</strong> from your hotel</span>
+                  </p>
+                }
+              </div>
+
+              <!-- Timing Info Pills -->
+              <div class="itinerary-grid">
+                <div class="itinerary-cell">
+                  <span class="cell-label">Departure</span>
+                  <strong class="cell-value">{{ state.transportationBooking()?.trip?.departureTime | date:'shortTime' }}</strong>
+                  <small class="cell-sub">{{ state.transportationBooking()?.originStop?.city }}</small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Arrival</span>
+                  <strong class="cell-value">{{ state.transportationBooking()?.trip?.arrivalTime | date:'shortTime' }}</strong>
+                  <small class="cell-sub">{{ state.transportationBooking()?.destinationStop?.city }}</small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Reserved Seats</span>
+                  <strong class="cell-value">
+                    {{ state.selectedSeatsCount() }} {{ state.selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }}
+                  </strong>
+                  <small class="cell-sub">
+                    @for (s of state.transportationBooking()?.selectedSeats; track s.id; let last = $last) {
+                      #{{ s.seatNumber }}{{ last ? '' : ', ' }}
+                    }
+                  </small>
+                </div>
+                <div class="itinerary-cell">
+                  <span class="cell-label">Seat Price</span>
+                  <strong class="cell-value">{{ state.transportationBooking()?.trip?.price| number:'1.2-2' }} EGP</strong>
+                  <small class="cell-sub">Per seat</small>
+                </div>
+              </div>
+
+              <!-- Subtotal and Remove Action -->
+              <div class="section-subtotal-footer">
+                <div class="footer-action-group">
+                  <button
+                    type="button"
+                    class="btn-text-danger"
+                    (click)="onRemoveTransportation()"
+                    aria-label="Remove transportation from itinerary">
+                    &times; Remove Transportation
+                  </button>
+                </div>
+                <div class="footer-amount-group">
+                  <span class="subtotal-label">Transportation Subtotal</span>
+                  <strong class="subtotal-amount">{{ state.transportationPrice() | number:'1.2-2' }} EGP</strong>
+                </div>
+              </div>
+            </section>
+          }
+
+          <!-- ── Section 3: Payment Method Selection ── -->
+          <section class="checkout-section-card" aria-labelledby="payment-method-heading">
+            <div class="section-card-header">
+              <span class="section-badge badge--payment">Payment Method</span>
+              <h2 id="payment-method-heading" class="section-card-title">Select Payment Option</h2>
+              <p class="section-card-desc">Choose how you would like to complete this transaction. All transactions are securely processed.</p>
+            </div>
+
+            <!-- Payment Method Grid -->
+            <div class="payment-methods-grid" role="radiogroup" aria-label="Payment method selection">
+              @for (method of paymentMethods; track method.id) {
+                <div
+                  class="payment-option-card"
+                  [class.option--active]="selectedMethod() === method.id"
+                  (click)="selectPaymentMethod(method.id)"
+                  (keydown.enter)="selectPaymentMethod(method.id)"
+                  (keydown.space)="selectPaymentMethod(method.id)"
+                  tabindex="0"
+                  role="radio"
+                  [attr.aria-checked]="selectedMethod() === method.id">
+                  
+                  <div class="option-header">
+                    <div class="option-radio-ring" [class.ring--active]="selectedMethod() === method.id">
+                      @if (selectedMethod() === method.id) {
+                        <div class="radio-inner-dot"></div>
+                      }
+                    </div>
+                    <span class="option-title">{{ method.title }}</span>
+                  </div>
+                  <p class="option-desc">{{ method.subtitle }}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Card Details Form (When Credit/Debit Card Selected) -->
+            @if (selectedMethod() === 'CREDIT_CARD') {
+              <div class="card-details-form">
+                <h3 class="form-title">Payment Card Details</h3>
+
+                <div class="form-grid">
+                  <div class="form-group form-col-full">
+                    <label for="cardholder-name" class="form-label">Name on Card</label>
+                    <input
+                      id="cardholder-name"
+                      type="text"
+                      pInputText
+                      class="form-control"
+                      placeholder="e.g. Mahmoud Ahmed"
+                      [value]="cardholderName()"
+                      (input)="cardholderName.set($any($event.target).value)" />
+                  </div>
+
+                  <div class="form-group form-col-full">
+                    <label for="card-number" class="form-label">Card Number</label>
+                    <div class="input-with-icon">
+                      <input
+                        id="card-number"
+                        type="text"
+                        pInputText
+                        class="form-control"
+                        placeholder="•••• •••• •••• ••••"
+                        maxlength="19"
+                        [value]="cardNumber()"
+                        (input)="cardNumber.set($any($event.target).value)" />
+                      <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="form-group form-col-half">
+                    <label for="card-expiry" class="form-label">Expiry Date</label>
+                    <input
+                      id="card-expiry"
+                      type="text"
+                      pInputText
+                      class="form-control"
+                      placeholder="MM / YY"
+                      maxlength="5"
+                      [value]="cardExpiry()"
+                      (input)="cardExpiry.set($any($event.target).value)" />
+                  </div>
+
+                  <div class="form-group form-col-half">
+                    <label for="card-cvv" class="form-label">CVV / CVC</label>
+                    <input
+                      id="card-cvv"
+                      type="password"
+                      pInputText
+                      class="form-control"
+                      placeholder="•••"
+                      maxlength="4"
+                      [value]="cardCvv()"
+                      (input)="cardCvv.set($any($event.target).value)" />
+                  </div>
+                </div>
+              </div>
+            } @else if (selectedMethod() === 'PAYPAL') {
+              <div class="external-provider-banner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                <div>
+                  <strong>PayPal Authorization</strong>
+                  <p>You will be securely redirected to PayPal to complete your purchase after clicking confirm.</p>
+                </div>
+              </div>
+            } @else {
+              <div class="external-provider-banner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 21h18"></path>
+                  <path d="M5 21V9"></path>
+                  <path d="M19 21V9"></path>
+                  <path d="M9 21v-8"></path>
+                  <path d="M15 21v-8"></path>
+                  <polygon points="12 3 2 9 22 9 12 3"></polygon>
+                </svg>
+                <div>
+                  <strong>Bank Transfer Instructions</strong>
+                  <p>Wire reference number and payment instructions will be presented upon order placement.</p>
+                </div>
+              </div>
+            }
+          </section>
+        </div>
+
+        <!-- ── Right Column: Sticky Summary & Action Dock ── -->
+        <aside class="checkout-summary-column" aria-labelledby="order-summary-heading">
+          <div class="summary-card">
+            <h2 id="order-summary-heading" class="summary-title">Summary & Payment</h2>
+
+            <div class="summary-line-items">
+              @if (state.hasHotel()) {
+                <div class="summary-item">
+                  <div class="item-meta">
+                    <span class="item-name">{{ state.hotelBooking()?.hotel?.name }}</span>
+                    <small class="item-sub">
+                      {{ state.selectedRoomsCount() }} {{ state.selectedRoomsCount() === 1 ? 'Room' : 'Rooms' }} • {{ state.hotelBooking()?.stayNights }} Nights
+                    </small>
+                  </div>
+                  <strong class="item-price">{{ state.hotelPrice() | number:'1.2-2' }} EGP</strong>
+                </div>
+              }
+
+              @if (state.hasTransportation()) {
+                <div class="summary-item">
+                  <div class="item-meta">
+                    <span class="item-name">Bus Transportation</span>
+                    <small class="item-sub">
+                      {{ state.selectedSeatsCount() }} {{ state.selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} ({{ state.transportationBooking()?.trip?.bus?.company }})
+                    </small>
+                  </div>
+                  <strong class="item-price">{{ state.transportationPrice() | number:'1.2-2' }} EGP</strong>
+                </div>
+              }
+
+              <div class="summary-item fees-item">
+                <div class="item-meta">
+                  <span class="item-name">Taxes & Booking Fees</span>
+                  <small class="item-sub">Municipal tourism levy included</small>
+                </div>
+                <span class="item-free-badge">Included</span>
+              </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <!-- Grand Total Display -->
+            <div class="summary-grand-total">
+              <div class="total-labels">
+                <span class="total-title">Total Due</span>
+                <small class="total-tax-note">All taxes & fees included</small>
+              </div>
+              <div class="total-figure">
+                <span class="total-amount">{{ state.totalCombinedPrice() | number:'1.2-2' }}</span>
+                <span class="total-currency">EGP</span>
+              </div>
+            </div>
+
+            <!-- Guarantees & Security Badges -->
+            <div class="security-badges">
+              <div class="security-badge-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>256-bit SSL Bank-Grade Encryption</span>
+              </div>
+              <div class="security-badge-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Instant Confirmation & Ticket Generation</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="summary-actions-stack">
+              <button
+                pButton
+                type="button"
+                id="btn-confirm-and-pay"
+                class="btn-pay-submit"
+                severity="primary"
+                [disabled]="isProcessing() || !state.hasAnySelection()"
+                (click)="onProcessPayment()"
+                [attr.aria-busy]="isProcessing()">
+                @if (isProcessing()) {
+                  <span>Authorizing Payment...</span>
+                } @else {
+                  <span>Pay {{ state.totalCombinedPrice() | number:'1.2-2' }} EGP</span>
+                }
+              </button>
+
+              <button
+                pButton
+                type="button"
+                id="btn-clear-checkout"
+                class="btn-clear-checkout"
+                severity="secondary"
+                [outlined]="true"
+                (click)="onClearSummary()"
+                aria-label="Clear itinerary and start over">
+                Clear Itinerary & Return
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    } @else {
+      <!-- Empty State -->
+      <div class="empty-state-card">
+        <div class="empty-icon-wrap">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </div>
+        <h2 class="empty-title">Your Itinerary is Empty</h2>
+        <p class="empty-desc">You do not currently have any active hotel or bus reservations selected in your session.</p>
+        <div class="empty-actions">
+          <a routerLink="/hotels" class="btn-browse-primary">
+            Browse Hotels
+          </a>
+          <a routerLink="/buses" class="btn-browse-secondary">
+            Search Bus Trips
+          </a>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- ── Order Confirmation Dialog ── -->
+  <p-dialog
+    header="Reservation Confirmed!"
+    [visible]="confirmationDialogVisible()"
+    (visibleChange)="onConfirmationClosed()"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="confirmation-dialog">
+    <div class="dialog-success-body">
+      <div class="success-icon-badge">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h3 class="dialog-title">Thank You for Booking with TravelEase!</h3>
+      <p class="dialog-text">
+        Your payment has been successfully authorized and your booking has been recorded.
+      </p>
+      <div class="reference-box">
+        <span class="ref-label">Booking Reference:</span>
+        <strong class="ref-code">{{ confirmedReference() }}</strong>
+      </div>
+      <p class="dialog-sub">
+        A confirmation receipt has been issued to your registered email address.
+      </p>
+      <button
+        pButton
+        type="button"
+        class="btn-dialog-close"
+        severity="primary"
+        (click)="onConfirmationClosed()">
+        Return to Hotels
+      </button>
+    </div>
+  </p-dialog>
+</div>

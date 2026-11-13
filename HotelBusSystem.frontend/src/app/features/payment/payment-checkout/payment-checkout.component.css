@@ -1,0 +1,912 @@
+/* ═══════════════════════════════════════════════════════════════
+   TravelEase — Payment & Checkout Page Styles
+   Built with Semantic Tokens & Full Light / Dark Mode Support
+════════════════════════════════════════════════════════════════ */
+
+.checkout-page {
+  min-height: calc(100vh - 140px);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.checkout-container {
+  max-width: var(--container-max, 1200px);
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* ─── Hero Header ────────────────────────────────────────────── */
+.checkout-hero {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-block: 2.25rem 2rem;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.hero-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.hero-title {
+  font-size: clamp(1.85rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.hero-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 720px;
+}
+
+/* ─── Main Two-Column Layout ─────────────────────────────────── */
+.checkout-main {
+  padding-block: 2.5rem 4rem;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 390px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.checkout-content-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* ─── Checkout Section Cards ─────────────────────────────────── */
+.checkout-section-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: border-color var(--transition-base, 0.25s);
+}
+
+.section-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.header-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.badge--hotel {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.badge--transport {
+  background: rgba(168, 85, 247, 0.14);
+  color: #9333ea;
+}
+
+[data-theme="dark"] .badge--transport {
+  background: rgba(168, 85, 247, 0.22);
+  color: #c084fc;
+}
+
+.badge--payment {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+[data-theme="dark"] .badge--payment {
+  background: rgba(59, 130, 246, 0.22);
+  color: #60a5fa;
+}
+
+.carrier-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.hotel-rating-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .hotel-rating-chip {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.section-card-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.section-card-location,
+.section-card-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+/* ─── Itinerary Grid (Check-in, Duration, etc.) ──────────────── */
+.itinerary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.itinerary-cell {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cell-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cell-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cell-sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Rooms Table ────────────────────────────────────────────── */
+.rooms-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.subsection-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.rooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.room-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.room-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.room-item-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.room-item-number {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.room-type-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.room-meta-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.room-item-pricing {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.room-price-stack {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-total-cost {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.room-cost-breakdown {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.btn-icon-remove {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.btn-icon-remove:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+/* ─── Section Subtotal Footer ────────────────────────────────── */
+.section-subtotal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.subtotal-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.subtotal-amount {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.btn-text-danger {
+  background: transparent;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast, 0.2s);
+}
+
+.btn-text-danger:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+/* ─── Payment Methods Grid ───────────────────────────────────── */
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+}
+
+.payment-option-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all var(--transition-base, 0.25s);
+  outline: none;
+}
+
+.payment-option-card:hover {
+  border-color: var(--color-primary);
+  background: var(--card-bg);
+}
+
+.payment-option-card.option--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.option-radio-ring {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast, 0.15s);
+}
+
+.option-radio-ring.ring--active {
+  border-color: var(--color-primary);
+}
+
+.radio-inner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+}
+
+.option-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.option-desc {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+  padding-left: 1.7rem;
+}
+
+/* ─── Card Details Form ──────────────────────────────────────── */
+.card-details-form {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-col-full {
+  grid-column: 1 / -1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-control {
+  width: 100%;
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.65rem 0.85rem !important;
+  font-size: 0.9rem !important;
+  transition: all var(--transition-fast, 0.2s) !important;
+}
+
+.form-control:focus {
+  border-color: var(--input-focus) !important;
+  box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.external-provider-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.external-provider-banner svg {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.external-provider-banner strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+/* ─── Right Column: Sticky Summary ───────────────────────────── */
+.checkout-summary-column {
+  position: sticky;
+  top: 90px;
+}
+
+.summary-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.summary-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: var(--font-tight, 'Inter Tight', sans-serif);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.summary-line-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.item-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.item-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.item-free-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Grand Total Block */
+.summary-grand-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.total-labels {
+  display: flex;
+  flex-direction: column;
+}
+
+.total-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.total-tax-note {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.total-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.total-amount {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+.total-currency {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Security Badges */
+.security-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.security-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.security-badge-row svg {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Summary Actions Stack */
+.summary-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.btn-pay-submit {
+  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  padding-block: 0.85rem !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.btn-clear-checkout {
+  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  padding-block: 0.65rem !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* ─── Empty State Card ───────────────────────────────────────── */
+.empty-state-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn-browse-primary {
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--text-on-primary, #fff);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background var(--transition-fast, 0.2s);
+}
+
+.btn-browse-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-browse-secondary {
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.btn-browse-secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ─── Confirmation Dialog Styling ────────────────────────────── */
+:host ::ng-deep .confirmation-dialog .p-dialog {
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  max-width: 480px;
+  width: 90vw;
+}
+
+:host ::ng-deep .confirmation-dialog .p-dialog-header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 1.25rem 1.5rem;
+}
+
+:host ::ng-deep .confirmation-dialog .p-dialog-content {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  padding: 1.5rem;
+}
+
+.dialog-success-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.success-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dialog-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.reference-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: var(--bg-surface);
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--radius-md);
+}
+
+.ref-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.ref-code {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: 0.05em;
+}
+
+.dialog-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.btn-dialog-close {
+  width: 100%;
+  display: flex !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  padding-block: 0.75rem !important;
+  border-radius: var(--radius-md) !important;
+  margin-top: 0.5rem;
+}
+
+/* ─── Responsive Queries ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-summary-column {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-col-half {
+    grid-column: 1 / -1;
+  }
+
+  .room-item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .room-item-pricing {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
