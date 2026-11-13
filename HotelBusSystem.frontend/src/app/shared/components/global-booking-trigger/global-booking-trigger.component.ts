@@ -11,6 +11,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { AuthService } from '../../../core/services/auth.service';
 import { BookingStateService } from '../../../core/services/booking-state.service';
 import { HotelBookingSummaryComponent } from '../../../features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component';
 
@@ -155,6 +156,7 @@ import { HotelBookingSummaryComponent } from '../../../features/hotels/hotel-det
 })
 export class GlobalBookingTriggerComponent implements OnInit, OnDestroy {
   readonly bookingState = inject(BookingStateService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly currentUrl = signal<string>(this.router.url);
@@ -186,6 +188,7 @@ export class GlobalBookingTriggerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUrl.set(this.router.url);
+    this.checkResumeSummary();
     this.routerSub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((event) => {
@@ -194,12 +197,28 @@ export class GlobalBookingTriggerComponent implements OnInit, OnDestroy {
           this.bookingState.hideTriggerOnPayment.set(true);
         } else {
           this.bookingState.hideTriggerOnPayment.set(false);
+          this.checkResumeSummary();
         }
       });
   }
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
+  }
+
+  private checkResumeSummary(): void {
+    if (!this.bookingState.resumeSummaryAfterLogin()) return;
+    if (this.authService.isAuthenticated()) {
+      this.bookingState.setResumeSummaryAfterLogin(false);
+      this.bookingState.openSummary();
+    } else {
+      this.authService.ensureInitialized().then(() => {
+        if (this.bookingState.resumeSummaryAfterLogin() && this.authService.isAuthenticated()) {
+          this.bookingState.setResumeSummaryAfterLogin(false);
+          this.bookingState.openSummary();
+        }
+      });
+    }
   }
 
   openSummary(): void {

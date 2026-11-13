@@ -1923,6 +1923,90 @@ Refactored the transportation recommendation logic in `HotelBookingSummaryCompon
 - **Vitest Unit Test Suite**: **94/94 tests passed** across all 8 suites (`bus-eligibility.util.spec.ts`, `booking-state.service.spec.ts`, `hotel-booking-flow.spec.ts`, `hotel-booking-summary.component.spec.ts`, `hotel-transportation-recommendations.component.spec.ts`, `global-booking-trigger.component.spec.ts`, `hotel-details-gallery.spec.ts`, `payment-checkout.component.spec.ts`).
 - **Angular Production Build (`npx ng build`)**: Completed successfully with exit code 0.
 
+---
+
+# Phase: Require Login Before Continue to Payment & Restore Drawer State
+
+## 1. Overview & Problem
+
+Previously, a user could proceed through the entire booking summary flow and click "Continue to Payment" without being authenticated, navigating directly to `/payment`. Furthermore, the `/payment` route was declared as an unguarded child route under `PublicLayout`, allowing direct unauthenticated URL access.
+
+### Requirements:
+1. Unauthenticated guests can browse hotels, select dates, guests, rooms, and bus transportation without being forced to log in upfront.
+2. Clicking "Continue to Payment" in the summary drawer (`HotelBookingSummaryComponent`) redirects unauthenticated guests to `/login?returnUrl=<currentUrl>`.
+3. All booking selections (hotel, rooms, stay dates, guest party, custom room distributions, selected outgoing/return bus trips and seats) remain completely intact in `BookingStateService` and `sessionStorage`.
+4. A persistence flag (`resumeSummaryAfterLogin`) is stored so that when the user completes login and returns to their previous page (e.g. `/hotels/:id`), the summary drawer automatically reopens with all selections preserved.
+5. Authenticated `USER` users clicking "Continue to Payment" navigate directly to `/payment`.
+6. Direct URL navigation to `/payment` is guarded with `canActivate: [authGuard, roleGuard(['USER'])]`:
+   - Unauthenticated guests are redirected to `/login?returnUrl=/payment`.
+   - After login as a `USER`, they are redirected to `/payment`.
+   - An authenticated `ADMIN` attempting to access `/payment` is automatically redirected to `/admin` per `roleGuard` rules.
+7. No redirect loops, no duplicate or premature booking creation POST requests.
+
+---
+
+## 2. Architecture & Implementation
+
+### Routing Guard Protection (`app.routes.ts`)
+- Added `canActivate: [authGuard, roleGuard(['USER'])]` to the `payment` route definition in `src/app/app.routes.ts`.
+- Direct access to `/payment` runs `authGuard` first, saving `/payment` into `returnUrl`.
+- If an admin logs in, `roleGuard(['USER'])` redirects them away to `/admin`.
+
+### State Management & Persistence (`BookingStateService`)
+- Added signal `readonly resumeSummaryAfterLogin = signal<boolean>(false);`.
+- Extended `PersistedBookingState` to serialize/deserialize `resumeSummaryAfterLogin` in `sessionStorage` under key `travelease_booking_summary_state`.
+- Added `setResumeSummaryAfterLogin(value: boolean): void`.
+- Updated `continueToPayment(currentUrl?: string)`:
+  - Injects `AuthService`.
+  - If `!this.authService.isAuthenticated()`:
+    - Sets `resumeSummaryAfterLogin(true)`.
+    - Persists state to storage.
+    - Navigates to `/login` with `queryParams: { returnUrl: currentUrl || this.router.url }`.
+  - If authenticated:
+    - Closes summary drawer.
+    - Sets `hideTriggerOnPayment(true)`.
+    - Navigates to `/payment`.
+- Updated `clearAll()` to reset `resumeSummaryAfterLogin` to `false`.
+
+### Drawer & Global Trigger Auto-Resume (`GlobalBookingTriggerComponent` & `HotelBookingSummaryComponent`)
+- `HotelBookingSummaryComponent`:
+  - `onContinueToPayment()` invokes `this.bookingState.continueToPayment(this.router.url)`.
+- `GlobalBookingTriggerComponent`:
+  - Injects `AuthService`.
+  - In `ngOnInit()` and on router `NavigationEnd` (outside `/payment`), checks `checkResumeSummary()`:
+    - If `resumeSummaryAfterLogin()` is `true` and the user is authenticated, it clears the flag via `setResumeSummaryAfterLogin(false)` and calls `openSummary()`.
+    - If authentication is still being initialized (e.g. page refresh), awaits `authService.ensureInitialized()` before verifying credentials and reopening the drawer.
+
+---
+
+## 3. Files Modified & Created
+
+| File | Status | Description |
+| :--- | :--- | :--- |
+| `src/app/app.routes.ts` | Modified | Added `canActivate: [authGuard, roleGuard(['USER'])]` to `/payment` route |
+| `src/app/core/services/booking-state.service.ts` | Modified | Added `resumeSummaryAfterLogin` signal and persistence, updated `continueToPayment()` with auth check and login redirect |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Updated `onContinueToPayment()` to pass `this.router.url` to `continueToPayment()` |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.ts` | Modified | Injected `AuthService`, added `checkResumeSummary()` in `ngOnInit()` and `NavigationEnd` |
+| `src/app/core/guards/payment-route-guard.spec.ts` | Created | Unit test suite verifying `/payment` guard behavior (guest redirect with `returnUrl`, user access, admin redirect to `/admin`) |
+| `src/app/core/services/booking-state.service.spec.ts` | Modified | Added unit tests for `continueToPayment` guest redirect, user navigation, and flag persistence |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.spec.ts` | Modified | Added unit tests for continue to payment flow and updated inline date test range to future dates |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.spec.ts` | Modified | Added unit tests for automatic drawer resumption upon login |
+| `IMPLEMENTATION.md` | Modified | Documented requirements, architectural design, file modifications, and verification |
+
+---
+
+## 4. Verification Performed
+
+- **Unit Tests (`npx vitest run`)**: **51/51 tests passed** across all 5 affected test suites:
+  - `payment-route-guard.spec.ts` (5/5 passed)
+  - `booking-state.service.spec.ts` (16/16 passed)
+  - `hotel-booking-summary.component.spec.ts` (7/7 passed)
+  - `global-booking-trigger.component.spec.ts` (8/8 passed)
+  - `bus-eligibility.util.spec.ts` (15/15 passed)
+- **TypeScript Type Check (`npx tsc --noEmit`)**: 0 errors.
+- **Production Build (`npx ng build`)**: Completed successfully with exit code 0.
+
+
 
 
 

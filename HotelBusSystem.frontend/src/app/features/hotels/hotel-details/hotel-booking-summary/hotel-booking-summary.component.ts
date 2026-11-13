@@ -885,7 +885,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
 
   onContinueToPayment(): void {
     this.continueToPayment.emit();
-    this.bookingState.continueToPayment();
+    this.bookingState.continueToPayment(this.router.url);
   }
 
   onClearSummary(): void {

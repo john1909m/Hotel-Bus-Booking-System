@@ -36,6 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'payment',
+        canActivate: [authGuard, roleGuard(['USER'])],
         loadComponent: () =>
           import('./features/payment/payment-checkout/payment-checkout.component').then(m => m.PaymentCheckoutComponent),
         title: 'TravelEase — Payment & Checkout',

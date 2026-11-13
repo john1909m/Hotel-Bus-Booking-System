@@ -2,16 +2,21 @@ import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 import { BookingStateService, HotelBookingState } from './booking-state.service';
 
 describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
   let service: BookingStateService;
   let mockRouter: any;
+  let mockAuthService: any;
 
   beforeEach(() => {
-    // Clear localStorage
+    // Clear localStorage and sessionStorage
     if (typeof localStorage !== 'undefined') {
       localStorage.clear();
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
     }
 
     mockRouter = {
@@ -19,9 +24,15 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       url: '/hotels',
     };
 
+    mockAuthService = {
+      isAuthenticated: vi.fn().mockReturnValue(true),
+      ensureInitialized: vi.fn().mockResolvedValue(null),
+    };
+
     const injector = Injector.create({
       providers: [
         { provide: Router, useValue: mockRouter },
+        { provide: AuthService, useValue: mockAuthService },
         BookingStateService,
       ],
     });
@@ -208,11 +219,12 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       expect(service.children()[0].id).toBe(child1Id);
     });
 
-    it('clearAll should reset standalone stay dates and guest counts', () => {
-      service.checkIn.set('2026-11-01');
-      service.checkOut.set('2026-11-05');
+    it('clearAll should reset standalone stay dates, guest counts, and resumeSummaryAfterLogin', () => {
+      service.checkIn.set('2026-11-20');
+      service.checkOut.set('2026-11-25');
       service.adults.set(4);
       service.addChild(5);
+      service.resumeSummaryAfterLogin.set(true);
 
       service.clearAll();
 
@@ -221,6 +233,42 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       expect(service.adults()).toBe(2);
       expect(service.children()).toEqual([]);
       expect(service.stayNights()).toBeNull();
+      expect(service.resumeSummaryAfterLogin()).toBe(false);
+    });
+
+    it('continueToPayment should redirect unauthenticated guest to login with returnUrl', () => {
+      mockAuthService.isAuthenticated.mockReturnValue(false);
+      mockRouter.url = '/hotels/42';
+
+      service.continueToPayment();
+
+      expect(service.resumeSummaryAfterLogin()).toBe(true);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { returnUrl: '/hotels/42' },
+      });
+    });
+
+    it('continueToPayment should accept custom currentUrl for returnUrl', () => {
+      mockAuthService.isAuthenticated.mockReturnValue(false);
+
+      service.continueToPayment('/hotels/10?checkIn=2026-12-01&checkOut=2026-12-05');
+
+      expect(service.resumeSummaryAfterLogin()).toBe(true);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { returnUrl: '/hotels/10?checkIn=2026-12-01&checkOut=2026-12-05' },
+      });
+    });
+
+    it('continueToPayment should navigate directly to /payment when user is authenticated', () => {
+      mockAuthService.isAuthenticated.mockReturnValue(true);
+      service.openSummary();
+
+      service.continueToPayment();
+
+      expect(service.summaryOpen()).toBe(false);
+      expect(service.hideTriggerOnPayment()).toBe(true);
+      expect(service.resumeSummaryAfterLogin()).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/payment']);
     });
   });
 });

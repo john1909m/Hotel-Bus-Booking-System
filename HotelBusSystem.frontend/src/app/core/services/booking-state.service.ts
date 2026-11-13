@@ -1,6 +1,7 @@
 import { Injectable, computed, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { AuthService } from './auth.service';
 import { HotelDTO } from '../models/Hotel/hotel.model';
 import { RoomDTO } from '../models/Room/room.model';
 import { BusStopDto } from '../models/Bus/bus-stop.model';
@@ -56,6 +57,7 @@ export interface PersistedBookingState {
   checkOut?: string;
   adults?: number;
   children?: ChildGuestState[];
+  resumeSummaryAfterLogin?: boolean;
 }
 
 const STORAGE_KEY = 'travelease_booking_summary_state';
@@ -65,6 +67,7 @@ const STORAGE_KEY = 'travelease_booking_summary_state';
 })
 export class BookingStateService {
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   // State signals
   readonly hotelBooking = signal<HotelBookingState | null>(null);
@@ -72,6 +75,7 @@ export class BookingStateService {
   readonly originBusStopId = signal<number | null>(null);
   readonly summaryOpen = signal<boolean>(false);
   readonly hideTriggerOnPayment = signal<boolean>(false);
+  readonly resumeSummaryAfterLogin = signal<boolean>(false);
 
   // Single Source of Truth for stay dates and guest party
   readonly checkIn = signal<string>('');
@@ -591,6 +595,7 @@ export class BookingStateService {
     this.originBusStopId.set(null);
     this.summaryOpen.set(false);
     this.hideTriggerOnPayment.set(false);
+    this.resumeSummaryAfterLogin.set(false);
     this.clearStorage();
     this.stayDatesChanged$.next({ checkIn: '', checkOut: '' });
     this.guestsChanged$.next({ adults: 2, children: [] });
@@ -645,9 +650,28 @@ export class BookingStateService {
   }
 
   /**
-   * Navigates to the payment checkout flow while preserving current state.
+   * Sets the resumeSummaryAfterLogin flag and persists state.
    */
-  continueToPayment(): void {
+  setResumeSummaryAfterLogin(value: boolean): void {
+    this.resumeSummaryAfterLogin.set(value);
+    this.persistToStorage();
+  }
+
+  /**
+   * Navigates to the payment checkout flow while preserving current state.
+   * If the user is unauthenticated, redirects to login with returnUrl and sets
+   * resumeSummaryAfterLogin flag so the drawer reopens automatically after login.
+   */
+  continueToPayment(currentUrl?: string): void {
+    if (!this.authService.isAuthenticated()) {
+      this.setResumeSummaryAfterLogin(true);
+      const returnDestination = currentUrl || this.router.url;
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: returnDestination },
+      });
+      return;
+    }
+
     this.closeSummary();
     this.hideTriggerOnPayment.set(true);
     this.router.navigate(['/payment']);
@@ -773,6 +797,7 @@ export class BookingStateService {
         checkOut: this.checkOut(),
         adults: this.adults(),
         children: this.children(),
+        resumeSummaryAfterLogin: this.resumeSummaryAfterLogin(),
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
@@ -791,6 +816,9 @@ export class BookingStateService {
         if (data.checkOut) this.checkOut.set(data.checkOut);
         if (typeof data.adults === 'number' && data.adults >= 1) this.adults.set(data.adults);
         if (Array.isArray(data.children)) this.children.set(data.children);
+        if (typeof data.resumeSummaryAfterLogin === 'boolean') {
+          this.resumeSummaryAfterLogin.set(data.resumeSummaryAfterLogin);
+        }
 
         // Validate hotel draft
         if (

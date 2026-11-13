@@ -169,17 +169,17 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
   it('valid inline date changes update BookingStateService and recalculate nights and price', () => {
     component.openDateEditor();
 
-    // Change to 5 nights: 2026-11-10 to 2026-11-15
-    const newIn = new Date(2026, 10, 10);
-    const newOut = new Date(2026, 10, 15);
+    // Change to 5 nights: 2026-11-20 to 2026-11-25 (future dates)
+    const newIn = new Date(2026, 10, 20);
+    const newOut = new Date(2026, 10, 25);
 
     component.onCheckInSelect(newIn);
     component.onCheckOutSelect(newOut);
 
     expect(component.dateErrorMessage()).toBeNull();
     const updated = bookingState.hotelBooking();
-    expect(updated?.checkIn).toBe('2026-11-10');
-    expect(updated?.checkOut).toBe('2026-11-15');
+    expect(updated?.checkIn).toBe('2026-11-20');
+    expect(updated?.checkOut).toBe('2026-11-25');
     expect(updated?.stayNights).toBe(5);
     // 1200 * 5 = 6000
     expect(updated?.totalHotelPrice).toBe(6000);
@@ -231,5 +231,26 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
 
     expect(component.outgoingTrips().length).toBe(0);
     expect(component.hasSearchedTrips()).toBe(true);
+  });
+
+  it('redirects unauthenticated guest to login with returnUrl and sets resumeSummaryAfterLogin flag', () => {
+    mockAuthService.isAuthenticated.mockReturnValue(false);
+    mockRouter.url = '/hotels/1?checkIn=2026-11-20&checkOut=2026-11-25';
+
+    component.onContinueToPayment();
+
+    expect(bookingState.resumeSummaryAfterLogin()).toBe(true);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/hotels/1?checkIn=2026-11-20&checkOut=2026-11-25' },
+    });
+  });
+
+  it('navigates authenticated user directly to payment', () => {
+    mockAuthService.isAuthenticated.mockReturnValue(true);
+
+    component.onContinueToPayment();
+
+    expect(bookingState.resumeSummaryAfterLogin()).toBe(false);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/payment']);
   });
 });
