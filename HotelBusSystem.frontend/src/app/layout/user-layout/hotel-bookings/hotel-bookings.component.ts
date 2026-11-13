@@ -10,8 +10,6 @@ import {
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
@@ -21,7 +19,7 @@ import { HotelBookingDTO } from '../../../core/models/Hotel/hotel-booking.model'
 @Component({
   selector: 'app-hotel-bookings',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, DialogModule, ButtonModule, ToastModule],
+  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, ToastModule],
   providers: [MessageService],
   templateUrl: './hotel-bookings.component.html',
   styleUrl: './hotel-bookings.component.css',
@@ -36,12 +34,6 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
   readonly bookings = signal<HotelBookingDTO[]>([]);
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
-
-  // Cancellation Signals
-  readonly cancelDialogVisible = signal<boolean>(false);
-  readonly bookingToCancel = signal<HotelBookingDTO | null>(null);
-  readonly isCancelling = signal<boolean>(false);
-  readonly cancelErrorMessage = signal<string | null>(null);
 
   readonly totalCount = computed(() => this.bookings().length);
 
@@ -117,60 +109,5 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
       default:
         return status || 'Reservation placed';
     }
-  }
-
-  canCancelBooking(b: HotelBookingDTO): boolean {
-    if (!b || b.status !== 'PENDING') return false;
-    // Ownership check: user can only cancel their own booking
-    const currentUserId = this.authService.currentUser()?.id;
-    if (currentUserId && b.userId && b.userId !== currentUserId) {
-      return false;
-    }
-    if (!b.checkIn) return true;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    return b.checkIn >= todayStr;
-  }
-
-  openCancelDialog(b: HotelBookingDTO): void {
-    if (!this.canCancelBooking(b)) return;
-    this.bookingToCancel.set(b);
-    this.cancelErrorMessage.set(null);
-    this.cancelDialogVisible.set(true);
-  }
-
-  closeCancelDialog(): void {
-    this.cancelDialogVisible.set(false);
-    this.bookingToCancel.set(null);
-    this.cancelErrorMessage.set(null);
-  }
-
-  confirmCancel(): void {
-    const booking = this.bookingToCancel();
-    if (!booking || !this.canCancelBooking(booking) || this.isCancelling()) return;
-
-    this.isCancelling.set(true);
-    this.cancelErrorMessage.set(null);
-
-    // Business Logic & Contract Verification:
-    // When a user cancels an eligible booking:
-    // - Status must change from PENDING to CANCELLED.
-    // - The booking must remain in the database (DELETE is strictly prohibited for user cancellations).
-    // - Cancellation must be persisted by the backend, not simulated in Angular.
-    // - If no existing supported API can persist the status change, report this as a backend limitation.
-    //
-    // Backend investigation confirms that HotelBookingController only provides DELETE (physical deletion)
-    // and PUT (which takes HotelBookingRequestDto, lacking a status field). No backend endpoint exists
-    // to transition hotel booking status to CANCELLED without hard deletion.
-    setTimeout(() => {
-      this.isCancelling.set(false);
-      const msg = 'Cancellation unavailable: The backend API lacks a non-destructive cancellation endpoint to update booking status to CANCELLED. Permanent database deletion is reserved for administrators and cannot be performed for user cancellations. Please contact property administration.';
-      this.cancelErrorMessage.set(msg);
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Backend Capability Missing',
-        detail: 'The backend does not currently support status transitions to CANCELLED for hotel bookings.',
-        life: 7000,
-      });
-    }, 450);
   }
 }

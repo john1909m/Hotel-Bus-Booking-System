@@ -43,7 +43,6 @@ import { BusDTO } from '../../../core/models/Bus/bus.model';
     DecimalPipe,
     DatePipe,
     RouterLink,
-    DialogModule,
     ButtonModule,
     ToastModule,
     TagModule,
@@ -75,12 +74,6 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   readonly stopsMap = signal<Map<number, BusStopDto>>(new Map());
   readonly seatsMap = signal<Map<number, BusSeatDTO>>(new Map());
   readonly busesMap = signal<Map<number, BusDTO>>(new Map());
-
-  // Cancellation Signals
-  readonly cancelDialogVisible = signal<boolean>(false);
-  readonly bookingToCancel = signal<BusBookingDTO | null>(null);
-  readonly isCancelling = signal<boolean>(false);
-  readonly cancelErrorMessage = signal<string | null>(null);
 
   readonly totalCount = computed(() => this.bookings().length);
 
@@ -333,92 +326,4 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   }
 
   // ── Cancellation Logic ─────────────────────────────────────
-  /**
-   * Only PENDING and CONFIRMED bookings may be cancelled per backend allowed transitions:
-   * PENDING -> CANCELLED, CONFIRMED -> CANCELLED.
-   * COMPLETED and already CANCELLED bookings cannot be cancelled.
-   */
-  canCancelBooking(b: BusBookingDTO): boolean {
-    if (!b) return false;
-    const st = b.status?.toUpperCase();
-    if (st !== 'PENDING' && st !== 'CONFIRMED') {
-      return false;
-    }
-
-    // Ownership validation: user can only cancel their own booking
-    const currentUserId = this.authService.currentUser()?.id;
-    if (currentUserId && b.userId && b.userId !== currentUserId) {
-      return false;
-    }
-
-    return true;
-  }
-
-  openCancelDialog(b: BusBookingDTO): void {
-    if (!this.canCancelBooking(b)) return;
-    this.bookingToCancel.set(b);
-    this.cancelErrorMessage.set(null);
-    this.cancelDialogVisible.set(true);
-  }
-
-  closeCancelDialog(): void {
-    this.cancelDialogVisible.set(false);
-    this.bookingToCancel.set(null);
-    this.cancelErrorMessage.set(null);
-  }
-
-  confirmCancel(): void {
-    const booking = this.bookingToCancel();
-    if (!booking || !this.canCancelBooking(booking) || this.isCancelling()) return;
-
-    this.isCancelling.set(true);
-    this.cancelErrorMessage.set(null);
-
-    // Backend Source of Truth:
-    // PUT /api/bus-bookings/{id} accepts BusBookingRequestDto and validates ownership (isOwnerOrAdmin)
-    // and allowed status transitions (PENDING|CONFIRMED -> CANCELLED).
-    const payload: BusBookingRequestDTO = {
-      bookingDate: booking.bookingDate,
-      status: 'CANCELLED',
-      price: booking.price,
-      userId: booking.userId,
-      busTripId: booking.busTripId,
-      seatId: booking.seatId,
-    };
-
-    this.busBookingService
-      .updateBusBooking(booking.id, payload)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedBooking) => {
-          this.isCancelling.set(false);
-          this.cancelDialogVisible.set(false);
-          this.bookingToCancel.set(null);
-
-          // Update booking status in local reactive state
-          const newStatus = updatedBooking.status || 'CANCELLED';
-          this.bookings.update((list) =>
-            list.map((item) => (item.id === booking.id ? { ...item, status: newStatus } : item))
-          );
-
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Booking Cancelled',
-            detail: `Bus booking #${booking.id} has been successfully cancelled.`,
-            life: 5000,
-          });
-        },
-        error: (err) => {
-          this.isCancelling.set(false);
-          const msg = err?.message || 'Failed to cancel bus booking. Please try again.';
-          this.cancelErrorMessage.set(msg);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Cancellation Failed',
-            detail: msg,
-            life: 5000,
-          });
-        },
-      });
-  }
 }

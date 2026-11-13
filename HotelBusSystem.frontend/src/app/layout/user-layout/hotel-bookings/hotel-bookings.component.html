@@ -210,17 +210,16 @@
               }
             </span>
 
-            @if (booking.hotelId) {
-              <div class="card-action-group">
-                @if (canCancelBooking(booking)) {
-                  <button
-                    type="button"
-                    class="btn-card-cancel"
-                    (click)="openCancelDialog(booking)"
-                    aria-label="Cancel this reservation">
-                    Cancel Booking
-                  </button>
-                }
+            <div class="card-action-group">
+              <div class="admin-notice-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Cancellations are handled by administration. Please contact property support to modify or cancel.</span>
+              </div>
+              @if (booking.hotelId) {
                 <a
                   [routerLink]="['/hotels', booking.hotelId]"
                   [queryParams]="{ editBookingId: booking.id }"
@@ -231,85 +230,13 @@
                     <polyline points="12 5 19 12 12 19"></polyline>
                   </svg>
                 </a>
-              </div>
-            }
+              }
+            </div>
           </div>
         </article>
       }
     </div>
   }
-
-  <!-- ── CANCELLATION CONFIRMATION DIALOG ── -->
-  <p-dialog
-    [(visible)]="cancelDialogVisible"
-    [modal]="true"
-    header="Cancel Hotel Reservation"
-    [style]="{ width: '90vw', maxWidth: '480px' }"
-    [draggable]="false"
-    [resizable]="false"
-    (onHide)="closeCancelDialog()">
-    @if (bookingToCancel(); as b) {
-      <div class="cancel-dialog-content">
-        <div class="cancel-warning-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          <div>
-            <strong>Cancel Booking #{{ b.id }}</strong>
-            <p>
-              Are you sure you want to cancel your reservation at <strong>{{ b.hotelName || ('Hotel #' + b.hotelId) }}</strong>?
-              This action will change the status to <strong>CANCELLED</strong>. The record will remain in your history and will <em>not</em> be permanently deleted.
-            </p>
-          </div>
-        </div>
-
-        <div class="cancel-details-summary">
-          <div class="summary-line">
-            <span>Check-in:</span>
-            <strong>{{ b.checkIn }}</strong>
-          </div>
-          <div class="summary-line">
-            <span>Check-out:</span>
-            <strong>{{ b.checkOut }}</strong>
-          </div>
-          <div class="summary-line">
-            <span>Current Status:</span>
-            <span class="status-badge" [ngClass]="getStatusClass(b.status)">{{ b.status }}</span>
-          </div>
-        </div>
-
-        @if (cancelErrorMessage()) {
-          <div class="cancel-error-alert" role="alert">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span>{{ cancelErrorMessage() }}</span>
-          </div>
-        }
-      </div>
-
-      <div class="cancel-dialog-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="closeCancelDialog()"
-          [disabled]="isCancelling()">
-          Keep Reservation
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger-action"
-          (click)="confirmCancel()"
-          [disabled]="isCancelling()">
-          {{ isCancelling() ? 'Processing...' : 'Confirm Cancellation' }}
-        </button>
-      </div>
-    }
-  </p-dialog>
 
   <p-toast></p-toast>
 </div>

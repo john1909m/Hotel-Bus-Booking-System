@@ -395,6 +395,14 @@
 
             <!-- Action Buttons -->
             <div class="summary-actions-stack">
+              @if (validationErrorMessage()) {
+                <p-message severity="error" [text]="validationErrorMessage()!" styleClass="w-full mb-3"></p-message>
+              }
+
+              @if (partialFailureMessage()) {
+                <p-message severity="warn" [text]="partialFailureMessage()!" styleClass="w-full mb-3"></p-message>
+              }
+
               <button
                 pButton
                 type="button"
@@ -405,7 +413,7 @@
                 (click)="onProcessPayment()"
                 [attr.aria-busy]="isProcessing()">
                 @if (isProcessing()) {
-                  <span>Authorizing Payment...</span>
+                  <span>Submitting Booking (Pending Review)...</span>
                 } @else {
                   <span>Pay {{ state.totalCombinedPrice() | number:'1.2-2' }} EGP</span>
                 }
@@ -452,7 +460,7 @@
 
   <!-- ── Order Confirmation Dialog ── -->
   <p-dialog
-    header="Reservation Confirmed!"
+    header="Booking Received (Under Review)"
     [visible]="confirmationDialogVisible()"
     (visibleChange)="onConfirmationClosed()"
     [modal]="true"
@@ -466,25 +474,63 @@
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
-      <h3 class="dialog-title">Thank You for Booking with TravelEase!</h3>
+      <h3 class="dialog-title">Your Booking Has Been Received!</h3>
       <p class="dialog-text">
-        Your payment has been successfully authorized and your booking has been recorded.
+        Your reservation request has been submitted with status <strong>PENDING</strong> and is currently under review by our administration.
       </p>
+
       <div class="reference-box">
         <span class="ref-label">Booking Reference:</span>
         <strong class="ref-code">{{ confirmedReference() }}</strong>
       </div>
-      <p class="dialog-sub">
-        A confirmation receipt has been issued to your registered email address.
-      </p>
-      <button
-        pButton
-        type="button"
-        class="btn-dialog-close"
-        severity="primary"
-        (click)="onConfirmationClosed()">
-        Return to Hotels
-      </button>
+
+      <div class="booking-ids-list" style="margin: 1rem 0; text-align: left; background: var(--bg-surface-subtle, #f8fafc); padding: 0.85rem 1rem; border-radius: 8px;">
+        @if (createdHotelBooking(); as hb) {
+          <div style="margin-bottom: 0.5rem;">
+            🏨 <strong>Hotel Reservation:</strong> Booking #{{ hb.id }} &bull; Status: <span style="color: #d97706; font-weight: 700;">PENDING</span>
+          </div>
+        }
+        @if (createdBusBookings().length > 0) {
+          <div>
+            🚌 <strong>Bus Seat Reservation(s):</strong>
+            <ul style="margin: 0.25rem 0 0 1.25rem; padding: 0;">
+              @for (bb of createdBusBookings(); track bb.id) {
+                <li>Booking #{{ bb.id }} (Trip #{{ bb.busTripId }}, Seat #{{ bb.seatId }}) &bull; Status: <span style="color: #d97706; font-weight: 700;">PENDING</span></li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <div class="dialog-actions-row" style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1rem;">
+        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+          <a
+            routerLink="/user/hotel-bookings"
+            pButton
+            severity="info"
+            class="p-button-outlined"
+            (click)="confirmationDialogVisible.set(false)">
+            My Hotel Bookings
+          </a>
+          <a
+            routerLink="/user/bus-bookings"
+            pButton
+            severity="info"
+            class="p-button-outlined"
+            (click)="confirmationDialogVisible.set(false)">
+            My Bus Bookings
+          </a>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          class="btn-dialog-close"
+          severity="primary"
+          (click)="onConfirmationClosed()">
+          Return to Hotels
+        </button>
+      </div>
     </div>
   </p-dialog>
 </div>

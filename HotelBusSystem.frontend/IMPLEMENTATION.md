@@ -2006,6 +2006,66 @@ Previously, a user could proceed through the entire booking summary flow and cli
 - **TypeScript Type Check (`npx tsc --noEmit`)**: 0 errors.
 - **Production Build (`npx ng build`)**: Completed successfully with exit code 0.
 
+---
+
+# Phase: Payment Flow — Pending Bookings on Pay, Admin Review, Approve and Cancel
+
+## 1. Overview & Business Rules
+
+Previously, the Payment page (`/payment`) simulated payment with a `setTimeout` creating a random `TE-XXXXXX` reference without persisting real bookings. Additionally, the customer booking view included a local cancellation attempt that was unsupported and incompatible with the business model.
+
+### Key Business Rules Implemented:
+1. **Creation with Status `PENDING`**:
+   - Pressing "Pay" creates real reservation records for the logged-in customer with status `PENDING`.
+   - For hotel-only bookings: creates 1 Hotel Booking via `POST /api/hotel-bookings` with status `PENDING`.
+   - For hotel + bus bookings: creates 1 Bus Booking per selected seat via `POST /api/bus-bookings` with status `PENDING`, followed by the Hotel Booking.
+2. **Decision Option A Enforced**:
+   - The customer does **NOT** call `POST /api/payments`.
+   - The Payment record is recorded and verified by the Admin during administrative review using the Admin Payments Management interface.
+   - The customer confirmation message clearly states that the booking request has been received with status **PENDING** and is under review by administration. It does not claim payment is completed.
+3. **No Customer Cancellation**:
+   - Only administrators can cancel bookings. Customers cannot cancel from the frontend.
+   - The customer cancel button and its dialog were removed from `hotel-bookings.component` and `BusBookings.component`.
+   - Replaced with a read-only administration notice informing the customer to contact support for changes.
+4. **Partial Failure Resilience**:
+   - If bus seat bookings succeed and hotel booking fails (or vice versa), an explicit alert displays the created IDs and failure cause without clearing state, enabling user retry without orphaned untracked bookings.
+5. **Admin Approve & Cancel Integration**:
+   - Verified existing Admin quick-approve actions (`PATCH /api/hotel-bookings/{id}/status` and `PATCH /api/bus-bookings/{id}/status` with `{ status: 'CONFIRMED' }`) move `PENDING` bookings to `CONFIRMED`.
+
+---
+
+## 2. Architecture & File Changes
+
+| File | Status | Description |
+| :--- | :--- | :--- |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.ts` | Modified | Integrated real booking creation flow (`HotelBookingService`, `BusBookingService`), pre-validation, partial failure handling, Option A TODO note, and confirmation state |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.html` | Modified | Added validation & partial failure messages (`p-message`), updated confirmation dialog with PENDING review text and links to My Hotel / My Bus Bookings |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.spec.ts` | Modified | Added 9 test specs covering hotel-only booking, multi-seat bus booking, invalid state prevention, and partial failure handling |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.ts` | Modified | Removed customer cancellation dialog, signals, and methods |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.html` | Modified | Replaced Cancel Booking button and dialog with read-only administration contact notice |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.css` | Modified | Pruned unused cancellation dialog styles, added `.admin-notice-pill` styling |
+| `src/app/layout/user-layout/hotel-bookings/hotel-bookings.component.spec.ts` | Created | Added unit test suite verifying customer hotel reservations load with status PENDING and no cancel action exists |
+| `src/app/layout/user-layout/BusBookings/BusBookings.component.ts` | Modified | Removed customer cancellation dialog and handlers |
+| `src/app/layout/user-layout/BusBookings/BusBookings.component.html` | Modified | Replaced Cancel Ticket button and dialog with administration contact notice |
+| `src/app/layout/user-layout/BusBookings/BusBookings.component.css` | Modified | Pruned unused cancellation dialog styles, added `.admin-notice-pill` styling |
+| `src/app/layout/user-layout/BusBookings/BusBookings.component.spec.ts` | Modified | Modernized Vitest spec verifying bus reservations load with status PENDING and no cancel action exists |
+| `IMPLEMENTATION.md` | Modified | Documented full architecture, inspection evidence, and test verifications |
+
+---
+
+## 3. Verification Performed
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: **0 errors** (exit code 0).
+- **Angular Production Build (`npx ng build`)**: Completed successfully with exit code 0.
+- **Unit Test Suite (`npx vitest run`)**: **179 passing tests** across 18 test suites:
+  - `payment-checkout.component.spec.ts` (9/9 passed)
+  - `hotel-bookings.component.spec.ts` (2/2 passed)
+  - `BusBookings.component.spec.ts` (2/2 passed)
+  - `payment-route-guard.spec.ts` (5/5 passed)
+  - `booking-state.service.spec.ts` (16/16 passed)
+  - All other existing domain suites passed.
+
+
 
 
 

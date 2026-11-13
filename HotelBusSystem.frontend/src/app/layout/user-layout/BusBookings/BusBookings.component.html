@@ -238,19 +238,16 @@
               }
             </span>
 
-            @if (canCancelBooking(booking)) {
-              <div class="card-action-group">
-                <button
-                  type="button"
-                  class="btn-card-cancel"
-                  (click)="openCancelDialog(booking)"
-                  id="cancel-bus-booking-btn-{{ booking.id }}"
-                  aria-label="Cancel bus ticket"
-                >
-                  Cancel Ticket
-                </button>
+            <div class="card-action-group">
+              <div class="admin-notice-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Cancellations are handled by administration. Please contact support to modify or cancel.</span>
               </div>
-            }
+            </div>
           </div>
 
         </article>
@@ -258,74 +255,6 @@
     </div>
   }
 
-  <!-- ─── CANCELLATION CONFIRMATION MODAL ───────────────────── -->
-  <p-dialog
-    [(visible)]="cancelDialogVisible"
-    [modal]="true"
-    header="Cancel Travel Reservation"
-    [style]="{ width: '92vw', maxWidth: '480px' }"
-    [draggable]="false"
-    [resizable]="false"
-    (onHide)="closeCancelDialog()"
-  >
-    <div class="cancel-dialog-content">
-      <div class="cancel-warning-icon" aria-hidden="true">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-
-      <h3 class="cancel-modal-title">Cancel Bus Booking?</h3>
-      <p class="cancel-modal-desc">
-        Are you sure you want to cancel booking
-        <strong class="cancel-highlight">#{{ bookingToCancel()?.id }}</strong>
-        for
-        <strong>{{ getRouteDisplayName(bookingToCancel()?.busTripId || 0) }}</strong>?
-      </p>
-
-      <div class="cancel-info-box">
-        <div class="info-row">
-          <span>Assigned Seat:</span>
-          <strong>{{ getSeatDisplayName(bookingToCancel()?.seatId || 0) }}</strong>
-        </div>
-        <div class="info-row">
-          <span>Total Fare:</span>
-          <strong>${{ bookingToCancel()?.price | number:'1.2-2' }} EGP</strong>
-        </div>
-        <p class="cancel-warning-note">
-          ⚠️ Your seat assignment will be immediately released for other passengers. This action cannot be reversed.
-        </p>
-      </div>
-
-      @if (cancelErrorMessage()) {
-        <div class="modal-error-banner" role="alert">
-          <span>{{ cancelErrorMessage() }}</span>
-        </div>
-      }
-    </div>
-
-    <div class="dialog-footer">
-      <button
-        type="button"
-        class="btn-dialog-back"
-        (click)="closeCancelDialog()"
-        [disabled]="isCancelling()"
-      >
-        Keep Ticket
-      </button>
-
-      <button
-        type="button"
-        class="btn-dialog-confirm"
-        (click)="confirmCancel()"
-        [disabled]="isCancelling()"
-        id="confirm-cancel-bus-booking-btn"
-      >
-        {{ isCancelling() ? 'Cancelling…' : 'Confirm Cancellation' }}
-      </button>
-    </div>
-  </p-dialog>
+  <p-toast></p-toast>
 
 </div>
