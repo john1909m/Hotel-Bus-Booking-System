@@ -467,45 +467,28 @@
 
           <!-- Booking Submission Action Button -->
           <div class="action-submit-block">
-            @if (isAuthenticated()) {
-              <button
-                type="button"
-                class="btn btn-primary w-full btn-confirm-booking"
-                [disabled]="selectedSeatsCount() === 0 || submitting()"
-                (click)="submitBookings()"
-                id="confirm-bus-booking-btn"
-              >
-                @if (submitting()) {
-                  <span class="btn-spinner" aria-hidden="true"></span>
-                  <span>Reserving Seats...</span>
-                } @else {
-                  <span>
-                    Confirm Reservation
-                    @if (selectedSeatsCount() > 0) {
-                      ({{ selectedSeatsCount() }} {{ selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} · {{ totalPrice() | number:'1.2-2' }} EGP)
-                    }
-                  </span>
+            <button
+              type="button"
+              class="btn btn-primary w-full btn-confirm-booking"
+              [disabled]="selectedSeatsCount() === 0"
+              (click)="submitBookings()"
+              id="confirm-bus-booking-btn"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              <span>
+                Add to Booking Summary
+                @if (selectedSeatsCount() > 0) {
+                  ({{ selectedSeatsCount() }} {{ selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} · {{ totalPrice() | number:'1.2-2' }} EGP)
                 }
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="btn btn-primary w-full btn-guest-login"
-                [disabled]="selectedSeatsCount() === 0"
-                (click)="proceedAsGuest()"
-                id="guest-login-book-btn"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                  <polyline points="10 17 15 12 10 7"></polyline>
-                  <line x1="15" y1="12" x2="3" y2="12"></line>
-                </svg>
-                <span>Log In to Reserve Seats</span>
-              </button>
-            }
+              </span>
+            </button>
 
             <p class="terms-secure-hint">
-              🔒 Pessimistic seat locking protects your reservation against double booking.
+              🔒 Pessimistic seat locking protects your reservation at checkout.
             </p>
           </div>
 

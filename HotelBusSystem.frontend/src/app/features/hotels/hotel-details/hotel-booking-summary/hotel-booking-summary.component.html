@@ -21,7 +21,7 @@
       </div>
       <div class="drawer-header-titles">
         <h2 class="drawer-title">Booking Summary</h2>
-        <span class="drawer-hotel-name">{{ effectiveHotel()?.name || 'Hotel Reservation' }}</span>
+        <span class="drawer-hotel-name">{{ hasHotel() ? (effectiveHotel()?.name || 'Hotel Reservation') : 'Transportation Reservation' }}</span>
       </div>
       @if (effectiveRooms().length > 0) {
         <span class="drawer-rooms-badge">
@@ -51,109 +51,117 @@
           <span class="step-tag">A</span>
           <h3 id="stay-info-heading" class="section-title">Stay Information</h3>
         </div>
-        <button
-          type="button"
-          class="btn-change-dates"
-          (click)="onChangeDates()"
-          [attr.aria-expanded]="isEditingDates()"
-          title="Change stay dates inline">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <span>{{ isEditingDates() ? 'Done' : 'Change Dates' }}</span>
-        </button>
+        @if (hasHotel()) {
+          <button
+            type="button"
+            class="btn-change-dates"
+            (click)="onChangeDates()"
+            [attr.aria-expanded]="isEditingDates()"
+            title="Change stay dates inline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>{{ isEditingDates() ? 'Done' : 'Change Dates' }}</span>
+          </button>
+        }
       </div>
 
-      <!-- INLINE DATE PICKERS EDITOR -->
-      @if (isEditingDates()) {
-        <div class="inline-date-editor-card" role="region" aria-label="Inline Stay Date Editor">
-          <div class="editor-header">
-            <span class="editor-title">Update Stay Dates</span>
-            <span class="editor-sub">Dates are updated across your stay, room validity, and transportation options.</span>
+      @if (!hasHotel()) {
+        <div class="drawer-info-empty-state my-2">
+          <p-message severity="info" text="No hotel selected. Stay dates and room allocation apply when booking hotel accommodation." styleClass="w-full"></p-message>
+        </div>
+      } @else {
+        <!-- INLINE DATE PICKERS EDITOR -->
+        @if (isEditingDates()) {
+          <div class="inline-date-editor-card" role="region" aria-label="Inline Stay Date Editor">
+            <div class="editor-header">
+              <span class="editor-title">Update Stay Dates</span>
+              <span class="editor-sub">Dates are updated across your stay, room validity, and transportation options.</span>
+            </div>
+
+            <div class="editor-inputs-grid">
+              <div class="editor-field">
+                <label for="drawer-checkin-picker" class="editor-label">Check-in Date</label>
+                <p-datepicker
+                  id="drawer-checkin-picker"
+                  [ngModel]="editCheckInDate()"
+                  (ngModelChange)="onCheckInSelect($event)"
+                  [minDate]="minCheckInDate()"
+                  dateFormat="yy-mm-dd"
+                  [showIcon]="true"
+                  iconDisplay="input"
+                  appendTo="body"
+                  styleClass="drawer-inline-datepicker"
+                  [style]="{ width: '100%' }"
+                  ariaLabel="Check-in Date">
+                </p-datepicker>
+              </div>
+
+              <div class="editor-field">
+                <label for="drawer-checkout-picker" class="editor-label">Check-out Date</label>
+                <p-datepicker
+                  id="drawer-checkout-picker"
+                  [ngModel]="editCheckOutDate()"
+                  (ngModelChange)="onCheckOutSelect($event)"
+                  [minDate]="minCheckOutDate()"
+                  dateFormat="yy-mm-dd"
+                  [showIcon]="true"
+                  iconDisplay="input"
+                  appendTo="body"
+                  styleClass="drawer-inline-datepicker"
+                  [style]="{ width: '100%' }"
+                  ariaLabel="Check-out Date">
+                </p-datepicker>
+              </div>
+            </div>
+
+            @if (dateErrorMessage()) {
+              <div class="editor-error-row">
+                <p-message severity="error" [text]="dateErrorMessage()!"></p-message>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="stay-info-card">
+          <div class="stay-dates-row">
+            <div class="stay-date-block">
+              <span class="date-label">Check-in</span>
+              <span class="date-val">{{ effectiveCheckIn() || 'Not selected' }}</span>
+            </div>
+
+            <div class="stay-arrow" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </div>
+
+            <div class="stay-date-block">
+              <span class="date-label">Check-out</span>
+              <span class="date-val">{{ effectiveCheckOut() || 'Not selected' }}</span>
+            </div>
           </div>
 
-          <div class="editor-inputs-grid">
-            <div class="editor-field">
-              <label for="drawer-checkin-picker" class="editor-label">Check-in Date</label>
-              <p-datepicker
-                id="drawer-checkin-picker"
-                [ngModel]="editCheckInDate()"
-                (ngModelChange)="onCheckInSelect($event)"
-                [minDate]="minCheckInDate()"
-                dateFormat="yy-mm-dd"
-                [showIcon]="true"
-                iconDisplay="input"
-                appendTo="body"
-                styleClass="drawer-inline-datepicker"
-                [style]="{ width: '100%' }"
-                ariaLabel="Check-in Date">
-              </p-datepicker>
-            </div>
-
-            <div class="editor-field">
-              <label for="drawer-checkout-picker" class="editor-label">Check-out Date</label>
-              <p-datepicker
-                id="drawer-checkout-picker"
-                [ngModel]="editCheckOutDate()"
-                (ngModelChange)="onCheckOutSelect($event)"
-                [minDate]="minCheckOutDate()"
-                dateFormat="yy-mm-dd"
-                [showIcon]="true"
-                iconDisplay="input"
-                appendTo="body"
-                styleClass="drawer-inline-datepicker"
-                [style]="{ width: '100%' }"
-                ariaLabel="Check-out Date">
-              </p-datepicker>
-            </div>
+          <div class="stay-duration-row">
+            @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
+              <span class="stay-nights-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                {{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }} Stay
+              </span>
+            } @else {
+              <span class="stay-nights-badge stay-nights-badge--warning">
+                Stay dates required to calculate total price
+              </span>
+            }
           </div>
-
-          @if (dateErrorMessage()) {
-            <div class="editor-error-row">
-              <p-message severity="error" [text]="dateErrorMessage()!"></p-message>
-            </div>
-          }
         </div>
       }
-
-      <div class="stay-info-card">
-        <div class="stay-dates-row">
-          <div class="stay-date-block">
-            <span class="date-label">Check-in</span>
-            <span class="date-val">{{ effectiveCheckIn() || 'Not selected' }}</span>
-          </div>
-
-          <div class="stay-arrow" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </div>
-
-          <div class="stay-date-block">
-            <span class="date-label">Check-out</span>
-            <span class="date-val">{{ effectiveCheckOut() || 'Not selected' }}</span>
-          </div>
-        </div>
-
-        <div class="stay-duration-row">
-          @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
-            <span class="stay-nights-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-              {{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }} Stay
-            </span>
-          } @else {
-            <span class="stay-nights-badge stay-nights-badge--warning">
-              Stay dates required to calculate total price
-            </span>
-          }
-        </div>
-      </div>
     </section>
 
     <!-- ── OPTIONAL TRANSPORTATION RECOMMENDATIONS (SHOWN AFTER STAGE A & BEFORE STAGE B) ── -->
@@ -491,7 +499,7 @@
             Room & Guest Allocation ({{ effectiveRooms().length }})
           </h3>
         </div>
-        @if (effectiveRooms().length > 1) {
+        @if (hasHotel() && effectiveRooms().length > 1) {
           <button
             type="button"
             class="btn-auto-distribute"
@@ -502,7 +510,12 @@
         }
       </div>
 
-      <!-- Synchronized Overall Reservation Guests Card -->
+      @if (!hasHotel()) {
+        <div class="drawer-info-empty-state my-2">
+          <p-message severity="info" text="No hotel rooms selected. You are currently booking standalone transportation." styleClass="w-full"></p-message>
+        </div>
+      } @else {
+        <!-- Synchronized Overall Reservation Guests Card -->
       <div class="drawer-stay-guests-card">
         <div class="drawer-guests-header">
           <span class="drawer-guests-title">Reservation Guests</span>
@@ -725,6 +738,7 @@
           }
         </div>
       }
+    }
     </section>
 
     <!-- ── SECTION C: PRICE BREAKDOWN ── -->
@@ -735,40 +749,44 @@
       </div>
 
       <div class="pricing-card">
-        <div class="pricing-rows-group">
-          @for (room of effectiveRooms(); track room.id) {
-            <div class="price-line">
-              <span class="price-line-title">Room #{{ room.roomNumber }} ({{ room.roomType }})</span>
-              <span class="price-line-val">{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
-            </div>
-          }
-
-          <div class="price-line total-nightly-line">
-            <span>Combined Nightly Rate:</span>
-            <strong>{{ effectiveTotalNightlyRate() | number:'1.2-2' }} EGP</strong>
-          </div>
-
-          <div class="price-line duration-line">
-            <span>Stay Duration:</span>
-            @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
-              <span>{{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }}</span>
-            } @else {
-              <span class="text-pending">Select valid dates</span>
+        @if (hasHotel()) {
+          <div class="pricing-rows-group">
+            @for (room of effectiveRooms(); track room.id) {
+              <div class="price-line">
+                <span class="price-line-title">Room #{{ room.roomNumber }} ({{ room.roomType }})</span>
+                <span class="price-line-val">{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
+              </div>
             }
-          </div>
 
-          <div class="price-line hotel-subtotal-line">
-            <span>Hotel Subtotal:</span>
-            <strong>{{ (effectiveTotalStayCost() || 0) | number:'1.2-2' }} EGP</strong>
+            <div class="price-line total-nightly-line">
+              <span>Combined Nightly Rate:</span>
+              <strong>{{ effectiveTotalNightlyRate() | number:'1.2-2' }} EGP</strong>
+            </div>
+
+            <div class="price-line duration-line">
+              <span>Stay Duration:</span>
+              @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
+                <span>{{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }}</span>
+              } @else {
+                <span class="text-pending">Select valid dates</span>
+              }
+            </div>
+
+            <div class="price-line hotel-subtotal-line">
+              <span>Hotel Subtotal:</span>
+              <strong>{{ (effectiveTotalStayCost() || 0) | number:'1.2-2' }} EGP</strong>
+            </div>
           </div>
-        </div>
+        }
 
         <!-- Optional Transportation Breakdown Rows (only shown when selected) -->
         @if (bookingState.hasTransportation()) {
-          <div class="price-separator"></div>
+          @if (hasHotel()) {
+            <div class="price-separator"></div>
+          }
 
           <div class="transportation-breakdown-section">
-            <span class="transport-breakdown-heading">Optional Transportation:</span>
+            <span class="transport-breakdown-heading">{{ hasHotel() ? 'Optional Transportation:' : 'Selected Transportation:' }}</span>
 
             @if (bookingState.hasOutgoingTrip()) {
               <div class="transport-subtotal-row">
@@ -808,18 +826,23 @@
         <div class="grand-total-block">
           <div class="grand-total-labels">
             <span class="total-label">
-              {{ bookingState.hasTransportation() ? 'Grand Total' : 'Total Estimated Stay' }}
+              {{ hasHotel() ? (bookingState.hasTransportation() ? 'Grand Total' : 'Total Estimated Stay') : 'Transportation Total' }}
             </span>
             <small class="total-note">
-              {{ bookingState.hasTransportation() ? 'Hotel accommodation plus bus transportation' : 'All selected rooms for full stay' }}
+              {{ hasHotel() ? (bookingState.hasTransportation() ? 'Hotel accommodation plus bus transportation' : 'All selected rooms for full stay') : 'Bus ticket reservations' }}
             </small>
           </div>
           <div class="grand-total-amount">
-            @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0 && effectiveTotalStayCost() !== null) {
-              <span class="total-number">{{ (effectiveTotalStayCost()! + bookingState.transportationPrice()) | number:'1.2-2' }}</span>
-              <span class="total-currency">EGP</span>
+            @if (hasHotel()) {
+              @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0 && effectiveTotalStayCost() !== null) {
+                <span class="total-number">{{ (effectiveTotalStayCost()! + bookingState.transportationPrice()) | number:'1.2-2' }}</span>
+                <span class="total-currency">EGP</span>
+              } @else {
+                <span class="total-pending">Dates Required</span>
+              }
             } @else {
-              <span class="total-pending">Dates Required</span>
+              <span class="total-number">{{ bookingState.transportationPrice() | number:'1.2-2' }}</span>
+              <span class="total-currency">EGP</span>
             }
           </div>
         </div>
@@ -884,7 +907,7 @@
           id="btn-drawer-continue-payment"
           class="btn-drawer-submit"
           severity="primary"
-          [disabled]="effectiveRooms().length === 0 || !canSubmit || isSubmitting || validationErrors.length > 0"
+          [disabled]="!canContinueToPayment() || isSubmitting || (hasHotel() && (!canSubmit || validationErrors.length > 0))"
           (click)="onContinueToPayment()"
           aria-label="Continue to payment page">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -930,5 +953,7 @@
 <app-bus-seat-selection
   [trip]="activeTripForSeats()"
   [(visible)]="seatDialogVisible"
+  [direction]="activeTripDirection()"
+  [hotelBusStopId]="hotelBusStop()?.id || null"
   (bookingComplete)="onSeatsConfirmed($event)">
 </app-bus-seat-selection>

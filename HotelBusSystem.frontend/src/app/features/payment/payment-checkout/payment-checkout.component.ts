@@ -18,6 +18,7 @@ import { HotelBookingRequestDTO, HotelBookingDTO } from '../../../core/models/Ho
 import { BusBookingRequestDTO, BusBookingDTO } from '../../../core/models/Bus/bus-booking.model';
 import { paymentMethod } from '../../../core/models/Payment/payment.model';
 import { roomType } from '../../../core/models/Room/room.model';
+import { isOutgoingEligible, isReturnEligible } from '../../../core/utils/bus-eligibility.util';
 
 export interface PaymentOption {
   id: paymentMethod;
@@ -139,6 +140,37 @@ export class PaymentCheckoutComponent {
       }
       if (tb?.returnTrip && (!tb.returnTrip.trip?.id || !tb.returnTrip.selectedSeats || tb.returnTrip.selectedSeats.length === 0)) {
         return { isValid: false, error: 'Return bus trip has no seats selected.' };
+      }
+    }
+
+    // If both hotel and transportation exist, re-check eligibility against current hotel stay dates
+    if (this.state.hasHotel() && this.state.hasTransportation()) {
+      const hb = this.state.hotelBooking()!;
+      const tb = this.state.transportationBooking();
+      const stayDates = { checkIn: hb.checkIn, checkOut: hb.checkOut };
+
+      if (tb?.outgoing?.trip) {
+        const destStopId = tb.outgoing.destinationStop?.id ?? tb.outgoing.trip.destinationStop?.id;
+        const eligible = isOutgoingEligible(tb.outgoing.trip, stayDates, destStopId);
+        if (!eligible) {
+          const tripName = `${tb.outgoing.trip.bus?.company || 'Bus Trip'} (${tb.outgoing.originStop?.name || 'Origin'} → ${tb.outgoing.destinationStop?.name || 'Destination'})`;
+          return {
+            isValid: false,
+            error: `Outgoing bus trip "${tripName}" is no longer eligible for your hotel check-in date (${hb.checkIn}). Please update your transportation selection before proceeding.`,
+          };
+        }
+      }
+
+      if (tb?.returnTrip?.trip) {
+        const origStopId = tb.returnTrip.originStop?.id ?? tb.returnTrip.trip.originStop?.id;
+        const eligible = isReturnEligible(tb.returnTrip.trip, stayDates, origStopId);
+        if (!eligible) {
+          const tripName = `${tb.returnTrip.trip.bus?.company || 'Bus Trip'} (${tb.returnTrip.originStop?.name || 'Origin'} → ${tb.returnTrip.destinationStop?.name || 'Destination'})`;
+          return {
+            isValid: false,
+            error: `Return bus trip "${tripName}" is no longer eligible for your hotel check-out date (${hb.checkOut}). Please update your transportation selection before proceeding.`,
+          };
+        }
       }
     }
 

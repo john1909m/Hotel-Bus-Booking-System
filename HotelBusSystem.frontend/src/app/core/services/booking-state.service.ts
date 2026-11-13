@@ -129,8 +129,12 @@ export class BookingStateService {
     return this.hasHotel() || this.hasTransportation();
   });
 
+  readonly canContinueToPayment = computed<boolean>(() => {
+    return this.hasHotel() || this.hasTransportation();
+  });
+
   readonly hotelPrice = computed<number>(() => {
-    return this.hotelBooking()?.totalHotelPrice || 0;
+    return this.hasHotel() ? (this.hotelBooking()?.totalHotelPrice || 0) : 0;
   });
 
   readonly outgoingTripPrice = computed<number>(() => {

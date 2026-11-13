@@ -427,9 +427,9 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
   onBookingComplete(bookings: BusBookingDTO[]): void {
     this.messageService.add({
       severity: 'success',
-      summary: 'Reservation Created',
-      detail: `Successfully created ${bookings.length} seat reservation(s) in PENDING status.`,
-      life: 6000,
+      summary: 'Added to Booking Summary',
+      detail: `Successfully added ${bookings.length} seat(s) to your booking summary.`,
+      life: 5000,
     });
   }
 

@@ -270,5 +270,93 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       expect(service.resumeSummaryAfterLogin()).toBe(false);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/payment']);
     });
+
+    it('canContinueToPayment should be true for rooms only, true for transport only, and false when both are empty', () => {
+      // 1. Both empty
+      expect(service.hasHotel()).toBe(false);
+      expect(service.hasTransportation()).toBe(false);
+      expect(service.canContinueToPayment()).toBe(false);
+
+      // 2. Transport only
+      service.selectOutgoingTrip(
+        { id: 10, price: 150, busId: 1 } as any,
+        [{ id: 1, seatNumber: '1A', seatType: 'REGULAR', busId: 1 }],
+        { id: 101, name: 'Stop A' } as any,
+        { id: 102, name: 'Stop B' } as any
+      );
+      expect(service.hasTransportation()).toBe(true);
+      expect(service.hasHotel()).toBe(false);
+      expect(service.canContinueToPayment()).toBe(true);
+      expect(service.transportationPrice()).toBe(150);
+      expect(service.totalCombinedPrice()).toBe(150);
+
+      // 3. Clear transport, set hotel only
+      service.clearTransportationSelection();
+      expect(service.hasTransportation()).toBe(false);
+      expect(service.canContinueToPayment()).toBe(false);
+
+      service.hotelBooking.set({
+        hotel: { id: 1, name: 'Hotel Cairo' } as any,
+        selectedRooms: [{ id: 201, roomNumber: '201', pricePerNight: 500 } as any],
+        checkIn: '2026-12-01',
+        checkOut: '2026-12-03',
+        stayNights: 2,
+        adultsCount: 2,
+        children: [],
+        totalHotelPrice: 1000,
+      });
+      expect(service.hasHotel()).toBe(true);
+      expect(service.canContinueToPayment()).toBe(true);
+      expect(service.hotelPrice()).toBe(1000);
+      expect(service.totalCombinedPrice()).toBe(1000);
+    });
+
+    it('setting transport does not modify hotel stay dates or hotel total', () => {
+      service.checkIn.set('2026-11-20');
+      service.checkOut.set('2026-11-22');
+      service.hotelBooking.set({
+        hotel: { id: 1, name: 'Hotel Cairo' } as any,
+        selectedRooms: [{ id: 201, pricePerNight: 500 } as any],
+        checkIn: '2026-11-20',
+        checkOut: '2026-11-22',
+        stayNights: 2,
+        adultsCount: 2,
+        children: [],
+        totalHotelPrice: 1000,
+      });
+
+      // Select bus trip
+      service.selectOutgoingTrip(
+        { id: 88, price: 200, busId: 2 } as any,
+        [{ id: 1, seatNumber: '1A', seatType: 'REGULAR', busId: 2 }],
+        null,
+        null
+      );
+
+      // Hotel dates and prices remain unchanged
+      expect(service.checkIn()).toBe('2026-11-20');
+      expect(service.checkOut()).toBe('2026-11-22');
+      expect(service.hotelBooking()?.checkIn).toBe('2026-11-20');
+      expect(service.hotelBooking()?.totalHotelPrice).toBe(1000);
+      expect(service.transportationPrice()).toBe(200);
+      expect(service.totalCombinedPrice()).toBe(1200);
+    });
+
+    it('setting hotel dates does not modify transport selection or transport total', () => {
+      service.selectOutgoingTrip(
+        { id: 99, price: 300, busId: 3 } as any,
+        [{ id: 5, seatNumber: '2B', seatType: 'REGULAR', busId: 3 }, { id: 6, seatNumber: '2C', seatType: 'REGULAR', busId: 3 }],
+        null,
+        null
+      );
+      expect(service.transportationPrice()).toBe(600);
+
+      // Modify hotel dates
+      service.setStayDates('2026-12-10', '2026-12-15');
+
+      expect(service.transportationPrice()).toBe(600);
+      expect(service.hasOutgoingTrip()).toBe(true);
+      expect(service.transportationBooking()?.outgoing?.selectedSeats?.length).toBe(2);
+    });
   });
 });

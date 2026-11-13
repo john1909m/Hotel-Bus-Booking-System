@@ -240,6 +240,14 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
     return this.bookingState.summaryOpen();
   });
 
+  readonly hasHotel = computed<boolean>(() => {
+    return this.bookingState.hasHotel();
+  });
+
+  readonly canContinueToPayment = computed<boolean>(() => {
+    return this.bookingState.canContinueToPayment();
+  });
+
   // ── Transportation State ────────────────────────────────────
   readonly busStopOptions = signal<BusStopOption[]>([]);
   readonly allStops = signal<BusStopDto[]>([]);

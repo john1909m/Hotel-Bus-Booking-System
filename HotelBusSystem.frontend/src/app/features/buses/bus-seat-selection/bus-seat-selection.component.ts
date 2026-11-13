@@ -22,7 +22,9 @@ import { MessageService } from 'primeng/api';
 
 import { BusSeatService } from '../../../core/services/bus-seat.service';
 import { BusBookingService } from '../../../core/services/bus-booking.service';
+import { BookingStateService } from '../../../core/services/booking-state.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { isOutgoingEligible, isReturnEligible } from '../../../core/utils/bus-eligibility.util';
 
 import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusBookingDTO, BusBookingRequestDTO } from '../../../core/models/Bus/bus-booking.model';
@@ -54,14 +56,18 @@ export interface SeatRow {
 export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
   private readonly busSeatService = inject(BusSeatService);
   private readonly busBookingService = inject(BusBookingService);
+  private readonly bookingState = inject(BookingStateService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
 
   @Input({ required: true }) trip: EnrichedBusTrip | null = null;
   @Input() visible: boolean = false;
+  @Input() direction: 'outgoing' | 'return' = 'outgoing';
+  @Input() hotelBusStopId: number | null = null;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() bookingComplete = new EventEmitter<BusBookingDTO[]>();
+  @Output() seatsConfirmed = new EventEmitter<{ trip: EnrichedBusTrip; seats: BusSeatDTO[]; direction: 'outgoing' | 'return' }>();
 
   // State Signals
   readonly loading = signal<boolean>(false);
@@ -405,18 +411,12 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
   }
 
   /**
-   * Submits booking requests sequentially for all selected seats.
-   * Concurrency & Conflict Protection:
-   * Backend uses pessimistic row locking (findByIdForUpdate on BusTrip).
-   * Sequential dispatch prevents connection pool lock deadlocks.
+   * Adds the selected bus trip and reserved seats to BookingStateService.
+   * If a hotel is currently selected, re-validates trip eligibility before adding.
+   * Concurrency & Seat Locking: Handled at Pay time via pessimistic locking.
    */
-  async submitBookings(): Promise<void> {
+  submitBookings(): void {
     if (!this.trip) return;
-
-    if (!this.isAuthenticated()) {
-      this.proceedAsGuest();
-      return;
-    }
 
     const seatsToBook = this.selectedSeatsList();
     if (seatsToBook.length === 0) {
@@ -429,76 +429,87 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    this.submitting.set(true);
-    this.error.set(null);
+    // Check hotel eligibility if a hotel is selected in bookingState
+    if (this.bookingState.hasHotel()) {
+      const hb = this.bookingState.hotelBooking();
+      const stayDates = { checkIn: hb?.checkIn || '', checkOut: hb?.checkOut || '' };
+      const stopId = this.hotelBusStopId ?? (this.direction === 'outgoing' ? this.trip.destinationStop?.id : this.trip.originStop?.id);
 
-    const currentUser = this.authService.currentUser();
-    const todayStr = new Date().toISOString().split('T')[0];
-    const createdList: BusBookingDTO[] = [];
-
-    for (const seat of seatsToBook) {
-      try {
-        const payload: BusBookingRequestDTO = {
-          busTripId: this.trip.id,
-          seatId: seat.id,
-          status: 'PENDING',
-          price: this.trip.price,
-          bookingDate: todayStr,
-          userId: currentUser?.id || 0,
-        };
-
-        const created = await firstValueFrom(this.busBookingService.createBusBooking(payload));
-        createdList.push(created);
-      } catch (err: unknown) {
-        console.error(`Booking submission error for seat ${seat.seatNumber}:`, err);
-        const friendlyMsg = extractErrorMessage(
-          err,
-          `Seat ${seat.seatNumber} could not be reserved.`
-        );
-
-        // Conflict handling: refresh availability immediately
-        await this.refreshBookedSeats();
-
-        if (createdList.length > 0) {
-          // Partial success: inform user about partial reservation
+      if (this.direction === 'outgoing') {
+        const eligible = isOutgoingEligible(this.trip, stayDates, stopId);
+        if (!eligible) {
+          const reason = `This outgoing trip is not eligible for your hotel check-in date (${stayDates.checkIn}).`;
+          this.error.set(reason);
           this.messageService.add({
-            severity: 'warn',
-            summary: 'Partial Reservation',
-            detail: `Seat ${seat.seatNumber} could not be booked (${friendlyMsg}), but ${createdList.length} seat(s) were successfully reserved.`,
-            life: 8000,
+            severity: 'error',
+            summary: 'Trip Ineligible',
+            detail: reason,
+            life: 6000,
           });
-
-          this.createdBookings.set(createdList);
-          this.showPaymentPlaceholder.set(true);
-          this.submitting.set(false);
-          this.bookingComplete.emit(createdList);
           return;
         }
-
-        // None succeeded: show error, remove conflicted seat
-        this.error.set(`Seat ${seat.seatNumber}: ${friendlyMsg}`);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Seat Unavailable',
-          detail: friendlyMsg,
-          life: 6000,
-        });
-
-        // Unselect conflicted seat
-        const currentSel = new Set(this.selectedSeatIds());
-        currentSel.delete(seat.id);
-        this.selectedSeatIds.set(currentSel);
-
-        this.submitting.set(false);
-        return;
+      } else {
+        const eligible = isReturnEligible(this.trip, stayDates, stopId);
+        if (!eligible) {
+          const reason = `This return trip is not eligible for your hotel check-out date (${stayDates.checkOut}).`;
+          this.error.set(reason);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Trip Ineligible',
+            detail: reason,
+            life: 6000,
+          });
+          return;
+        }
       }
     }
 
-    // All seats booked successfully!
-    this.createdBookings.set(createdList);
-    this.showPaymentPlaceholder.set(true);
-    this.submitting.set(false);
-    this.bookingComplete.emit(createdList);
+    // Add to BookingStateService
+    const dist = (this.trip as any)?.distanceFromHotel ?? null;
+    if (this.direction === 'return') {
+      this.bookingState.selectReturnTrip(
+        this.trip,
+        seatsToBook,
+        this.trip.originStop || null,
+        this.trip.destinationStop || null,
+        dist
+      );
+    } else {
+      this.bookingState.selectOutgoingTrip(
+        this.trip,
+        seatsToBook,
+        this.trip.originStop || null,
+        this.trip.destinationStop || null,
+        dist
+      );
+    }
+
+    // Also emit backward-compatible bookingComplete output (mapped from selected seats)
+    const mockBookings: any[] = seatsToBook.map((s) => ({
+      id: s.id,
+      seatId: s.id,
+      seatNumber: s.seatNumber,
+      seatType: s.seatType,
+      busTripId: this.trip!.id,
+      price: this.trip!.price,
+      status: 'PENDING',
+    }));
+    this.bookingComplete.emit(mockBookings);
+    this.seatsConfirmed.emit({
+      trip: this.trip,
+      seats: seatsToBook,
+      direction: this.direction,
+    });
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Added to Booking Summary',
+      detail: `${seatsToBook.length} seat(s) for ${this.trip.originStop?.name || 'Origin'} → ${this.trip.destinationStop?.name || 'Destination'} added to your summary.`,
+      life: 4000,
+    });
+
+    // Close the dialog
+    this.closeDialog();
   }
 
   /**

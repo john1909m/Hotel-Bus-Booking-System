@@ -253,4 +253,27 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
     expect(bookingState.resumeSummaryAfterLogin()).toBe(false);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/payment']);
   });
+
+  it('correctly handles standalone transportation without a hotel', () => {
+    // Clear hotel
+    bookingState.clearHotelSelection();
+    component.hotel = null;
+    component.selectedRooms = [];
+
+    expect(component.hasHotel()).toBe(false);
+    expect(component.canContinueToPayment()).toBe(false);
+
+    // Select standalone bus trip
+    bookingState.selectOutgoingTrip(
+      { id: 101, price: 350, busId: 5 } as any,
+      [{ id: 1, seatNumber: '1A', seatType: 'REGULAR', busId: 5 }],
+      { id: 10, name: 'Cairo' } as any,
+      { id: 20, name: 'Alexandria' } as any
+    );
+
+    expect(component.hasHotel()).toBe(false);
+    expect(component.canContinueToPayment()).toBe(true);
+    expect(bookingState.transportationPrice()).toBe(350);
+    expect(bookingState.totalCombinedPrice()).toBe(350);
+  });
 });
