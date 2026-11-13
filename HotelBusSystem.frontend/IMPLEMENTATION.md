@@ -1324,6 +1324,610 @@ All operations strictly utilize the Phase A services (`ImageUploadService`, `Hot
   - `image-upload.service.spec.ts`: 7/7 passed.
   - `hotel-images-management.spec.ts`: 9/9 passed.
 
+---
+
+## Implementation: Hotel Listing Refinements, Dynamic Filters & PrimeNG Modernization
+
+### 1. Overview
+
+This phase refined the public **Hotel Listing** page (`/hotels`), optimizing screen real estate, upgrading filter controls with modern PrimeNG components, enabling dynamic city options, and implementing real-time partial-text hotel searches.
+
+---
+
+### 2. Files Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-listing/hotel-listing.ts` | Modified | Added dynamic city extraction from backend hotels, instant case-insensitive partial search, PrimeNG imports, and signal-based filter states |
+| `src/app/features/hotels/hotel-listing/hotel-listing.html` | Modified | Implemented vertical filter sidebar, wide prominent search input, PrimeNG `p-select` dropdowns, and rating star selectors |
+| `src/app/features/hotels/hotel-listing/hotel-listing.css` | Modified | Replaced redundant custom CSS with PrimeNG utility classes and project design tokens, expanding hotel cards grid space |
+| `src/app/features/hotels/hotel-listing/hotel-listing.spec.ts` | Modified | Updated unit tests to verify vertical sidebar layout, partial matching, dynamic city options, and rating filters |
+
+---
+
+### 3. Key UI & Functional Capabilities
+
+1. **Vertical Filter Sidebar**:
+   - Reorganized search and filtering: hotel text search remains top-level and prominent, while property filters (City, Rating, Sort Order) are arranged vertically in a dedicated responsive sidebar.
+   - Preserves desktop grid balance (`grid-template-columns: 280px 1fr`) with smooth single-column stacking on tablets and mobile screens.
+
+2. **Dynamic City Filter**:
+   - Replaced free-text input with a PrimeNG `p-select` dropdown.
+   - Options are populated dynamically using distinct city values retrieved from actual property models, including an "All Cities" default option without hardcoded city names.
+
+3. **Instant Partial-Text Search**:
+   - Hotel name search supports debounced real-time partial text matching as the user types.
+   - Matching is strictly case-insensitive (`toLowerCase()`) and operates across pages.
+
+4. **PrimeNG First & Design Token Consistency**:
+   - Adopted PrimeNG components (`p-select`, `p-button`, `p-skeleton`) with native project themes and translucent input backgrounds.
+   - Fully compatible with Light Mode and Dark Mode (`[data-theme="dark"]`).
+
+---
+
+### 4. Build & Test Verification
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: 0 errors.
+- **Unit Test Suite**: All hotel listing spec tests passed.
+
+---
+
+## Implementation: Hotel Details Guest Synchronization & Booking Availability Hardening
+
+### 1. Overview
+
+Refined the Hotel Details (`/hotels/:id`) guest party configuration and room availability architecture, ensuring complete synchronization between the page and drawer, preventing unwanted date-selection scroll jumps, displaying Google Maps actions cleanly, and persisting room availability state across page refreshes.
+
+---
+
+### 2. Files Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Synchronized adult/child signals, capacity validation, Google Maps link generation, and draft availability reconciliation |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Modified | Rendered "View on Google Maps" button (hidden raw coordinates), synchronized guest steppers, and room availability indicators |
+| `src/app/features/hotels/hotel-details/hotel-details.css` | Modified | Added styling for maps action button, stay bar steppers, and room occupancy status tags |
+| `src/app/features/hotels/hotel-details/hotel-booking-flow.spec.ts` | Modified | Added tests for synchronized guest states, capacity checks, and refresh persistence |
+
+---
+
+### 3. Key Functional Capabilities
+
+1. **Synchronized Adults & Children State**:
+   - Guest counters in the Stay Dates bar on the main page and within the `HotelBookingSummaryComponent` drawer are linked through a single source of truth.
+   - Incrementing or decrementing guests in either component reflects immediately in both views.
+
+2. **Per-Room Capacity & Child Policy Enforcement**:
+   - Capacity calculated according to business rules: children aged 0–11 stay free (do not count toward room capacity ceiling), while guests aged 12+ count toward capacity.
+   - Steppers enforce maximum occupancy based on the total capacity of selected rooms.
+
+3. **Google Maps Clean Integration**:
+   - Removed raw latitude and longitude coordinates from the property location section.
+   - Replaced with a styled `View on Google Maps` button linking to Google Maps query coordinates.
+
+4. **Date Selection Scroll Stability**:
+   - Resolved layout shifting when selecting check-in/out dates, preserving the user's scroll position.
+
+---
+
+## Implementation: Hotel Booking Room Availability & Multi-Room Conflict Resolution
+
+### 1. Overview
+
+Fixed an issue where certain booked rooms remained selectable (e.g. Room 102 was correctly disabled as "Booked", but Room 103 in the same multi-room reservation remained selectable). Hardened the date overlap algorithm and identifier resolution against actual backend models and statuses.
+
+---
+
+### 2. Files Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Upgraded `activeBookedRoomIds` computed signal to map room numbers to IDs, implement strict date overlap, filter backend statuses, and trigger automatic de-selection |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Modified | Passed room IDs and numbers to `isRoomBooked(room.id, room.roomNumber)` for consistent button disabling and badges |
+| `src/app/features/hotels/hotel-details/hotel-booking-flow.spec.ts` | Modified | Added unit tests verifying multi-room booking conflict detection (both Room 102 & 103 disabled) and date overlap boundaries |
+
+---
+
+### 3. Key Architecture & Logic Fixes
+
+1. **Multi-Room Booking Identification**:
+   - In Spring Boot, multi-room bookings store the first room in `hb.room` and subsequent rooms in `hb.bookingRooms`.
+   - The frontend `activeBookedRoomIds` signal was updated to inspect:
+     1. `b.rooms` list (`r.roomId`, `r.id`, and `r.roomNumber`).
+     2. Legacy `b.roomId` (evaluated both as numeric ID and mapped room number).
+     3. Direct `b.room` objects and direct `b.roomNumber` attributes.
+   - Dynamically builds a `roomNumberToId` dictionary from `this.rooms()`, guaranteeing that whether the server returns room entity IDs or room numbers, the corresponding room is identified and disabled.
+
+2. **Strict Date Overlap Formula**:
+   - Implemented exact stay interval overlap condition:
+     $$\text{existingCheckIn} < \text{requestedCheckOut} \land \text{existingCheckOut} > \text{requestedCheckIn}$$
+   - When stay dates are not yet selected, only reservations currently active today ($\text{bIn} \le \text{today} \land \text{bOut} > \text{today}$) mark rooms as occupied, avoiding false positives on future dates.
+
+3. **Backend Status Filtering**:
+   - Active reservations: `status === 'CONFIRMED' || status === 'PENDING'`.
+   - Cancelled and historical completed reservations are explicitly excluded from blocking rooms.
+
+4. **Reactive Re-evaluation & Automatic Deselection**:
+   - Whenever check-in or check-out dates change, `activeBookedRoomIds` recomputes instantly.
+   - `reconcileSelectedRoomsAvailability()` automatically removes any previously selected room that has become unavailable for the newly chosen dates.
+
+---
+
+## Implementation: Optional Bus Transportation Recommendations
+
+### 1. Overview
+
+Provides an optional **Transportation Recommendations** section on the Hotel Details page once a user has selected a hotel, room, stay dates, and guest party. The user can select their departure bus stop and view compatible bus trips arriving on check-in day, with arrivals ~30–60 minutes before check-in prioritized.
+
+---
+
+### 2. Files Created & Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.ts` | Created | Standalone component managing origin stop selection, trip recommendations query, arrival time vs check-in evaluation, seat availability math, and modal seat selection |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.html` | Created | Template with departure stop selector (`p-select`), skeleton loaders, recommendation cards with badges, and embedded `<app-bus-seat-selection>` |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.css` | Created | Token-driven styling matching TravelEase design system |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.spec.ts` | Created | Unit tests verifying dynamic stop loading, check-in arrival filtering, 30–60 min badge prioritization, and seat calculation (6 tests) |
+| `src/app/core/services/hotel-bus-stop.service.ts` | Modified | Added `getHotelBusStopsByHotelId(hotelId: number)` returning `Observable<HotelBusStopDTO[]>` |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Imported and rendered `<app-hotel-transportation-recommendations>` when rooms and dates are active |
+
+---
+
+### 3. Key Functional Capabilities
+
+1. **Dynamic Origin Stop Selector**:
+   - Populated from `GET /api/bus-stops` (`size: 100`) via `BusStopService`. No hardcoded cities or terminals.
+
+2. **Hotel Bus Stop Resolution & Distance**:
+   - Attempts `hotelBusStopService.getHotelBusStopsByHotelId(hotelId)`.
+   - Fallback: queries bus stops in the hotel's city (`GET /api/bus-stops?city={city}`) and calculates geodesic distance via the Haversine formula using GPS coordinates (`latitude`, `longitude`).
+
+3. **Check-in Time Comparison & Prioritization**:
+   - Combines `checkInDate` and `checkInTime` into an authoritative target datetime.
+   - Trips arriving after check-in are excluded.
+   - Trips arriving 30–60 minutes prior to check-in receive a **"Recommended (Best Timing)"** badge and are sorted to the top.
+   - Earlier eligible trips receive an **"Early Arrival"** badge.
+
+4. **Available Seats Calculation**:
+   - Calculates real remaining seats by querying active bookings (`GET /api/bus-bookings/trip/{tripId}`) and subtracting booked seats (`status !== 'CANCELLED'`) from bus capacity.
+
+5. **Interactive Seat Selection Integration**:
+   - "Select Trip" opens an interactive modal with [`BusSeatSelectionComponent`](file:///d:/John/Projects/Angular/Hotel-Bus-Booking-System/HotelBusSystem.frontend/src/app/features/buses/bus-seat-selection/bus-seat-selection.component.ts).
+   - Selected seats are saved to [`BookingStateService`](file:///d:/John/Projects/Angular/Hotel-Bus-Booking-System/HotelBusSystem.frontend/src/app/core/services/booking-state.service.ts).
+   - Transportation remains strictly optional; removing transportation does not clear the hotel selection.
+
+---
+
+## Implementation: Unified Hotel Booking Summary & Persistent Dock Removal
+
+### 1. Overview
+
+Replaced the separate floating dock/popup modal (`PersistentBookingSummaryComponent`) with a single, unified booking experience housed entirely in the existing [`HotelBookingSummaryComponent`](file:///d:/John/Projects/Angular/Hotel-Bus-Booking-System/HotelBusSystem.frontend/src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts) drawer.
+
+---
+
+### 2. Files Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/layout/public-layout/public-layout.ts` | Modified | Removed `<app-persistent-booking-summary />` and its import from the public shell |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Added router navigation, `continueToPayment`, `clearSummary`, and transportation removal controls |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.html` | Modified | Added optional bus breakdown row, "Remove Bus" button, combined total, and "Continue to Payment" action |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.css` | Modified | Added styles for bus breakdown rows, danger actions, and payment buttons |
+| `src/app/core/services/booking-state.service.ts` | Modified | Added `clearSummary()` alias, unified session storage persistence for hotel + transportation |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Wired `continueToPayment` and `clearSummary` event handlers to synchronize with `BookingStateService` and navigate to `/payment` |
+
+---
+
+### 3. Key Actions & State Management
+
+1. **Single Unified Booking Summary**:
+   - Displays hotel details, selected rooms, stay dates, guest breakdown, hotel subtotal, optional bus carrier & route, reserved seats, transportation subtotal, and combined grand total.
+2. **Continue to Payment**:
+   - Preserves all selected hotel rooms, guest party allocations, and optional bus seats in `BookingStateService` and `sessionStorage`.
+   - Navigates to `/payment` without prematurely creating backend booking mutations.
+3. **Clear Summary**:
+   - Resets hotel selection, transportation selection, and draft session storage.
+4. **Remove Bus**:
+   - Allows removing transportation directly from the summary without affecting selected hotel rooms.
+
+---
+
+## Implementation: Booking Summary Stages, Bus Recommendations & Global Summary Access
+
+### 1. Overview
+
+Restructured the Hotel Booking Summary drawer (`HotelBookingSummaryComponent`) into 4 ordered stages, added optional Outgoing and Return Transportation Recommendations, and mounted a compact global trigger pill and single summary host across Public and Customer (User) layouts.
+
+---
+
+### 2. Four Ordered Summary Stages
+
+1. **Stage A - Stay Information**:
+   - Check-in date, check-out date, and calculated number of nights.
+   - "Change Dates" action button navigating back to room selection or details page without resetting guest state.
+
+2. **Optional Transportation Recommendations Section** (positioned directly after Stage A and before Stage B):
+   - **Origin Bus Stop Selection**: Dropdown powered by `p-select` querying `GET /api/bus-stops` with search filter, loading skeleton, and error banner.
+   - **Hotel Bus Stop Auto-Resolution**: Resolves hotel's associated bus stop via `GET /api/hotel-bus-stops/hotel/{hotelId}` (with fallback to nearest bus stop in the hotel's city using coordinates when running unauthenticated/403).
+   - **Outgoing Trip Recommendations**:
+     - Filtered by route (`originStopId === selectedOriginId && destinationStopId === hotelBusStopId`).
+     - Must arrive on the check-in date before hotel check-in time (`arrivalTime < checkInDateTime`).
+     - Trips arriving ~30-60 minutes before check-in are prominently tagged with a green **"Recommended"** timing badge.
+     - Earlier eligible trips are listed below the recommended ones without silent exclusion.
+   - **Return Trip Recommendations**:
+     - Filtered by route (`originStopId === hotelBusStopId && destinationStopId === selectedOriginId`).
+     - Must depart on the check-out date after hotel check-out time (`departureTime >= checkOutDateTime`).
+     - Sorted chronologically (closest departure after check-out first).
+   - **Trip Card Information**:
+     - Bus carrier company, route, departure/arrival times, stops, distance from hotel (km), calculated available seats, ticket price per seat, and interactive "Select Trip" button.
+   - **Independent Direction Selection**:
+     - Users can select outgoing only, return only, both, or neither.
+     - Selecting a trip launches the existing `BusSeatSelectionComponent` (`<app-bus-seat-selection>`).
+     - Selected trips are displayed in summary cards with "Remove" buttons; removing transportation never alters or resets hotel selection.
+
+3. **Stage B - Room & Guest Allocation**:
+   - Synchronized overall Reservation Guests card (Adults / Children counters) with capacity status pills.
+   - Per-room cards with room number, room type label, capacity hint, nightly rate, and remove room button.
+   - Per-room adults steppers (minimum 1 adult per room) and children table with age pickers (0–11 free, 12–17 chargeable).
+   - Auto-distribute action button for multi-room reservations.
+
+4. **Stage C - Price Breakdown**:
+   - Itemized room rates and stay duration.
+   - Hotel accommodation full-stay subtotal.
+   - Transportation subtotal and direction line items (only shown when an outgoing or return trip is selected).
+   - Grand total calculating combined hotel and transportation total.
+
+5. **Stage D - Confirmation**:
+   - Check-list validation box when capacity or stay requirements are unmet.
+   - Action buttons:
+     - **"Continue to Payment"**: Primary button navigating to `/payment` while preserving all draft data in `BookingStateService` without creating backend records.
+     - **"Clear Summary"**: Danger outlined button resetting hotel and transportation selections, clearing sessionStorage, closing drawer, and hiding the trigger.
+     - **"Return to Browsing Rooms"**: Secondary button closing the drawer and navigating to `/hotels/{hotelId}` (or `/hotels`).
+
+---
+
+### 3. Global Trigger & Single Drawer Host
+
+- **Compact Floating Trigger (`GlobalBookingTriggerComponent`)**:
+  - Mounted once in `PublicLayout` and `UserLayout`.
+  - Floating pill button positioned comfortably at bottom-right with high z-index.
+  - Displays dynamic item count badge and combined total in EGP.
+  - Automatically hidden on Admin routes and on `/payment`.
+  - Clicking the trigger opens the single global summary drawer.
+- **Single Host Architecture**:
+  - Removed duplicate `<app-hotel-booking-summary>` from `hotel-details.html`, delegating to the single layout-level host.
+  - Room catalog floating dock "View Summary" calls `BookingStateService.openSummaryPopup()`, opening the global drawer seamlessly.
+
+---
+
+### 4. Files Created & Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/core/services/booking-state.service.ts` | Modified | Extended state with `SelectedTripInfo` for outgoing and return trips, `originBusStopId`, guest mutation helpers, and data validation on sessionStorage restore |
+| `src/app/core/services/booking-state.service.spec.ts` | Modified | Unit tests covering independent outgoing/return trips, guest mutations, and corrupted storage discard (9 tests) |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Comprehensive 4-stage drawer with transportation recommendation logic, bus stop resolution, and seat modal integration |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.html` | Modified | Template for Stages A, B, C, D, transportation recommendation grid, direction tabs, and confirmation actions |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.css` | Modified | Token-compliant responsive styling, dark mode support, and timing badges |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.spec.ts` | Created | Unit test suite verifying Stages A, B, C, D, recommended badges, return trips, and navigation actions (7 tests) |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.ts` | Created | Standalone trigger pill and single drawer host component |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.spec.ts` | Created | Unit test suite verifying trigger visibility across routes and hiding on `/payment` (4 tests) |
+| `src/app/layout/public-layout/public-layout.ts` | Modified | Mounted `<app-global-booking-trigger />` |
+| `src/app/layout/user-layout/user-layout.ts` | Modified | Mounted `<app-global-booking-trigger />` |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Modified | Removed duplicate summary drawer instance |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Adapted `openSidebar` to trigger `BookingStateService.openSummaryPopup()` |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.html` | Modified | Added safe optional chaining for transportation banner |
+
+---
+
+### 5. Verification Performed
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: 0 errors.
+- **Angular Production Build (`npx ng build`)**: Succeeded (exit code 0).
+- **Vitest Unit Test Suite**: **126/126 passed** across all 13 active test suites:
+  - `booking-state.service.spec.ts` (9/9 passed)
+  - `hotel-booking-summary.component.spec.ts` (7/7 passed)
+  - `global-booking-trigger.component.spec.ts` (4/4 passed)
+  - `hotel-booking-flow.spec.ts` (21/21 passed)
+  - `payment-checkout.component.spec.ts` (6/6 passed)
+  - `hotel-transportation-recommendations.component.spec.ts` (6/6 passed)
+  - `hotel-listing.spec.ts` (20/20 passed)
+  - `hotel-details-gallery.spec.ts` (21/21 passed)
+  - `image-lightbox.component.spec.ts` (9/9 passed)
+  - `image-upload.service.spec.ts` (10/10 passed)
+  - `auth.interceptor.spec.ts` (4/4 passed)
+  - `hotel-image.service.spec.ts` (5/5 passed)
+  - `persistent-booking-summary.component.spec.ts` (4/4 passed)
+
+
+### 1. Overview
+
+Implemented the dedicated `/payment` checkout route under `PublicLayout`. Redesigned the page from scratch to adhere to TravelEase visual identity, theme tokens, PrimeNG components, and full Light/Dark mode support.
+
+---
+
+### 2. Files Created & Modified
+
+| File | Type | Description |
+| --- | --- | --- |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.ts` | Created | Standalone component managing order review, payment method selection, card form state, and authorization simulation |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.html` | Created | Template with hero header, 2-column layout (itinerary cards, payment method cards, card details form, sticky summary dock, confirmation dialog, and empty state) |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.css` | Created | 100% token-driven styles with zero hardcoded light colors, fully supporting Dark Mode (`[data-theme="dark"]`) |
+| `src/app/features/payment/payment-checkout/payment-checkout.component.spec.ts` | Created | Unit test suite covering payment method selection, itinerary clearing, payment authorization, and room removal (6 tests) |
+| `src/app/app.routes.ts` | Modified | Registered `{ path: 'payment', loadComponent: ... }` under `PublicLayout` |
+
+---
+
+### 3. Key UI & Functional Capabilities
+
+1. **Visual Identity & Theme Compliance**:
+   - Employs project CSS variables (`--bg-page`, `--bg-surface`, `--card-bg`, `--card-border`, `--text-primary`, `--text-secondary`, `--color-primary`, `--input-bg`, `--input-border`).
+   - Adapts seamlessly to Light and Dark modes without color clipping or contrast regressions.
+
+2. **Two-Column Responsive Layout**:
+   - **Left Column**:
+     - **Hotel Reservation Card**: Displays property name, rating badge, address, stay dates, duration, occupants, and individual room cards with nightly rates and remove buttons.
+     - **Transportation Card** (when selected): Displays bus company, route, departure/arrival times, station distance from hotel, reserved seats, subtotal, and removal button.
+     - **Payment Method Selector**: Selectable cards for `Credit / Debit Card`, `PayPal`, and `Bank Transfer / Wire` with radio indicators.
+     - **Card Details Form**: Cardholder name, card number with icon, expiration date, and CVV using `pInputText` and semantic design tokens.
+   - **Right Column (Sticky Summary Dock)**:
+     - Itemized breakdown of accommodations, transportation, and included taxes/fees.
+     - Total due in EGP.
+     - 256-bit SSL encryption and instant confirmation guarantee badges.
+     - Primary **"Pay & Confirm"** button (`pButton`, `severity="primary"`).
+     - Secondary **"Clear Itinerary & Return"** button (`pButton`, `severity="secondary"`, `[outlined]="true"`).
+
+3. **Confirmation Dialog**:
+   - PrimeNG `<p-dialog>` displaying authorization success, reference code (e.g. `TE-104928`), and return routing to `/hotels`.
+
+4. **Empty State**:
+   - Contextual empty state with direct action buttons to browse hotels or search buses when no items are active.
+
+---
+
+# Implementation: Single Booking Summary Drawer With Independent Open/Close State & Global Trigger
+
+## 1. Overview & Objectives
+
+Unified the customer booking summary experience into exactly ONE drawer component (`HotelBookingSummaryComponent`), controlled by a single source of truth in `BookingStateService` (`summaryOpen`), and triggered by an independent floating badge (`GlobalBookingTriggerComponent`).
+
+Key problems resolved:
+1. **Drawer Closing Defect**: The PrimeNG Drawer was configured with `[modal]="false"` and `[dismissible]="false"`, and relied on a local computed property conflicting with parent input bindings. The drawer now binds directly to `bookingState.summaryOpen()` with `[modal]="true"`, `[dismissible]="true"`, and `[closeOnEscape]="true"`. It closes reliably via the header X button, Escape key, modal backdrop/mask click, and the "Return to Browsing Rooms" button.
+2. **Competing Experiences Removed**: Deleted the legacy `PersistentBookingSummaryComponent` (floating dock + modal dialog) completely, ensuring only `HotelBookingSummaryComponent` exists.
+3. **Decoupled Floating Trigger**: The floating trigger pill remains visible on all customer routes whenever active booking selections exist (`hasAnySelection()`), independent of whether the drawer is open or closed. It disappears only when the user transitions to `/payment` or clicks "Clear Summary".
+4. **State Integrity**: Closing the drawer never clears or alters user selections.
+
+---
+
+## 2. Architecture & State Management
+
+### Single Source of Truth (`BookingStateService`)
+- Signal: `readonly summaryOpen = signal<boolean>(false);`
+- Methods:
+  - `openSummary(): void` — Sets `summaryOpen` to `true`.
+  - `closeSummary(): void` — Sets `summaryOpen` to `false` without modifying selections.
+  - `setSummaryOpen(value: boolean): void` — Directly updates `summaryOpen`.
+  - `toggleSummary(): void` — Inverts `summaryOpen`.
+  - `clearSummary(): void` / `clearAll(): void` — Resets selections and closes summary.
+  - `continueToPayment(): void` — Closes summary, sets `hideTriggerOnPayment(true)`, and navigates to `/payment`.
+- Backward-compatibility aliases maintained: `isSummaryPopupOpen`, `openSummaryPopup()`, `closeSummaryPopup()`, `toggleSummaryPopup()`.
+
+### Global Drawer & Trigger Synchronization
+- **`HotelBookingSummaryComponent`**:
+  - `[visible]="bookingState.summaryOpen()"`
+  - `(visibleChange)="onDrawerVisibleChange($event)"` calling `bookingState.setSummaryOpen($event)`.
+  - `closeDrawer()` calls `bookingState.closeSummary()`.
+  - Configured with `[modal]="true"`, `[dismissible]="true"`, `[closeOnEscape]="true"`, and `[blockScroll]="true"`.
+  - Header actions and `.p-drawer-close-button` styled with theme tokens for both Light and Dark modes.
+- **`GlobalBookingTriggerComponent`**:
+  - Visibility condition: `bookingState.hasAnySelection() && !isOnPaymentRoute() && !bookingState.hideTriggerOnPayment()`.
+  - Drawer open state does not affect trigger visibility.
+  - Clicking the trigger badge calls `toggleSummary()`.
+  - Hosts the single `<app-hotel-booking-summary>` instance mounted across `PublicLayout` and `UserLayout`.
+
+---
+
+## 3. Files Created, Modified & Deleted
+
+| File | Status | Description |
+| --- | --- | --- |
+| `src/app/core/services/booking-state.service.ts` | Modified | Added `summaryOpen` signal, `openSummary()`, `closeSummary()`, `setSummaryOpen()`, and `toggleSummary()` |
+| `src/app/core/services/booking-state.service.spec.ts` | Created | Unit test suite verifying drawer open/close lifecycle, selection persistence on close, toggle, and payment transition (7 tests) |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Bound drawer visibility to `bookingState.summaryOpen()`, updated `onDrawerVisibleChange` and `closeDrawer` |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.html` | Modified | Updated `p-drawer` configuration with `[modal]="true"`, `[dismissible]="true"`, `[closeOnEscape]="true"` |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.css` | Modified | Styled `.p-drawer-close-button` and header layout to prevent flex overflow and ensure full clickability |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Updated `openSidebar()` and `closeSidebar()` to call `openSummary()` and `closeSummary()` |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.ts` | Modified | Synchronized with `summaryOpen`, added `toggleSummary()`, bound drawer state directly to service |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.spec.ts` | Created | Unit tests verifying trigger visibility independence from drawer open state, route hiding, and toggling (5 tests) |
+| `src/app/shared/components/persistent-booking-summary/` (4 files) | Deleted | Removed legacy `persistent-booking-summary.component.ts`, `.html`, `.css`, `.spec.ts` |
+
+---
+
+# Implementation: Single Floating Trigger, Restored Bus Suggestions & Inline Date Pickers
+
+## 1. Overview & Objectives
+
+Resolved the three remaining defects in the booking summary experience:
+1. **Eliminated Duplicate Floating Dock**: Removed the redundant `.floating-selection-dock` in `HotelDetails` template, leaving `GlobalBookingTriggerComponent` as the sole floating element in the DOM.
+2. **Restored Bus Suggestions in Summary Drawer**: Resolved hotel bus stops and populated outgoing and return bus trip suggestions dynamically by passing state bindings from `GlobalBookingTriggerComponent` and proactively resolving on drawer open and origin change. Added departure guide and empty states.
+3. **Inline Date Pickers in Stage A ("Change Dates")**: Replaced page navigation and drawer closing with inline PrimeNG `p-datepicker` controls and `p-message` validation, keeping the drawer open and updating stay dates and room availability in real-time.
+
+---
+
+## 2. Files Modified & Created
+
+| File | Status | Description |
+| --- | --- | --- |
+| `src/app/features/hotels/hotel-details/hotel-details.html` | Modified | Removed redundant `.floating-selection-dock` |
+| `src/app/core/services/booking-state.service.ts` | Modified | Added `parseLocalDate()`, `formatDateToIso()`, `getTodayString()`, and `validateStayDates()` helpers |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Integrated `DatePickerModule`, `MessageModule`, inline date editing signals, `validateAndApplyDates()`, and reactive bus resolution |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.html` | Modified | Rendered inline date pickers, validation error message, and departure terminal guide |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.css` | Modified | Styled `.inline-date-editor-card`, `.editor-inputs-grid`, `.drawer-inline-datepicker`, and `.empty-transport-guide` |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.ts` | Modified | Bound hotel and stay state inputs (`hotel`, `checkIn`, `checkOut`, `stayNights`, `selectedRooms`) to `<app-hotel-booking-summary>` |
+| `src/app/core/services/booking-state.service.spec.ts` | Modified | Added 4 unit tests covering `validateStayDates()` and `updateStayDates()` |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.spec.ts` | Created | Added 5 unit tests for inline date editing, validation rejection, and bus suggestions |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.spec.ts` | Modified | Added test confirming singular floating trigger |
+
+---
+
+## 3. Verification Performed
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: 0 errors.
+- **Vitest Unit Test Suite**: **133/133 tests passed** across all 13 suites.
+- **Angular Production Build (`npx ng build`)**: Succeeded with code 0.
+
+---
+
+# Implementation: Two-Way Synchronization of Stay Dates & Guests Between Hotel Details and Booking Summary
+
+## 1. Overview & Objectives
+
+Implemented end-to-end two-way synchronization of stay dates (`checkIn`, `checkOut`), stay nights, and guest configuration (`adults`, `children` with individual ages) between `HotelDetails` and `HotelBookingSummaryComponent` using `BookingStateService` as the Single Source of Truth (SSOT).
+
+### Key Problems Resolved
+1. **Desynchronized Dates & Guests**: Changes made on `HotelDetails` (check-in, check-out, adults, children) were previously lost or disconnected from `HotelBookingSummaryComponent`, and changes made inside the summary drawer (via PrimeNG DatePickers or guest steppers) did not update `HotelDetails`.
+2. **Snapshot `@Input()` Chains Removed**: `GlobalBookingTriggerComponent` previously passed one-way snapshot inputs to `<app-hotel-booking-summary>`, which severed reactivity. The summary component now reads and writes directly to `BookingStateService`.
+3. **Decoupled from Room Selection**: Previously, stay dates and guests existed in `BookingStateService` only inside `hotelBooking`, which was `null` before rooms were selected. Now, top-level signals (`checkIn`, `checkOut`, `adults`, `children`, and `stayNights`) persist and synchronize even before room selection.
+4. **Availability & Capacity Rules Maintained**:
+   - Date modifications immediately re-trigger room availability checks and deselect any newly overlapping rooms.
+   - Guest modifications enforce capacity rules: children aged 0–11 are free (do not count toward room capacity); children aged 12–17 are chargeable and count toward room capacity.
+
+---
+
+## 2. Architecture & State Management
+
+### Single Source of Truth (`BookingStateService`)
+- **Reactive Signals**:
+  - `readonly checkIn = signal<string>('');`
+  - `readonly checkOut = signal<string>('');`
+  - `readonly adults = signal<number>(2);`
+  - `readonly children = signal<ChildGuestState[]>([]);`
+  - `readonly stayNights = computed<number | null>(...)`
+- **Cross-Component RxJS Subjects**:
+  - `readonly stayDatesChanged$ = new Subject<{ checkIn: string; checkOut: string }>();`
+  - `readonly guestsChanged$ = new Subject<{ adults: number; children: ChildGuestState[] }>();`
+- **Mutator Methods**:
+  - `setStayDates(checkIn: string, checkOut: string)`: Sets dates, validates date logic, recalculates stay nights and total hotel price, notifies listeners, and persists to storage.
+  - `updateStayDates(checkIn: string, checkOut: string, stayNights?: number)`: Delegates to `setStayDates()`.
+  - `setAdults(count: number)`: Updates adults count, redistributes guests, notifies listeners, and persists to storage.
+  - `addChild(age?: number | null)`: Generates next sequential ID, adds child, redistributes guests, notifies listeners, and persists to storage.
+  - `removeChild(id: number)`: Removes child, cleans custom room child assignments, redistributes guests, and persists to storage.
+  - `setChildAge(id: number, age: number | null)`: Updates child age in state and draft, persists to storage.
+  - `increaseTotalAdults()`, `decreaseTotalAdults()`, `increaseTotalChildren()`, `decreaseTotalChildren()`: Enforce room capacity limits when rooms are selected while allowing guest adjustments before room selection.
+  - `clearAll()` / `clearSummary()`: Resets all dates to empty, adults to 2, and children to empty array.
+  - `persistToStorage()` & `restoreFromStorage()`: Serializes and restores `checkIn`, `checkOut`, `adults`, `children` to/from `sessionStorage`.
+
+### Component Integration
+- **`HotelDetails`**:
+  - Points `checkInInput`, `checkOutInput`, `adultsCount`, and `children` directly to `BookingStateService` signals.
+  - In `ngOnInit()`, subscribes to `stayDatesChanged$` and `guestsChanged$` with `takeUntil(this.destroy$)` to keep query params in sync, reload booked rooms, and reconcile adult allocations without using constructor `effect()` (preventing `NG0201` test errors).
+  - Centralized child ID generation to `bookingStateService.addChild(null)` to avoid duplicate IDs between drawer and details page.
+- **`HotelBookingSummaryComponent`**:
+  - Computes `effectiveCheckIn`, `effectiveCheckOut`, `effectiveStayNights`, `effectiveAdultsCount`, and `effectiveChildren` directly from `BookingStateService`.
+  - Stage A inline date pickers update dates via `bookingState.setStayDates()`.
+  - Stage B guest steppers, child addition, child age selection, and child removal mutate `BookingStateService` directly.
+- **`GlobalBookingTriggerComponent`**:
+  - Cleaned up `<app-hotel-booking-summary>` template, removing redundant snapshot input bindings.
+
+---
+
+## 3. Files Modified & Created
+
+| File | Status | Description |
+| --- | --- | --- |
+| `src/app/core/services/booking-state.service.ts` | Modified | Added top-level signals (`checkIn`, `checkOut`, `adults`, `children`, `stayNights`), notification subjects, mutation methods (`setStayDates`, `setAdults`, `addChild`, `removeChild`, `setChildAge`), and persistence |
+| `src/app/core/services/booking-state.service.spec.ts` | Modified | Added unit tests verifying `setStayDates`, signal updates, `setAdults`, `addChild`, `removeChild`, `setChildAge`, and `clearAll` (13 tests total) |
+| `src/app/features/hotels/hotel-details/hotel-details.ts` | Modified | Referenced `BookingStateService` signals for dates and guests, subscribed to notification subjects, wired mutation actions to service, and aligned child ID generation |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Read directly from `BookingStateService` signals with fallback hierarchy, wired `validateAndApplyDates` to `setStayDates` |
+| `src/app/shared/components/global-booking-trigger/global-booking-trigger.component.ts` | Modified | Removed stale snapshot input bindings from `<app-hotel-booking-summary>` |
+| `src/app/features/hotels/hotel-details/hotel-booking-flow.spec.ts` | Modified | Added test confirming two-way synchronization of dates, nights, adults, and child ages (22 tests total) |
+| `IMPLEMENTATION.md` | Modified | Updated with architecture and implementation details for two-way date and guest synchronization |
+
+---
+
+## 4. Verification Performed
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: Passed with 0 errors.
+- **Vitest Unit Test Suite**: **73/73 tests passed** across all 6 core booking test suites (`booking-state.service.spec.ts`, `hotel-booking-flow.spec.ts`, `hotel-booking-summary.component.spec.ts`, `global-booking-trigger.component.spec.ts`, `hotel-details-gallery.spec.ts`, `payment-checkout.component.spec.ts`).
+- **Angular Production Build (`npx ng build`)**: Application bundle generation completed successfully with exit code 0.
+
+---
+
+# Implementation: Recommended Bus Logic Based on Dates Only (Hotel Times Deferred)
+
+## 1. Overview & Objectives
+
+Refactored the transportation recommendation logic in `HotelBookingSummaryComponent` and `HotelTransportationRecommendationsComponent` to evaluate bus trip eligibility strictly using stay dates (`checkIn`, `checkOut`), decoupling the logic from unseeded or defaulted hotel check-in/out times (`14:00`, `11:00`).
+
+### Key Problems Resolved
+1. **Unreliable Time Dependency**: Recommendation logic previously constructed combined datetimes using hotel check-in/out times (hardcoded to `'14:00'` and `'11:00'` as fallbacks) which filtered out valid trips arriving on the check-in date.
+2. **Fabricated "Recommended" Badges**: "Recommended", "Tight Arrival", and "Early Arrival" badges were calculated against synthetic time differences.
+3. **Duplicated Eligibility Logic**: Both `HotelBookingSummaryComponent` and `HotelTransportationRecommendationsComponent` maintained duplicated trip filtering and timing arithmetic.
+
+---
+
+## 2. Architecture & Helper Functions
+
+### Centralized Eligibility Helper (`src/app/core/utils/bus-eligibility.util.ts`)
+- **`isOutgoingEligible(trip, stay, hotelBusStopId?, checkInTime?)`**:
+  - Outgoing trips are eligible when:
+    1. Trip status is `SCHEDULED`.
+    2. Arrival stop matches the hotel's Bus Stop.
+    3. Departure date is on or after the check-in date.
+    4. Arrival date is on the check-in date (no later than check-in date).
+  - Includes a clear TODO plug-in point for `checkInTime` evaluation once database hotel times are populated and reliable.
+- **`isReturnEligible(trip, stay, hotelBusStopId?, checkOutTime?)`**:
+  - Return trips are eligible when:
+    1. Trip status is `SCHEDULED`.
+    2. Departure stop matches the hotel's Bus Stop.
+    3. Departure date matches the check-out date.
+  - Includes a clear TODO plug-in point for `checkOutTime` evaluation once database hotel times are populated and reliable.
+- **`isOutgoingRecommended(trip, stay, hotelBusStopId?)`**:
+  - Outgoing trips arriving on the check-in date ending at least 30 minutes before the end of that day (arrival time $\le$ 23:30) receive the "Recommended" badge.
+  - Outgoing trips arriving in the final 30 minutes before midnight are listed without the Recommended badge.
+- **`getOutgoingTimingBadge(trip, stay, hotelBusStopId?)`**: Returns `'Recommended'` or empty string `''`.
+- **`getReturnTimingBadge()`**: Returns empty string `''`. Return trips never receive a "Recommended" badge and are listed chronologically by departure time.
+
+### UI & Component Integration
+- `HotelBookingSummaryComponent`:
+  - Outgoing and return trips filtered with `isOutgoingEligible` and `isReturnEligible`.
+  - Added PrimeNG notice: `<p-message severity="info" text="Recommendations are based on your stay dates" styleClass="w-full"></p-message>`.
+  - Empty states updated to date-only text without hardcoded times.
+- `HotelTransportationRecommendationsComponent`:
+  - Deduplicated logic to call `isOutgoingEligible` and `isOutgoingRecommended`.
+  - Subtitle and empty state text updated to date-only messaging.
+
+---
+
+## 3. Files Modified & Created
+
+| File | Status | Description |
+| --- | --- | --- |
+| `src/app/core/utils/bus-eligibility.util.ts` | Created | Date-only bus eligibility helper functions with time plug-in points (`isOutgoingEligible`, `isReturnEligible`, `isOutgoingRecommended`, `extractLocalDateStr`) |
+| `src/app/core/utils/bus-eligibility.util.spec.ts` | Created | Unit test suite verifying date-only matching, rejection of other dates/stops, and time-independence (15 tests) |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.ts` | Modified | Wired recommendation calculation to centralized eligibility helper, removed hardcoded time math |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.html` | Modified | Added UI note, updated empty states and timing pill display |
+| `src/app/features/hotels/hotel-details/hotel-booking-summary/hotel-booking-summary.component.spec.ts` | Modified | Updated return trip expectations for date-only badge rules |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.ts` | Modified | Replaced duplicated trip filtering and badge logic with shared eligibility helper |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.html` | Modified | Updated subtitle and empty state text to date-only |
+| `src/app/features/hotels/hotel-details/hotel-transportation-recommendations/hotel-transportation-recommendations.component.spec.ts` | Modified | Updated test assertions for date-only recommendations |
+| `IMPLEMENTATION.md` | Modified | Documented implementation, architecture, and verification for date-only bus recommendation phase |
+
+---
+
+## 4. Verification Performed
+
+- **TypeScript Compilation (`npx tsc --noEmit`)**: Passed with 0 errors.
+- **Vitest Unit Test Suite**: **94/94 tests passed** across all 8 suites (`bus-eligibility.util.spec.ts`, `booking-state.service.spec.ts`, `hotel-booking-flow.spec.ts`, `hotel-booking-summary.component.spec.ts`, `hotel-transportation-recommendations.component.spec.ts`, `global-booking-trigger.component.spec.ts`, `hotel-details-gallery.spec.ts`, `payment-checkout.component.spec.ts`).
+- **Angular Production Build (`npx ng build`)**: Completed successfully with exit code 0.
+
+
+
+
+
+
 
 
 

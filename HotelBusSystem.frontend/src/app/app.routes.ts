@@ -34,6 +34,12 @@ export const routes: Routes = [
           import('./features/buses/bus-search-results/bus-search-results').then(m => m.BusSearchResultsComponent),
         title: 'TravelEase — Bus Search Results',
       },
+      {
+        path: 'payment',
+        loadComponent: () =>
+          import('./features/payment/payment-checkout/payment-checkout.component').then(m => m.PaymentCheckoutComponent),
+        title: 'TravelEase — Payment & Checkout',
+      },
     ],
   },
 
