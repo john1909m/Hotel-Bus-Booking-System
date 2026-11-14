@@ -24,7 +24,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import {
   HotelDto,
   BusTripInfoDto,
-  RoomDto as AiRoomDto
+  RoomDto as AiRoomDto,
+  ChatMessageItem
 } from '../../../core/models/AI Assistant/AIChat.model';
 import { RoomDTO } from '../../../core/models/Room/room.model';
 import {
@@ -89,6 +90,134 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   // In-Chat Booking Flows
   readonly hotelBookingState = signal<InChatHotelBooking | null>(null);
   readonly busBookingState = signal<InChatBusBooking | null>(null);
+
+  // Idempotency keys stored per draft ID
+  private readonly idempotencyKeys = new Map<number | string, string>();
+
+  // Confirmation state per draft
+  readonly confirmingDraftId = signal<number | string | null>(null);
+  readonly draftErrors = signal<Map<number | string, string>>(new Map());
+
+  getIdempotencyKey(draftId: number | string): string {
+    let key = this.idempotencyKeys.get(draftId);
+    if (!key) {
+      key = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : this.generateUUID();
+      this.idempotencyKeys.set(draftId, key);
+    }
+    return key;
+  }
+
+  getDraftError(draftId: number | string): string | null {
+    return this.draftErrors().get(draftId) || null;
+  }
+
+  setDraftError(draftId: number | string, error: string): void {
+    this.draftErrors.update((map) => {
+      const next = new Map(map);
+      next.set(draftId, error);
+      return next;
+    });
+  }
+
+  clearDraftError(draftId: number | string): void {
+    this.draftErrors.update((map) => {
+      const next = new Map(map);
+      next.delete(draftId);
+      return next;
+    });
+  }
+
+  generateUUID(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  async confirmDraft(draft: BookingDraftResponse): Promise<void> {
+    if (!this.authService.isAuthenticated()) {
+      this.redirectToLogin();
+      return;
+    }
+
+    const draftId = draft.id;
+    const key = this.getIdempotencyKey(draftId);
+    this.clearDraftError(draftId);
+    this.confirmingDraftId.set(draftId);
+
+    if (this.aiChatService.isMockMode()) {
+      draft.status = 'CONFIRMED';
+      draft.bookingId = draft.bookingId || Math.floor(Math.random() * 8000) + 1000;
+      this.confirmingDraftId.set(null);
+
+      this.aiChatService.messages.update((list) => [
+        ...list,
+        {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `✅ Booking submitted successfully! Hotel Reference: #${draft.bookingId}. Your reservation is currently under administrative review (PENDING). An administrator will review and confirm your booking.`,
+          timestamp: new Date(),
+          isMock: true,
+        }
+      ]);
+      this.shouldScrollToBottom = true;
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.aiService.confirmBookingDraft(draftId, key)
+      );
+
+      draft.status = response.status || 'CONFIRMED';
+      draft.bookingId = response.bookingId;
+      draft.busBookingIds = response.busBookingIds;
+      this.confirmingDraftId.set(null);
+
+      const busRefText = response.busBookingIds && response.busBookingIds.length > 0
+        ? ` | Bus Reference(s): #${response.busBookingIds.join(', #')}`
+        : '';
+
+      this.aiChatService.messages.update((list) => [
+        ...list,
+        {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `✅ Booking submitted successfully! Hotel Reference: #${response.bookingId || response.id}${busRefText}. Your reservation is currently under administrative review (PENDING). An administrator will review and confirm your booking.`,
+          timestamp: new Date(),
+          isMock: false,
+        }
+      ]);
+      this.shouldScrollToBottom = true;
+    } catch (err) {
+      this.confirmingDraftId.set(null);
+      const errorMsg = extractErrorMessage(err, 'Booking confirmation failed. Please try again.');
+      this.setDraftError(draftId, errorMsg);
+      this.shouldScrollToBottom = true;
+    }
+  }
+
+  cancelDraft(draft: BookingDraftResponse): void {
+    draft.status = 'CANCELLED';
+    this.clearDraftError(draft.id);
+    this.aiChatService.messages.update((list) => [
+      ...list,
+      {
+        id: this.generateUUID(),
+        sender: 'assistant',
+        text: `Booking draft #${draft.id} for ${draft.hotelName || 'hotel'} has been cancelled.`,
+        timestamp: new Date(),
+        isMock: this.aiChatService.isMockMode(),
+      }
+    ]);
+    this.shouldScrollToBottom = true;
+  }
 
   readonly suggestedPrompts: string[] = [
     '🏨 Find hotels in Cairo under 2000 EGP',
@@ -497,9 +626,18 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
         totalPrice: hotelTotal,
       };
 
-      this.hotelBookingState.update((curr) =>
-        curr ? { ...curr, draft: mockDraft, step: 'summary', loading: false } : null
-      );
+      const draftMsg: ChatMessageItem = {
+        id: this.generateUUID(),
+        sender: 'assistant',
+        text: `I've prepared a booking draft for your stay at ${mockDraft.hotelName}. Please review the reservation details below and confirm when you're ready:`,
+        timestamp: new Date(),
+        draftId: mockDraft.id,
+        draft: mockDraft,
+        isMock: true,
+      };
+
+      this.cancelHotelBooking();
+      this.aiChatService.messages.update((list) => [...list, draftMsg]);
       this.shouldScrollToBottom = true;
       return;
     }
@@ -507,6 +645,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
     const payload: BookingDraftRequest = {
       hotelId: s.hotel.id,
       roomId: s.selectedRoom.id,
+      roomIds: [s.selectedRoom.id],
       checkInDate: s.checkIn,
       checkOutDate: s.checkOut,
       adults: s.adults,
@@ -515,9 +654,18 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
 
     try {
       const response = await firstValueFrom(this.aiService.createBookingDraft(payload));
-      this.hotelBookingState.update((curr) =>
-        curr ? { ...curr, draft: response, step: 'summary', loading: false } : null
-      );
+      const draftMsg: ChatMessageItem = {
+        id: this.generateUUID(),
+        sender: 'assistant',
+        text: `I've prepared a booking draft for your stay at ${response.hotelName || s.hotel.name}. Please review the reservation details below and confirm when you're ready:`,
+        timestamp: new Date(),
+        draftId: response.id,
+        draft: response,
+        isMock: false,
+      };
+
+      this.cancelHotelBooking();
+      this.aiChatService.messages.update((list) => [...list, draftMsg]);
       this.shouldScrollToBottom = true;
     } catch (err) {
       this.hotelBookingState.update((curr) =>
@@ -529,60 +677,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   async confirmHotelBooking(): Promise<void> {
     const s = this.hotelBookingState();
     if (!s || !s.draft) return;
-
-    this.hotelBookingState.update((curr) => (curr ? { ...curr, loading: true, error: null } : null));
-
-    if (this.aiChatService.isMockMode()) {
-      const confirmed: BookingDraftResponse = {
-        ...s.draft,
-        status: 'CONFIRMED',
-        bookingId: Math.floor(Math.random() * 8000) + 1000,
-      };
-
-      this.hotelBookingState.update((curr) =>
-        curr ? { ...curr, confirmedBooking: confirmed, step: 'confirmed', loading: false } : null
-      );
-
-      // Append confirmation to chat
-      this.aiChatService.messages.update((list) => [
-        ...list,
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-          sender: 'assistant',
-          text: `🎉 Your hotel booking at ${confirmed.hotelName} has been confirmed! Reference: #${confirmed.bookingId}. Room: ${confirmed.roomType} (${confirmed.checkInDate} to ${confirmed.checkOutDate}).`,
-          timestamp: new Date(),
-          isMock: true,
-        }
-      ]);
-      this.shouldScrollToBottom = true;
-      return;
-    }
-
-    try {
-      const response = await firstValueFrom(
-        this.aiService.confirmBookingDraft(s.draft.id, crypto.randomUUID ? crypto.randomUUID() : undefined)
-      );
-
-      this.hotelBookingState.update((curr) =>
-        curr ? { ...curr, confirmedBooking: response, step: 'confirmed', loading: false } : null
-      );
-
-      this.aiChatService.messages.update((list) => [
-        ...list,
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-          sender: 'assistant',
-          text: `🎉 Hotel booking confirmed successfully! Reference: #${response.bookingId || response.id} at ${response.hotelName}. Check-in: ${response.checkInDate}.`,
-          timestamp: new Date(),
-          isMock: false,
-        }
-      ]);
-      this.shouldScrollToBottom = true;
-    } catch (err) {
-      this.hotelBookingState.update((curr) =>
-        curr ? { ...curr, loading: false, error: extractErrorMessage(err, 'Booking confirmation failed.') } : null
-      );
-    }
+    await this.confirmDraft(s.draft);
   }
 
   editHotelBookingDates(): void {
@@ -727,9 +822,9 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
       this.aiChatService.messages.update((list) => [
         ...list,
         {
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          id: this.generateUUID(),
           sender: 'assistant',
-          text: `🎟️ Bus booking confirmed! Ticket #${mockBooking.id} for Seat ${s.selectedSeat?.seatNumber} (${this.getTripOrigin(s.trip)} ➔ ${this.getTripDestination(s.trip)}).`,
+          text: ` Bus booking submitted! Ticket #${mockBooking.id} for Seat ${s.selectedSeat?.seatNumber} (${this.getTripOrigin(s.trip)} ➔ ${this.getTripDestination(s.trip)}). Your reservation is under administrative review (PENDING).`,
           timestamp: new Date(),
           isMock: true,
         }
@@ -757,9 +852,9 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
       this.aiChatService.messages.update((list) => [
         ...list,
         {
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          id: this.generateUUID(),
           sender: 'assistant',
-          text: `🎟️ Bus booking confirmed! Reference: #${response.id} for Seat ${s.selectedSeat?.seatNumber}. Safe travels!`,
+          text: ` Bus booking submitted! Reference: #${response.id} for Seat ${s.selectedSeat?.seatNumber}. Your reservation is under administrative review (PENDING). Safe travels!`,
           timestamp: new Date(),
           isMock: false,
         }

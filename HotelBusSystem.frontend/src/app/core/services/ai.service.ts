@@ -48,7 +48,7 @@ export class AiService {
    * GET /ai/bookings/drafts/{id}
    * Get a booking draft by ID (owner only).
    */
-  getBookingDraft(id: number): Observable<BookingDraftResponse> {
+  getBookingDraft(id: number | string): Observable<BookingDraftResponse> {
     return this.http.get<BookingDraftResponse>(`${this.apiUrl}/bookings/drafts/${id}`).pipe(
       catchError(handleError)
     );
@@ -58,7 +58,7 @@ export class AiService {
    * POST /ai/bookings/drafts/{id}/confirm
    * Confirm a booking draft with optional Idempotency-Key header.
    */
-  confirmBookingDraft(id: number, idempotencyKey?: string): Observable<BookingDraftResponse> {
+  confirmBookingDraft(id: number | string, idempotencyKey?: string): Observable<BookingDraftResponse> {
     let headers = new HttpHeaders();
     if (idempotencyKey) {
       headers = headers.set('Idempotency-Key', idempotencyKey);

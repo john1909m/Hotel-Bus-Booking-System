@@ -514,11 +514,224 @@
             <div class="msg-bubble-wrap">
               <!-- Text Bubble with Safe Markdown Formatting -->
               <div class="msg-bubble" [class.user-bubble]="msg.sender === 'user'" [class.assistant-bubble]="msg.sender === 'assistant'" [class.error-bubble]="msg.isError">
-                <p class="msg-text">{{ formatMessageText(msg.text, msg.results && msg.results.length > 0) }}</p>
+                <p class="msg-text">{{ formatMessageText(msg.text, (msg.results && msg.results.length > 0) || !!msg.draft) }}</p>
                 @if (msg.isMock) {
                   <span class="mock-tag" title="Generated in mock dev mode">Mock</span>
                 }
               </div>
+
+              <!-- Booking Draft Card (AI Booking Confirmation Flow) -->
+              @if (msg.draft; as draft) {
+                <div class="ai-draft-card" [attr.data-draft-status]="draft.status">
+                  <!-- Draft Card Header -->
+                  <div class="draft-card-header">
+                    <div class="draft-title-row">
+                      <span class="draft-badge" [ngClass]="'draft-status-' + draft.status.toLowerCase()">
+                        {{ draft.status === 'CREATED' ? 'Draft Reservation' : draft.status }}
+                      </span>
+                      <span class="draft-ref-id">#{{ draft.id }}</span>
+                    </div>
+                    @if (draft.status === 'CREATED' && draft.expiresAt) {
+                      <span class="draft-expires-text">⏱️ Expires: {{ draft.expiresAt | date:'shortTime' }}</span>
+                    }
+                  </div>
+
+                  <!-- Draft Card Content -->
+                  <div class="draft-card-body">
+                    <!-- Hotel Details -->
+                    <div class="draft-section">
+                      <div class="draft-section-title">
+                        <span>🏨 Hotel & Room</span>
+                      </div>
+                      <div class="draft-hotel-name">{{ draft.hotelName }}</div>
+                      
+                      @if (draft.rooms && draft.rooms.length > 0) {
+                        <div class="draft-multi-rooms">
+                          @for (r of draft.rooms; track (r.roomId ?? $index)) {
+                            <div class="draft-room-line">
+                              <span>🛏️ {{ r.roomType || 'Room' }} (Room #{{ r.roomNumber }})</span>
+                              @if (r.pricePerNight) {
+                                <span class="draft-sub-rate">EGP {{ r.pricePerNight }} / night</span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      } @else if (draft.roomType || draft.roomNumber) {
+                        <div class="draft-room-line">
+                          <span>🛏️ {{ draft.roomType || 'Standard' }} (Room #{{ draft.roomNumber }})</span>
+                          @if (draft.pricePerNight) {
+                            <span class="draft-sub-rate">EGP {{ draft.pricePerNight }} / night</span>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Stay Dates & Guests -->
+                    <div class="draft-section">
+                      <div class="draft-section-title">
+                        <span>📅 Stay Dates & Guests</span>
+                      </div>
+                      <div class="draft-detail-row">
+                        <span class="detail-label">Dates:</span>
+                        <span class="detail-val">{{ draft.checkInDate }} ➔ {{ draft.checkOutDate }} ({{ draft.nights }} nights)</span>
+                      </div>
+                      <div class="draft-detail-row">
+                        <span class="detail-label">Guests:</span>
+                        <span class="detail-val">
+                          {{ draft.adults || draft.guests }} Adult(s)
+                          @if (draft.childAges && draft.childAges.length > 0) {
+                            • {{ draft.childAges.length }} Child(ren) (Ages: {{ draft.childAges.join(', ') }})
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Bus Transportation (if included) -->
+                    @if (draft.goingTripId || draft.returnTripId) {
+                      <div class="draft-section">
+                        <div class="draft-section-title">
+                          <span>🚌 Transportation</span>
+                        </div>
+                        @if (draft.goingTripId) {
+                          <div class="draft-transport-item">
+                            <div class="transport-direction">Outgoing Trip:</div>
+                            <div class="transport-route">{{ draft.goingTripOrigin }} ➔ {{ draft.goingTripDestination }}</div>
+                            <div class="transport-meta">
+                              <span>🕒 {{ draft.goingTripDepartureTime | date:'short' }}</span>
+                              @if (draft.goingSeats && draft.goingSeats.length > 0) {
+                                <span>💺 Seat(s): @for (s of draft.goingSeats; track s.seatId; let last = $last) { {{ s.seatNumber }}{{ !last ? ', ' : '' }} }</span>
+                              } @else if (draft.goingSeatNumber) {
+                                <span>💺 Seat: {{ draft.goingSeatNumber }}</span>
+                              }
+                              @if (draft.goingTransportPrice) {
+                                <span>• EGP {{ draft.goingTransportPrice }}</span>
+                              }
+                            </div>
+                          </div>
+                        }
+                        @if (draft.returnTripId) {
+                          <div class="draft-transport-item">
+                            <div class="transport-direction">Return Trip:</div>
+                            <div class="transport-route">{{ draft.returnTripOrigin }} ➔ {{ draft.returnTripDestination }}</div>
+                            <div class="transport-meta">
+                              <span>🕒 {{ draft.returnTripDepartureTime | date:'short' }}</span>
+                              @if (draft.returnSeats && draft.returnSeats.length > 0) {
+                                <span>💺 Seat(s): @for (s of draft.returnSeats; track s.seatId; let last = $last) { {{ s.seatNumber }}{{ !last ? ', ' : '' }} }</span>
+                              } @else if (draft.returnSeatNumber) {
+                                <span>💺 Seat: {{ draft.returnSeatNumber }}</span>
+                              }
+                              @if (draft.returnTransportPrice) {
+                                <span>• EGP {{ draft.returnTransportPrice }}</span>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Price Breakdown -->
+                    <div class="draft-section draft-pricing-section">
+                      @if (draft.hotelTotal) {
+                        <div class="draft-price-line">
+                          <span>Hotel Total ({{ draft.nights }} nights):</span>
+                          <span>EGP {{ draft.hotelTotal }}</span>
+                        </div>
+                      }
+                      @if (draft.goingTransportPrice) {
+                        <div class="draft-price-line">
+                          <span>Outgoing Bus:</span>
+                          <span>EGP {{ draft.goingTransportPrice }}</span>
+                        </div>
+                      }
+                      @if (draft.returnTransportPrice) {
+                        <div class="draft-price-line">
+                          <span>Return Bus:</span>
+                          <span>EGP {{ draft.returnTransportPrice }}</span>
+                        </div>
+                      }
+                      <div class="draft-total-row">
+                        <span class="total-label">Total Price:</span>
+                        <span class="total-amount">EGP {{ draft.totalPrice }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Error Alert on Draft (if confirmation failed) -->
+                    @if (getDraftError(draft.id); as draftErr) {
+                      <div class="draft-error-alert" role="alert">
+                        <span class="draft-error-icon">⚠️</span>
+                        <div class="draft-error-msg">
+                          <strong>Confirmation Error:</strong> {{ draftErr }}
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Confirmed Booking Banner -->
+                    @if (draft.status === 'CONFIRMED') {
+                      <div class="draft-confirmed-banner">
+                        <div class="confirmed-badge-row">
+                          <span class="confirmed-check">✓</span>
+                          <strong>Booking Submitted!</strong>
+                        </div>
+                        <p class="confirmed-ref-info">
+                          Hotel Booking Reference: <strong>#{{ draft.bookingId || draft.id }}</strong>
+                          @if (draft.busBookingIds && draft.busBookingIds.length > 0) {
+                            <br />
+                            Bus Booking Reference(s): <strong>#{{ draft.busBookingIds.join(', #') }}</strong>
+                          }
+                        </p>
+                        <p class="confirmed-pending-notice">
+                          ℹ️ Your booking is currently under administrative review (PENDING). An administrator will verify and approve your booking. Payment has not been processed.
+                        </p>
+                        <div class="confirmed-actions">
+                          <a routerLink="/user/hotel-bookings" class="btn-card-action-btn primary" (click)="close()">
+                            View My Bookings →
+                          </a>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Cancelled Banner -->
+                    @if (draft.status === 'CANCELLED') {
+                      <div class="draft-cancelled-banner">
+                        <span>Draft reservation has been cancelled.</span>
+                      </div>
+                    }
+
+                    <!-- Expired Banner -->
+                    @if (draft.status === 'EXPIRED') {
+                      <div class="draft-expired-banner">
+                        <span>This draft has expired. Please search again to make a fresh reservation.</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Draft Card Action Buttons (when status is CREATED) -->
+                  @if (draft.status === 'CREATED') {
+                    <div class="draft-card-actions">
+                      <button
+                        type="button"
+                        class="btn-draft-cancel"
+                        (click)="cancelDraft(draft)"
+                        [disabled]="confirmingDraftId() === draft.id"
+                      >
+                        Cancel draft
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-draft-confirm"
+                        (click)="confirmDraft(draft)"
+                        [disabled]="confirmingDraftId() === draft.id"
+                      >
+                        @if (confirmingDraftId() === draft.id) {
+                          <span class="btn-spinner"></span> Confirming...
+                        } @else {
+                          Confirm booking ✓
+                        }
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
 
               <!-- Structured Hotel Cards (HOTEL or HOTEL_DETAILS) -->
               @if (msg.results && msg.results.length > 0) {

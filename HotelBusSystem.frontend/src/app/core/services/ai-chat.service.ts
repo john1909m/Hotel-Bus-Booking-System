@@ -12,6 +12,7 @@ import {
   HotelDto,
   BusTripInfoDto
 } from '../models/AI Assistant/AIChat.model';
+import { BookingDraftResponse } from '../models/AI Assistant/BookingDraft.model';
 import { AuthService } from './auth.service';
 
 const STORAGE_KEY_CONV_ID = 'travelease_ai_conv_id';
@@ -258,8 +259,43 @@ export class AiChatService {
       missingInformation: response.missingInformation,
       requiresConfirmation: response.requiresConfirmation,
       draftId: response.draftId,
+      selectionRequired: response.selectionRequired,
       isMock,
     };
+
+    if (isMock && response.draftId === '1042') {
+      assistantMsg.draft = {
+        id: 1042,
+        status: 'CREATED',
+        expiresAt: new Date(Date.now() + 30 * 60000).toISOString(),
+        hotelId: 1,
+        hotelName: 'Grand Nile Tower Cairo',
+        roomId: 201,
+        roomNumber: '101',
+        roomType: 'Deluxe Nile View',
+        roomCapacity: 2,
+        pricePerNight: 1850,
+        checkInDate: '2026-12-01',
+        checkOutDate: '2026-12-04',
+        nights: 3,
+        adults: 2,
+        guests: 2,
+        childAges: [],
+        hotelTotal: 5550,
+        totalPrice: 5550,
+      };
+    } else if (response.draftId && !isMock) {
+      this.http.get<BookingDraftResponse>(`${this.apiUrl}/bookings/drafts/${response.draftId}`).pipe(
+        catchError(() => of(null))
+      ).subscribe((draft) => {
+        if (draft) {
+          assistantMsg.draft = draft;
+          const currentList = this.messages().map((m) => (m.id === assistantMsg.id ? { ...m, draft } : m));
+          this.messages.set(currentList);
+          this.saveMessagesToStorage(currentList);
+        }
+      });
+    }
 
     const updated = [...this.messages(), assistantMsg];
     this.messages.set(updated);
@@ -269,7 +305,20 @@ export class AiChatService {
   private handleMockChat(userText: string): Observable<AiResponse> {
     const textLower = userText.toLowerCase();
 
-    // 1. Hotel search scenario
+    // 1. Booking / draft creation scenario
+    if (textLower.includes('book') || textLower.includes('draft') || textLower.includes('reserve')) {
+      return of<AiResponse>({
+        conversationId: this.conversationId(),
+        message: 'I have prepared a booking draft for your stay at Grand Nile Tower Cairo. Please review the details below and confirm your reservation when you are ready:',
+        intent: 'ROOM_SELECTION',
+        results: [],
+        missingInformation: [],
+        requiresConfirmation: true,
+        draftId: '1042',
+      });
+    }
+
+    // 2. Hotel search scenario
     if (textLower.includes('hotel') || textLower.includes('cairo') || textLower.includes('alexandria') || textLower.includes('stay') || textLower.includes('resort')) {
       const hotels: HotelDto[] = [
         {

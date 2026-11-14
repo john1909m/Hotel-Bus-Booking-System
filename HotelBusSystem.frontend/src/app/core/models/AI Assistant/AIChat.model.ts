@@ -1,3 +1,5 @@
+import { BookingDraftResponse } from './BookingDraft.model';
+
 export interface ResultItems {
   type: string;
   data: any;
@@ -21,6 +23,7 @@ export interface AiResponse {
   missingInformation: string[];
   requiresConfirmation: boolean;
   draftId?: string | number | null;
+  selectionRequired?: boolean;
 }
 
 // Backward compatibility alias
@@ -112,6 +115,8 @@ export interface ChatMessageItem {
   missingInformation?: string[];
   requiresConfirmation?: boolean;
   draftId?: string | number | null;
+  selectionRequired?: boolean;
+  draft?: BookingDraftResponse | null;
   isError?: boolean;
   isMock?: boolean;
 }
