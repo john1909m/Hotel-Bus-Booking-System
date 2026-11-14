@@ -94,7 +94,8 @@
             class="filter-input"
             placeholder="Filter by city…"
             [value]="cityFilter()"
-            (change)="onCityChange($any($event.target).value)"
+            (input)="onCityInput($any($event.target).value)"
+            (keydown.enter)="$event.preventDefault()"
             aria-label="Filter bus stops by city"
           />
         </div>
@@ -145,7 +146,7 @@
   <!-- ─── Data Table Card ──────────────────────────────────── -->
   <section class="table-card" aria-label="Bus stops data table">
     <p-table
-      [value]="busStops()"
+      [value]="displayedBusStops()"
       [lazy]="true"
       [loading]="loading()"
       [paginator]="true"

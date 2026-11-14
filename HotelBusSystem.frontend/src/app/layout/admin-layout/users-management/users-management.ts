@@ -84,7 +84,9 @@ export class UsersManagement implements OnInit, OnDestroy {
   readonly userToDelete = signal<UserDto | null>(null);
 
   // ── Computed ───────────────────────────────────────────────
-  readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
+  readonly totalElements = computed(
+    () => this.pageData()?.totalElements ?? this.pageData()?.page?.totalElements ?? 0
+  );
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
   readonly hasActiveFilters = computed(
     () => !!(this.searchQuery() || this.roleFilter() || this.sortFilter())
@@ -101,7 +103,7 @@ export class UsersManagement implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.searchSubject$
-      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.currentPage.set(0);
         this.loadUsers();

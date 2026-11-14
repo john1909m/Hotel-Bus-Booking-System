@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusDTO, BusRequestDTO } from '../models/Bus/bus.model';
 import { PageBusDTO, BusListParams, BusLookupParams } from '../models/Pagination/busPage.model'
@@ -44,10 +44,30 @@ export class BusService {
     let httpParams = new HttpParams();
     if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
     if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
-    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
-    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
+    if (params.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    } else if (params.sortBy) {
+      const dir = params.sortDirection || 'asc';
+      httpParams = httpParams.set('sort', `${params.sortBy},${dir}`);
+    }
+    if (params.q) httpParams = httpParams.set('q', params.q);
+    if (params.busType) httpParams = httpParams.set('busType', params.busType);
+    if (params.company) httpParams = httpParams.set('company', params.company);
 
-    return this.http.get<PageBusDTO>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res) => {
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? res?.content?.length ?? 0;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 10;
+        const number = res?.page?.number ?? res?.number ?? 0;
+        return {
+          ...res,
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PageBusDTO;
+      }),
       catchError(handleError)
     );
   }

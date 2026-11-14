@@ -53,9 +53,11 @@ export class BusStopsManagement implements OnInit, OnDestroy {
   private readonly messageService = inject(MessageService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
+  private readonly citySubject$ = new Subject<string>();
 
   readonly busStops = signal<BusStopDto[]>([]);
   readonly pageData = signal<PageBusStopDTO | null>(null);
+  readonly allBusStopsCache = signal<BusStopDto[] | null>(null);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
   readonly deleting = signal<boolean>(false);
@@ -74,7 +76,42 @@ export class BusStopsManagement implements OnInit, OnDestroy {
   readonly deleteDialogVisible = signal<boolean>(false);
   readonly stopToDelete = signal<BusStopDto | null>(null);
 
-  readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
+  readonly isCityFilterActive = computed(() => !!this.cityFilter().trim());
+
+  readonly filteredBusStops = computed(() => {
+    const list = this.allBusStopsCache() || this.busStops();
+    const citySearch = this.cityFilter().trim().toLowerCase();
+    const qSearch = this.searchQuery().trim().toLowerCase();
+
+    if (!citySearch && !qSearch) return list;
+
+    return list.filter((stop) => {
+      const matchCity =
+        !citySearch || (stop.city ?? '').toLowerCase().includes(citySearch);
+      const matchQ =
+        !qSearch ||
+        (stop.name ?? '').toLowerCase().includes(qSearch) ||
+        (stop.city ?? '').toLowerCase().includes(qSearch) ||
+        (stop.address ?? '').toLowerCase().includes(qSearch);
+      return matchCity && matchQ;
+    });
+  });
+
+  readonly displayedBusStops = computed(() => {
+    if (this.isCityFilterActive()) {
+      const start = this.firstRow();
+      return this.filteredBusStops().slice(start, start + this.pageSize());
+    }
+    return this.busStops();
+  });
+
+  readonly totalElements = computed(() => {
+    if (this.isCityFilterActive()) {
+      return this.filteredBusStops().length;
+    }
+    return this.pageData()?.totalElements ?? this.pageData()?.page?.totalElements ?? 0;
+  });
+
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
   readonly hasActiveFilters = computed(
     () => !!(this.searchQuery() || this.cityFilter())
@@ -91,10 +128,18 @@ export class BusStopsManagement implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.searchSubject$
-      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.currentPage.set(0);
-        this.loadBusStops();
+        this.handleFilterChange();
+      });
+
+    this.citySubject$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((city) => {
+        this.cityFilter.set(city);
+        this.currentPage.set(0);
+        this.handleFilterChange();
       });
 
     this.loadBusStops();
@@ -103,6 +148,42 @@ export class BusStopsManagement implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  handleFilterChange(): void {
+    if (this.isCityFilterActive()) {
+      if (!this.allBusStopsCache()) {
+        this.loadAllStopsForCitySearch();
+      }
+    } else {
+      this.loadBusStops();
+    }
+  }
+
+  private loadAllStopsForCitySearch(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.busStopService
+      .getAllBusStopsCatalog()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (allStops) => {
+          this.allBusStopsCache.set(allStops);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          const msg = err?.message || 'Failed to load bus stops catalog.';
+          this.errorMessage.set(msg);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error Loading Stops',
+            detail: msg,
+            life: 5000,
+          });
+        },
+      });
   }
 
   loadBusStops(): void {
@@ -116,9 +197,6 @@ export class BusStopsManagement implements OnInit, OnDestroy {
 
     const q = this.searchQuery().trim();
     if (q) params.q = q;
-
-    const city = this.cityFilter().trim();
-    if (city) params.city = city;
 
     this.busStopService
       .getAllBusStops(params)
@@ -148,10 +226,12 @@ export class BusStopsManagement implements OnInit, OnDestroy {
     this.searchSubject$.next(value);
   }
 
+  onCityInput(value: string): void {
+    this.citySubject$.next(value);
+  }
+
   onCityChange(value: string): void {
-    this.cityFilter.set(value);
-    this.currentPage.set(0);
-    this.loadBusStops();
+    this.onCityInput(value);
   }
 
   clearFilters(): void {
@@ -165,7 +245,9 @@ export class BusStopsManagement implements OnInit, OnDestroy {
     const pageIndex = Math.floor(event.first / event.rows);
     this.pageSize.set(event.rows);
     this.currentPage.set(pageIndex);
-    this.loadBusStops();
+    if (!this.isCityFilterActive()) {
+      this.loadBusStops();
+    }
   }
 
   // ── Create & Edit Handlers ─────────────────────────────────
@@ -243,7 +325,8 @@ export class BusStopsManagement implements OnInit, OnDestroy {
               detail: `Stop "${updated.name}" has been updated.`,
               life: 4000,
             });
-            this.loadBusStops();
+            this.allBusStopsCache.set(null);
+            this.handleFilterChange();
           },
           error: (err) => {
             this.saving.set(false);
@@ -271,7 +354,8 @@ export class BusStopsManagement implements OnInit, OnDestroy {
               life: 4000,
             });
             this.currentPage.set(0);
-            this.loadBusStops();
+            this.allBusStopsCache.set(null);
+            this.handleFilterChange();
           },
           error: (err) => {
             this.saving.set(false);
@@ -321,7 +405,8 @@ export class BusStopsManagement implements OnInit, OnDestroy {
           if (this.busStops().length === 1 && this.currentPage() > 0) {
             this.currentPage.update((p) => p - 1);
           }
-          this.loadBusStops();
+          this.allBusStopsCache.set(null);
+          this.handleFilterChange();
         },
         error: (err) => {
           this.deleting.set(false);

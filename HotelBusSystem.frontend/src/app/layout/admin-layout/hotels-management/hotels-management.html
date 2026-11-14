@@ -74,7 +74,8 @@
             class="filter-input"
             placeholder="Filter by city…"
             [value]="cityFilter()"
-            (change)="onCityChange($any($event.target).value)"
+            (input)="onCityInput($any($event.target).value)"
+            (keydown.enter)="$event.preventDefault()"
             aria-label="Filter hotels by city"
           />
         </div>
@@ -187,7 +188,7 @@
   <!-- ─── PrimeNG Data Table ───────────────────────────────── -->
   <div class="table-card">
     <p-table
-      [value]="hotels()"
+      [value]="displayedHotels()"
       [lazy]="true"
       [paginator]="true"
       [rows]="pageSize()"

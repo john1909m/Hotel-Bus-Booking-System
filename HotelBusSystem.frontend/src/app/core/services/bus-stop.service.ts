@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusStopDto, BusStopRequestDto } from '../models/Bus/bus-stop.model';
 import { BusStopListParams, BusStopLookupParams, PageBusStopDTO } from '../models/Pagination/busStopPage.model';
@@ -46,8 +46,51 @@ export class BusStopService {
     if (params.q) httpParams = httpParams.set('q', params.q);
     if (params.city) httpParams = httpParams.set('city', params.city);
 
-    return this.http.get<PageBusStopDTO>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res) => {
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? res?.content?.length ?? 0;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 10;
+        const number = res?.page?.number ?? res?.number ?? 0;
+        return {
+          ...res,
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PageBusStopDTO;
+      }),
       catchError(handleError)
+    );
+  }
+
+  /**
+   * Loads all bus stops by iterating over pages capped at 100 (Spring Data max-page-size).
+   * Used for client-side operations such as partial city filtering.
+   */
+  getAllBusStopsCatalog(): Observable<BusStopDto[]> {
+    return this.getAllBusStops({ page: 0, size: 100 }).pipe(
+      switchMap((firstPage) => {
+        const total = firstPage.totalElements ?? firstPage.content?.length ?? 0;
+        const firstBatch = firstPage.content ?? [];
+        if (firstBatch.length >= total || firstPage.last) {
+          return of(firstBatch);
+        }
+        const totalPages = Math.ceil(total / 100);
+        const pageRequests: Observable<PageBusStopDTO>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          pageRequests.push(this.getAllBusStops({ page: p, size: 100 }));
+        }
+        return forkJoin(pageRequests).pipe(
+          map((pages) => {
+            const all = [...firstBatch];
+            for (const pg of pages) {
+              if (pg.content) all.push(...pg.content);
+            }
+            return all;
+          })
+        );
+      })
     );
   }
 

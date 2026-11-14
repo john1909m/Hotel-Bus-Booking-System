@@ -1,18 +1,20 @@
 import { BusStopDto } from "../Bus/bus-stop.model";
 import { Pageable, Sort } from "./userPage.model";
+import { PageMetadata } from "./hotelPage.model";
 
-export interface PageBusStopDTO{
-    totalElements: number;
-    totalPages: number;
-    last: boolean;
-    first: boolean;
-    pageable: Pageable;
-    numberOfElements: number;
-    size: number;
-    content: BusStopDto[];
-    number: number;
-    sort: Sort;
-    empty: boolean;
+export interface PageBusStopDTO {
+  totalElements: number;
+  totalPages: number;
+  last?: boolean;
+  first?: boolean;
+  pageable?: Pageable;
+  numberOfElements?: number;
+  size: number;
+  content: BusStopDto[];
+  number: number;
+  sort?: Sort;
+  empty?: boolean;
+  page?: PageMetadata;
 }
 
 export interface BusStopListParams {

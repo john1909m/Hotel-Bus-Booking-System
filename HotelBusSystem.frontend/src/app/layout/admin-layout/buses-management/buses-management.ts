@@ -15,7 +15,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, debounceTime, distinctUntilChanged } from 'rxjs';
 
 // PrimeNG Modules
 import { TableModule } from 'primeng/table';
@@ -60,6 +60,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly destroy$ = new Subject<void>();
+  private readonly searchSubject$ = new Subject<string>();
 
   readonly buses = signal<BusDTO[]>([]);
   readonly pageData = signal<PageBusDTO | null>(null);
@@ -69,6 +70,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   readonly errorMessage = signal<string | null>(null);
 
   readonly searchFilter = signal<string>('');
+  readonly busTypeFilter = signal<string>('');
   readonly sortBy = signal<string>('id');
   readonly sortDirection = signal<string>('asc');
   readonly currentPage = signal<number>(0);
@@ -90,19 +92,21 @@ export class BusesManagement implements OnInit, OnDestroy {
   readonly loadingSeats = signal<boolean>(false);
   readonly generatingSeats = signal<boolean>(false);
 
-  readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
+  readonly totalElements = computed(
+    () => this.pageData()?.totalElements ?? this.pageData()?.page?.totalElements ?? 0
+  );
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
+  readonly hasActiveFilters = computed(
+    () =>
+      !!(
+        this.searchFilter() ||
+        this.busTypeFilter() ||
+        this.sortBy() !== 'id' ||
+        this.sortDirection() !== 'asc'
+      )
+  );
 
-  readonly displayedBuses = computed(() => {
-    const q = this.searchFilter().trim().toLowerCase();
-    const list = this.buses();
-    if (!q) return list;
-    return list.filter(
-      (b) =>
-        b.busNumber.toLowerCase().includes(q) ||
-        (b.company && b.company.toLowerCase().includes(q))
-    );
-  });
+  readonly displayedBuses = computed(() => this.buses());
 
   readonly sortedBusSeats = computed(() => {
     return [...this.currentBusSeats()].sort((a, b) => {
@@ -124,6 +128,13 @@ export class BusesManagement implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.searchSubject$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.currentPage.set(0);
+        this.loadBuses();
+      });
+
     this.loadBuses();
   }
 
@@ -139,9 +150,14 @@ export class BusesManagement implements OnInit, OnDestroy {
     const params: BusListParams = {
       page: this.currentPage(),
       size: this.pageSize(),
-      sortBy: this.sortBy(),
-      sortDirection: this.sortDirection(),
+      sort: `${this.sortBy()},${this.sortDirection()}`,
     };
+
+    const q = this.searchFilter().trim();
+    if (q) params.q = q;
+
+    const bt = this.busTypeFilter().trim();
+    if (bt) params.busType = bt;
 
     this.busService
       .getAllBuses(params)
@@ -168,6 +184,22 @@ export class BusesManagement implements OnInit, OnDestroy {
 
   onSearchFilter(val: string): void {
     this.searchFilter.set(val);
+    this.searchSubject$.next(val);
+  }
+
+  onBusTypeChange(val: string): void {
+    this.busTypeFilter.set(val);
+    this.currentPage.set(0);
+    this.loadBuses();
+  }
+
+  clearFilters(): void {
+    this.searchFilter.set('');
+    this.busTypeFilter.set('');
+    this.sortBy.set('id');
+    this.sortDirection.set('asc');
+    this.currentPage.set(0);
+    this.loadBuses();
   }
 
   onSortChange(val: string): void {

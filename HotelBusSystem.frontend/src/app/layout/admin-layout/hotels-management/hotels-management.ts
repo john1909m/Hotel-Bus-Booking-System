@@ -63,10 +63,12 @@ export class HotelsManagement implements OnInit, OnDestroy {
   private readonly messageService = inject(MessageService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
+  private readonly citySubject$ = new Subject<string>();
 
   // ── State Signals ──────────────────────────────────────────
   readonly hotels = signal<HotelDTO[]>([]);
   readonly pageData = signal<PageHotelDTO | null>(null);
+  readonly allHotelsCache = signal<HotelDTO[] | null>(null);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
   readonly deleting = signal<boolean>(false);
@@ -89,9 +91,85 @@ export class HotelsManagement implements OnInit, OnDestroy {
   readonly hotelToDelete = signal<HotelDTO | null>(null);
 
   // ── Computed ───────────────────────────────────────────────
-  readonly totalElements = computed(() => this.pageData()?.totalElements ?? 0);
-  readonly totalPages = computed(() => this.pageData()?.totalPages ?? 0);
+  readonly isCityFilterActive = computed(() => !!this.cityFilter().trim());
+
+  /**
+   * Filtered dataset used when partial city search (Option 2) is active.
+   */
+  readonly filteredHotels = computed(() => {
+    const list = this.allHotelsCache() ?? [];
+    if (!this.isCityFilterActive()) {
+      return list;
+    }
+
+    const citySearch = this.cityFilter().trim().toLowerCase();
+    const qSearch = this.searchQuery().trim().toLowerCase();
+    const minRating = this.minRatingFilter();
+    const sort = this.sortFilter();
+
+    let result = list.filter((hotel) => {
+      // Partial case-insensitive city match
+      const cityMatch = (hotel.city ?? '').toLowerCase().includes(citySearch);
+      if (!cityMatch) return false;
+
+      // Partial case-insensitive name/city match for q parameter
+      const qMatch =
+        !qSearch ||
+        (hotel.name ?? '').toLowerCase().includes(qSearch) ||
+        (hotel.city ?? '').toLowerCase().includes(qSearch);
+      if (!qMatch) return false;
+
+      // Minimum rating filter
+      if (minRating !== null && minRating !== undefined) {
+        if ((hotel.rating ?? 0) < minRating) return false;
+      }
+
+      return true;
+    });
+
+    // Apply sorting in-memory
+    if (sort === 'rating,desc') {
+      result = [...result].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    } else if (sort === 'name,asc') {
+      result = [...result].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+    } else if (sort === 'name,desc') {
+      result = [...result].sort((a, b) => (b.name ?? '').localeCompare(a.name ?? ''));
+    }
+
+    return result;
+  });
+
+  /**
+   * Slice of hotels displayed in the table.
+   * If city search is active, returns the locally sliced page from filteredHotels.
+   * If server pagination is active, returns the current page's hotels.
+   */
+  readonly displayedHotels = computed(() => {
+    if (this.isCityFilterActive()) {
+      const start = this.currentPage() * this.pageSize();
+      return this.filteredHotels().slice(start, start + this.pageSize());
+    }
+    return this.hotels();
+  });
+
+  readonly totalElements = computed(() => {
+    if (this.isCityFilterActive()) {
+      return this.filteredHotels().length;
+    }
+    const page: any = this.pageData();
+    return page?.page?.totalElements ?? page?.totalElements ?? 0;
+  });
+
+  readonly totalPages = computed(() => {
+    if (this.isCityFilterActive()) {
+      return Math.ceil(this.filteredHotels().length / this.pageSize());
+    }
+    const page: any = this.pageData();
+    return page?.page?.totalPages ?? page?.totalPages ?? 0;
+  });
+
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
+
   readonly hasActiveFilters = computed(
     () =>
       !!(
@@ -116,12 +194,22 @@ export class HotelsManagement implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Debounce search query changes
+    // Debounce name search input (300ms)
     this.searchSubject$
-      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(() => {
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((query) => {
+        this.searchQuery.set(query);
         this.currentPage.set(0);
-        this.loadHotels();
+        this.handleFilterChange();
+      });
+
+    // Debounce city search input (300ms)
+    this.citySubject$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((city) => {
+        this.cityFilter.set(city);
+        this.currentPage.set(0);
+        this.handleFilterChange();
       });
 
     this.loadHotels();
@@ -133,6 +221,53 @@ export class HotelsManagement implements OnInit, OnDestroy {
   }
 
   // ── Data Loading ───────────────────────────────────────────
+
+  /**
+   * Dispatches either local partial filtering (if city filter is active)
+   * or server-side paginated request (if city filter is empty).
+   */
+  handleFilterChange(): void {
+    if (this.isCityFilterActive()) {
+      if (!this.allHotelsCache()) {
+        this.loadAllHotelsForCitySearch();
+      }
+    } else {
+      this.loadHotels();
+    }
+  }
+
+  /**
+   * Option 2: Loads all hotels into cache once using paginated requests (capped at 100 per page).
+   */
+  private loadAllHotelsForCitySearch(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.hotelService
+      .getAllHotels()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (allHotels) => {
+          this.allHotelsCache.set(allHotels);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          const msg = err?.message || 'Failed to load hotels for city search.';
+          this.errorMessage.set(msg);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error Loading Hotels',
+            detail: msg,
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  /**
+   * Server-side paginated loading when no city filter is active.
+   */
   loadHotels(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -144,9 +279,6 @@ export class HotelsManagement implements OnInit, OnDestroy {
 
     const q = this.searchQuery().trim();
     if (q) params.q = q;
-
-    const city = this.cityFilter().trim();
-    if (city) params.city = city;
 
     const minRating = this.minRatingFilter();
     if (minRating !== null && minRating !== undefined) params.minRating = minRating;
@@ -179,27 +311,24 @@ export class HotelsManagement implements OnInit, OnDestroy {
 
   // ── Filters & Search ───────────────────────────────────────
   onSearchInput(value: string): void {
-    this.searchQuery.set(value);
     this.searchSubject$.next(value);
   }
 
-  onCityChange(value: string): void {
-    this.cityFilter.set(value);
-    this.currentPage.set(0);
-    this.loadHotels();
+  onCityInput(value: string): void {
+    this.citySubject$.next(value);
   }
 
   onRatingChange(value: string): void {
     const val = value ? parseFloat(value) : null;
     this.minRatingFilter.set(val);
     this.currentPage.set(0);
-    this.loadHotels();
+    this.handleFilterChange();
   }
 
   onSortChange(value: string): void {
     this.sortFilter.set(value);
     this.currentPage.set(0);
-    this.loadHotels();
+    this.handleFilterChange();
   }
 
   clearFilters(): void {
@@ -216,7 +345,11 @@ export class HotelsManagement implements OnInit, OnDestroy {
     const pageIndex = Math.floor(event.first / event.rows);
     this.pageSize.set(event.rows);
     this.currentPage.set(pageIndex);
-    this.loadHotels();
+
+    // If city search is not active, request new page from server
+    if (!this.isCityFilterActive()) {
+      this.loadHotels();
+    }
   }
 
   // ── Create & Edit Modal Handlers ───────────────────────────
@@ -306,7 +439,9 @@ export class HotelsManagement implements OnInit, OnDestroy {
               detail: `"${updated.name}" has been updated successfully.`,
               life: 4000,
             });
-            this.loadHotels();
+            // Invalidate cache
+            this.allHotelsCache.set(null);
+            this.handleFilterChange();
           },
           error: (err) => {
             this.saving.set(false);
@@ -334,7 +469,9 @@ export class HotelsManagement implements OnInit, OnDestroy {
               life: 4000,
             });
             this.currentPage.set(0);
-            this.loadHotels();
+            // Invalidate cache
+            this.allHotelsCache.set(null);
+            this.handleFilterChange();
           },
           error: (err) => {
             this.saving.set(false);
@@ -384,11 +521,13 @@ export class HotelsManagement implements OnInit, OnDestroy {
 
           // Handle edge case: if this was the last item on current page and not first page,
           // move to the previous page before reloading
-          if (this.hotels().length === 1 && this.currentPage() > 0) {
+          if (this.displayedHotels().length === 1 && this.currentPage() > 0) {
             this.currentPage.update((p) => p - 1);
           }
 
-          this.loadHotels();
+          // Invalidate cache
+          this.allHotelsCache.set(null);
+          this.handleFilterChange();
         },
         error: (err) => {
           this.deleting.set(false);

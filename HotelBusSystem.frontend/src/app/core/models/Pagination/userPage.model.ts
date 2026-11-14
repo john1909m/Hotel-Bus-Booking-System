@@ -1,4 +1,5 @@
 import { UserDto } from "../User/user.model";
+import { PageMetadata } from "./hotelPage.model";
 
 export interface Pageable {
     unpaged: boolean;
@@ -16,13 +17,14 @@ export interface Sort{
 export interface PageUserDto{
     totalElements: number;
     totalPages: number;
-    last: boolean;
-    first: boolean;
-    pageable: Pageable;
-    numberOfElements: number;
+    last?: boolean;
+    first?: boolean;
+    pageable?: Pageable;
+    numberOfElements?: number;
     size: number;
     content: UserDto[];
     number: number;
-    sort: Sort;
-    empty: boolean;
+    sort?: Sort;
+    empty?: boolean;
+    page?: PageMetadata;
 }

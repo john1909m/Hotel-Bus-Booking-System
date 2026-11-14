@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { UserDto, UserRequestDto, UserListParams} from '../models/User/user.model';
 import { PageUserDto } from '../models/Pagination/userPage.model';
 import { environment } from '../../../environments/environment';
@@ -27,7 +27,20 @@ export class UserService {
     if (params.q) httpParams = httpParams.set('q', params.q);
     if (params.role) httpParams = httpParams.set('role', params.role);
 
-    return this.http.get<PageUserDto>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res) => {
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? res?.content?.length ?? 0;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 10;
+        const number = res?.page?.number ?? res?.number ?? 0;
+        return {
+          ...res,
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PageUserDto;
+      }),
       catchError(handleError)
     );
   }

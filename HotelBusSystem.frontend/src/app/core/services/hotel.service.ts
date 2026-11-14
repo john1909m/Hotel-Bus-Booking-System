@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { catchError, switchMap, map } from 'rxjs/operators';
 import { HotelDTO, HotelRequestDTO } from '../models/Hotel/hotel.model';
 import { PageHotelDTO, HotelListParams, HotelLookupParams } from '../models/Pagination/hotelPage.model';
 import { environment } from '../../../environments/environment';
@@ -31,8 +31,51 @@ export class HotelService {
     if (params.minRating !== undefined) httpParams = httpParams.set('minRating', params.minRating);
     if (params.maxPrice !== undefined) httpParams = httpParams.set('maxPrice', params.maxPrice);
 
-    return this.http.get<PageHotelDTO>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res) => {
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? res?.content?.length ?? 0;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 10;
+        const number = res?.page?.number ?? res?.number ?? 0;
+        return {
+          ...res,
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PageHotelDTO;
+      }),
       catchError(handleError)
+    );
+  }
+
+  /**
+   * Loads all hotels by iterating over pages capped at 100 (Spring Data max-page-size).
+   * Used for client-side operations such as partial city filtering.
+   */
+  getAllHotels(): Observable<HotelDTO[]> {
+    return this.getHotels({ page: 0, size: 100 }).pipe(
+      switchMap((firstPage) => {
+        const total =
+          firstPage.page?.totalElements ??
+          firstPage.totalElements ??
+          firstPage.content?.length ??
+          0;
+        const firstBatch = firstPage.content ?? [];
+        if (firstBatch.length >= total || firstPage.last) {
+          return of(firstBatch);
+        }
+
+        const totalPages = Math.ceil(total / 100);
+        const requests: Observable<PageHotelDTO>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          requests.push(this.getHotels({ page: p, size: 100 }));
+        }
+
+        return forkJoin(requests).pipe(
+          map((pages) => [firstBatch, ...pages.map((pg) => pg.content ?? [])].flat())
+        );
+      })
     );
   }
 

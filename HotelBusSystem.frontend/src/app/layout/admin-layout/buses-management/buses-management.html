@@ -120,12 +120,48 @@
           </select>
         </div>
       </div>
+      <!-- Bus Type Filter -->
+      <div class="filter-field">
+        <label for="admin-bus-type" class="filter-label">Bus Type</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🏷️</span>
+          <select
+            id="admin-bus-type"
+            class="filter-select"
+            [value]="busTypeFilter()"
+            (change)="onBusTypeChange($any($event.target).value)"
+            aria-label="Filter by bus type"
+          >
+            <option value="">All Types</option>
+            <option value="STANDARD">Standard</option>
+            <option value="VIP">VIP</option>
+            <option value="LUXURY">Luxury</option>
+            <option value="SLEEPER">Sleeper</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
         Total Buses: <strong>{{ totalElements() }}</strong>
+      </div>
+
+      <div class="filter-actions-right">
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="clearFilters()"
+            id="admin-clear-bus-filters-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+            Clear Filters
+          </button>
+        }
       </div>
     </div>
   </section>

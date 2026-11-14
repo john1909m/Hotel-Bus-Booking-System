@@ -61,6 +61,28 @@
   <!-- ─── Filter & Search Bar ──────────────────────────────── -->
   <section class="filters-card" aria-label="Filters and search">
     <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-trip-search" class="filter-label">Search Query</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-trip-search"
+            type="search"
+            class="filter-input"
+            placeholder="Search by bus, route, or status…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            aria-label="Search bus trips"
+          />
+        </div>
+      </div>
+
       <!-- Status Filter -->
       <div class="filter-field">
         <label for="admin-trip-status" class="filter-label">Trip Status</label>
@@ -81,6 +103,46 @@
           </select>
         </div>
       </div>
+
+      <!-- Bus Filter -->
+      <div class="filter-field">
+        <label for="admin-trip-bus" class="filter-label">Assigned Bus</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🚌</span>
+          <select
+            id="admin-trip-bus"
+            class="filter-select"
+            [value]="selectedBusId() ?? ''"
+            (change)="onBusChange($any($event.target).value)"
+            aria-label="Filter trips by bus"
+          >
+            <option value="">All Buses</option>
+            @for (bus of buses(); track bus.id) {
+              <option [value]="bus.id">{{ bus.busNumber }} ({{ bus.company }})</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Route Filter -->
+      <div class="filter-field">
+        <label for="admin-trip-route" class="filter-label">Assigned Route</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">🗺</span>
+          <select
+            id="admin-trip-route"
+            class="filter-select"
+            [value]="selectedRouteId() ?? ''"
+            (change)="onRouteChange($any($event.target).value)"
+            aria-label="Filter trips by route"
+          >
+            <option value="">All Routes</option>
+            @for (route of routes(); track route.id) {
+              <option [value]="route.id">{{ route.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Filter Actions Bar -->
@@ -90,7 +152,7 @@
       </div>
 
       <div class="filter-actions-right">
-        @if (statusFilter()) {
+        @if (hasActiveFilters()) {
           <button
             type="button"
             class="btn-secondary"
@@ -127,7 +189,7 @@
   <!-- ─── Data Table Card ──────────────────────────────────── -->
   <section class="table-card" aria-label="Bus trips data table">
     <p-table
-      [value]="trips()"
+      [value]="displayedTrips()"
       [lazy]="true"
       [loading]="loading()"
       [paginator]="true"
