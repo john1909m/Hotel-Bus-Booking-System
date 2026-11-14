@@ -6,11 +6,11 @@
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <span>Admin Portal</span>
         <span class="sep">/</span>
-        <span class="current">Overview Dashboard</span>
+        <span class="current">Analytics & Overview</span>
       </nav>
-      <h1 class="page-title">Admin Dashboard</h1>
+      <h1 class="page-title">Admin Dashboard & Analytics</h1>
       <p class="page-subtitle">
-        Welcome back, <strong>{{ currentUser()?.name || 'Administrator' }}</strong>. Monitor live database counts and manage travel infrastructure.
+        Welcome back, <strong>{{ currentUser()?.name || 'Administrator' }}</strong>. Visual platform intelligence queried directly from backend analytics endpoints.
       </p>
     </div>
 
@@ -18,13 +18,11 @@
       <button
         type="button"
         class="btn-refresh"
-        (click)="refreshStats()"
-        [disabled]="loading()"
-        id="admin-dashboard-refresh-btn"
-        aria-label="Refresh dashboard metrics"
+        (click)="loadAll()"
+        id="admin-dashboard-refresh-all-btn"
+        aria-label="Refresh all analytics data"
       >
         <svg
-          [class.spinning]="loading()"
           width="16"
           height="16"
           viewBox="0 0 24 24"
@@ -37,157 +35,893 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>{{ loading() ? 'Refreshing…' : 'Refresh Metrics' }}</span>
+        <span>Refresh All</span>
       </button>
     </div>
   </header>
 
-  <!-- ─── Error Notification Banner (if any) ───────────────── -->
-  @if (errorMessage()) {
-    <div class="error-banner" role="alert">
-      <div class="error-banner-content">
+  <!-- ─── Global Date Range Filter Toolbar ─────────────────── -->
+  <section class="filter-toolbar-card" aria-label="Date Range Filters">
+    <div class="toolbar-content">
+      <div class="date-pickers-group">
+        <div class="picker-field">
+          <label for="admin-from-date" class="picker-label">Start Date</label>
+          <p-datepicker
+            id="admin-from-date"
+            [ngModel]="fromDate()"
+            (ngModelChange)="fromDate.set($event)"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="admin-datepicker"
+            placeholder="YYYY-MM-DD"
+            ariaLabel="Analytics Start Date"
+          />
+        </div>
+
+        <div class="picker-field">
+          <label for="admin-to-date" class="picker-label">End Date</label>
+          <p-datepicker
+            id="admin-to-date"
+            [ngModel]="toDate()"
+            (ngModelChange)="toDate.set($event)"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="admin-datepicker"
+            placeholder="YYYY-MM-DD"
+            ariaLabel="Analytics End Date"
+          />
+        </div>
+
+        <div class="toolbar-buttons">
+          <button
+            type="button"
+            class="btn-filter-apply"
+            (click)="applyDateFilter()"
+            id="admin-apply-filter-btn"
+          >
+            Apply Range
+          </button>
+          <button
+            type="button"
+            class="btn-filter-clear"
+            (click)="clearDateFilter()"
+            id="admin-clear-filter-btn"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="preset-buttons-group">
+        <span class="preset-label">Presets:</span>
+        <button
+          type="button"
+          class="btn-preset"
+          (click)="setPreset(7)"
+        >
+          Last 7 Days
+        </button>
+        <button
+          type="button"
+          class="btn-preset"
+          (click)="setPreset(30)"
+        >
+          Last 30 Days
+        </button>
+        <button
+          type="button"
+          class="btn-preset"
+          (click)="setPreset(90)"
+        >
+          Last 90 Days
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Range Status Indicator -->
+    <div class="filter-status-row">
+      <span class="status-indicator">
+        <span class="dot" [class.active]="activeFrom() && activeTo()"></span>
+        @if (activeFrom() && activeTo()) {
+          Active Window: <strong>{{ activeFrom() }}</strong> to <strong>{{ activeTo() }}</strong>
+        } @else {
+          Default Window: <strong>Backend Default (Last 30 Days in Africa/Cairo)</strong>
+        }
+      </span>
+      <span class="status-note">Parameters apply to all analytics cards</span>
+    </div>
+
+    @if (dateError()) {
+      <div class="error-banner" role="alert">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
-        <span>{{ errorMessage() }}</span>
+        <span>{{ dateError() }}</span>
       </div>
-      <button type="button" class="btn-retry" (click)="refreshStats()">
-        Retry
+    }
+  </section>
+
+  <!-- ─── CARD 1: Executive Summary KPIs (Tiles Only, No Chart) ─── -->
+  <section class="analytics-card" aria-label="Executive Summary KPIs">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Executive Summary KPIs</h2>
+        <p class="card-subtitle">Aggregate inventory, booking volume, and platform revenue metrics</p>
+      </div>
+      <button
+        type="button"
+        class="card-refresh-btn"
+        (click)="loadSummary()"
+        [disabled]="summaryLoading()"
+        title="Reload Summary KPIs"
+        aria-label="Reload Summary KPIs"
+      >
+        ↻
       </button>
     </div>
-  }
 
-  <!-- ─── Live Metrics Summary Grid ────────────────────────── -->
-  <section class="stats-grid" aria-label="Live database statistics">
-
-    <!-- Hotels -->
-    <a routerLink="/admin/hotels" class="stat-card primary">
-      <div class="stat-info">
-        <span class="stat-label">Hotels</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().hotelsCount !== null ? (stats().hotelsCount | number) : '—' }} }
-        </div>
-        <span class="stat-subtext">Active properties</span>
+    @if (summaryLoading()) {
+      <div class="skeleton-grid">
+        <p-skeleton height="90px" borderRadius="10px" />
+        <p-skeleton height="90px" borderRadius="10px" />
+        <p-skeleton height="90px" borderRadius="10px" />
+        <p-skeleton height="90px" borderRadius="10px" />
       </div>
-      <div class="stat-icon" aria-hidden="true">🏨</div>
-    </a>
-
-    <!-- Rooms -->
-    <a routerLink="/admin/rooms" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Rooms</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().roomsCount !== null ? (stats().roomsCount | number) : '—' }} }
+    } @else if (summaryError()) {
+      <div class="card-error-state" role="alert">
+        <div class="error-text">
+          <span class="error-icon">⚠️</span>
+          <span>{{ summaryError() }}</span>
         </div>
-        <span class="stat-subtext">Configured units</span>
+        <button type="button" class="btn-retry" (click)="loadSummary()">Retry</button>
       </div>
-      <div class="stat-icon" aria-hidden="true">🛏</div>
-    </a>
-
-    <!-- Users -->
-    <a routerLink="/admin/users" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Users</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().usersCount !== null ? (stats().usersCount | number) : '—' }} }
+    } @else if (summaryData(); as s) {
+      <div class="kpi-groups-container">
+        <!-- Revenue Group -->
+        <div class="kpi-group revenue-group">
+          <h3 class="kpi-group-title">Platform Revenue</h3>
+          <div class="kpi-grid">
+            <div class="kpi-stat-card primary">
+              <span class="kpi-stat-label">Total Revenue</span>
+              <div class="kpi-stat-value">EGP {{ s.revenue | number:'1.2-2' }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Hotel Revenue</span>
+              <div class="kpi-stat-value">EGP {{ s.hotelRevenue | number:'1.2-2' }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Bus Revenue</span>
+              <div class="kpi-stat-value">EGP {{ s.busRevenue | number:'1.2-2' }}</div>
+            </div>
+          </div>
         </div>
-        <span class="stat-subtext">Registered accounts</span>
+
+        <!-- Bookings Group -->
+        <div class="kpi-group">
+          <h3 class="kpi-group-title">Bookings Activity</h3>
+          <div class="kpi-grid">
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Hotel Bookings</span>
+              <div class="kpi-stat-value">{{ s.hotelBookings | number }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Bus Bookings</span>
+              <div class="kpi-stat-value">{{ s.busBookings | number }}</div>
+            </div>
+            <div class="kpi-stat-card highlight">
+              <span class="kpi-stat-label">Active Bookings</span>
+              <div class="kpi-stat-value">{{ s.activeBookings | number }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Cancelled Bookings</span>
+              <div class="kpi-stat-value">{{ s.cancelledBookings | number }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inventory Group -->
+        <div class="kpi-group">
+          <h3 class="kpi-group-title">Platform Infrastructure</h3>
+          <div class="kpi-grid">
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Hotels</span>
+              <div class="kpi-stat-value">{{ s.totalHotels | number }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Rooms</span>
+              <div class="kpi-stat-value">{{ s.totalRooms | number }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Buses</span>
+              <div class="kpi-stat-value">{{ s.totalBuses | number }}</div>
+            </div>
+            <div class="kpi-stat-card">
+              <span class="kpi-stat-label">Customers</span>
+              <div class="kpi-stat-value">{{ s.totalCustomers | number }}</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">👤</div>
-    </a>
+    }
+  </section>
 
-    <!-- Buses -->
-    <a routerLink="/admin/buses" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Buses</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().busesCount !== null ? (stats().busesCount | number) : '—' }} }
+  <!-- ─── TWO-COLUMN ROW: Revenue Trends & Booking Trends ──── -->
+  <div class="analytics-row-2col">
+
+    <!-- ─── CARD 2: Revenue Trends (Line Chart) ────────────── -->
+    <section class="analytics-card" aria-label="Revenue Trends">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Revenue Trends</h2>
+          <p class="card-subtitle">Revenue over time across channels</p>
         </div>
-        <span class="stat-subtext">Fleet vehicles</span>
+        <div class="card-controls">
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="revenueGranularity() === 'DAY'"
+              (click)="setRevenueGranularity('DAY')"
+            >
+              Day
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="revenueGranularity() === 'WEEK'"
+              (click)="setRevenueGranularity('WEEK')"
+            >
+              Week
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="revenueGranularity() === 'MONTH'"
+              (click)="setRevenueGranularity('MONTH')"
+            >
+              Month
+            </button>
+          </div>
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadRevenue()"
+            [disabled]="revenueLoading()"
+            title="Reload Revenue"
+          >
+            ↻
+          </button>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">🚌</div>
-    </a>
 
-    <!-- Routes -->
-    <a routerLink="/admin/bus-routes" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Bus Routes</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().busRoutesCount !== null ? (stats().busRoutesCount | number) : '—' }} }
+      @if (revenueLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
         </div>
-        <span class="stat-subtext">Inter-city routes</span>
+      } @else if (revenueError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ revenueError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadRevenue()">Retry</button>
+        </div>
+      } @else if (revenueData(); as r) {
+        @if (r.points && r.points.length > 0) {
+          <div class="chart-container">
+            <p-chart
+              type="line"
+              [data]="revenueChartData()"
+              [options]="revenueChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No revenue data available for this date range.</p>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- ─── CARD 3: Booking Volume Trends (Bar Chart) ──────── -->
+    <section class="analytics-card" aria-label="Booking Volume Trends">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Booking Volume Trends</h2>
+          <p class="card-subtitle">Reservation volume across service types</p>
+        </div>
+        <div class="card-controls">
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="bookingsGranularity() === 'DAY'"
+              (click)="setBookingsGranularity('DAY')"
+            >
+              Day
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="bookingsGranularity() === 'WEEK'"
+              (click)="setBookingsGranularity('WEEK')"
+            >
+              Week
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="bookingsGranularity() === 'MONTH'"
+              (click)="setBookingsGranularity('MONTH')"
+            >
+              Month
+            </button>
+          </div>
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadBookingsTrends()"
+            [disabled]="bookingsLoading()"
+            title="Reload Bookings Trends"
+          >
+            ↻
+          </button>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">🗺</div>
-    </a>
 
-    <!-- Bus Stops -->
-    <a routerLink="/admin/bus-stops" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Bus Stops</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().busStopsCount !== null ? (stats().busStopsCount | number) : '—' }} }
+      <!-- Secondary filter bar for Type & Status -->
+      <div class="sub-filter-row">
+        <div class="sub-filter-group">
+          <span class="sub-filter-label">Type:</span>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsType() === undefined"
+            (click)="setBookingsType(undefined)"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsType() === 'HOTEL'"
+            (click)="setBookingsType('HOTEL')"
+          >
+            Hotel
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsType() === 'BUS'"
+            (click)="setBookingsType('BUS')"
+          >
+            Bus
+          </button>
         </div>
-        <span class="stat-subtext">Stations & stops</span>
+
+        <div class="sub-filter-group">
+          <span class="sub-filter-label">Status:</span>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsStatus() === undefined"
+            (click)="setBookingsStatus(undefined)"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsStatus() === 'CONFIRMED'"
+            (click)="setBookingsStatus('CONFIRMED')"
+          >
+            Confirmed
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsStatus() === 'PENDING'"
+            (click)="setBookingsStatus('PENDING')"
+          >
+            Pending
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsStatus() === 'COMPLETED'"
+            (click)="setBookingsStatus('COMPLETED')"
+          >
+            Completed
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="bookingsStatus() === 'CANCELLED'"
+            (click)="setBookingsStatus('CANCELLED')"
+          >
+            Cancelled
+          </button>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">🚏</div>
-    </a>
 
-    <!-- Trips -->
-    <a routerLink="/admin/bus-trips" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Bus Trips</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().busTripsCount !== null ? (stats().busTripsCount | number) : '—' }} }
+      @if (bookingsLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
         </div>
-        <span class="stat-subtext">Scheduled departures</span>
+      } @else if (bookingsError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ bookingsError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadBookingsTrends()">Retry</button>
+        </div>
+      } @else if (bookingsData(); as b) {
+        @if (b.points && b.points.length > 0) {
+          <div class="chart-container">
+            <p-chart
+              type="bar"
+              [data]="bookingsChartData()"
+              [options]="bookingsChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No booking volume recorded for this filter criteria.</p>
+          </div>
+        }
+      }
+    </section>
+
+  </div>
+
+  <!-- ─── TWO-COLUMN ROW: Status Distribution & Top Hotels ─── -->
+  <div class="analytics-row-2col">
+
+    <!-- ─── CARD 4: Bookings by Status (Doughnut Chart) ────── -->
+    <section class="analytics-card" aria-label="Bookings by Status">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Bookings by Status</h2>
+          <p class="card-subtitle">Lifecycle breakdown across reservation states</p>
+        </div>
+        <div class="card-controls">
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="statusType() === undefined"
+              (click)="setStatusType(undefined)"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="statusType() === 'HOTEL'"
+              (click)="setStatusType('HOTEL')"
+            >
+              Hotels
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="statusType() === 'BUS'"
+              (click)="setStatusType('BUS')"
+            >
+              Buses
+            </button>
+          </div>
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadBookingsByStatus()"
+            [disabled]="statusLoading()"
+            title="Reload Status Breakdown"
+          >
+            ↻
+          </button>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">🛣</div>
-    </a>
 
-    <!-- Hotel Bookings -->
-    <a routerLink="/admin/hotel-bookings" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Hotel Bookings</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().hotelBookingsCount !== null ? (stats().hotelBookingsCount | number) : '—' }} }
+      @if (statusLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
         </div>
-        <span class="stat-subtext">Reservations made</span>
+      } @else if (statusError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ statusError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadBookingsByStatus()">Retry</button>
+        </div>
+      } @else if (statusData(); as st) {
+        @if (st.items && st.items.length > 0) {
+          <div class="chart-container doughnut-container">
+            <p-chart
+              type="doughnut"
+              [data]="statusChartData()"
+              [options]="statusChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No status data available for this range.</p>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- ─── CARD 5: Top Performing Hotels (Horizontal Bar) ─── -->
+    <section class="analytics-card" aria-label="Top Performing Hotels">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Top Performing Hotels</h2>
+          <p class="card-subtitle">Highest grossing properties and booking destinations</p>
+        </div>
+        <div class="card-controls">
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="topHotelsSortBy() === 'REVENUE'"
+              (click)="setTopHotelsSortBy('REVENUE')"
+            >
+              By Revenue
+            </button>
+            <button
+              type="button"
+              class="btn-toggle"
+              [class.active]="topHotelsSortBy() === 'BOOKINGS'"
+              (click)="setTopHotelsSortBy('BOOKINGS')"
+            >
+              By Bookings
+            </button>
+          </div>
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadTopHotels()"
+            [disabled]="topHotelsLoading()"
+            title="Reload Top Hotels"
+          >
+            ↻
+          </button>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">📋</div>
-    </a>
 
-    <!-- Bus Bookings -->
-    <a routerLink="/admin/bus-bookings" class="stat-card">
-      <div class="stat-info">
-        <span class="stat-label">Bus Bookings</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().busBookingsCount !== null ? (stats().busBookingsCount | number) : '—' }} }
+      <div class="sub-filter-row">
+        <div class="sub-filter-group">
+          <span class="sub-filter-label">Show:</span>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="topHotelsLimit() === 5"
+            (click)="setTopHotelsLimit(5)"
+          >
+            Top 5
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="topHotelsLimit() === 10"
+            (click)="setTopHotelsLimit(10)"
+          >
+            Top 10
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="topHotelsLimit() === 20"
+            (click)="setTopHotelsLimit(20)"
+          >
+            Top 20
+          </button>
         </div>
-        <span class="stat-subtext">Tickets reserved</span>
       </div>
-      <div class="stat-icon" aria-hidden="true">🎟</div>
-    </a>
 
-    <!-- Payments & Revenue -->
-    <a routerLink="/admin/payments" class="stat-card primary">
-      <div class="stat-info">
-        <span class="stat-label">Payments</span>
-        <div class="stat-value">
-          @if (loading()) { … } @else { {{ stats().paymentsCount !== null ? (stats().paymentsCount | number) : '—' }} }
+      @if (topHotelsLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
         </div>
-        <span class="stat-subtext">
-          @if (stats().totalRevenue !== null) {
-            Total: ${{ stats().totalRevenue | number:'1.2-2' }}
-          } @else {
-            Transactions
+      } @else if (topHotelsError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ topHotelsError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadTopHotels()">Retry</button>
+        </div>
+      } @else if (topHotelsData(); as th) {
+        @if (th.items && th.items.length > 0) {
+          <div class="chart-container">
+            <p-chart
+              type="bar"
+              [data]="topHotelsChartData()"
+              [options]="topHotelsChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No hotel booking records match the criteria.</p>
+          </div>
+        }
+      }
+    </section>
+
+  </div>
+
+  <!-- ─── TWO-COLUMN ROW: Occupancy & Bus Utilization ──────── -->
+  <div class="analytics-row-2col">
+
+    <!-- ─── CARD 6: Hotel Room Occupancy (Horizontal Bar) ──── -->
+    <section class="analytics-card" aria-label="Hotel Room Occupancy">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Hotel Room Occupancy</h2>
+          <p class="card-subtitle">Room night capacity versus booked night utilization</p>
+        </div>
+        <div class="card-controls">
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadOccupancy()"
+            [disabled]="occupancyLoading()"
+            title="Reload Occupancy"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+
+      <!-- Hotel ID filter input -->
+      <div class="filter-input-row">
+        <label for="occupancy-hotel-id" class="filter-input-label">Filter Hotel ID:</label>
+        <div class="filter-input-box">
+          <input
+            id="occupancy-hotel-id"
+            type="text"
+            #hotelInput
+            placeholder="e.g. 1 (blank = all)"
+            class="inline-input"
+            (keyup.enter)="setOccupancyHotelId(hotelInput.value)"
+          />
+          <button
+            type="button"
+            class="btn-input-apply"
+            (click)="setOccupancyHotelId(hotelInput.value)"
+          >
+            Apply
+          </button>
+          @if (occupancyHotelId() !== undefined) {
+            <button
+              type="button"
+              class="btn-input-clear"
+              (click)="hotelInput.value = ''; setOccupancyHotelId('')"
+            >
+              Clear
+            </button>
           }
-        </span>
+        </div>
       </div>
-      <div class="stat-icon" aria-hidden="true">💳</div>
-    </a>
 
+      @if (occupancyLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
+        </div>
+      } @else if (occupancyError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ occupancyError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadOccupancy()">Retry</button>
+        </div>
+      } @else if (occupancyData(); as occ) {
+        @if (occ.items && occ.items.length > 0) {
+          <div class="chart-container">
+            <p-chart
+              type="bar"
+              [data]="occupancyChartData()"
+              [options]="occupancyChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No hotel occupancy data available for this range.</p>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- ─── CARD 7: Bus Trips Utilization (Bar Chart) ──────── -->
+    <section class="analytics-card" aria-label="Bus Trips Utilization">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Bus Trips Utilization</h2>
+          <p class="card-subtitle">Departure seat capacity versus booked passenger utilization</p>
+        </div>
+        <div class="card-controls">
+          <button
+            type="button"
+            class="card-refresh-btn"
+            (click)="loadBusTrips()"
+            [disabled]="busTripsLoading()"
+            title="Reload Bus Trips Utilization"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+
+      <!-- Route ID and Limit filters -->
+      <div class="filter-input-row">
+        <label for="bus-route-id" class="filter-input-label">Filter Route ID:</label>
+        <div class="filter-input-box">
+          <input
+            id="bus-route-id"
+            type="text"
+            #routeInput
+            placeholder="e.g. 5 (blank = all)"
+            class="inline-input"
+            (keyup.enter)="setBusTripsRouteId(routeInput.value)"
+          />
+          <button
+            type="button"
+            class="btn-input-apply"
+            (click)="setBusTripsRouteId(routeInput.value)"
+          >
+            Apply
+          </button>
+          @if (busTripsRouteId() !== undefined) {
+            <button
+              type="button"
+              class="btn-input-clear"
+              (click)="routeInput.value = ''; setBusTripsRouteId('')"
+            >
+              Clear
+            </button>
+          }
+        </div>
+
+        <div class="limit-selector-group">
+          <span class="sub-filter-label">Limit:</span>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="busTripsLimit() === 10"
+            (click)="setBusTripsLimit(10)"
+          >
+            10
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="busTripsLimit() === 20"
+            (click)="setBusTripsLimit(20)"
+          >
+            20
+          </button>
+          <button
+            type="button"
+            class="btn-sub-toggle"
+            [class.active]="busTripsLimit() === 50"
+            (click)="setBusTripsLimit(50)"
+          >
+            50
+          </button>
+        </div>
+      </div>
+
+      @if (busTripsLoading()) {
+        <div class="skeleton-chart">
+          <p-skeleton height="280px" borderRadius="8px" />
+        </div>
+      } @else if (busTripsError()) {
+        <div class="card-error-state" role="alert">
+          <div class="error-text">
+            <span class="error-icon">⚠️</span>
+            <span>{{ busTripsError() }}</span>
+          </div>
+          <button type="button" class="btn-retry" (click)="loadBusTrips()">Retry</button>
+        </div>
+      } @else if (busTripsData(); as bt) {
+        @if (bt.items && bt.items.length > 0) {
+          <div class="chart-container">
+            <p-chart
+              type="bar"
+              [data]="busTripsChartData()"
+              [options]="busTripsChartOptions()"
+              [style]="{ width: '100%', height: '100%' }"
+            />
+          </div>
+        } @else {
+          <div class="empty-chart-state">
+            <p>No bus trip departures recorded for this range.</p>
+          </div>
+        }
+      }
+    </section>
+
+  </div>
+
+  <!-- ─── CARD 8: Payments Breakdown (Doughnut + Bar) ──────── -->
+  <section class="analytics-card" aria-label="Payments Breakdown">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Payments Breakdown</h2>
+        <p class="card-subtitle">Settlements by payment method and gateway status</p>
+      </div>
+      <div class="card-controls">
+        <button
+          type="button"
+          class="card-refresh-btn"
+          (click)="loadPayments()"
+          [disabled]="paymentsLoading()"
+          title="Reload Payments Breakdown"
+        >
+          ↻
+        </button>
+      </div>
+    </div>
+
+    @if (paymentsLoading()) {
+      <div class="skeleton-chart">
+        <p-skeleton height="280px" borderRadius="8px" />
+      </div>
+    } @else if (paymentsError()) {
+      <div class="card-error-state" role="alert">
+        <div class="error-text">
+          <span class="error-icon">⚠️</span>
+          <span>{{ paymentsError() }}</span>
+        </div>
+        <button type="button" class="btn-retry" (click)="loadPayments()">Retry</button>
+      </div>
+    } @else if (paymentsData(); as p) {
+      @if (p.items && p.items.length > 0) {
+        <div class="payments-charts-grid">
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">By Payment Method (Amount)</h3>
+            <div class="chart-container doughnut-container">
+              <p-chart
+                type="doughnut"
+                [data]="paymentsMethodChartData()"
+                [options]="paymentsMethodChartOptions()"
+                [style]="{ width: '100%', height: '100%' }"
+              />
+            </div>
+          </div>
+
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">By Transaction Status (Count)</h3>
+            <div class="chart-container">
+              <p-chart
+                type="bar"
+                [data]="paymentsStatusChartData()"
+                [options]="paymentsStatusChartOptions()"
+                [style]="{ width: '100%', height: '100%' }"
+              />
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-chart-state">
+          <p>No recorded payment transactions for this date window.</p>
+        </div>
+      }
+    }
   </section>
 
   <!-- ─── Quick Access Hub ──────────────────────────────────── -->
@@ -295,14 +1029,5 @@
       </a>
     </div>
   </section>
-
-  <!-- ─── Data Transparency & Limitations Note ─────────────── -->
-  <aside class="info-note" aria-label="API Integration Note">
-    <span class="info-icon" aria-hidden="true">ℹ️</span>
-    <div>
-      <strong>Data Transparency & Backend Integration Notice:</strong>
-      All metrics displayed above are queried in real time directly from the live database endpoints. Aggregate trends (such as daily booking curves or monthly revenue forecasting) require dedicated analytical aggregation endpoints that are not yet exposed by the current backend API.
-    </div>
-  </aside>
 
 </div>
