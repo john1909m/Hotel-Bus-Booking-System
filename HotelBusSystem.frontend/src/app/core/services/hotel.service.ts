@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { HotelDTO, HotelRequestDTO } from '../models/Hotel/hotel.model';
 import { PageHotelDTO, HotelListParams, HotelLookupParams } from '../models/Pagination/hotelPage.model';
 import { environment } from '../../../environments/environment';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 
 

@@ -30,7 +30,7 @@ import { RoomDTO, roomType } from '../../../core/models/Room/room.model';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
 import { PagedModelRoomDto } from '../../../core/models/Pagination/roomPage.model';
 import { HotelBookingDTO, HotelBookingRequestDTO } from '../../../core/models/Hotel/hotel-booking.model';
-import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
+import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../core/utils/safe-image-url';
 
 import { ImageLightboxComponent } from '../../../shared/components/image-lightbox/image-lightbox.component';
 import { BookingStateService, ChildGuestState } from '../../../core/services/booking-state.service';

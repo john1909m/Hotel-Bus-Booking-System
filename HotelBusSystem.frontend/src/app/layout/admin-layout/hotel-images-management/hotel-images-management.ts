@@ -34,7 +34,7 @@ import { HotelImageService } from '../../../core/services/hotel-image.service';
 import { ImageUploadService } from '../../../core/services/image-upload.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
-import { SafeImageUrlPipe } from '../../../../utils/safe-image-url';
+import { SafeImageUrlPipe } from '../../../core/utils/safe-image-url';
 
 
 export type ImageCategoryFilter = 'ALL' | 'HOTEL_GALLERY' | string;

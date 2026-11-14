@@ -34,7 +34,7 @@ import {
 } from '../../../core/models/AI Assistant/BookingDraft.model';
 import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusBookingDTO, BusBookingRequestDTO } from '../../../core/models/Bus/bus-booking.model';
-import { extractErrorMessage } from '../../../../utils/ErrorHandling';
+import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
 
 export interface InChatHotelBooking {
   step: 'dates' | 'rooms' | 'summary' | 'confirmed';

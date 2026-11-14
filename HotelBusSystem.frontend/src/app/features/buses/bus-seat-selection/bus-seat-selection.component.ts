@@ -29,7 +29,7 @@ import { isOutgoingEligible, isReturnEligible } from '../../../core/utils/bus-el
 import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusBookingDTO, BusBookingRequestDTO } from '../../../core/models/Bus/bus-booking.model';
 import { EnrichedBusTrip } from '../bus-search-results/bus-search-results';
-import { extractErrorMessage } from '../../../../utils/ErrorHandling';
+import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
 
 export interface SeatRow {
   rowNumber: number;

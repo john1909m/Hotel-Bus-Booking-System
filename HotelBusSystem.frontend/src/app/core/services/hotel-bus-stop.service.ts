@@ -4,7 +4,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { catchError, Observable, throwError } from 'rxjs';
 import { PageHotelBusStopDTO, HotelBusStopListParams } from '../models/Pagination/hotelBusStopPage.model';
 import { HotelBusStopDTO } from '../models/Hotel/hotel-bus-stop.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',

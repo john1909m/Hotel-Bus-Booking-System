@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { UserDto, UserRequestDto, UserListParams} from '../models/User/user.model';
 import { PageUserDto } from '../models/Pagination/userPage.model';
 import { environment } from '../../../environments/environment';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',

@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusTripDTO, BusTripRequestDTO, status , BusTripListParams, BusTripLookupParams} from '../models/Bus/bus-trip.model';
 import { PageBusTripDTO } from '../models/Pagination/busTripPage.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 
 

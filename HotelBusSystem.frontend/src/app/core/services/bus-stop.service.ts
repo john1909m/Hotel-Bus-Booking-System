@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusStopDto, BusStopRequestDto } from '../models/Bus/bus-stop.model';
 import { BusStopListParams, BusStopLookupParams, PageBusStopDTO } from '../models/Pagination/busStopPage.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',

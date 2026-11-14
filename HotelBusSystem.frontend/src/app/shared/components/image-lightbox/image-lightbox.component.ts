@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
-import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
+import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../core/utils/safe-image-url';
 
 @Component({
   selector: 'app-image-lightbox',

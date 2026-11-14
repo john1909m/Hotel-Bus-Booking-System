@@ -6,7 +6,7 @@ import { HotelListing } from './hotel-listing';
 import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { PageHotelDTO } from '../../../core/models/Pagination/hotelPage.model';
-import { DEFAULT_IMAGE_PLACEHOLDER, SafeImageUrlPipe } from '../../../../utils/safe-image-url';
+import { DEFAULT_IMAGE_PLACEHOLDER, SafeImageUrlPipe } from '../../../core/utils/safe-image-url';
 
 describe('HotelListing - Cover Images & Listing Integration', () => {
   let component: HotelListing;

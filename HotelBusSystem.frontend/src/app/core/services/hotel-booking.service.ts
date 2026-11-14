@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { HotelBookingDTO, HotelBookingRequestDTO, StatusUpdateRequestDTO, status } from '../models/Hotel/hotel-booking.model';
 import { PageHotelBookingDTO, HotelBookingListParams } from '../models/Pagination/hotelBookingPage.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 
 @Injectable({

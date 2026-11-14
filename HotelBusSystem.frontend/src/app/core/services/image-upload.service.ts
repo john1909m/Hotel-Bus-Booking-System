@@ -11,7 +11,7 @@ import {
   HotelImageRequest,
 } from '../models/Image/hotel_image.model';
 import { HotelImageService } from './hotel-image.service';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 export const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB

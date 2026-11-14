@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AiChatRequest, AiChatResponse } from '../models/AI Assistant/AIChat.model';
 import { AiMessageDto } from '../models/AI Assistant/AIMessage.model';
 import { BookingDraftRequest, BookingDraftResponse } from '../models/AI Assistant/BookingDraft.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 @Injectable({
   providedIn: 'root',
 })

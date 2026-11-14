@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { RoomDTO, RoomRequestDTO } from '../models/Room/room.model';
 import { PagedModelRoomDto, RoomListParams } from '../models/Pagination/roomPage.model';
-import { handleError } from '../../../utils/ErrorHandling';
+import { handleError } from '../utils/ErrorHandling';
 
 @Injectable({
   providedIn: 'root',

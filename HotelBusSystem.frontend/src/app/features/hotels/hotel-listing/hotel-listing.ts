@@ -17,7 +17,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { PageHotelDTO,  HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
-import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../../utils/safe-image-url';
+import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../core/utils/safe-image-url';
 
 type PageState = 'loading' | 'success' | 'empty' | 'error';
 

@@ -42,7 +42,7 @@ import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusDTO } from '../../../core/models/Bus/bus.model';
 import { UserDto } from '../../../core/models/User/user.model';
 import { PageBusBookingDTO, BusBookingListParams } from '../../../core/models/Pagination/busBookingPage.model';
-import { extractErrorMessage } from '../../../../utils/ErrorHandling';
+import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
 
 @Component({
   selector: 'app-bus-bookings-management',

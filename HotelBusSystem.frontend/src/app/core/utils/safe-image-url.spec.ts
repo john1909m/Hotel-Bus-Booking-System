@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { safeImageUrl, isAllowedImageUrl, DEFAULT_IMAGE_PLACEHOLDER, SafeImageUrlPipe } from './safe-image-url';
-import { environment } from '../environments/environment';
+import { environment } from '../../../environments/environment';
 
 describe('safeImageUrl and isAllowedImageUrl', () => {
   const allowedBase = environment.imagePublicBaseUrl; // 'https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev'
