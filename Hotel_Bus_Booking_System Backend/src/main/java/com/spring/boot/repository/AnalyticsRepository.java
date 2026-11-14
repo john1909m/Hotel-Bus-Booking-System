@@ -118,25 +118,32 @@ public class AnalyticsRepository {
      */
     @SuppressWarnings("unchecked")
     public Map<LocalDate, BigDecimal> getHotelRevenueByGranularity(LocalDate from, LocalDate to, String granularity) {
-        String sql = "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) AS date) as period_start, " +
-                "COALESCE(SUM(hb.total_price), 0) as revenue " +
-                "FROM hotel_bookings hb " +
-                "WHERE hb.check_in >= :from AND hb.check_in <= :to " +
-                "AND hb.status IN (" + REVENUE_STATUS_SQL + ") " +
-                "GROUP BY date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) " +
-                "ORDER BY period_start ASC";
+        // Whitelist: the only values that can reach the SQL text
+        final String unit = switch (granularity.toLowerCase()) {
+            case "day" -> "day";
+            case "week" -> "week";
+            case "month" -> "month";
+            default -> throw new IllegalArgumentException("Unsupported granularity: " + granularity);
+        };
+
+        String sql = """
+            SELECT CAST(date_trunc('%s', hb.check_in) AS date) AS period_start,
+                   COALESCE(SUM(hb.total_price), 0) AS revenue
+            FROM hotel_bookings hb
+            WHERE hb.check_in >= :from AND hb.check_in <= :to
+              AND hb.status IN (%s)
+            GROUP BY CAST(date_trunc('%s', hb.check_in) AS date)
+            ORDER BY period_start ASC
+            """.formatted(unit, REVENUE_STATUS_SQL, unit);
 
         Query query = entityManager.createNativeQuery(sql)
-                .setParameter("granularity", granularity.toLowerCase())
                 .setParameter("from", from)
                 .setParameter("to", to);
 
         List<Object[]> rows = query.getResultList();
         Map<LocalDate, BigDecimal> result = new LinkedHashMap<>();
         for (Object[] row : rows) {
-            LocalDate date = toLocalDate(row[0]);
-            BigDecimal rev = toBigDecimal(row[1]);
-            result.put(date, rev);
+            result.put(toLocalDate(row[0]), toBigDecimal(row[1]));
         }
         return result;
     }
