@@ -4,6 +4,7 @@ import com.spring.boot.dto.RoomDto;
 import com.spring.boot.dto.RoomRequestDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public interface RoomService {
 
     RoomDto getRoomById(Long id);
 
-    List<RoomDto> getAllRooms();
+    PagedModel<RoomDto> getAllRooms(Pageable pageable);
 
     List<RoomDto> getRoomsByHotelId(Long hotelId);
 

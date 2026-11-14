@@ -28,6 +28,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query("SELECT r FROM Room r WHERE r.id IN :ids ORDER BY r.id ASC")
     List<Room> findAllByIdsForUpdate(@Param("ids") List<Long> ids);
 
+    Page<Room> findAll(Pageable pageable);
+
     List<Room> findByHotelId(Long hotelId);
 
     Page<Room> findByHotelId(Long hotelId, Pageable pageable);

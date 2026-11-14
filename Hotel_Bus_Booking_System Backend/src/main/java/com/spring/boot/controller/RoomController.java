@@ -6,6 +6,10 @@ import com.spring.boot.enums.Role;
 
 import com.spring.boot.service.interfaces.RoomService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,8 +42,9 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RoomDto>> getAllRooms() {
-        List<RoomDto> rooms = roomService.getAllRooms();
+    public ResponseEntity<PagedModel<RoomDto>> getAllRooms(
+            @ParameterObject @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        PagedModel<RoomDto> rooms = roomService.getAllRooms(pageable);
         return new ResponseEntity<>(rooms, HttpStatus.OK);
     }
 

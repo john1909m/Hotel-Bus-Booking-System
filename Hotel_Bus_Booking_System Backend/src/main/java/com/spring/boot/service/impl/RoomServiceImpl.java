@@ -13,6 +13,7 @@ import com.spring.boot.service.interfaces.RoomService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 
 import com.spring.boot.exception.BookingConflictException;
@@ -59,11 +60,10 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-//    @Cacheable(value = "rooms", key = "'all'")
-    public java.util.List<RoomDto> getAllRooms() {
-        return roomRepository.findAll().stream()
-                .map(roomMapper::roomToRoomDto)
-                .toList();
+    public PagedModel<RoomDto> getAllRooms(Pageable pageable) {
+        Page<RoomDto> dtoPage = roomRepository.findAll(pageable)
+                .map(roomMapper::toDto);
+        return new PagedModel<>(dtoPage);
     }
 
     @Override
