@@ -59,7 +59,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @Cacheable(value = "rooms", key = "'all'")
+//    @Cacheable(value = "rooms", key = "'all'")
     public java.util.List<RoomDto> getAllRooms() {
         return roomRepository.findAll().stream()
                 .map(roomMapper::roomToRoomDto)
