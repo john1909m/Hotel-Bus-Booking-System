@@ -153,25 +153,31 @@ public class AnalyticsRepository {
      */
     @SuppressWarnings("unchecked")
     public Map<LocalDate, BigDecimal> getBusRevenueByGranularity(LocalDate from, LocalDate to, String granularity) {
-        String sql = "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) AS date) as period_start, " +
-                "COALESCE(SUM(bb.price), 0) as revenue " +
-                "FROM bus_bookings bb " +
-                "WHERE bb.booking_date >= :from AND bb.booking_date <= :to " +
-                "AND bb.status IN (" + REVENUE_STATUS_SQL + ") " +
-                "GROUP BY date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) " +
-                "ORDER BY period_start ASC";
+        final String unit = switch (granularity.toLowerCase()) {
+            case "day" -> "day";
+            case "week" -> "week";
+            case "month" -> "month";
+            default -> throw new IllegalArgumentException("Unsupported granularity: " + granularity);
+        };
+
+        String sql = """
+            SELECT CAST(date_trunc('%s', bb.booking_date) AS date) AS period_start,
+                   COALESCE(SUM(bb.price), 0) AS revenue
+            FROM bus_bookings bb
+            WHERE bb.booking_date >= :from AND bb.booking_date <= :to
+              AND bb.status IN (%s)
+            GROUP BY CAST(date_trunc('%s', bb.booking_date) AS date)
+            ORDER BY period_start ASC
+            """.formatted(unit, REVENUE_STATUS_SQL, unit);
 
         Query query = entityManager.createNativeQuery(sql)
-                .setParameter("granularity", granularity.toLowerCase())
                 .setParameter("from", from)
                 .setParameter("to", to);
 
         List<Object[]> rows = query.getResultList();
         Map<LocalDate, BigDecimal> result = new LinkedHashMap<>();
         for (Object[] row : rows) {
-            LocalDate date = toLocalDate(row[0]);
-            BigDecimal rev = toBigDecimal(row[1]);
-            result.put(date, rev);
+            result.put(toLocalDate(row[0]), toBigDecimal(row[1]));
         }
         return result;
     }
@@ -185,47 +191,59 @@ public class AnalyticsRepository {
      */
     @SuppressWarnings("unchecked")
     public Map<LocalDate, Long> getBookingsCountByGranularity(LocalDate from, LocalDate to, String granularity, String type, BookingStatus status) {
+        final String unit = switch (granularity.toLowerCase()) {
+            case "day" -> "day";
+            case "week" -> "week";
+            case "month" -> "month";
+            default -> throw new IllegalArgumentException("Unsupported granularity: " + granularity);
+        };
+
         String statusFilterValue = (status != null && status != BookingStatus.ANY) ? status.name() : null;
 
         String sql;
         if ("HOTEL".equalsIgnoreCase(type)) {
-            sql = "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) AS date) as period_start, " +
-                    "COUNT(hb.id) as cnt " +
-                    "FROM hotel_bookings hb " +
-                    "WHERE hb.check_in >= :from AND hb.check_in <= :to " +
-                    "AND (CAST(:status AS text) IS NULL OR hb.status = CAST(:status AS text)) " +
-                    "GROUP BY date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) " +
-                    "ORDER BY period_start ASC";
+            sql = """
+                SELECT CAST(date_trunc('%s', hb.check_in) AS date) AS period_start,
+                       COUNT(hb.id) AS cnt
+                FROM hotel_bookings hb
+                WHERE hb.check_in >= :from AND hb.check_in <= :to
+                  AND (CAST(:status AS text) IS NULL OR hb.status = CAST(:status AS text))
+                GROUP BY CAST(date_trunc('%s', hb.check_in) AS date)
+                ORDER BY period_start ASC
+                """.formatted(unit, unit);
         } else if ("BUS".equalsIgnoreCase(type)) {
-            sql = "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) AS date) as period_start, " +
-                    "COUNT(bb.id) as cnt " +
-                    "FROM bus_bookings bb " +
-                    "WHERE bb.booking_date >= :from AND bb.booking_date <= :to " +
-                    "AND (CAST(:status AS text) IS NULL OR bb.status = CAST(:status AS text)) " +
-                    "GROUP BY date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) " +
-                    "ORDER BY period_start ASC";
+            sql = """
+                SELECT CAST(date_trunc('%s', bb.booking_date) AS date) AS period_start,
+                       COUNT(bb.id) AS cnt
+                FROM bus_bookings bb
+                WHERE bb.booking_date >= :from AND bb.booking_date <= :to
+                  AND (CAST(:status AS text) IS NULL OR bb.status = CAST(:status AS text))
+                GROUP BY CAST(date_trunc('%s', bb.booking_date) AS date)
+                ORDER BY period_start ASC
+                """.formatted(unit, unit);
         } else {
-            sql = "SELECT period_start, SUM(cnt) as cnt FROM ( " +
-                    "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) AS date) as period_start, " +
-                    "COUNT(hb.id) as cnt " +
-                    "FROM hotel_bookings hb " +
-                    "WHERE hb.check_in >= :from AND hb.check_in <= :to " +
-                    "AND (CAST(:status AS text) IS NULL OR hb.status = CAST(:status AS text)) " +
-                    "GROUP BY date_trunc(CAST(:granularity AS text), CAST(hb.check_in AS timestamp)) " +
-                    "UNION ALL " +
-                    "SELECT CAST(date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) AS date) as period_start, " +
-                    "COUNT(bb.id) as cnt " +
-                    "FROM bus_bookings bb " +
-                    "WHERE bb.booking_date >= :from AND bb.booking_date <= :to " +
-                    "AND (CAST(:status AS text) IS NULL OR bb.status = CAST(:status AS text)) " +
-                    "GROUP BY date_trunc(CAST(:granularity AS text), CAST(bb.booking_date AS timestamp)) " +
-                    ") combined " +
-                    "GROUP BY period_start " +
-                    "ORDER BY period_start ASC";
+            sql = """
+                SELECT period_start, SUM(cnt) AS cnt FROM (
+                    SELECT CAST(date_trunc('%s', hb.check_in) AS date) AS period_start,
+                           COUNT(hb.id) AS cnt
+                    FROM hotel_bookings hb
+                    WHERE hb.check_in >= :from AND hb.check_in <= :to
+                      AND (CAST(:status AS text) IS NULL OR hb.status = CAST(:status AS text))
+                    GROUP BY CAST(date_trunc('%s', hb.check_in) AS date)
+                    UNION ALL
+                    SELECT CAST(date_trunc('%s', bb.booking_date) AS date) AS period_start,
+                           COUNT(bb.id) AS cnt
+                    FROM bus_bookings bb
+                    WHERE bb.booking_date >= :from AND bb.booking_date <= :to
+                      AND (CAST(:status AS text) IS NULL OR bb.status = CAST(:status AS text))
+                    GROUP BY CAST(date_trunc('%s', bb.booking_date) AS date)
+                ) combined
+                GROUP BY period_start
+                ORDER BY period_start ASC
+                """.formatted(unit, unit, unit, unit);
         }
 
         Query query = entityManager.createNativeQuery(sql)
-                .setParameter("granularity", granularity.toLowerCase())
                 .setParameter("from", from)
                 .setParameter("to", to)
                 .setParameter("status", statusFilterValue);
