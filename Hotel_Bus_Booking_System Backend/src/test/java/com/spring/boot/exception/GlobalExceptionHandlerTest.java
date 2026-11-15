@@ -1,6 +1,7 @@
 package com.spring.boot.exception;
 
 import com.spring.boot.dto.BusTripRequestDto;
+import com.spring.boot.helper.BundleMessageService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +12,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
 import java.util.List;
 import java.util.Locale;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -73,7 +77,8 @@ class GlobalExceptionHandlerTest {
         localeResolver.setSupportedLocales(List.of(Locale.ENGLISH, Locale.forLanguageTag("ar")));
         localeResolver.setDefaultLocale(Locale.ENGLISH);
 
-        GlobalExceptionHandler handler = new GlobalExceptionHandler(messageSource);
+        BundleMessageService bundleMessageService = new BundleMessageService(messageSource);
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(bundleMessageService);
 
         mockMvc = MockMvcBuilders.standaloneSetup(new TestErrorController())
                 .setControllerAdvice(handler)
@@ -166,6 +171,18 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
                 .andExpect(jsonPath("$.message").value("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً."))
                 .andExpect(content().string(not(containsString("Sensitive database"))));
+    }
+
+    @Test
+    @DisplayName("Spring ApplicationContext creates GlobalExceptionHandler bean without No default constructor error")
+    void testSpringBeanCreation() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(MessageSource.class, ResourceBundleMessageSource::new);
+            context.register(BundleMessageService.class, GlobalExceptionHandler.class);
+            context.refresh();
+            GlobalExceptionHandler bean = context.getBean(GlobalExceptionHandler.class);
+            assertNotNull(bean);
+        }
     }
 
     @Test

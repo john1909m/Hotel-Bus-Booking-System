@@ -128,17 +128,9 @@ public class GlobalExceptionHandler {
         KEY_TO_CODE_MAP.put("error.too_many_requests", ErrorCode.TOO_MANY_REQUESTS);
     }
 
-    public GlobalExceptionHandler(MessageSource messageSource, BundleMessageService bundleMessageService) {
-        this.messageSource = messageSource;
-        this.bundleMessageService = bundleMessageService;
-    }
-
     public GlobalExceptionHandler(BundleMessageService bundleMessageService) {
-        this(bundleMessageService != null ? bundleMessageService.getMessageSource() : null, bundleMessageService);
-    }
-
-    public GlobalExceptionHandler(MessageSource messageSource) {
-        this(messageSource, null);
+        this.bundleMessageService = bundleMessageService;
+        this.messageSource = bundleMessageService != null ? bundleMessageService.getMessageSource() : null;
     }
 
     private String resolveMessage(String codeOrKey, Object[] args, Locale locale) {
