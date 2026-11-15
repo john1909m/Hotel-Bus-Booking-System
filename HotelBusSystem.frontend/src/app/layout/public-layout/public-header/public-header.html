@@ -96,3 +96,9 @@
     </nav>
   </div>
 </header>
+
+<app-logout-confirmation-dialog
+  [(visible)]="showLogoutConfirm"
+  (confirmed)="onLogoutConfirmed()"
+  (cancelled)="onLogoutCancelled()">
+</app-logout-confirmation-dialog>

@@ -155,11 +155,13 @@
           <div class="wizard-steps-nav">
             <span class="step-dot" [class.active]="hbs.step === 'dates'" [class.done]="hbs.step !== 'dates'">1. Dates</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'rooms'" [class.done]="hbs.step === 'summary' || hbs.step === 'confirmed'">2. Room</span>
+            <span class="step-dot" [class.active]="hbs.step === 'origin'" [class.done]="hbs.step === 'rooms' || hbs.step === 'summary' || hbs.step === 'confirmed'">2. Origin</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'summary'" [class.done]="hbs.step === 'confirmed'">3. Summary</span>
+            <span class="step-dot" [class.active]="hbs.step === 'rooms'" [class.done]="hbs.step === 'summary' || hbs.step === 'confirmed'">3. Room</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'confirmed'">4. Confirmed</span>
+            <span class="step-dot" [class.active]="hbs.step === 'summary'" [class.done]="hbs.step === 'confirmed'">4. Summary</span>
+            <span class="step-sep">›</span>
+            <span class="step-dot" [class.active]="hbs.step === 'confirmed'">5. Confirmed</span>
           </div>
 
           <!-- Wizard Error -->
@@ -245,18 +247,53 @@
                   type="button"
                   class="btn-wizard-primary"
                   [disabled]="hbs.loading"
-                  (click)="loadHotelRooms()"
+                  (click)="proceedFromDates()"
                 >
-                  {{ hbs.loading ? 'Searching Rooms...' : 'Find Available Rooms →' }}
+                  {{ hbs.loading ? 'Searching...' : 'Continue to Rooms & Transport →' }}
                 </button>
               </div>
             </div>
           }
 
-          <!-- Step 2: Room Selection -->
+          <!-- Step 2: Origin City Selection for Bus Suggestions -->
+          @if (hbs.step === 'origin') {
+            <div class="wizard-step-body">
+              <span class="wizard-subhead">Which city will you be traveling from?</span>
+              <p class="wizard-hint-text">
+                Select your departure city to view eligible bus trips to {{ hbs.hotel.name }} in {{ hbs.hotel.city || 'your destination' }}:
+              </p>
+
+              <div class="city-chips-grid">
+                @for (city of availableOriginCities(); track city) {
+                  <button
+                    type="button"
+                    class="btn-city-chip"
+                    [class.selected]="hbs.originCity === city"
+                    (click)="chooseOriginCity(city)"
+                  >
+                    📍 {{ city }}
+                  </button>
+                }
+              </div>
+
+              <div class="wizard-actions-split">
+                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingDates()">← Change Dates</button>
+                <button
+                  type="button"
+                  class="btn-wizard-secondary"
+                  (click)="skipOriginCity()"
+                  title="Proceed to room selection without bus suggestions"
+                >
+                  Skip Bus →
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Step 3: Room Selection -->
           @if (hbs.step === 'rooms') {
             <div class="wizard-step-body">
-              <span class="wizard-subhead">Select a Room for {{ hbs.adults }} Adult(s):</span>
+              <span class="wizard-subhead">{{ getRoomSelectionTitle(hbs.adults, hbs.childAges) }}</span>
               <div class="wizard-rooms-list">
                 @for (room of hbs.availableRooms; track (room.id ?? $index)) {
                   <div
@@ -279,7 +316,7 @@
               </div>
 
               <div class="wizard-actions-split">
-                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingDates()">← Change Dates</button>
+                <button type="button" class="btn-wizard-secondary" (click)="backToOriginFromRooms()">← Back</button>
                 <button
                   type="button"
                   class="btn-wizard-primary"
@@ -806,9 +843,9 @@
                               <button
                                 type="button"
                                 class="btn-card-action-btn primary"
-                                (click)="startBusBooking(trip)"
+                                (click)="selectBusTripForSummary(trip)"
                               >
-                                Select Seat & Book
+                                Select
                               </button>
                               <a
                                 [routerLink]="['/buses/results']"
@@ -926,6 +963,43 @@
 
       <!-- Chat Footer / Input Form -->
       <footer class="chat-footer">
+        @if (speechService.isListening()) {
+          <div class="speech-listening-banner" role="status" aria-live="polite">
+            <div class="listening-wave" aria-hidden="true">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+            </div>
+            <span class="listening-text">
+              {{ selectedSpeechLang() === 'ar-EG' ? 'جارٍ الاستماع...' : 'Listening...' }}
+            </span>
+            <button
+              type="button"
+              class="btn-stop-listening"
+              (click)="speechService.stop()"
+              [title]="selectedSpeechLang() === 'ar-EG' ? 'إيقاف الاستماع' : 'Stop listening'"
+            >
+              {{ selectedSpeechLang() === 'ar-EG' ? 'إيقاف' : 'Stop' }}
+            </button>
+          </div>
+        }
+
+        @if (speechService.error()) {
+          <div class="speech-error-alert" role="alert">
+            <span class="speech-error-icon">⚠️</span>
+            <span class="speech-error-text">{{ speechService.error() }}</span>
+            <button
+              type="button"
+              class="speech-error-dismiss"
+              (click)="clearSpeechError()"
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
+          </div>
+        }
+
         <form class="chat-input-form" (ngSubmit)="send()">
           <div class="input-container">
             <textarea
@@ -942,17 +1016,76 @@
               aria-label="Message TravelEase AI Assistant"
             ></textarea>
             
-            <button
-              type="submit"
-              class="send-btn"
-              [disabled]="!currentInput().trim() || aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
-              aria-label="Send message"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
+            <div class="input-actions-cluster">
+              <!-- Speech Language Switcher -->
+              <button
+                type="button"
+                class="btn-speech-lang"
+                (click)="toggleSpeechLanguage()"
+                [title]="selectedSpeechLang() === 'ar-EG' ? 'Switch to English' : 'التحويل إلى العربية'"
+                aria-label="Toggle speech input language"
+              >
+                {{ selectedSpeechLang() === 'ar-EG' ? 'عربي' : 'EN' }}
+              </button>
+
+              <!-- Speech Input Mic Button -->
+              @if (speechService.isSupported()) {
+                <button
+                  type="button"
+                  pButton
+                  class="p-button-rounded p-button-text speech-mic-btn"
+                  [class.listening]="speechService.isListening()"
+                  (click)="toggleSpeechInput()"
+                  [disabled]="aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
+                  [title]="speechService.isListening()
+                    ? (selectedSpeechLang() === 'ar-EG' ? 'إيقاف الاستماع' : 'Stop listening')
+                    : (selectedSpeechLang() === 'ar-EG' ? 'تحدث إلى المساعد' : 'Speak your message')"
+                  [attr.aria-label]="speechService.isListening() ? 'Stop voice input' : 'Start voice input'"
+                >
+                  <svg class="mic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                    <line x1="8" y1="22" x2="16" y2="22"></line>
+                  </svg>
+                  @if (speechService.isListening()) {
+                    <span class="mic-pulse-ring"></span>
+                  }
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  pButton
+                  class="p-button-rounded p-button-text speech-mic-btn disabled"
+                  disabled
+                  title="Voice input requires Google Chrome, Microsoft Edge, or Apple Safari."
+                  aria-label="Voice input not supported in this browser"
+                >
+                  <svg class="mic-svg muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="2" y1="2" x2="22" y2="22"></line>
+                    <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"></path>
+                    <path d="M5 10v2a7 7 0 0 0 12 5"></path>
+                    <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"></path>
+                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                    <line x1="8" y1="22" x2="16" y2="22"></line>
+                  </svg>
+                </button>
+              }
+
+              <!-- Send Button -->
+              <button
+                type="submit"
+                class="send-btn"
+                [disabled]="!currentInput().trim() || aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
+                aria-label="Send message"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="input-footer-row">
@@ -966,3 +1099,13 @@
     </section>
   }
 </aside>
+
+@if (selectedTripForSeats()) {
+  <app-bus-seat-selection
+    [trip]="selectedTripForSeats()"
+    [visible]="seatDialogVisible()"
+    (visibleChange)="seatDialogVisible.set($event)"
+    [direction]="'outgoing'"
+    [hotelBusStopId]="selectedHotelBusStopId()"
+  />
+}

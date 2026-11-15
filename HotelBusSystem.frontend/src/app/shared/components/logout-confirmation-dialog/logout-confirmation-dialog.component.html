@@ -1,0 +1,53 @@
+<p-dialog
+  header="Confirm Sign Out"
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '440px', maxWidth: '92vw' }"
+  styleClass="logout-modal-dialog"
+  (onHide)="onHide()"
+>
+  <div class="logout-dialog-body">
+    <div class="logout-dialog-icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+    </div>
+    <div class="logout-dialog-text">
+      <p class="logout-dialog-prompt">Are you sure you want to sign out?</p>
+      <p class="logout-dialog-help">
+        You will be logged out of your current session. You will need to sign back in to view or manage your reservations.
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="logout-dialog-footer">
+      <button
+        type="button"
+        pButton
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-outlined p-button-secondary"
+        (click)="onCancel()"
+        aria-label="Cancel sign out">
+      </button>
+      <button
+        type="button"
+        pButton
+        label="Sign Out"
+        icon="pi pi-sign-out"
+        class="p-button-primary"
+        (click)="onConfirm()"
+        aria-label="Confirm sign out">
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>
+

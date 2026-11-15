@@ -9,11 +9,12 @@ import {
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { LogoutConfirmationDialogComponent } from '../../../shared/components/logout-confirmation-dialog/logout-confirmation-dialog.component';
 
 @Component({
   selector: 'app-user-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, LogoutConfirmationDialogComponent],
   templateUrl: './user-header.html',
   styleUrl: './user-header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,11 +48,22 @@ export class UserHeader implements OnInit {
     this.menuOpen.update(v => !v);
   }
 
+  readonly showLogoutConfirm = signal<boolean>(false);
+
   closeMenu(): void {
     this.menuOpen.set(false);
   }
 
   logout(): void {
+    this.showLogoutConfirm.set(true);
+  }
+
+  onLogoutCancelled(): void {
+    this.showLogoutConfirm.set(false);
+  }
+
+  onLogoutConfirmed(): void {
+    this.showLogoutConfirm.set(false);
     this.authService.logout().subscribe({
       next: () => {
         this.closeMenu();

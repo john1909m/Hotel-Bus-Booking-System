@@ -1,0 +1,50 @@
+.logout-dialog-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0 0.75rem 0;
+}
+
+.logout-dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .logout-dialog-icon {
+  background: rgba(239, 68, 68, 0.22);
+  color: #f87171;
+}
+
+.logout-dialog-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.logout-dialog-prompt {
+  margin: 0 0 0.35rem 0;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.logout-dialog-help {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.logout-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  width: 100%;
+}
+

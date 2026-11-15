@@ -112,3 +112,9 @@
     </main>
   </div>
 </div>
+
+<app-logout-confirmation-dialog
+  [(visible)]="showLogoutConfirm"
+  (confirmed)="onLogoutConfirmed()"
+  (cancelled)="onLogoutCancelled()">
+</app-logout-confirmation-dialog>

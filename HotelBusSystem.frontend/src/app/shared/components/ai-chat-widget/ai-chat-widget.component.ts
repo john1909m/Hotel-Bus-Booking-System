@@ -7,19 +7,27 @@ import {
   ViewChild,
   AfterViewChecked,
   HostListener,
-  OnInit
+  OnInit,
+  OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { firstValueFrom, of, catchError } from 'rxjs';
+import { Router, RouterLink, NavigationStart } from '@angular/router';
+import { firstValueFrom, of, catchError, forkJoin, Subscription, filter } from 'rxjs';
+import { ButtonModule } from 'primeng/button';
 
 import { AiChatService } from '../../../core/services/ai-chat.service';
 import { AiService } from '../../../core/services/ai.service';
 import { RoomService } from '../../../core/services/room.service';
 import { BusSeatService } from '../../../core/services/bus-seat.service';
 import { BusBookingService } from '../../../core/services/bus-booking.service';
+import { BusStopService } from '../../../core/services/bus-stop.service';
+import { BusRouteService } from '../../../core/services/bus-route.service';
+import { BusTripService } from '../../../core/services/bus-trip.service';
+import { HotelBusStopService } from '../../../core/services/hotel-bus-stop.service';
+import { BookingStateService } from '../../../core/services/booking-state.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SpeechInputService } from '../../../core/services/speech-input.service';
 
 import {
   HotelDto,
@@ -34,16 +42,25 @@ import {
 } from '../../../core/models/AI Assistant/BookingDraft.model';
 import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusBookingDTO, BusBookingRequestDTO } from '../../../core/models/Bus/bus-booking.model';
+import { BusStopDto } from '../../../core/models/Bus/bus-stop.model';
+import { BusRouteDTO } from '../../../core/models/Bus/bus-route';
+import { BusTripDTO } from '../../../core/models/Bus/bus-trip.model';
+import { SpeechLanguage } from '../../../core/models/speech-recognition.model';
+import { BusSeatSelectionComponent } from '../../../features/buses/bus-seat-selection/bus-seat-selection.component';
+import { EnrichedBusTrip } from '../../../features/buses/bus-search-results/bus-search-results';
 import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
+import { calculateGuestBreakdown } from '../../../core/utils/guest-rules.util';
+import { isOutgoingEligible, isReturnEligible } from '../../../core/utils/bus-eligibility.util';
 
 export interface InChatHotelBooking {
-  step: 'dates' | 'rooms' | 'summary' | 'confirmed';
+  step: 'dates' | 'origin' | 'rooms' | 'summary' | 'confirmed';
   hotel: HotelDto;
   checkIn: string;
   checkOut: string;
   adults: number;
   childCount: number;
   childAges: number[];
+  originCity: string | null;
   availableRooms: RoomDTO[];
   selectedRoom: RoomDTO | null;
   draft: BookingDraftResponse | null;
@@ -66,18 +83,24 @@ export interface InChatBusBooking {
 @Component({
   selector: 'app-ai-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, BusSeatSelectionComponent],
   templateUrl: './ai-chat-widget.component.html',
   styleUrl: './ai-chat-widget.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
+export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestroy {
   protected readonly aiChatService = inject(AiChatService);
   protected readonly aiService = inject(AiService);
   protected readonly roomService = inject(RoomService);
   protected readonly busSeatService = inject(BusSeatService);
   protected readonly busBookingService = inject(BusBookingService);
+  protected readonly busStopService = inject(BusStopService);
+  protected readonly busRouteService = inject(BusRouteService);
+  protected readonly busTripService = inject(BusTripService);
+  protected readonly hotelBusStopService = inject(HotelBusStopService);
+  protected readonly bookingState = inject(BookingStateService);
   protected readonly authService = inject(AuthService);
+  protected readonly speechService = inject(SpeechInputService);
   private readonly router = inject(Router);
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
@@ -87,9 +110,21 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   readonly currentInput = signal<string>('');
   private shouldScrollToBottom = false;
 
+  // Speech Input State
+  readonly selectedSpeechLang = signal<SpeechLanguage>('en-US');
+  private speechBaseInput = '';
+  private routerSub?: Subscription;
+
   // In-Chat Booking Flows
   readonly hotelBookingState = signal<InChatHotelBooking | null>(null);
   readonly busBookingState = signal<InChatBusBooking | null>(null);
+
+  // Transportation Integration State (Part 4)
+  readonly availableOriginCities = signal<string[]>([]);
+  readonly selectedHotelBusStop = signal<BusStopDto | null>(null);
+  readonly selectedHotelBusStopId = signal<number | null>(null);
+  readonly seatDialogVisible = signal<boolean>(false);
+  readonly selectedTripForSeats = signal<EnrichedBusTrip | null>(null);
 
   // Idempotency keys stored per draft ID
   private readonly idempotencyKeys = new Map<number | string, string>();
@@ -227,6 +262,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   ];
 
   ngOnInit(): void {
+    this.loadOriginCities();
     if (this.authService.isAuthenticated() && !this.aiChatService.isMockMode()) {
       this.aiChatService.loadConversationHistory().subscribe({
         next: () => {
@@ -234,6 +270,19 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
         }
       });
     }
+
+    this.routerSub = this.router.events
+      .pipe(filter((e) => e instanceof NavigationStart))
+      .subscribe(() => {
+        if (this.speechService.isListening()) {
+          this.speechService.stop();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
+    this.speechService.dispose();
   }
 
   ngAfterViewChecked(): void {
@@ -261,10 +310,18 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   }
 
   close(): void {
+    if (this.speechService.isListening()) {
+      this.speechService.stop();
+    }
     this.isOpen.set(false);
   }
 
   clearHistory(): void {
+    if (this.speechService.isListening()) {
+      this.speechService.stop();
+    }
+    this.speechBaseInput = '';
+    this.speechService.error.set(null);
     this.aiChatService.clearConversation();
     this.cancelHotelBooking();
     this.cancelBusBooking();
@@ -283,6 +340,11 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
   }
 
   send(): void {
+    if (this.speechService.isListening()) {
+      this.speechService.stop();
+    }
+    this.speechBaseInput = '';
+
     const text = this.currentInput().trim();
     if (!text || this.aiChatService.isLoading()) return;
 
@@ -301,6 +363,43 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
         this.shouldScrollToBottom = true;
       }
     });
+  }
+
+  toggleSpeechInput(): void {
+    if (this.speechService.isListening()) {
+      this.speechService.stop();
+      return;
+    }
+    this.speechBaseInput = this.currentInput().trim();
+    this.speechService.start(this.selectedSpeechLang(), ({ interim, final }) => {
+      let speechCombined = final;
+      if (interim) {
+        speechCombined = speechCombined ? `${speechCombined} ${interim}` : interim;
+      }
+      if (speechCombined) {
+        const updated = this.speechBaseInput
+          ? `${this.speechBaseInput} ${speechCombined}`
+          : speechCombined;
+        this.currentInput.set(updated);
+      }
+    });
+  }
+
+  setSpeechLanguage(lang: SpeechLanguage): void {
+    if (this.selectedSpeechLang() === lang) return;
+    if (this.speechService.isListening()) {
+      this.speechService.stop();
+    }
+    this.selectedSpeechLang.set(lang);
+  }
+
+  toggleSpeechLanguage(): void {
+    const nextLang = this.selectedSpeechLang() === 'en-US' ? 'ar-EG' : 'en-US';
+    this.setSpeechLanguage(nextLang);
+  }
+
+  clearSpeechError(): void {
+    this.speechService.error.set(null);
   }
 
   sendSuggested(prompt: string): void {
@@ -443,6 +542,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
       adults: 2,
       childCount: 0,
       childAges: [],
+      originCity: null,
       availableRooms: [],
       selectedRoom: null,
       draft: null,
@@ -502,6 +602,54 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
     });
   }
 
+  getRoomSelectionTitle(adults: number, childAges?: number[]): string {
+    const children = childAges ? childAges.length : 0;
+    if (children > 0) {
+      return `Select a room for ${adults} adult(s) and ${children} child(ren):`;
+    }
+    return `Select a room for ${adults} adult(s):`;
+  }
+
+  proceedFromDates(): void {
+    const s = this.hotelBookingState();
+    if (!s) return;
+
+    if (!s.checkIn || !s.checkOut) {
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Please select both check-in and check-out dates.' } : null));
+      return;
+    }
+    if (s.checkIn < this.getTodayDateString()) {
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Check-in date cannot be in the past.' } : null));
+      return;
+    }
+    if (s.checkOut <= s.checkIn) {
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Check-out date must be after check-in date.' } : null));
+      return;
+    }
+
+    if (!s.originCity) {
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, step: 'origin', error: null } : null));
+      this.shouldScrollToBottom = true;
+      return;
+    }
+
+    this.suggestBusTripsAndLoadRooms(s.originCity);
+  }
+
+  async chooseOriginCity(originCity: string): Promise<void> {
+    this.hotelBookingState.update((s) => (s ? { ...s, originCity, loading: true, error: null } : null));
+    await this.suggestBusTripsAndLoadRooms(originCity);
+  }
+
+  async skipOriginCity(): Promise<void> {
+    this.hotelBookingState.update((s) => (s ? { ...s, originCity: '', loading: true, error: null } : null));
+    await this.loadHotelRooms();
+  }
+
+  backToOriginFromRooms(): void {
+    this.hotelBookingState.update((s) => (s ? { ...s, step: 'origin', error: null } : null));
+  }
+
   async loadHotelRooms(): Promise<void> {
     const s = this.hotelBookingState();
     if (!s) return;
@@ -551,6 +699,15 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
             pricePerNight: s.hotel.minPrice || 1350,
             hotelId: s.hotel.id,
             hotelName: s.hotel.name,
+          },
+          {
+            id: 204,
+            roomNumber: '401',
+            roomType: 'FAMILY' as any,
+            capacity: 3,
+            pricePerNight: (s.hotel.minPrice || 1600) + 300,
+            hotelId: s.hotel.id,
+            hotelName: s.hotel.name,
           }
         ];
       } else {
@@ -564,19 +721,32 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
         );
       }
 
-      // Filter rooms matching capacity for adults
-      const suitable = rooms.filter((r) => r.capacity >= s.adults);
-      const list = suitable.length > 0 ? suitable : rooms;
+      // Guest breakdown calculation using guest-rules.util.ts
+      const breakdown = calculateGuestBreakdown({
+        adults: s.adults,
+        childAges: s.childAges,
+        guests: s.adults + s.childAges.length,
+      });
+
+      // Filter rooms matching capacity: capacity >= requiredCapacity (smaller rooms excluded)
+      const suitable = rooms.filter((r) => r.capacity >= breakdown.requiredCapacity);
+      // Sort by capacity ASC, then price ASC
+      suitable.sort((a, b) => {
+        if (a.capacity !== b.capacity) {
+          return a.capacity - b.capacity;
+        }
+        return (a.pricePerNight ?? 0) - (b.pricePerNight ?? 0);
+      });
 
       this.hotelBookingState.update((curr) =>
         curr
           ? {
               ...curr,
-              availableRooms: list,
-              selectedRoom: list.length > 0 ? list[0] : null,
+              availableRooms: suitable,
+              selectedRoom: suitable.length > 0 ? suitable[0] : null,
               step: 'rooms',
               loading: false,
-              error: list.length === 0 ? 'No rooms available for the selected guest count.' : null,
+              error: suitable.length === 0 ? `No rooms available for the selected guest count (requires capacity of ${breakdown.requiredCapacity}).` : null,
             }
           : null
       );
@@ -586,6 +756,352 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked {
         curr ? { ...curr, loading: false, error: extractErrorMessage(err, 'Failed to fetch rooms.') } : null
       );
     }
+  }
+
+  // ─── Bus Transportation Integration (Part 4) ────────────────
+  async loadOriginCities(): Promise<void> {
+    try {
+      const page = await firstValueFrom(
+        this.busStopService.getAllBusStops({ size: 100 }).pipe(
+          catchError(() => of({ content: [] as BusStopDto[] }))
+        )
+      );
+      const stops = page?.content || [];
+      const cities = Array.from(new Set(stops.map((s) => s.city?.trim()).filter((c): c is string => !!c))).sort();
+      if (cities.length > 0) {
+        this.availableOriginCities.set(cities);
+      } else {
+        this.availableOriginCities.set(['Cairo', 'Alexandria', 'Hurghada', 'Luxor', 'Sharm El Sheikh', 'Giza', 'Aswan']);
+      }
+    } catch {
+      this.availableOriginCities.set(['Cairo', 'Alexandria', 'Hurghada', 'Luxor', 'Sharm El Sheikh', 'Giza', 'Aswan']);
+    }
+  }
+
+  async suggestBusTripsAndLoadRooms(originCity: string): Promise<void> {
+    const s = this.hotelBookingState();
+    if (!s) return;
+
+    if (originCity) {
+      await this.suggestBusTripsForHotel(s.hotel, s.checkIn, s.checkOut, originCity);
+    }
+    await this.loadHotelRooms();
+  }
+
+  async suggestBusTripsForHotel(hotel: HotelDto, checkInDate: string, checkOutDate: string, originCity: string): Promise<void> {
+    if (this.aiChatService.isMockMode()) {
+      const destCity = hotel.city || 'Alexandria';
+      const destStopName = `${destCity} Bus Terminal`;
+      if (originCity.toLowerCase() === destCity.toLowerCase()) {
+        const msg: ChatMessageItem = {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `No direct bus trips found from ${originCity} to ${hotel.name} (${destStopName}) on ${checkInDate}. Routes in our system have no intermediate stops, so a trip qualifies only if its destination stop is ${destStopName}.`,
+          timestamp: new Date(),
+          isMock: true,
+        };
+        this.aiChatService.messages.update((list) => [...list, msg]);
+      } else {
+        const mockTrips: BusTripInfoDto[] = [
+          {
+            id: 301,
+            tripId: 301,
+            routeId: 10,
+            routeName: `${originCity} ➔ ${destCity} Morning Express`,
+            originCity,
+            originStopName: `${originCity} Central Station`,
+            destinationCity: destCity,
+            destinationStopName: destStopName,
+            departureTime: `${checkInDate}T08:30:00`,
+            arrivalTime: `${checkInDate}T11:30:00`,
+            price: 240,
+            busCompany: 'Go Bus Premium',
+            availableSeats: 18,
+            status: 'SCHEDULED',
+          },
+          {
+            id: 302,
+            tripId: 302,
+            routeId: 10,
+            routeName: `${originCity} ➔ ${destCity} Afternoon`,
+            originCity,
+            originStopName: `${originCity} Central Station`,
+            destinationCity: destCity,
+            destinationStopName: destStopName,
+            departureTime: `${checkInDate}T14:00:00`,
+            arrivalTime: `${checkInDate}T17:00:00`,
+            price: 260,
+            busCompany: 'Super Jet VIP',
+            availableSeats: 12,
+            status: 'SCHEDULED',
+          }
+        ];
+
+        const msg: ChatMessageItem = {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `Here are available bus trips from ${originCity} to ${hotel.name} (${destStopName}) for your stay:`,
+          timestamp: new Date(),
+          results: [
+            {
+              type: 'BUS_TRIP',
+              data: mockTrips,
+            }
+          ],
+          isMock: true,
+        };
+        this.aiChatService.messages.update((list) => [...list, msg]);
+      }
+      return;
+    }
+
+    // Real Mode
+    const destStop = await this.resolveDestinationBusStop(hotel);
+    if (!destStop) {
+      const msg: ChatMessageItem = {
+        id: this.generateUUID(),
+        sender: 'assistant',
+        text: `No bus stop is currently associated with ${hotel.name} in ${hotel.city || 'this area'}. Routes in our system have no intermediate stops, so a trip qualifies only if its destination stop is the hotel's stop.`,
+        timestamp: new Date(),
+        isMock: false,
+      };
+      this.aiChatService.messages.update((list) => [...list, msg]);
+      return;
+    }
+
+    this.selectedHotelBusStop.set(destStop);
+    this.selectedHotelBusStopId.set(destStop.id);
+
+    try {
+      const allStopsPage = await firstValueFrom(
+        this.busStopService.getAllBusStops({ size: 100 }).pipe(catchError(() => of({ content: [] as BusStopDto[] })))
+      );
+      const allStops = allStopsPage?.content || [];
+      const originStops = allStops.filter((s) => (s.city || '').toLowerCase() === originCity.toLowerCase());
+      const originStopIds = new Set(originStops.map((s) => s.id));
+
+      if (originStopIds.size === 0) {
+        const msg: ChatMessageItem = {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `No bus stations found in ${originCity}. Please choose another departure city.`,
+          timestamp: new Date(),
+          isMock: false,
+        };
+        this.aiChatService.messages.update((list) => [...list, msg]);
+        return;
+      }
+
+      const routesPage = await firstValueFrom(
+        this.busRouteService.getAllBusRoutes({ size: 100 }).pipe(catchError(() => of({ content: [] as BusRouteDTO[] })))
+      );
+      const allRoutes = routesPage?.content || [];
+      const matchingRoutes = allRoutes.filter((r) => originStopIds.has(r.originStopId) && r.destinationStopId === destStop.id);
+
+      if (matchingRoutes.length === 0) {
+        const msg: ChatMessageItem = {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `No direct bus routes found from ${originCity} to ${hotel.name} (${destStop.name}). Routes in our system have no intermediate stops, so a trip qualifies only if its destination stop is ${destStop.name}.`,
+          timestamp: new Date(),
+          isMock: false,
+        };
+        this.aiChatService.messages.update((list) => [...list, msg]);
+        return;
+      }
+
+      const tripRequests = matchingRoutes.map((route) =>
+        this.busTripService.getAllBusTrips({
+          routeId: route.id,
+          departureAfter: `${checkInDate}T00:00:00`,
+          departureBefore: `${checkInDate}T23:59:59`,
+          status: 'SCHEDULED',
+          size: 50,
+        }).pipe(catchError(() => of({ content: [] as BusTripDTO[] })))
+      );
+
+      const tripPages = await firstValueFrom(forkJoin(tripRequests));
+      const rawTrips: BusTripDTO[] = tripPages.flatMap((p) => p?.content || []);
+
+      const stay = { checkIn: checkInDate, checkOut: checkOutDate };
+      const eligibleTrips = rawTrips.filter((t) =>
+        isOutgoingEligible({ ...t, destinationStop: destStop }, stay, destStop.id)
+      );
+
+      if (eligibleTrips.length === 0) {
+        const msg: ChatMessageItem = {
+          id: this.generateUUID(),
+          sender: 'assistant',
+          text: `No scheduled bus trips found from ${originCity} to ${hotel.name} (${destStop.name}) on ${checkInDate}. Routes in our system have no intermediate stops, so a trip qualifies only if its destination stop is ${destStop.name}.`,
+          timestamp: new Date(),
+          isMock: false,
+        };
+        this.aiChatService.messages.update((list) => [...list, msg]);
+        return;
+      }
+
+      const enrichedTripDtos: BusTripInfoDto[] = eligibleTrips.map((t) => {
+        const route = matchingRoutes.find((r) => r.id === t.routeId);
+        const origStop = allStops.find((s) => s.id === (route?.originStopId ?? (t as any).originStopId));
+        return {
+          id: t.id,
+          tripId: t.id,
+          routeId: t.routeId,
+          routeName: route?.name || `${origStop?.name || originCity} ➔ ${destStop.name}`,
+          originCity: origStop?.city || originCity,
+          originStopName: origStop?.name || `${originCity} Station`,
+          destinationCity: destStop.city,
+          destinationStopName: destStop.name,
+          departureTime: t.departureTime || (t as any).departure || '',
+          arrivalTime: t.arrivalTime || '',
+          price: t.price,
+          busCompany: (t as any).busCompany || 'TravelEase Express',
+          status: t.status,
+        };
+      });
+
+      const msg: ChatMessageItem = {
+        id: this.generateUUID(),
+        sender: 'assistant',
+        text: `Here are available bus trips from ${originCity} to ${hotel.name} (${destStop.name}) for your stay:`,
+        timestamp: new Date(),
+        results: [
+          {
+            type: 'BUS_TRIP',
+            data: enrichedTripDtos,
+          }
+        ],
+        isMock: false,
+      };
+      this.aiChatService.messages.update((list) => [...list, msg]);
+      this.shouldScrollToBottom = true;
+    } catch (err) {
+      console.error('Error querying bus suggestions:', err);
+    }
+  }
+
+  async resolveDestinationBusStop(hotel: HotelDto): Promise<BusStopDto | null> {
+    if (!hotel?.id) return null;
+
+    // 1. Try querying backend hotel-bus-stops association
+    try {
+      const hotelBusStops = await firstValueFrom(
+        this.hotelBusStopService.getHotelBusStopsByHotelId(hotel.id).pipe(
+          catchError(() => of([] as any[]))
+        )
+      );
+      if (hotelBusStops && hotelBusStops.length > 0) {
+        const primary = hotelBusStops[0];
+        const stop = await firstValueFrom(
+          this.busStopService.getBusStopById(primary.busStopId).pipe(
+            catchError(() => of(null))
+          )
+        );
+        if (stop) return stop;
+      }
+    } catch {
+      // Fallback
+    }
+
+    // 2. Fallback: Query bus stops in the hotel's city
+    if (hotel.city) {
+      try {
+        const cityStopsPage = await firstValueFrom(
+          this.busStopService.getAllBusStops({ city: hotel.city.trim(), size: 50 }).pipe(
+            catchError(() => of({ content: [] as BusStopDto[] }))
+          )
+        );
+        const cityStops = cityStopsPage?.content || [];
+        if (cityStops.length > 0) {
+          if (hotel.latitude !== undefined && hotel.longitude !== undefined) {
+            let closestStop = cityStops[0];
+            let minDistance = this.calculateDistance(
+              hotel.latitude,
+              hotel.longitude,
+              closestStop.latitude,
+              closestStop.longitude
+            );
+            for (let i = 1; i < cityStops.length; i++) {
+              const dist = this.calculateDistance(
+                hotel.latitude,
+                hotel.longitude,
+                cityStops[i].latitude,
+                cityStops[i].longitude
+              );
+              if (dist < minDistance) {
+                minDistance = dist;
+                closestStop = cityStops[i];
+              }
+            }
+            return closestStop;
+          }
+          return cityStops[0];
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  private calculateDistance(lat1?: number, lon1?: number, lat2?: number, lon2?: number): number {
+    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) {
+      return 0;
+    }
+    const R = 6371; // Radius of the Earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return parseFloat((R * c).toFixed(2));
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
+
+  selectBusTripForSummary(trip: any): void {
+    const destStopId = trip.destinationStopId || trip.destinationStop?.id || this.selectedHotelBusStopId() || 2;
+    const originStopId = trip.originStopId || trip.originStop?.id || 1;
+
+    const enriched: EnrichedBusTrip = {
+      id: trip.id ?? trip.tripId,
+      routeId: trip.routeId || 1,
+      busId: trip.busId || 1,
+      departureTime: trip.departureTime || trip.departure,
+      arrivalTime: trip.arrivalTime,
+      price: trip.price,
+      status: trip.status || 'SCHEDULED',
+      formattedDuration: trip.formattedDuration || '3h 0m',
+      isOvernight: !!trip.isOvernight,
+      originStop: {
+        id: originStopId,
+        name: trip.originStopName || trip.originCity || 'Origin',
+        city: trip.originCity || 'Origin City',
+      } as any,
+      destinationStop: {
+        id: destStopId,
+        name: trip.destinationStopName || trip.destinationCity || 'Destination',
+        city: trip.destinationCity || 'Destination City',
+      } as any,
+      route: {
+        id: trip.routeId || 1,
+        name: trip.routeName || `${trip.originCity || 'Origin'} ➔ ${trip.destinationCity || 'Destination'}`,
+        originStopId,
+        destinationStopId: destStopId,
+      } as any,
+    };
+
+    this.selectedTripForSeats.set(enriched);
+    this.seatDialogVisible.set(true);
+  }
+
+  closeSeatDialog(): void {
+    this.seatDialogVisible.set(false);
+    this.selectedTripForSeats.set(null);
   }
 
   selectHotelRoom(room: RoomDTO): void {

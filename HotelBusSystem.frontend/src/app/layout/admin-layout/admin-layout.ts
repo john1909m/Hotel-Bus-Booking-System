@@ -8,6 +8,7 @@ import {
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ThemeService } from '../../core/services/theme.service';
 import { AuthService } from '../../core/services/auth.service';
+import { LogoutConfirmationDialogComponent } from '../../shared/components/logout-confirmation-dialog/logout-confirmation-dialog.component';
 
 interface NavItem {
   label: string;
@@ -18,7 +19,7 @@ interface NavItem {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, LogoutConfirmationDialogComponent],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,11 +63,22 @@ export class AdminLayout implements OnInit {
     this.sidebarOpen.update(v => !v);
   }
 
+  readonly showLogoutConfirm = signal<boolean>(false);
+
   closeSidebar(): void {
     this.sidebarOpen.set(false);
   }
 
   logout(): void {
+    this.showLogoutConfirm.set(true);
+  }
+
+  onLogoutCancelled(): void {
+    this.showLogoutConfirm.set(false);
+  }
+
+  onLogoutConfirmed(): void {
+    this.showLogoutConfirm.set(false);
     this.authService.logout().subscribe({
       next: () => this.router.navigate(['/']),
       error: () => this.router.navigate(['/']),

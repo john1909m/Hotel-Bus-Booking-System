@@ -425,6 +425,49 @@
   color: var(--text-primary, #2E3A40);
 }
 
+.wizard-hint-text {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8a9ba3);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.city-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.btn-city-chip {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color, #dde4e6);
+  background: var(--bg-elevated, #FFFFFF);
+  color: var(--text-primary, #2E3A40);
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-city-chip:hover {
+  border-color: var(--color-primary, #009B77);
+  color: var(--color-primary, #009B77);
+  background: var(--bg-hover, rgba(0, 155, 119, 0.06));
+}
+
+.btn-city-chip.selected {
+  border-color: var(--color-primary, #009B77);
+  background: var(--color-primary, #009B77);
+  color: #FFFFFF;
+}
+
 .wizard-form-group {
   display: flex;
   flex-direction: column;
@@ -1180,6 +1223,198 @@
   color: var(--text-muted, #8a9ba3);
 }
 
+.input-actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Speech Language Switcher ────────────────────────────── */
+.btn-speech-lang {
+  border: 1px solid var(--border-color, #dde4e6);
+  background: var(--bg-surface, #F4F1E7);
+  color: var(--text-secondary, #52636a);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  user-select: none;
+  line-height: 1;
+  min-width: 28px;
+  text-align: center;
+}
+
+.btn-speech-lang:hover {
+  background: var(--bg-elevated, #ffffff);
+  color: var(--color-primary, #009B77);
+  border-color: var(--color-primary, #009B77);
+}
+
+/* ─── Speech Microphone Button (PrimeNG styled) ──────────── */
+.speech-mic-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-secondary, #52636a);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+}
+
+.speech-mic-btn:hover:not(:disabled) {
+  background: rgba(0, 155, 119, 0.1);
+  color: var(--color-primary, #009B77);
+}
+
+.speech-mic-btn.listening {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  animation: mic-pulse 1.5s infinite;
+}
+
+.speech-mic-btn.disabled,
+.speech-mic-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mic-svg.muted {
+  color: var(--text-muted, #8a9ba3);
+}
+
+.mic-pulse-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-md, 8px);
+  border: 2px solid #ef4444;
+  opacity: 0.6;
+  animation: mic-pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes mic-pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* ─── Speech Listening Indicator Banner ───────────────────── */
+.speech-listening-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.8125rem;
+  color: #dc2626;
+  animation: fadeIn 200ms ease;
+}
+
+.listening-text {
+  font-weight: 600;
+  flex: 1;
+}
+
+.btn-stop-listening {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  padding: 3px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast, 150ms ease);
+}
+
+.btn-stop-listening:hover {
+  background: #dc2626;
+}
+
+.listening-wave {
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 14px;
+}
+
+.wave-bar {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  background: #ef4444;
+  border-radius: 2px;
+  animation: wave-animation 1s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes wave-animation {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+
+/* ─── Speech Error Alert Banner ───────────────────────────── */
+.speech-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md, 8px);
+  color: #991b1b;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  animation: fadeIn 200ms ease;
+}
+
+.speech-error-icon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.speech-error-text {
+  flex: 1;
+}
+
+.speech-error-dismiss {
+  background: transparent;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background var(--transition-fast, 150ms ease);
+}
+
+.speech-error-dismiss:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .send-btn {
   background: var(--color-primary, #009B77);
   color: var(--text-on-primary, #FFFFFF);
@@ -1702,6 +1937,43 @@
 [data-theme="dark"] .draft-error-alert {
   background: #450a0a;
   border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .btn-speech-lang {
+  background: var(--bg-surface, #222F33);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-speech-lang:hover {
+  background: var(--bg-elevated, #2E3A40);
+  color: #ffffff;
+  border-color: var(--color-primary, #009B77);
+}
+
+[data-theme="dark"] .speech-mic-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .speech-mic-btn:hover:not(:disabled) {
+  background: rgba(0, 155, 119, 0.2);
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .speech-listening-banner {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .speech-error-alert {
+  background: #450a0a;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .speech-error-dismiss {
   color: #fca5a5;
 }
 
