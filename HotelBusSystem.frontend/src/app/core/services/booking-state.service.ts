@@ -8,6 +8,8 @@ import { BusStopDto } from '../models/Bus/bus-stop.model';
 import { BusSeatDTO } from '../models/Bus/bus-seat.model';
 import { EnrichedBusTrip } from '../../features/buses/bus-search-results/bus-search-results';
 
+import { isChildChargeable } from '../utils/guest-rules.util';
+
 export interface ChildGuestState {
   id: number;
   age: number | null;
@@ -76,6 +78,7 @@ export class BookingStateService {
   readonly summaryOpen = signal<boolean>(false);
   readonly hideTriggerOnPayment = signal<boolean>(false);
   readonly resumeSummaryAfterLogin = signal<boolean>(false);
+  readonly editingBookingId = signal<number | null>(null);
 
   // Single Source of Truth for stay dates and guest party
   readonly checkIn = signal<string>('');
@@ -377,6 +380,20 @@ export class BookingStateService {
   }
 
   /**
+   * Sets entire children list and synchronizes with hotel booking state.
+   */
+  setChildren(children: ChildGuestState[]): void {
+    this.children.set(children);
+    const current = this.hotelBooking();
+    if (current) {
+      this.hotelBooking.set({ ...current, children });
+      this.autoDistributeGuests();
+    }
+    this.persistToStorage();
+    this.guestsChanged$.next({ adults: this.adults(), children });
+  }
+
+  /**
    * Clears only hotel selections, preserving transportation if already chosen.
    */
   clearHotelSelection(): void {
@@ -600,9 +617,17 @@ export class BookingStateService {
     this.summaryOpen.set(false);
     this.hideTriggerOnPayment.set(false);
     this.resumeSummaryAfterLogin.set(false);
+    this.editingBookingId.set(null);
     this.clearStorage();
     this.stayDatesChanged$.next({ checkIn: '', checkOut: '' });
     this.guestsChanged$.next({ adults: 2, children: [] });
+  }
+
+  /**
+   * Sets or clears the active booking ID currently undergoing modification.
+   */
+  setEditingBookingId(id: number | null): void {
+    this.editingBookingId.set(id);
   }
 
   /**
@@ -686,7 +711,7 @@ export class BookingStateService {
     const current = this.hotelBooking();
     if (current && current.selectedRooms.length > 0) {
       const totalCapacity = current.selectedRooms.reduce((acc, r) => acc + (r.capacity || 2), 0);
-      const chargeableChildren = this.children().filter((c) => c.age !== null && c.age >= 12).length;
+      const chargeableChildren = this.children().filter((c) => isChildChargeable(c.age)).length;
       if (this.adults() + chargeableChildren >= totalCapacity) return;
     }
     this.setAdults(this.adults() + 1);

@@ -133,5 +133,22 @@ describe('BusSeatSelectionComponent - Add to Booking Summary & Eligibility', () 
       summary: 'Trip Ineligible',
     }));
   });
+
+  describe('Add to Booking Summary button state (Part E)', () => {
+    it('has disabled condition when no seats are selected', () => {
+      expect(component.selectedSeatsCount()).toBe(0);
+      expect(component.selectedSeatsList().length).toBe(0);
+    });
+
+    it('updates selectedSeatsCount and totalPrice when seats are selected', () => {
+      component.onSeatClick(mockSeats[0]);
+      expect(component.selectedSeatsCount()).toBe(1);
+      expect(component.totalPrice()).toBe(180);
+
+      component.onSeatClick(mockSeats[1]);
+      expect(component.selectedSeatsCount()).toBe(2);
+      expect(component.totalPrice()).toBe(360);
+    });
+  });
 });
 

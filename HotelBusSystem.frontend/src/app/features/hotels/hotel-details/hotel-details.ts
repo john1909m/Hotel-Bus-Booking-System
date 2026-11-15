@@ -31,6 +31,7 @@ import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
 import { PagedModelRoomDto } from '../../../core/models/Pagination/roomPage.model';
 import { HotelBookingDTO, HotelBookingRequestDTO } from '../../../core/models/Hotel/hotel-booking.model';
 import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../core/utils/safe-image-url';
+import { isChildFree, isChildChargeable, calculateGuestBreakdown } from '../../../core/utils/guest-rules.util';
 
 import { ImageLightboxComponent } from '../../../shared/components/image-lightbox/image-lightbox.component';
 import { BookingStateService, ChildGuestState } from '../../../core/services/booking-state.service';
@@ -403,11 +404,11 @@ export class HotelDetails implements OnInit, OnDestroy {
   readonly totalGuestsCount = computed(() => this.adultsCount() + this.totalChildrenCount());
 
   readonly freeChildrenCount = computed(() =>
-    this.children().filter((c) => c.age !== null && c.age >= 0 && c.age <= 11).length
+    this.children().filter((c) => isChildFree(c.age)).length
   );
 
   readonly capacityChildrenCount = computed(() =>
-    this.children().filter((c) => c.age !== null && c.age >= 12 && c.age <= 17).length
+    this.children().filter((c) => isChildChargeable(c.age)).length
   );
 
   readonly requiredCapacity = computed(() =>
@@ -432,10 +433,10 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   isChildAgeDisabled(child: ChildGuest, age: number): boolean {
-    if (age < 12) return false; // Ages 0-11 free, never restricted
+    if (isChildFree(age)) return false; // Ages 0-11 free, never restricted
     if (this.selectedRooms().length === 0) return false;
-    if (child.age !== null && child.age >= 12 && child.age === age) return false;
-    const currentTakesCapacity = child.age !== null && child.age >= 12;
+    if (child.age !== null && isChildChargeable(child.age) && child.age === age) return false;
+    const currentTakesCapacity = child.age !== null && isChildChargeable(child.age);
     const delta = currentTakesCapacity ? 0 : 1;
     return this.requiredCapacity() + delta > this.totalRoomCapacity();
   }
@@ -727,6 +728,9 @@ export class HotelDetails implements OnInit, OnDestroy {
         next: (hotel) => {
           this.hotel.set(hotel);
           this.hotelState.set('success');
+          if (this.selectedRooms().length > 0 || this.editingBooking()?.rooms?.length) {
+            this.syncBookingState();
+          }
         },
         error: (err) => {
           this.hotelError.set(err?.message || 'We could not find the requested hotel or it has been removed.');
@@ -1286,8 +1290,21 @@ export class HotelDetails implements OnInit, OnDestroy {
 
   // ── Booking Summary Sidebar Handlers ────────────────────────
   openSidebar(): void {
-    this.sidebarVisible.set(true);
+    const currentHotel = this.hotel();
+    if (this.selectedRooms().length === 0 && this.editingBooking()?.rooms?.length) {
+      const restoredRooms: RoomDTO[] = this.editingBooking()!.rooms!.map((r) => ({
+        id: r.id || (r as any).roomId,
+        roomNumber: r.roomNumber || `Room #${r.id || (r as any).roomId}`,
+        roomType: r.roomType || 'Standard',
+        capacity: 2,
+        pricePerNight: r.pricePerNight || 0,
+        hotelId: currentHotel?.id || this.editingBooking()!.hotelId || 0,
+        hotelName: currentHotel?.name || this.editingBooking()!.hotelName || '',
+      }));
+      this.selectedRooms.set(restoredRooms);
+    }
     this.saveBookingDraft();
+    this.sidebarVisible.set(true);
     this.bookingStateService.openSummary();
   }
 
@@ -1532,12 +1549,13 @@ export class HotelDetails implements OnInit, OnDestroy {
       children: this.getAssignedChildren(r.id).length,
     }));
 
-    const totalGuests = totalAssignedAdults + childAges.length;
+    const effectiveAdults = Math.max(this.adultsCount(), totalAssignedAdults, 1);
+    const totalGuests = effectiveAdults + childAges.length;
     const payload: HotelBookingRequestDTO = {
       checkIn,
       checkOut,
       guests: totalGuests,
-      adults: totalAssignedAdults,
+      adults: effectiveAdults,
       childAges,
       roomId: roomIds[0],
       roomIds,
@@ -1571,6 +1589,7 @@ export class HotelDetails implements OnInit, OnDestroy {
               this.clearBookingDraft(currentHotelId);
               this.editingBookingId.set(null);
               this.editingBooking.set(null);
+              this.bookingStateService.setEditingBookingId(null);
 
               this.router.navigate([], {
                 relativeTo: this.route,
@@ -1653,8 +1672,13 @@ export class HotelDetails implements OnInit, OnDestroy {
     this.updateSuccessNotice.set(null);
   }
 
+  getGuestBreakdown(booking: HotelBookingDTO) {
+    return calculateGuestBreakdown(booking);
+  }
+
   // ── Existing Booking Editing Handlers ───────────────────────
   loadBookingForEditing(bId: number): void {
+    this.bookingStateService.setEditingBookingId(bId);
     this.hotelBookingService
       .getHotelBookingById(bId)
       .pipe(takeUntil(this.destroy$))
@@ -1662,6 +1686,9 @@ export class HotelDetails implements OnInit, OnDestroy {
         next: (booking: HotelBookingDTO) => {
           this.editingBookingId.set(booking.id);
           this.editingBooking.set(booking);
+          this.bookingStateService.setEditingBookingId(booking.id);
+
+          const breakdown = calculateGuestBreakdown(booking);
 
           if (booking.checkIn && booking.checkOut) {
             this.bookingStateService.setStayDates(booking.checkIn, booking.checkOut);
@@ -1671,32 +1698,61 @@ export class HotelDetails implements OnInit, OnDestroy {
             this.bookingStateService.setStayDates(this.checkInInput(), booking.checkOut);
           }
 
-          const adults = booking.adults || booking.guests || 1;
-          this.bookingStateService.setAdults(Math.max(1, adults));
+          this.bookingStateService.setAdults(Math.max(1, breakdown.adultsCount));
 
-          if (booking.childAges && Array.isArray(booking.childAges) && booking.childAges.length > 0) {
-            const restoredChildren: ChildGuest[] = booking.childAges.map((age, i) => ({
+          if (breakdown.children.length > 0) {
+            const restoredChildren: ChildGuestState[] = breakdown.children.map((c, i) => ({
               id: i + 1,
-              age: Number(age),
+              age: c.age,
             }));
-            this.children.set(restoredChildren);
+            this.bookingStateService.setChildren(restoredChildren);
             this.nextChildId = restoredChildren.length + 1;
           } else {
-            this.children.set([]);
+            this.bookingStateService.setChildren([]);
+            this.nextChildId = 1;
           }
 
+          const bookingRooms = booking.rooms && booking.rooms.length > 0 ? booking.rooms : [];
           const targetRoomIds: number[] = [];
-          if (booking.rooms && booking.rooms.length > 0) {
-            targetRoomIds.push(...booking.rooms.map((r) => r.id));
+          if (bookingRooms.length > 0) {
+            targetRoomIds.push(...bookingRooms.map((r) => r.id || (r as any).roomId));
           } else if (booking.roomId) {
             targetRoomIds.push(booking.roomId);
           }
 
           this.pendingDraftRoomIds = targetRoomIds;
+
+          // Pre-seed selected rooms immediately from booking so drawer has details right away
+          if (bookingRooms.length > 0) {
+            const currentHotel = this.hotel();
+            const hId = this.hotelId() || booking.hotelId || 0;
+            const hName = currentHotel?.name || booking.hotelName || '';
+            const restoredRooms: RoomDTO[] = bookingRooms.map((r) => ({
+              id: r.id || (r as any).roomId,
+              roomNumber: r.roomNumber || `Room #${r.id || (r as any).roomId}`,
+              roomType: r.roomType || 'Standard',
+              capacity: 2,
+              pricePerNight: r.pricePerNight || 0,
+              hotelId: hId,
+              hotelName: hName,
+            }));
+            this.selectedRooms.set(restoredRooms);
+
+            const adultAlloc: Record<number, number> = {};
+            const totalAdults = Math.max(1, breakdown.adultsCount);
+            restoredRooms.forEach((r, idx) => {
+              adultAlloc[r.id] = idx === 0 ? Math.max(1, totalAdults - (restoredRooms.length - 1)) : 1;
+            });
+            this.customRoomAdults.set(adultAlloc);
+          }
+
           const hId = this.hotelId();
           if (hId && this.rooms().length > 0) {
             this.reconcileDraftRooms(hId, this.rooms());
           }
+
+          // Immediately sync with BookingStateService so clicking "View Summary" has data preloaded
+          this.syncBookingState();
         },
         error: (err) => {
           console.error('Failed to load existing booking for edit:', err);
@@ -1707,6 +1763,7 @@ export class HotelDetails implements OnInit, OnDestroy {
   cancelEditing(): void {
     this.editingBookingId.set(null);
     this.editingBooking.set(null);
+    this.bookingStateService.setEditingBookingId(null);
     this.clearSelectedRooms();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -1746,7 +1803,21 @@ export class HotelDetails implements OnInit, OnDestroy {
       console.warn('Failed to save hotel booking draft to sessionStorage', e);
     }
 
-    const currentHotel = this.hotel();
+    this.syncBookingState();
+  }
+
+  syncBookingState(): void {
+    const currentHotel = this.hotel() || (this.editingBooking() ? {
+      id: this.editingBooking()!.hotelId || this.hotelId() || 0,
+      name: this.editingBooking()!.hotelName || 'Hotel',
+      city: '',
+      address: '',
+      description: '',
+      images: [],
+      amenities: [],
+      rating: 5,
+    } as any : null);
+
     if (currentHotel && this.selectedRooms().length > 0) {
       const nights = this.stayNights() || 1;
       const hotelTotal = this.totalStayCost() !== null ? this.totalStayCost()! : (this.totalNightlyRate() * nights);
@@ -1762,7 +1833,7 @@ export class HotelDetails implements OnInit, OnDestroy {
         customRoomChildIds: this.customRoomChildIds(),
         totalHotelPrice: hotelTotal,
       });
-    } else {
+    } else if (!this.editingBookingId()) {
       this.bookingStateService.clearHotelSelection();
     }
   }

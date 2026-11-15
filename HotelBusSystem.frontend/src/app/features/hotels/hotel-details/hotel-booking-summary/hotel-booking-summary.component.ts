@@ -130,6 +130,14 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
   @Input() isAdultsIncreaseDisabled = false;
   @Input() isEditMode = false;
   @Input() editingBookingId: number | null = null;
+
+  get activeEditingBookingId(): number | null {
+    return this.editingBookingId ?? this.bookingState.editingBookingId();
+  }
+
+  get activeIsEditMode(): boolean {
+    return this.isEditMode || this.activeEditingBookingId !== null;
+  }
   @Input() isSubmitting = false;
   @Input() errorMessage: string | null = null;
   @Input() errorStatus: number | null = null;

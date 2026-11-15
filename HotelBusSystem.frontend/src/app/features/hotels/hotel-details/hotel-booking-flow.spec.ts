@@ -109,6 +109,23 @@ describe('HotelDetails - Room Booking Flow & Requirements', () => {
 
     mockHotelBookingService = {
       getHotelBookingsByHotelId: vi.fn().mockReturnValue(of(mockExistingBookings)),
+      getHotelBookingById: vi.fn().mockImplementation((id: number) =>
+        of({
+          id,
+          checkIn: '2026-12-01',
+          checkOut: '2026-12-05',
+          guests: 4,
+          adults: 2,
+          childAges: [14, 5],
+          status: 'PENDING',
+          totalPrice: 4800,
+          userId: 10,
+          roomId: 101,
+          hotelId: 1,
+          hotelName: 'Nile Palace Resort',
+          rooms: [mockRooms[0]],
+        })
+      ),
       createHotelBooking: vi.fn().mockImplementation((payload) =>
         of({
           id: 777,
@@ -687,6 +704,78 @@ describe('HotelDetails - Room Booking Flow & Requirements', () => {
       expect(component.isRoomBooked(102)).toBe(true);
       expect(component.isRoomBooked(103)).toBe(true);
       expect(component.isRoomBooked(101)).toBe(false);
+    });
+  });
+
+  describe('Edit Mode - Guest Breakdown & Child Ages Restoration (Part A)', () => {
+    it('restores stay dates, adults, children count, and child ages with free/chargeable status', () => {
+      component.loadBookingForEditing(505);
+
+      expect(mockHotelBookingService.getHotelBookingById).toHaveBeenCalledWith(505);
+      expect(component.checkInInput()).toBe('2026-12-01');
+      expect(component.checkOutInput()).toBe('2026-12-05');
+      expect(component.adultsCount()).toBe(2);
+      expect(component.children().length).toBe(2);
+      expect(component.children()[0].age).toBe(14);
+      expect(component.children()[1].age).toBe(5);
+      expect(component.capacityChildrenCount()).toBe(1); // Age 14 counts toward capacity
+      expect(component.freeChildrenCount()).toBe(1); // Age 5 is free
+      expect(component.requiredCapacity()).toBe(3); // 2 adults + 1 chargeable child
+    });
+  });
+
+  describe('Edit Mode - View Summary in Edit Banner (Part B)', () => {
+    it('opens the global booking summary drawer when openSidebar is called', () => {
+      const bookingStateService = (component as any).bookingStateService;
+      const openSummarySpy = vi.spyOn(bookingStateService, 'openSummary');
+
+      component.loadBookingForEditing(505);
+      component.openSidebar();
+
+      expect(openSummarySpy).toHaveBeenCalled();
+      expect(bookingStateService.summaryOpen()).toBe(true);
+      expect(bookingStateService.hasHotel()).toBe(true);
+      expect(bookingStateService.hotelBooking()?.selectedRooms.length).toBeGreaterThan(0);
+      expect(bookingStateService.hotelBooking()?.checkIn).toBe('2026-12-01');
+      expect(bookingStateService.hotelBooking()?.checkOut).toBe('2026-12-05');
+      expect(bookingStateService.hotelBooking()?.adultsCount).toBe(2);
+    });
+
+    it('populates bookingStateService with hotel and room selections immediately when loading booking for editing so drawer is NOT empty', () => {
+      const bookingStateService = (component as any).bookingStateService;
+      component.loadBookingForEditing(505);
+
+      expect(bookingStateService.hasHotel()).toBe(true);
+      expect(bookingStateService.hotelBooking()).toBeTruthy();
+      expect(bookingStateService.hotelBooking()?.hotel.name).toBe('Nile Palace Resort');
+      expect(bookingStateService.hotelBooking()?.selectedRooms[0].roomNumber).toBe('101');
+    });
+
+    it('keeps edit mode active when the summary drawer is closed', () => {
+      const bookingStateService = (component as any).bookingStateService;
+
+      component.loadBookingForEditing(505);
+      expect(component.isEditMode()).toBe(true);
+      expect(component.editingBookingId()).toBe(505);
+
+      component.openSidebar();
+      expect(bookingStateService.summaryOpen()).toBe(true);
+
+      component.closeSidebar();
+      expect(bookingStateService.summaryOpen()).toBe(false);
+      expect(component.isEditMode()).toBe(true);
+      expect(component.editingBookingId()).toBe(505);
+    });
+
+    it('resets edit mode when cancelEditing is called', () => {
+      component.loadBookingForEditing(505);
+      expect(component.isEditMode()).toBe(true);
+
+      component.cancelEditing();
+
+      expect(component.isEditMode()).toBe(false);
+      expect(component.editingBookingId()).toBeNull();
+      expect(component.selectedRooms().length).toBe(0);
     });
   });
 });

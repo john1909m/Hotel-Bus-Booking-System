@@ -468,8 +468,10 @@
           <!-- Booking Submission Action Button -->
           <div class="action-submit-block">
             <button
+              pButton
               type="button"
-              class="btn btn-primary w-full btn-confirm-booking"
+              class="w-full btn-confirm-booking"
+              severity="primary"
               [disabled]="selectedSeatsCount() === 0"
               (click)="submitBookings()"
               id="confirm-bus-booking-btn"

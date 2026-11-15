@@ -301,9 +301,17 @@ export class PaymentCheckoutComponent {
     // Note: Decision Option A - Payment record is created by ADMIN during review via POST /api/payments.
     // TODO: Payment record creation is handled by ADMIN review via POST /api/payments under Option A.
 
-    this.hotelBookingService.createHotelBooking(hotelPayload).subscribe({
-      next: (createdHotel) => {
-        this.finalizeSuccess(createdHotel, createdBuses);
+    const editId = this.state.editingBookingId();
+    const booking$ = editId
+      ? this.hotelBookingService.updateHotelBooking(editId, hotelPayload)
+      : this.hotelBookingService.createHotelBooking(hotelPayload);
+
+    booking$.subscribe({
+      next: (createdOrUpdatedHotel) => {
+        if (editId) {
+          this.state.setEditingBookingId(null);
+        }
+        this.finalizeSuccess(createdOrUpdatedHotel, createdBuses);
       },
       error: (err) => {
         this.isProcessing.set(false);

@@ -34,11 +34,11 @@
   <!-- ── DRAWER CONTENT ── -->
   <div class="drawer-body">
     <!-- Edit Mode Indicator -->
-    @if (isEditMode) {
+    @if (activeIsEditMode) {
       <div class="drawer-edit-banner" role="alert">
         <div class="edit-banner-badge">EDITING</div>
         <div class="edit-banner-info">
-          <strong>Modifying Reservation #{{ editingBookingId }}</strong>
+          <strong>Modifying Reservation #{{ activeEditingBookingId }}</strong>
           <small>Submitting will update this existing booking.</small>
         </div>
       </div>

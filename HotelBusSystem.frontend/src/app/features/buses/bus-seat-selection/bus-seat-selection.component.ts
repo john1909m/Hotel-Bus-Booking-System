@@ -18,6 +18,7 @@ import { firstValueFrom, of, catchError } from 'rxjs';
 import { Dialog } from 'primeng/dialog';
 import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { BusSeatService } from '../../../core/services/bus-seat.service';
@@ -48,6 +49,7 @@ export interface SeatRow {
     Dialog,
     Tag,
     Tooltip,
+    ButtonModule,
   ],
   templateUrl: './bus-seat-selection.component.html',
   styleUrl: './bus-seat-selection.component.css',
