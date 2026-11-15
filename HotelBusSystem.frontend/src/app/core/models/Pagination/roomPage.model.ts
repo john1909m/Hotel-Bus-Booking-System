@@ -1,6 +1,5 @@
 import { RoomDTO } from "../Room/room.model";
 
-
 export interface roomPage {
   size: number;
   number: number;
@@ -10,11 +9,15 @@ export interface roomPage {
 
 export interface PagedModelRoomDto {
   content: RoomDTO[];
-  page: roomPage;
+  page?: roomPage;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
+  number?: number;
+  last?: boolean;
+  first?: boolean;
+  empty?: boolean;
 }
-
-
-
 
 export interface RoomListParams {
   page?: number;

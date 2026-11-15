@@ -72,8 +72,8 @@
             aria-label="Filter by hotel"
           >
             <option value="">All Hotels</option>
-            @for (h of hotels(); track h.id) {
-              <option [value]="h.id">{{ h.name }} ({{ h.city }})</option>
+            @for (h of availableHotels(); track h.id) {
+              <option [value]="h.id">{{ h.name }}</option>
             }
           </select>
         </div>
@@ -92,10 +92,9 @@
             aria-label="Filter by room type"
           >
             <option value="">All Types</option>
-            <option value="SINGLE">Single</option>
-            <option value="DOUBLE">Double</option>
-            <option value="SUITE">Suite</option>
-            <option value="DELUXE">Deluxe</option>
+            @for (t of availableRoomTypes(); track t) {
+              <option [value]="t">{{ t }}</option>
+            }
           </select>
         </div>
       </div>
@@ -194,7 +193,7 @@
           </td>
           <td>
             <div class="hotel-pill">
-              <span class="table-cell-title">{{ room.hotelName || getHotelName(room.hotelId) }}</span>
+              <span class="table-cell-title">{{ room.hotelName || ('Hotel #' + room.hotelId) }}</span>
             </div>
           </td>
           <td>
@@ -426,7 +425,7 @@
       <p class="delete-desc">
         Are you sure you want to permanently delete room
         <strong class="delete-entity-name">
-          {{ roomToDelete()?.roomNumber }} ({{ roomToDelete()?.hotelName || getHotelName(roomToDelete()?.hotelId ?? 0) }})
+          {{ roomToDelete()?.roomNumber }} ({{ roomToDelete()?.hotelName || ('Hotel #' + (roomToDelete()?.hotelId ?? 0)) }})
         </strong>?
         This action cannot be undone.
       </p>

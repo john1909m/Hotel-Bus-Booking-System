@@ -74,6 +74,7 @@ describe('HotelListing - Cover Images & Listing Integration', () => {
 
     mockHotelService = {
       getHotels: vi.fn().mockReturnValue(of(mockPageResponse)),
+      getAllHotels: vi.fn().mockReturnValue(of(mockHotels)),
     };
 
     const injector = Injector.create({
@@ -341,6 +342,94 @@ describe('HotelListing - Cover Images & Listing Integration', () => {
         page: 0,
         size: 12,
       });
+    });
+  });
+
+  describe('Dynamic Destination City Dropdown from Real Hotel Data (Part B)', () => {
+    it('should extract cities from all hotels across pages using hotelService.getAllHotels', () => {
+      mockHotelService.getAllHotels.mockReturnValue(
+        of([
+          { id: 1, name: 'H1', city: 'Alexandria' },
+          { id: 2, name: 'H2', city: 'Aswan' },
+          { id: 3, name: 'H3', city: 'Cairo' },
+          { id: 4, name: 'H4', city: 'Dahab' },
+        ])
+      );
+
+      component.loadAllCitiesCatalog();
+
+      expect(mockHotelService.getAllHotels).toHaveBeenCalled();
+      expect(component.availableCities()).toEqual(['Alexandria', 'Aswan', 'Cairo', 'Dahab']);
+    });
+
+    it('should preserve exact stored casing and string representation without reformatting', () => {
+      mockHotelService.getAllHotels.mockReturnValue(
+        of([
+          { id: 1, name: 'H1', city: 'cairo' },
+          { id: 2, name: 'H2', city: 'SHARM EL-SHEIKH' },
+          { id: 3, name: 'H3', city: 'El Gouna' },
+        ])
+      );
+
+      component.loadAllCitiesCatalog();
+
+      // Casing should match exact backend values, sorted case-insensitively:
+      // 'cairo', 'El Gouna', 'SHARM EL-SHEIKH'
+      expect(component.availableCities()).toEqual(['cairo', 'El Gouna', 'SHARM EL-SHEIKH']);
+    });
+
+    it('should sort cities alphabetically in case-insensitive order', () => {
+      mockHotelService.getAllHotels.mockReturnValue(
+        of([
+          { id: 1, name: 'H1', city: 'zanzibar' },
+          { id: 2, name: 'H2', city: 'Alexandria' },
+          { id: 3, name: 'H3', city: 'beirut' },
+          { id: 4, name: 'H4', city: 'Cairo' },
+        ])
+      );
+
+      component.loadAllCitiesCatalog();
+
+      expect(component.availableCities()).toEqual(['Alexandria', 'beirut', 'Cairo', 'zanzibar']);
+    });
+
+    it('should deduplicate identical cities and exclude null, empty, or blank strings', () => {
+      mockHotelService.getAllHotels.mockReturnValue(
+        of([
+          { id: 1, name: 'H1', city: 'Luxor' },
+          { id: 2, name: 'H2', city: 'Luxor' },
+          { id: 3, name: 'H3', city: '' },
+          { id: 4, name: 'H4', city: '   ' },
+          { id: 5, name: 'H5', city: null as any },
+          { id: 6, name: 'H6', city: undefined as any },
+          { id: 7, name: 'H7', city: 'Aswan' },
+        ])
+      );
+
+      component.loadAllCitiesCatalog();
+
+      expect(component.availableCities()).toEqual(['Aswan', 'Luxor']);
+    });
+
+    it('should not persist cities to localStorage or sessionStorage', () => {
+      const hasLocalStorage = typeof globalThis.localStorage !== 'undefined';
+      if (hasLocalStorage) {
+        const spy = vi.spyOn(globalThis.localStorage, 'setItem');
+        component.loadAllCitiesCatalog();
+        expect(spy).not.toHaveBeenCalled();
+        spy.mockRestore();
+      } else {
+        component.loadAllCitiesCatalog();
+        expect(typeof (globalThis as any).localStorage).toBe('undefined');
+      }
+    });
+
+    it('should rebuild cities dynamically on ngOnInit', () => {
+      const spy = vi.spyOn(component, 'loadAllCitiesCatalog');
+
+      component.ngOnInit();
+
+      expect(spy).toHaveBeenCalled();
     });
   });
 });

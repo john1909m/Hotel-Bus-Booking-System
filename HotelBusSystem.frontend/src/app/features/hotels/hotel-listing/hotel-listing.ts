@@ -10,7 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -112,6 +112,9 @@ export class HotelListing implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Rebuilt every time the listing component initializes across all hotel pages
+    this.loadAllCitiesCatalog();
+
     // Debounce search input to avoid excess API calls while updating as user types
     this.searchSubject$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
@@ -158,19 +161,9 @@ export class HotelListing implements OnInit, OnDestroy {
           this.hotels.set(response.content ?? []);
           this.pageState.set(response.empty ? 'empty' : 'success');
 
-          // Dynamically populate available cities from actual hotel data
-          if (response.content && response.content.length > 0) {
-            this.collectCities(response.content);
-          }
-
-          // Fetch complete city catalog if more hotels exist and not already filtered
-          if (
-            response.totalElements > this.pageSize &&
-            !this.searchQuery() &&
-            !this.cityFilter() &&
-            this.currentPage() === 0
-          ) {
-            this.loadAllCities(response.totalElements);
+          // Fallback population if catalog has not loaded yet
+          if (response.content && response.content.length > 0 && this.availableCities().length === 0) {
+            this.extractCitiesFallback(response.content);
           }
         },
         error: (err) => {
@@ -180,31 +173,43 @@ export class HotelListing implements OnInit, OnDestroy {
       });
   }
 
-  private collectCities(hotels: HotelDTO[]): void {
-    const set = new Set(this.availableCities());
-    for (const h of hotels) {
-      if (h.city && typeof h.city === 'string' && h.city.trim().length > 0) {
-        set.add(h.city.trim());
-      }
-    }
-    const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
-    this.availableCities.set(sorted);
-  }
+  loadAllCitiesCatalog(): void {
+    const fetch$ = this.hotelService.getAllHotels
+      ? this.hotelService.getAllHotels()
+      : of([]);
 
-  private loadAllCities(total: number): void {
-    this.hotelService
-      .getHotels({ page: 0, size: Math.min(total, 100) })
+    fetch$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (allData) => {
-          if (allData?.content) {
-            this.collectCities(allData.content);
-          }
+        next: (hotels) => {
+          if (!hotels || hotels.length === 0) return;
+          // Every distinct city across all pages, exactly as stored
+          const validCities = hotels
+            .map((h) => h.city)
+            .filter((c): c is string => typeof c === 'string' && c.trim().length > 0);
+
+          // Duplicates removed by exact value
+          const distinct = Array.from(new Set(validCities));
+
+          // Sorted alphabetically (case-insensitive)
+          distinct.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+          this.availableCities.set(distinct);
         },
         error: () => {
-          // Fallback gracefully to current page cities
+          // Graceful fallback to currently loaded page
         },
       });
+  }
+
+  private extractCitiesFallback(hotels: HotelDTO[]): void {
+    if (this.availableCities().length > 0) return;
+    const valid = hotels
+      .map((h) => h.city)
+      .filter((c): c is string => typeof c === 'string' && c.trim().length > 0);
+    const distinct = Array.from(new Set(valid));
+    distinct.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    this.availableCities.set(distinct);
   }
 
   // ── Filter handlers ────────────────────────────────────────

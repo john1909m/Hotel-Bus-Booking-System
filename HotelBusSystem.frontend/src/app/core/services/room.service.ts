@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { RoomDTO, RoomRequestDTO } from '../models/Room/room.model';
 import { PagedModelRoomDto, RoomListParams } from '../models/Pagination/roomPage.model';
@@ -36,10 +36,56 @@ export class RoomService {
 
   /**
    * GET /rooms
-   * Get all rooms (unpaginated list)
+   * Get all rooms (paginated)
    */
-  getAllRooms(): Observable<RoomDTO[]> {
-    return this.http.get<RoomDTO[]>(this.apiUrl).pipe(
+  getAllRooms(params: RoomListParams = {}): Observable<PagedModelRoomDto> {
+    let httpParams = new HttpParams();
+    if (params.page !== undefined) httpParams = httpParams.set('page', params.page);
+    if (params.size !== undefined) httpParams = httpParams.set('size', params.size);
+    if (params.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res: any) => {
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? res?.content?.length ?? 0;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 10;
+        const number = res?.page?.number ?? res?.number ?? 0;
+        return {
+          ...res,
+          content: res?.content ?? [],
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PagedModelRoomDto;
+      }),
+      catchError(handleError)
+    );
+  }
+
+  /**
+   * Loads all rooms catalog by paginating up to 100 per page.
+   * Used for client-side search and filtering across displayed fields.
+   */
+  getAllRoomsCatalog(): Observable<RoomDTO[]> {
+    return this.getAllRooms({ page: 0, size: 100 }).pipe(
+      switchMap((firstPage) => {
+        const total = firstPage.totalElements ?? firstPage.page?.totalElements ?? 0;
+        const firstBatch = firstPage.content ?? [];
+        if (firstBatch.length >= total || firstPage.last) {
+          return of(firstBatch);
+        }
+
+        const totalPages = Math.ceil(total / 100);
+        const requests: Observable<PagedModelRoomDto>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          requests.push(this.getAllRooms({ page: p, size: 100 }));
+        }
+
+        return forkJoin(requests).pipe(
+          map((pages) => [firstBatch, ...pages.map((pg) => pg.content ?? [])].flat())
+        );
+      }),
       catchError(handleError)
     );
   }
