@@ -61,4 +61,60 @@ describe('BusBookingsComponent', () => {
     expect((component as any).confirmCancel).toBeUndefined();
     expect((component as any).canCancelBooking).toBeUndefined();
   });
+
+  describe('Status Filters (Part C)', () => {
+    beforeEach(() => {
+      component.bookings.set([
+        { id: 101, status: 'PENDING' } as any,
+        { id: 102, status: 'PENDING' } as any,
+        { id: 103, status: 'CONFIRMED' } as any,
+        { id: 104, status: 'COMPLETED' } as any,
+        { id: 105, status: 'CANCELLED' } as any,
+      ]);
+    });
+
+    it('computes statusOptions with dynamic counts for all backend statuses', () => {
+      const options = component.statusOptions();
+      expect(options).toEqual([
+        { label: 'All (5)', value: 'ALL' },
+        { label: 'Pending (2)', value: 'PENDING' },
+        { label: 'Confirmed (1)', value: 'CONFIRMED' },
+        { label: 'Completed (1)', value: 'COMPLETED' },
+        { label: 'Cancelled (1)', value: 'CANCELLED' },
+      ]);
+    });
+
+    it('filters bookings in memory by selectedStatus', () => {
+      expect(component.filteredBookings().length).toBe(5);
+
+      component.onStatusChange('PENDING');
+      expect(component.filteredBookings().length).toBe(2);
+      expect(component.filteredBookings().every((b) => b.status === 'PENDING')).toBe(true);
+
+      component.onStatusChange('CONFIRMED');
+      expect(component.filteredBookings().length).toBe(1);
+      expect(component.filteredBookings()[0].id).toBe(103);
+
+      component.onStatusChange('COMPLETED');
+      expect(component.filteredBookings().length).toBe(1);
+      expect(component.filteredBookings()[0].id).toBe(104);
+
+      component.onStatusChange('CANCELLED');
+      expect(component.filteredBookings().length).toBe(1);
+      expect(component.filteredBookings()[0].id).toBe(105);
+    });
+
+    it('returns empty array when no bookings match filter and resets on resetStatusFilter', () => {
+      component.bookings.set([
+        { id: 101, status: 'CONFIRMED' } as any,
+      ]);
+
+      component.onStatusChange('PENDING');
+      expect(component.filteredBookings().length).toBe(0);
+
+      component.resetStatusFilter();
+      expect(component.selectedStatus()).toBe('ALL');
+      expect(component.filteredBookings().length).toBe(1);
+    });
+  });
 });

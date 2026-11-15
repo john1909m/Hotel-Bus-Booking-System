@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError } from 'rxjs/operators';
 
@@ -17,6 +18,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
 
 // Core Services & Models
@@ -43,9 +45,11 @@ import { BusDTO } from '../../../core/models/Bus/bus.model';
     DecimalPipe,
     DatePipe,
     RouterLink,
+    FormsModule,
     ButtonModule,
     ToastModule,
     TagModule,
+    SelectButtonModule,
   ],
   providers: [MessageService],
   templateUrl: './BusBookings.component.html',
@@ -76,6 +80,58 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   readonly busesMap = signal<Map<number, BusDTO>>(new Map());
 
   readonly totalCount = computed(() => this.bookings().length);
+
+  readonly selectedStatus = signal<string>('ALL');
+
+  readonly statusOptions = computed(() => {
+    const list = this.bookings();
+    const pendingCount = list.filter((b) => b.status === 'PENDING').length;
+    const confirmedCount = list.filter((b) => b.status === 'CONFIRMED').length;
+    const completedCount = list.filter((b) => b.status === 'COMPLETED').length;
+    const cancelledCount = list.filter((b) => b.status === 'CANCELLED').length;
+
+    return [
+      { label: `All (${list.length})`, value: 'ALL' },
+      { label: `Pending (${pendingCount})`, value: 'PENDING' },
+      { label: `Confirmed (${confirmedCount})`, value: 'CONFIRMED' },
+      { label: `Completed (${completedCount})`, value: 'COMPLETED' },
+      { label: `Cancelled (${cancelledCount})`, value: 'CANCELLED' },
+    ];
+  });
+
+  readonly filteredBookings = computed(() => {
+    const status = this.selectedStatus();
+    const list = this.bookings();
+    if (!status || status === 'ALL') {
+      return list;
+    }
+    return list.filter((b) => b.status?.toUpperCase() === status.toUpperCase());
+  });
+
+  readonly filteredCount = computed(() => this.filteredBookings().length);
+
+  onStatusChange(newStatus: string): void {
+    this.selectedStatus.set(newStatus || 'ALL');
+  }
+
+  resetStatusFilter(): void {
+    this.selectedStatus.set('ALL');
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'PENDING':
+        return 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return 'All';
+    }
+  }
 
   ngOnInit(): void {
     this.loadMyBookings();

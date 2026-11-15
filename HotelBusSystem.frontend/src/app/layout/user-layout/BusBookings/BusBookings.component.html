@@ -9,7 +9,11 @@
       <div class="header-badge-row">
         <span class="header-category-badge">Passenger Portal</span>
         <span class="header-count-badge" id="bus-bookings-count-badge">
-          {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+          @if (selectedStatus() !== 'ALL') {
+            {{ filteredCount() }} of {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+          } @else {
+            {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+          }
         </span>
       </div>
       <h1 class="page-title">My Bus Bookings</h1>
@@ -107,10 +111,50 @@
     </section>
   }
 
-  <!-- ─── BOOKINGS LIST ────────────────────────────────────── -->
+  <!-- ─── STATUS FILTER CONTROL ───────────────────────────── -->
   @if (!loading() && !error() && bookings().length > 0) {
+    <div class="status-filter-wrapper">
+      <div class="filter-headline">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span>Filter by Status</span>
+      </div>
+      <p-selectbutton
+        [options]="statusOptions()"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="onStatusChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        ariaLabel="Filter bus reservations by status">
+      </p-selectbutton>
+    </div>
+  }
+
+  <!-- ─── FILTER EMPTY STATE ────────────────────────────────── -->
+  @if (!loading() && !error() && bookings().length > 0 && filteredBookings().length === 0) {
+    <section class="state-card filter-empty-card" role="status">
+      <div class="state-icon filter-empty-icon" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+      </div>
+      <h2>No {{ getStatusLabel(selectedStatus()) }} Bus Bookings</h2>
+      <p class="empty-desc">
+        You do not have any bus reservations currently marked as <strong>{{ getStatusLabel(selectedStatus()) }}</strong>.
+      </p>
+      <button type="button" class="btn btn-secondary" (click)="resetStatusFilter()">
+        View All Bookings
+      </button>
+    </section>
+  }
+
+  <!-- ─── BOOKINGS LIST ────────────────────────────────────── -->
+  @if (!loading() && !error() && filteredBookings().length > 0) {
     <div class="bookings-grid" role="list" aria-label="Customer bus bookings list">
-      @for (booking of bookings(); track booking.id) {
+      @for (booking of filteredBookings(); track booking.id) {
         <article class="booking-card" role="listitem" id="bus-booking-card-{{ booking.id }}">
 
           <!-- Card Header -->

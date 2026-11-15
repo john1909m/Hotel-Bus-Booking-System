@@ -9,17 +9,20 @@ import {
 } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { HotelBookingDTO } from '../../../core/models/Hotel/hotel-booking.model';
+import { calculateGuestBreakdown, GuestBreakdown } from '../../../core/utils/guest-rules.util';
 
 @Component({
   selector: 'app-hotel-bookings',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, ToastModule],
+  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, ToastModule, FormsModule, SelectButtonModule],
   providers: [MessageService],
   templateUrl: './hotel-bookings.component.html',
   styleUrl: './hotel-bookings.component.css',
@@ -36,6 +39,58 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
 
   readonly totalCount = computed(() => this.bookings().length);
+
+  readonly selectedStatus = signal<string>('ALL');
+
+  readonly statusOptions = computed(() => {
+    const list = this.bookings();
+    const pendingCount = list.filter((b) => b.status === 'PENDING').length;
+    const confirmedCount = list.filter((b) => b.status === 'CONFIRMED').length;
+    const completedCount = list.filter((b) => b.status === 'COMPLETED').length;
+    const cancelledCount = list.filter((b) => b.status === 'CANCELLED').length;
+
+    return [
+      { label: `All (${list.length})`, value: 'ALL' },
+      { label: `Pending (${pendingCount})`, value: 'PENDING' },
+      { label: `Confirmed (${confirmedCount})`, value: 'CONFIRMED' },
+      { label: `Completed (${completedCount})`, value: 'COMPLETED' },
+      { label: `Cancelled (${cancelledCount})`, value: 'CANCELLED' },
+    ];
+  });
+
+  readonly filteredBookings = computed(() => {
+    const status = this.selectedStatus();
+    const list = this.bookings();
+    if (!status || status === 'ALL') {
+      return list;
+    }
+    return list.filter((b) => b.status?.toUpperCase() === status.toUpperCase());
+  });
+
+  readonly filteredCount = computed(() => this.filteredBookings().length);
+
+  onStatusChange(newStatus: string): void {
+    this.selectedStatus.set(newStatus || 'ALL');
+  }
+
+  resetStatusFilter(): void {
+    this.selectedStatus.set('ALL');
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'PENDING':
+        return 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return 'All';
+    }
+  }
 
   ngOnInit(): void {
     this.loadMyBookings();
@@ -109,5 +164,9 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
       default:
         return status || 'Reservation placed';
     }
+  }
+
+  getGuestBreakdown(booking: HotelBookingDTO): GuestBreakdown {
+    return calculateGuestBreakdown(booking);
   }
 }

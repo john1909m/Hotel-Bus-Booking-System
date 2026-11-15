@@ -131,13 +131,13 @@
 }
 
 .error-icon {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--color-danger-light, rgba(239, 68, 68, 0.12));
+  color: var(--color-danger, #dc2626);
 }
 
 [data-theme="dark"] .error-icon {
   background: rgba(220, 38, 38, 0.2);
-  color: #fca5a5;
+  color: var(--color-danger-light, #fca5a5);
 }
 
 .state-card h2 {
@@ -421,12 +421,12 @@
 }
 
 .cancelled-text {
-  color: #dc2626;
+  color: var(--color-danger, #dc2626);
   font-weight: 600;
 }
 
 [data-theme="dark"] .cancelled-text {
-  color: #fca5a5;
+  color: var(--color-danger-light, #fca5a5);
 }
 
 .card-action-group {
@@ -442,22 +442,22 @@
   gap: 0.5rem;
   padding: 0.35rem 0.75rem;
   border-radius: var(--radius-sm);
-  background: var(--bg-surface-subtle, #f8fafc);
-  border: 1px solid var(--border-color, #e2e8f0);
-  color: var(--text-muted, #64748b);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
   font-size: 0.775rem;
   line-height: 1.35;
 }
 
 .admin-notice-pill svg {
-  color: var(--color-primary, #009b77);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
 [data-theme="dark"] .admin-notice-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  background: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-muted);
 }
 
 /* ─── Responsive Adjustments ───────────────────────────────── */
@@ -517,4 +517,44 @@
     width: 100%;
     text-align: center;
   }
+}
+
+/* Status Filter Controls */
+.status-filter-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.filter-headline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filter-headline svg {
+  color: var(--color-primary);
+}
+
+.filter-empty-card {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.filter-empty-icon svg {
+  color: var(--color-primary);
+  opacity: 0.85;
 }
