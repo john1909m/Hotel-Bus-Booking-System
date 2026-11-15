@@ -22,11 +22,11 @@ public record BookingDraftRequest(
         @Schema(description = "List of room IDs for multi-room booking (1-10 rooms in the same hotel, no duplicates)", example = "[1, 2]")
         List<Long> roomIds,
 
-        @NotNull
+        @NotNull(message = "Check-in date is required")
         @Schema(description = "Check-in date (yyyy-MM-dd)", example = "2026-11-01")
         LocalDate checkInDate,
 
-        @NotNull
+        @NotNull(message = "Check-out date is required")
         @Schema(description = "Check-out date (yyyy-MM-dd)", example = "2026-11-05")
         LocalDate checkOutDate,
 

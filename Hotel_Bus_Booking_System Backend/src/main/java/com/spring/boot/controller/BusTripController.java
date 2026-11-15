@@ -4,6 +4,7 @@ import com.spring.boot.dto.BusTripDto;
 import com.spring.boot.dto.BusTripRequestDto;
 import com.spring.boot.enums.BusTripStatus;
 import com.spring.boot.service.interfaces.BusTripService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -30,7 +31,7 @@ public class BusTripController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BusTripDto> createBusTrip(@RequestBody BusTripRequestDto busTripRequestDto) {
+    public ResponseEntity<BusTripDto> createBusTrip(@Valid @RequestBody BusTripRequestDto busTripRequestDto) {
         BusTripDto createdBusTrip = busTripService.createBusTrip(busTripRequestDto);
         return new ResponseEntity<>(createdBusTrip, HttpStatus.CREATED);
     }
@@ -96,7 +97,7 @@ public class BusTripController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BusTripDto> updateBusTrip(@PathVariable Long id, @RequestBody BusTripRequestDto busTripRequestDto) {
+    public ResponseEntity<BusTripDto> updateBusTrip(@PathVariable Long id, @Valid @RequestBody BusTripRequestDto busTripRequestDto) {
         BusTripDto updatedBusTrip = busTripService.updateBusTrip(id, busTripRequestDto);
         return new ResponseEntity<>(updatedBusTrip, HttpStatus.OK);
     }

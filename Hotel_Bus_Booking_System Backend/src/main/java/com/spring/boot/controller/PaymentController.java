@@ -3,6 +3,7 @@ package com.spring.boot.controller;
 import com.spring.boot.dto.PaymentDto;
 import com.spring.boot.dto.PaymentRequestDto;
 import com.spring.boot.service.interfaces.PaymentService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class PaymentController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PaymentDto> createPayment(@RequestBody PaymentRequestDto paymentRequestDto) {
+    public ResponseEntity<PaymentDto> createPayment(@Valid @RequestBody PaymentRequestDto paymentRequestDto) {
         PaymentDto createdPayment = paymentService.createPayment(paymentRequestDto);
         return new ResponseEntity<>(createdPayment, HttpStatus.CREATED);
     }
@@ -55,7 +56,7 @@ public class PaymentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PaymentDto> updatePayment(@PathVariable Long id, @RequestBody PaymentRequestDto paymentRequestDto) {
+    public ResponseEntity<PaymentDto> updatePayment(@PathVariable Long id, @Valid @RequestBody PaymentRequestDto paymentRequestDto) {
         PaymentDto updatedPayment = paymentService.updatePayment(id, paymentRequestDto);
         return new ResponseEntity<>(updatedPayment, HttpStatus.OK);
     }

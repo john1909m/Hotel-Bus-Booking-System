@@ -1,16 +1,11 @@
 package com.spring.boot.dto;
 
-
 import com.spring.boot.enums.BookingStatus;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
-
-import java.time.LocalDate;
-
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,20 +19,20 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class BusBookingRequestDto {
 
-    @NotNull
+    @NotNull(message = "Booking date is required")
     private LocalDate bookingDate;
 
-    @NotNull
+    @NotNull(message = "Status is required")
     private BookingStatus status;
 
     private BigDecimal price;
 
-    @NotNull
+    @NotNull(message = "User ID is required")
     private Long userId; // Reference to user (costumer)
 
-    @NotNull
+    @NotNull(message = "Bus trip ID is required")
     private Long busTripId;
 
-    @NotNull
+    @NotNull(message = "Seat ID is required")
     private Long seatId;
 }

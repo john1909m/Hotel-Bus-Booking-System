@@ -4,6 +4,7 @@ import com.spring.boot.dto.BusTripDto;
 import com.spring.boot.dto.BusTripInfoDto;
 import com.spring.boot.dto.BusTripRequestDto;
 import com.spring.boot.enums.BusTripStatus;
+import com.spring.boot.exception.ErrorCode;
 import com.spring.boot.exception.ResourceNotFoundException;
 import com.spring.boot.helper.BundleMessageService;
 import com.spring.boot.model.BusTrip;
@@ -49,16 +50,25 @@ public class BusTripServiceImpl implements BusTripService {
     public BusTripDto createBusTrip(BusTripRequestDto busTripRequestDto) {
         // Validate that bus exists
         var bus = busRepository.findById(busTripRequestDto.getBusId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUS_NOT_FOUND));
 
         // Validate that route exists
         var route = busRouteRepository.findById(busTripRequestDto.getRouteId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUS_ROUTE_NOT_FOUND));
+
+        // Validate that departure and arrival times are provided
+        LocalDateTime departureTime = busTripRequestDto.getDepartureTime();
+        LocalDateTime arrivalTime = busTripRequestDto.getArrivalTime();
+        if (departureTime == null) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_TIME_REQUIRED);
+        }
+        if (arrivalTime == null) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_TIME_REQUIRED);
+        }
 
         // Validate that arrival time is after departure time
-        if (busTripRequestDto.getArrivalTime().isBefore(busTripRequestDto.getDepartureTime()) ||
-                busTripRequestDto.getArrivalTime().isEqual(busTripRequestDto.getDepartureTime())) {
-            throw new IllegalArgumentException(bundleMessageService.getMessage("error.arrival_time_before_departure"));
+        if (!arrivalTime.isAfter(departureTime)) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_ARRIVAL_BEFORE_DEPARTURE);
         }
 
         BusTrip busTrip = busTripMapper.busTripRequestDtoToBusTrip(busTripRequestDto);
@@ -69,7 +79,7 @@ public class BusTripServiceImpl implements BusTripService {
     @Override
     public BusTripDto getBusTripById(Long id) {
         BusTrip busTrip = busTripRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found")));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUS_TRIP_NOT_FOUND));
         return busTripMapper.busTripToBusTripDto(busTrip);
     }
 
@@ -139,26 +149,35 @@ public class BusTripServiceImpl implements BusTripService {
         // Handle bus relationship: if provided, validate and set; if not provided, keep existing
         if (busTripRequestDto.getBusId() != null) {
             var bus = busRepository.findById(busTripRequestDto.getBusId())
-                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_not_found")));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUS_NOT_FOUND));
             existingBusTrip.setBus(bus);
         }
 
         // Handle route relationship: if provided, validate and set; if not provided, keep existing
         if (busTripRequestDto.getRouteId() != null) {
             var route = busRouteRepository.findById(busTripRequestDto.getRouteId())
-                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_route_not_found")));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BUS_ROUTE_NOT_FOUND));
             existingBusTrip.setRoute(route);
         }
 
+        // Validate that departure and arrival times are provided
+        LocalDateTime departureTime = busTripRequestDto.getDepartureTime();
+        LocalDateTime arrivalTime = busTripRequestDto.getArrivalTime();
+        if (departureTime == null) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_TIME_REQUIRED);
+        }
+        if (arrivalTime == null) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_TIME_REQUIRED);
+        }
+
         // Validate that arrival time is after departure time
-        if (busTripRequestDto.getArrivalTime().isBefore(busTripRequestDto.getDepartureTime()) ||
-                busTripRequestDto.getArrivalTime().isEqual(busTripRequestDto.getDepartureTime())) {
-            throw new IllegalArgumentException(bundleMessageService.getMessage("error.arrival_time_before_departure"));
+        if (!arrivalTime.isAfter(departureTime)) {
+            throw new IllegalArgumentException(ErrorCode.BUS_TRIP_ARRIVAL_BEFORE_DEPARTURE);
         }
 
         // Update fields
-        existingBusTrip.setDepartureTime(busTripRequestDto.getDepartureTime());
-        existingBusTrip.setArrivalTime(busTripRequestDto.getArrivalTime());
+        existingBusTrip.setDepartureTime(departureTime);
+        existingBusTrip.setArrivalTime(arrivalTime);
         existingBusTrip.setPrice(busTripRequestDto.getPrice());
 
         // Save bus trip
@@ -172,10 +191,10 @@ public class BusTripServiceImpl implements BusTripService {
     @Transactional
     public void deleteBusTrip(Long id) {
         if (!busTripRepository.existsById(id)) {
-            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.bus_trip_not_found"));
+            throw new ResourceNotFoundException(ErrorCode.BUS_TRIP_NOT_FOUND);
         }
         if (busBookingRepository.existsByBusTripId(id)) {
-            throw new BookingConflictException(bundleMessageService.getMessage("error.trip_has_bookings"));
+            throw new BookingConflictException(ErrorCode.BUS_TRIP_HAS_BOOKINGS);
         }
         busTripRepository.deleteById(id);
     }
@@ -185,6 +204,9 @@ public class BusTripServiceImpl implements BusTripService {
                                                                 String checkInTime, int timeBufferHours) {
         return busTripRepository.findAll().stream()
                 .filter(trip -> {
+                    if (trip.getArrivalTime() == null || checkInTime == null) {
+                        return false;
+                    }
                     // Simple time check: trip should arrive before check-in time minus buffer
                     LocalTime tripArrivalTime = trip.getArrivalTime().toLocalTime();
                     LocalTime checkInTimeParsed = LocalTime.parse(checkInTime);
@@ -205,6 +227,9 @@ public class BusTripServiceImpl implements BusTripService {
                                                               String checkOutTime, int timeBufferHours) {
         return busTripRepository.findAll().stream()
                 .filter(trip -> {
+                    if (trip.getDepartureTime() == null || checkOutTime == null) {
+                        return false;
+                    }
                     // Simple time check: trip should depart after check-out time plus buffer
                     LocalTime tripDepartureTime = trip.getDepartureTime().toLocalTime();
                     LocalTime checkOutTimeParsed = LocalTime.parse(checkOutTime);

@@ -118,7 +118,13 @@ public class BookingDraftServiceImpl implements BookingDraftService {
         // 3. Validate stay dates
         LocalDate checkIn = request.checkInDate();
         LocalDate checkOut = request.checkOutDate();
-        if (checkOut == null || checkIn == null || checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
+        if (checkIn == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_IN_REQUIRED);
+        }
+        if (checkOut == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_REQUIRED);
+        }
+        if (!checkOut.isAfter(checkIn)) {
             throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_out_before_check_in"));
         }
         if (checkIn.isBefore(LocalDate.now())) {

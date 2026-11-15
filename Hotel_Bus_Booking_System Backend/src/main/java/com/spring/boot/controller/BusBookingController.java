@@ -7,6 +7,7 @@ import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.service.interfaces.BusBookingService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ public class BusBookingController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<BusBookingDto> createBusBooking(@RequestBody BusBookingRequestDto busBookingRequestDto) {
+    public ResponseEntity<BusBookingDto> createBusBooking(@Valid @RequestBody BusBookingRequestDto busBookingRequestDto) {
         BusBookingDto createdBusBooking = busBookingService.createBusBooking(busBookingRequestDto);
         return new ResponseEntity<>(createdBusBooking, HttpStatus.CREATED);
     }
@@ -98,7 +99,7 @@ public class BusBookingController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BusBookingDto> updateBusBooking(@PathVariable Long id, @RequestBody BusBookingRequestDto busBookingRequestDto) {
+    public ResponseEntity<BusBookingDto> updateBusBooking(@PathVariable Long id, @Valid @RequestBody BusBookingRequestDto busBookingRequestDto) {
         BusBookingDto updatedBusBooking = busBookingService.updateBusBooking(id, busBookingRequestDto);
         return new ResponseEntity<>(updatedBusBooking, HttpStatus.OK);
     }
@@ -108,7 +109,7 @@ public class BusBookingController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BusBookingDto> updateBusBookingStatus(
             @PathVariable Long id,
-            @RequestBody StatusUpdateRequestDto statusDto) {
+            @Valid @RequestBody StatusUpdateRequestDto statusDto) {
         BusBookingDto updated = busBookingService.updateBookingStatus(id, statusDto.getStatus());
         return ResponseEntity.ok(updated);
     }

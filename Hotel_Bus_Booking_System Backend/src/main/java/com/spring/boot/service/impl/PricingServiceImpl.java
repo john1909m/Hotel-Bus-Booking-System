@@ -2,6 +2,7 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.BusFeatureSummaryDto;
 import com.spring.boot.dto.BusTripPriceBreakdownDto;
+import com.spring.boot.exception.ErrorCode;
 import com.spring.boot.model.Bus;
 import com.spring.boot.model.BusFeature;
 import com.spring.boot.model.BusTrip;
@@ -32,7 +33,7 @@ public class PricingServiceImpl implements PricingService {
     @Transactional(readOnly = true)
     public BusTripPriceBreakdownDto calculateBusTripPrice(BusTrip trip) {
         if (trip == null || trip.getPrice() == null) {
-            throw new IllegalArgumentException("Trip and trip price must not be null");
+            throw new IllegalArgumentException(ErrorCode.INVALID_ARGUMENT);
         }
         if (trip.getPrice().compareTo(BigDecimal.ZERO) < 0) {
             throw new com.spring.boot.exception.AnalyticsValidationException("basePrice", "error.base_price_negative");

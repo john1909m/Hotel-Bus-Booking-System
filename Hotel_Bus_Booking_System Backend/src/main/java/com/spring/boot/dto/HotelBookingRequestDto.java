@@ -1,6 +1,7 @@
 package com.spring.boot.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,9 +20,11 @@ import java.util.List;
 @AllArgsConstructor
 public class HotelBookingRequestDto {
 
+    @NotNull(message = "Check-in date is required")
     @Schema(description = "Check-in date (yyyy-MM-dd)", example = "2026-11-01")
     private LocalDate checkIn;
 
+    @NotNull(message = "Check-out date is required")
     @Schema(description = "Check-out date (yyyy-MM-dd)", example = "2026-11-05")
     private LocalDate checkOut;
 

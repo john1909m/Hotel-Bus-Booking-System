@@ -1,11 +1,19 @@
 package com.spring.boot.exception;
 
 /**
- * Exception thrown when there is an invalid route/trip relationship.
+ * Exception thrown when a route-trip relationship is invalid.
  */
-public class InvalidRouteTripRelationshipException extends RuntimeException {
+public class InvalidRouteTripRelationshipException extends BaseApiException {
 
-    public InvalidRouteTripRelationshipException(String message) {
-        super(message);
+    public InvalidRouteTripRelationshipException(String errorCode) {
+        super(errorCode);
+    }
+
+    public InvalidRouteTripRelationshipException(String errorCode, Object... args) {
+        super(errorCode, args);
+    }
+
+    public InvalidRouteTripRelationshipException(String errorCode, Throwable cause) {
+        super(errorCode, cause);
     }
 }

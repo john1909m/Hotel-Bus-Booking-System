@@ -1,6 +1,7 @@
 package com.spring.boot.service.ai;
 
 import com.spring.boot.dto.*;
+import com.spring.boot.exception.ErrorCode;
 import com.spring.boot.service.interfaces.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
@@ -119,7 +120,7 @@ public class AiToolsImpl implements AiTools {
 
         // Tool inputs come from the model: validate like any user input
         if (checkIn == null || checkOut == null || !checkOut.isAfter(checkIn)) {
-            throw new IllegalArgumentException("Check-out must be after check-in");
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_BEFORE_CHECK_IN);
         }
 
         int requiredCapacity = hotelBookingService.calculateRequiredCapacity(adults, childAges, null);

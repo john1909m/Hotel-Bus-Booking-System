@@ -7,7 +7,7 @@ import lombok.Getter;
  * Carries field name and i18n message key to return structured field-level 400 errors.
  */
 @Getter
-public class AnalyticsValidationException extends RuntimeException {
+public class AnalyticsValidationException extends BaseApiException {
 
     private final String field;
     private final String messageKey;

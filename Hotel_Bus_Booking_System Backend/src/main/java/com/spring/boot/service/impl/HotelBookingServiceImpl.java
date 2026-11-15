@@ -4,6 +4,7 @@ import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
 import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.exception.BookingConflictException;
+import com.spring.boot.exception.ErrorCode;
 import com.spring.boot.exception.InvalidBookingDatesException;
 import com.spring.boot.exception.InvalidGuestCountException;
 import com.spring.boot.exception.ResourceNotFoundException;
@@ -72,9 +73,16 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     @Transactional
     public HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto, Long userId) {
         // Validate dates
-        if (hotelBookingRequestDto.getCheckOut().isBefore(hotelBookingRequestDto.getCheckIn()) ||
-                hotelBookingRequestDto.getCheckOut().isEqual(hotelBookingRequestDto.getCheckIn())) {
-            throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_out_before_check_in"));
+        LocalDate checkIn = hotelBookingRequestDto.getCheckIn();
+        LocalDate checkOut = hotelBookingRequestDto.getCheckOut();
+        if (checkIn == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_IN_REQUIRED);
+        }
+        if (checkOut == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_REQUIRED);
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_BEFORE_CHECK_IN);
         }
 
         // Validate user exists
@@ -140,8 +148,8 @@ public class HotelBookingServiceImpl implements HotelBookingService {
 
         // totalPrice = sum over rooms of (nights * room.pricePerNight)
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
-                hotelBookingRequestDto.getCheckIn(),
-                hotelBookingRequestDto.getCheckOut());
+                checkIn,
+                checkOut);
         BigDecimal totalPrice = BigDecimal.ZERO;
         for (Room room : rooms) {
             BigDecimal roomTotal = BigDecimal.valueOf(room.getPricePerNight()).multiply(BigDecimal.valueOf(nights));
@@ -255,9 +263,16 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         }
 
         // Validate dates
-        if (hotelBookingRequestDto.getCheckOut().isBefore(hotelBookingRequestDto.getCheckIn()) ||
-                hotelBookingRequestDto.getCheckOut().isEqual(hotelBookingRequestDto.getCheckIn())) {
-            throw new InvalidBookingDatesException(bundleMessageService.getMessage("error.check_out_before_check_in"));
+        LocalDate checkIn = hotelBookingRequestDto.getCheckIn();
+        LocalDate checkOut = hotelBookingRequestDto.getCheckOut();
+        if (checkIn == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_IN_REQUIRED);
+        }
+        if (checkOut == null) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_REQUIRED);
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_BEFORE_CHECK_IN);
         }
 
         List<Long> requestedRoomIds = hotelBookingRequestDto.getRoomIds();
@@ -317,15 +332,15 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         int totalOccupants = effectiveAdults + effectiveChildAges.size();
 
         long nights = java.time.temporal.ChronoUnit.DAYS.between(
-                hotelBookingRequestDto.getCheckIn(),
-                hotelBookingRequestDto.getCheckOut());
+                checkIn,
+                checkOut);
         BigDecimal totalPrice = BigDecimal.ZERO;
         for (Room r : rooms) {
             totalPrice = totalPrice.add(BigDecimal.valueOf(r.getPricePerNight()).multiply(BigDecimal.valueOf(nights)));
         }
 
-        existingHotelBooking.setCheckIn(hotelBookingRequestDto.getCheckIn());
-        existingHotelBooking.setCheckOut(hotelBookingRequestDto.getCheckOut());
+        existingHotelBooking.setCheckIn(checkIn);
+        existingHotelBooking.setCheckOut(checkOut);
         existingHotelBooking.setGuests(totalOccupants);
         existingHotelBooking.setTotalPrice(totalPrice);
 

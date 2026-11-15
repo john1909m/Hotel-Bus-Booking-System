@@ -266,6 +266,7 @@ class AnalyticsControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Start date must be before or equal to end date"))
-                .andExpect(jsonPath("$.errors.from").value("Start date must be before or equal to end date"));
+                .andExpect(jsonPath("$.errors[0].field").value("from"))
+                .andExpect(jsonPath("$.errors[0].message").value("Start date must be before or equal to end date"));
     }
 }

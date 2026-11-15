@@ -7,6 +7,7 @@ import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.dto.UserDto;
 import com.spring.boot.service.interfaces.HotelBookingService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -35,7 +36,7 @@ public class HotelBookingController {
                description = "Creates a single or multi-room booking. Requires adults (>= 1) and optional childAges (0-17). Children under 12 are free and do not count against room capacity. Plain guests count accepted for backward compatibility.")
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<HotelBookingDto> createHotelBooking(@RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
+    public ResponseEntity<HotelBookingDto> createHotelBooking(@Valid @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
         UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDto.getId();
         HotelBookingDto createdHotelBooking = hotelBookingService.createHotelBooking(hotelBookingRequestDto, userId);
@@ -92,7 +93,7 @@ public class HotelBookingController {
     @Operation(summary = "Update a hotel booking",
                description = "Updates an existing booking. Checks room capacity with the free-under-12 rule.")
     @PutMapping("/{id}")
-    public ResponseEntity<HotelBookingDto> updateHotelBooking(@PathVariable Long id, @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
+    public ResponseEntity<HotelBookingDto> updateHotelBooking(@PathVariable Long id, @Valid @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
         HotelBookingDto updatedHotelBooking = hotelBookingService.updateHotelBooking(id, hotelBookingRequestDto);
         return new ResponseEntity<>(updatedHotelBooking, HttpStatus.OK);
     }
@@ -102,7 +103,7 @@ public class HotelBookingController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HotelBookingDto> updateHotelBookingStatus(
             @PathVariable Long id,
-            @RequestBody StatusUpdateRequestDto statusDto) {
+            @Valid @RequestBody StatusUpdateRequestDto statusDto) {
         HotelBookingDto updated = hotelBookingService.updateBookingStatus(id, statusDto.getStatus());
         return ResponseEntity.ok(updated);
     }

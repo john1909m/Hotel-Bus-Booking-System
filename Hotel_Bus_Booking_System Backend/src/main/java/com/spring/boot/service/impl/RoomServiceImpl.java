@@ -45,7 +45,8 @@ public class RoomServiceImpl implements RoomService {
 
         // Validate and set hotel relationship
         Hotel hotel = hotelRepository.findById(roomRequestDto.getHotelId())
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
         room.setHotel(hotel);
 
         Room savedRoom = roomRepository.save(room);
@@ -55,7 +56,8 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomDto getRoomById(Long id) {
         Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
         return roomMapper.roomToRoomDto(room);
     }
 
@@ -84,7 +86,8 @@ public class RoomServiceImpl implements RoomService {
     @CacheEvict(value = "rooms", allEntries = true)
     public RoomDto updateRoom(Long id, RoomRequestDto roomRequestDto) {
         Room existingRoom = roomRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(bundleMessageService.getMessage("error.room_not_found")));
 
         // Update fields
         existingRoom.setRoomNumber(roomRequestDto.getRoomNumber());
@@ -92,10 +95,12 @@ public class RoomServiceImpl implements RoomService {
         existingRoom.setCapacity(roomRequestDto.getCapacity());
         existingRoom.setPricePerNight(roomRequestDto.getPricePerNight());
 
-        // Handle hotel relationship: if provided, validate and set; if not provided, keep existing
+        // Handle hotel relationship: if provided, validate and set; if not provided,
+        // keep existing
         if (roomRequestDto.getHotelId() != null) {
             Hotel hotel = hotelRepository.findById(roomRequestDto.getHotelId())
-                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.hotel_not_found")));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            bundleMessageService.getMessage("error.hotel_not_found")));
             existingRoom.setHotel(hotel);
         }
         // If hotelId is null, keep existing hotel relationship (don't change it)

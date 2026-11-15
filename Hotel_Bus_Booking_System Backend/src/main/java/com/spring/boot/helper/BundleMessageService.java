@@ -17,6 +17,10 @@ public class BundleMessageService {
         this.messageSource = messageSource;
     }
 
+    public MessageSource getMessageSource() {
+        return messageSource;
+    }
+
     /**
      * Gets a localized message by its key.
      *
