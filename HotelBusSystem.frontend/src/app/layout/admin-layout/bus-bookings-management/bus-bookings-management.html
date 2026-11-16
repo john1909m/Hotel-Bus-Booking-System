@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Bus Bookings</span>
+        <span class="current">{{ 'admin.busBookings.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Bus Bookings</h1>
+      <h1 class="page-title">{{ 'admin.busBookings.title' | translate }}</h1>
       <p class="page-subtitle">
-        Review and manage customer bus travel reservations, booked seat assignments, route journeys, and status lifecycle transitions.
+        {{ 'admin.busBookings.subtitle' | translate }}
       </p>
     </div>
 
@@ -23,13 +23,13 @@
         class="btn-primary-action"
         (click)="openCreateDialog()"
         id="admin-add-bus-booking-btn"
-        aria-label="Create bus booking"
+        [attr.aria-label]="'admin.busBookings.newBooking' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>New Booking</span>
+        <span>{{ 'admin.busBookings.newBooking' | translate }}</span>
       </button>
 
       <button
@@ -53,7 +53,7 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>Refresh</span>
+        <span>{{ 'admin.common.refresh' | translate }}</span>
       </button>
     </div>
   </header>
@@ -63,7 +63,7 @@
     <div class="filters-grid">
       <!-- Search Keyword -->
       <div class="filter-field search-field">
-        <label for="admin-bus-booking-search" class="filter-label">Quick Search</label>
+        <label for="admin-bus-booking-search" class="filter-label">{{ 'admin.busBookings.quickSearch' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,7 +75,7 @@
             id="admin-bus-booking-search"
             type="search"
             class="filter-input"
-            placeholder="Search by ID, Customer, Route, Seat, or Status…"
+            [placeholder]="'admin.busBookings.searchPlaceholder' | translate"
             [value]="searchFilter()"
             (input)="onSearchFilter($any($event.target).value)"
             aria-label="Filter bookings"
@@ -85,7 +85,7 @@
 
       <!-- Status Filter -->
       <div class="filter-field">
-        <label for="admin-bus-booking-status" class="filter-label">Status Filter</label>
+        <label for="admin-bus-booking-status" class="filter-label">{{ 'admin.common.status' | translate }}</label>
         <div class="input-wrapper">
           <select
             id="admin-bus-booking-status"
@@ -94,11 +94,11 @@
             (change)="onStatusFilterChange($any($event.target).value)"
             aria-label="Filter by booking status"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="PENDING">Pending</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="ALL">{{ 'admin.busBookings.allStatuses' | translate }}</option>
+            <option value="CONFIRMED">{{ 'admin.dashboard.confirmed' | translate }}</option>
+            <option value="PENDING">{{ 'admin.dashboard.pending' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.dashboard.completed' | translate }}</option>
+            <option value="CANCELLED">{{ 'admin.dashboard.cancelled' | translate }}</option>
           </select>
         </div>
       </div>
@@ -125,7 +125,7 @@
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
-        Total Bookings: <strong>{{ totalElements() }}</strong>
+        {{ 'admin.busBookings.totalBookings' | translate }} <strong>{{ totalElements() }}</strong>
       </div>
     </div>
   </section>
@@ -170,9 +170,9 @@
           <th>Customer</th>
           <th>Route &amp; Journey</th>
           <th>Seat Assigned</th>
-          <th>Booking Date</th>
+          <th>{{ 'admin.busBookings.colBookingDate' | translate }}</th>
           <th>Fare Price</th>
-          <th>Status</th>
+          <th>{{ 'admin.common.status' | translate }}</th>
           <th style="width: 175px; text-align: right">Actions</th>
         </tr>
       </ng-template>
@@ -330,7 +330,7 @@
           <td colspan="8">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🎟</div>
-              <h3 class="empty-title">No bus bookings found</h3>
+              <h3 class="empty-title">{{ 'admin.busBookings.noBookingsFound' | translate }}</h3>
               <p class="empty-desc">
                 No customer bus travel reservations matched the current filters. Adjust your criteria or click "New Booking".
               </p>
@@ -597,7 +597,7 @@
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
-    [header]="isEditMode() ? 'Edit Bus Booking' : 'New Bus Booking'"
+    [header]="(isEditMode() ? 'admin.busBookings.dialogEditTitle' : 'admin.busBookings.dialogNewTitle') | translate"
     [style]="{ width: '90vw', maxWidth: '560px' }"
     [draggable]="false"
     [resizable]="false"
@@ -692,7 +692,7 @@
         <!-- Status -->
         <div class="form-group">
           <label for="bookingStatus" class="form-label">
-            Booking Status <span class="required-star">*</span>
+            {{ 'admin.common.status' | translate }} <span class="required-star">*</span>
           </label>
           <select id="bookingStatus" class="form-select" formControlName="status">
             @if (isEditMode()) {

@@ -18,6 +18,7 @@ import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { UserService } from '../../../core/services/user.service';
@@ -52,6 +53,7 @@ export interface DisplayBookingItem {
     TagModule,
     SelectModule,
     ToastModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './user-bookings.html',
@@ -64,6 +66,7 @@ export class UserBookings implements OnInit, OnDestroy {
   private readonly busBookingService = inject(BusBookingService);
   private readonly paymentService = inject(PaymentService);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   // ── User Selection ─────────────────────────────────────────

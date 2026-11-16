@@ -19,6 +19,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { BusStopService } from '../../../../core/services/bus-stop.service';
 import { BusRouteService } from '../../../../core/services/bus-route.service';
@@ -72,6 +73,7 @@ export interface BusStopOption {
     TagModule,
     SkeletonModule,
     BusSeatSelectionComponent,
+    TranslatePipe,
   ],
   templateUrl: './hotel-transportation-recommendations.component.html',
   styleUrl: './hotel-transportation-recommendations.component.css',

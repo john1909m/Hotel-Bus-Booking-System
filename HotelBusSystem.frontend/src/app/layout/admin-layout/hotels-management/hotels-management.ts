@@ -28,6 +28,7 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { HotelService } from '../../../core/services/hotel.service';
@@ -51,6 +52,7 @@ import { PageHotelDTO, HotelListParams } from '../../../core/models/Pagination/h
     ToastModule,
     TagModule,
     ProgressSpinnerModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './hotels-management.html',
@@ -61,6 +63,7 @@ export class HotelsManagement implements OnInit, OnDestroy {
   private readonly hotelService = inject(HotelService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
   private readonly citySubject$ = new Subject<string>();

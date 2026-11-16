@@ -16,6 +16,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { BusSeatService } from '../../../core/services/bus-seat.service';
@@ -26,7 +27,7 @@ import { BusDTO } from '../../../core/models/Bus/bus.model';
 @Component({
   selector: 'app-bus-seats-management',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule, ToastModule, TagModule],
+  imports: [CommonModule, TableModule, ButtonModule, ToastModule, TagModule, TranslatePipe],
   providers: [MessageService],
   templateUrl: './bus-seats-management.html',
   styleUrl: './bus-seats-management.css',
@@ -36,6 +37,7 @@ export class BusSeatsManagement implements OnInit, OnDestroy {
   private readonly busSeatService = inject(BusSeatService);
   private readonly busService = inject(BusService);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
 

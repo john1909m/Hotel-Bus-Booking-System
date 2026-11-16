@@ -3,10 +3,10 @@
   <header class="checkout-hero">
     <div class="checkout-container">
       <div class="hero-content">
-        <span class="hero-eyebrow">Booking Finalization</span>
-        <h1 class="hero-title">Review & Payment</h1>
+        <span class="hero-eyebrow">{{ 'payment.hero.eyebrow' | translate }}</span>
+        <h1 class="hero-title">{{ 'payment.hero.title' | translate }}</h1>
         <p class="hero-subtitle">
-          Review your reserved itinerary details and select your preferred payment method to finalize your journey.
+          {{ 'payment.hero.subtitle' | translate }}
         </p>
       </div>
     </div>
@@ -24,8 +24,8 @@
             <section class="checkout-section-card" aria-labelledby="hotel-details-heading">
               <div class="section-card-header">
                 <div class="header-badge-group">
-                  <span class="section-badge badge--hotel">Hotel Stay</span>
-                  <div class="hotel-rating-chip" title="Hotel Star Rating">
+                  <span class="section-badge badge--hotel">{{ 'payment.hotel.stay' | translate }}</span>
+                  <div class="hotel-rating-chip" [title]="'payment.hotel.ratingTitle' | translate">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" aria-hidden="true">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
@@ -47,63 +47,63 @@
               <!-- Itinerary Info Pills -->
               <div class="itinerary-grid">
                 <div class="itinerary-cell">
-                  <span class="cell-label">Check-in</span>
+                  <span class="cell-label">{{ 'payment.hotel.checkIn' | translate }}</span>
                   <strong class="cell-value">{{ state.hotelBooking()?.checkIn }}</strong>
-                  <small class="cell-sub">After 14:00</small>
+                  <small class="cell-sub">{{ 'payment.hotel.checkInTime' | translate }}</small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Check-out</span>
+                  <span class="cell-label">{{ 'payment.hotel.checkOut' | translate }}</span>
                   <strong class="cell-value">{{ state.hotelBooking()?.checkOut }}</strong>
-                  <small class="cell-sub">Before 11:00</small>
+                  <small class="cell-sub">{{ 'payment.hotel.checkOutTime' | translate }}</small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Duration</span>
-                  <strong class="cell-value">{{ state.hotelBooking()?.stayNights }} Nights</strong>
-                  <small class="cell-sub">Length of stay</small>
+                  <span class="cell-label">{{ 'payment.hotel.duration' | translate }}</span>
+                  <strong class="cell-value">{{ 'payment.hotel.nights' | translate:{ count: state.hotelBooking()?.stayNights } }}</strong>
+                  <small class="cell-sub">{{ 'payment.hotel.stayLength' | translate }}</small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Guests</span>
+                  <span class="cell-label">{{ 'payment.hotel.guests' | translate }}</span>
                   <strong class="cell-value">
-                    {{ state.hotelBooking()?.adultsCount }} {{ state.hotelBooking()?.adultsCount === 1 ? 'Adult' : 'Adults' }}
+                    {{ (state.hotelBooking()?.adultsCount === 1 ? 'payment.hotel.adult' : 'payment.hotel.adults') | translate:{ count: state.hotelBooking()?.adultsCount } }}
                     @if (state.hotelBooking()?.children && (state.hotelBooking()?.children)!.length > 0) {
-                      , {{ (state.hotelBooking()?.children)!.length }} {{ (state.hotelBooking()?.children)!.length === 1 ? 'Child' : 'Children' }}
+                      , {{ ((state.hotelBooking()?.children)!.length === 1 ? 'payment.hotel.child' : 'payment.hotel.children') | translate:{ count: (state.hotelBooking()?.children)!.length } }}
                     }
                   </strong>
-                  <small class="cell-sub">Total occupants</small>
+                  <small class="cell-sub">{{ 'payment.hotel.totalOccupants' | translate }}</small>
                 </div>
               </div>
 
               <!-- Selected Rooms Table -->
               <div class="rooms-container">
-                <h3 class="subsection-title">Selected Accommodations</h3>
+                <h3 class="subsection-title">{{ 'payment.hotel.selectedAccommodations' | translate }}</h3>
                 <div class="rooms-list">
                   @for (room of state.hotelBooking()?.selectedRooms; track room.id) {
                     <div class="room-item-row">
                       <div class="room-item-main">
                         <div class="room-item-title-wrap">
-                          <span class="room-item-number">Room #{{ room.roomNumber }}</span>
+                          <span class="room-item-number">{{ 'payment.hotel.roomNumber' | translate:{ number: room.roomNumber } }}</span>
                           <span class="room-type-tag">{{ getRoomTypeLabel(room.roomType) }}</span>
                         </div>
                         <div class="room-meta-info">
-                          <span>Max {{ room.capacity }} guests</span>
+                          <span>{{ 'payment.hotel.maxGuests' | translate:{ count: room.capacity } }}</span>
                           <span>&bull;</span>
-                          <span>{{ room.pricePerNight | number:'1.2-2' }} EGP / night</span>
+                          <span>{{ 'payment.hotel.perNight' | translate:{ price: (room.pricePerNight | number:'1.2-2') } }}</span>
                         </div>
                       </div>
 
                       <div class="room-item-pricing">
                         <div class="room-price-stack">
                           <span class="room-total-cost">
-                            {{ ((room.pricePerNight || 0) * (state.hotelBooking()?.stayNights || 1)) | number:'1.2-2' }} EGP
+                            {{ 'payment.hotel.totalForNights' | translate:{ total: (((room.pricePerNight || 0) * (state.hotelBooking()?.stayNights || 1)) | number:'1.2-2') } }}
                           </span>
-                          <small class="room-cost-breakdown">for {{ state.hotelBooking()?.stayNights }} nights</small>
+                          <small class="room-cost-breakdown">{{ 'payment.hotel.forNights' | translate:{ count: state.hotelBooking()?.stayNights } }}</small>
                         </div>
                         <button
                           type="button"
                           class="btn-icon-remove"
                           (click)="onRemoveRoom(room.id)"
-                          title="Remove this room"
-                          aria-label="Remove room">
+                          [title]="'payment.hotel.removeRoom' | translate"
+                          [attr.aria-label]="'payment.hotel.removeRoomAria' | translate">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -117,7 +117,7 @@
 
               <!-- Subtotal Footer -->
               <div class="section-subtotal-footer">
-                <span class="subtotal-label">Hotel Accommodation Subtotal</span>
+                <span class="subtotal-label">{{ 'payment.hotel.subtotal' | translate }}</span>
                 <strong class="subtotal-amount">{{ state.hotelPrice() | number:'1.2-2' }} EGP</strong>
               </div>
             </section>
@@ -128,8 +128,8 @@
             <section class="checkout-section-card" aria-labelledby="transport-details-heading">
               <div class="section-card-header">
                 <div class="header-badge-group">
-                  <span class="section-badge badge--transport">Bus Transportation</span>
-                  <span class="carrier-tag">{{ state.transportationBooking()?.trip?.bus?.company || 'Bus Carrier' }}</span>
+                  <span class="section-badge badge--transport">{{ 'payment.transport.busTransportation' | translate }}</span>
+                  <span class="carrier-tag">{{ state.transportationBooking()?.trip?.bus?.company || ('payment.transport.defaultCarrier' | translate) }}</span>
                 </div>
                 <h2 id="transport-details-heading" class="section-card-title">
                   {{ state.transportationBooking()?.originStop?.name }} &rarr; {{ state.transportationBooking()?.destinationStop?.name }}
@@ -140,7 +140,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span>Arrival station is <strong>{{ state.transportationBooking()?.distanceFromHotel | number:'1.1-2' }} km</strong> from your hotel</span>
+                    <span>{{ 'payment.transport.arrivalStationDistance' | translate:{ distance: (state.transportationBooking()?.distanceFromHotel | number:'1.1-2') } }}</span>
                   </p>
                 }
               </div>
@@ -148,19 +148,19 @@
               <!-- Timing Info Pills -->
               <div class="itinerary-grid">
                 <div class="itinerary-cell">
-                  <span class="cell-label">Departure</span>
+                  <span class="cell-label">{{ 'payment.transport.departure' | translate }}</span>
                   <strong class="cell-value">{{ state.transportationBooking()?.trip?.departureTime | date:'shortTime' }}</strong>
                   <small class="cell-sub">{{ state.transportationBooking()?.originStop?.city }}</small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Arrival</span>
+                  <span class="cell-label">{{ 'payment.transport.arrival' | translate }}</span>
                   <strong class="cell-value">{{ state.transportationBooking()?.trip?.arrivalTime | date:'shortTime' }}</strong>
                   <small class="cell-sub">{{ state.transportationBooking()?.destinationStop?.city }}</small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Reserved Seats</span>
+                  <span class="cell-label">{{ 'payment.transport.reservedSeats' | translate }}</span>
                   <strong class="cell-value">
-                    {{ state.selectedSeatsCount() }} {{ state.selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }}
+                    {{ (state.selectedSeatsCount() === 1 ? 'payment.transport.seat' : 'payment.transport.seats') | translate:{ count: state.selectedSeatsCount() } }}
                   </strong>
                   <small class="cell-sub">
                     @for (s of state.transportationBooking()?.selectedSeats; track s.id; let last = $last) {
@@ -169,9 +169,9 @@
                   </small>
                 </div>
                 <div class="itinerary-cell">
-                  <span class="cell-label">Seat Price</span>
+                  <span class="cell-label">{{ 'payment.transport.seatPrice' | translate }}</span>
                   <strong class="cell-value">{{ state.transportationBooking()?.trip?.price| number:'1.2-2' }} EGP</strong>
-                  <small class="cell-sub">Per seat</small>
+                  <small class="cell-sub">{{ 'payment.transport.perSeat' | translate }}</small>
                 </div>
               </div>
 
@@ -182,12 +182,12 @@
                     type="button"
                     class="btn-text-danger"
                     (click)="onRemoveTransportation()"
-                    aria-label="Remove transportation from itinerary">
-                    &times; Remove Transportation
+                    [attr.aria-label]="'payment.transport.removeTransportationAria' | translate">
+                    &times; {{ 'payment.transport.removeTransportation' | translate }}
                   </button>
                 </div>
                 <div class="footer-amount-group">
-                  <span class="subtotal-label">Transportation Subtotal</span>
+                  <span class="subtotal-label">{{ 'payment.transport.subtotal' | translate }}</span>
                   <strong class="subtotal-amount">{{ state.transportationPrice() | number:'1.2-2' }} EGP</strong>
                 </div>
               </div>
@@ -197,13 +197,13 @@
           <!-- ── Section 3: Payment Method Selection ── -->
           <section class="checkout-section-card" aria-labelledby="payment-method-heading">
             <div class="section-card-header">
-              <span class="section-badge badge--payment">Payment Method</span>
-              <h2 id="payment-method-heading" class="section-card-title">Select Payment Option</h2>
-              <p class="section-card-desc">Choose how you would like to complete this transaction. All transactions are securely processed.</p>
+              <span class="section-badge badge--payment">{{ 'payment.method.badge' | translate }}</span>
+              <h2 id="payment-method-heading" class="section-card-title">{{ 'payment.method.title' | translate }}</h2>
+              <p class="section-card-desc">{{ 'payment.method.desc' | translate }}</p>
             </div>
 
             <!-- Payment Method Grid -->
-            <div class="payment-methods-grid" role="radiogroup" aria-label="Payment method selection">
+            <div class="payment-methods-grid" role="radiogroup" [attr.aria-label]="'payment.method.ariaLabel' | translate">
               @for (method of paymentMethods; track method.id) {
                 <div
                   class="payment-option-card"
@@ -221,9 +221,9 @@
                         <div class="radio-inner-dot"></div>
                       }
                     </div>
-                    <span class="option-title">{{ method.title }}</span>
+                    <span class="option-title">{{ 'payment.method.' + method.id + '.title' | translate }}</span>
                   </div>
-                  <p class="option-desc">{{ method.subtitle }}</p>
+                  <p class="option-desc">{{ 'payment.method.' + method.id + '.subtitle' | translate }}</p>
                 </div>
               }
             </div>
@@ -231,30 +231,30 @@
             <!-- Card Details Form (When Credit/Debit Card Selected) -->
             @if (selectedMethod() === 'CREDIT_CARD') {
               <div class="card-details-form">
-                <h3 class="form-title">Payment Card Details</h3>
+                <h3 class="form-title">{{ 'payment.cardForm.title' | translate }}</h3>
 
                 <div class="form-grid">
                   <div class="form-group form-col-full">
-                    <label for="cardholder-name" class="form-label">Name on Card</label>
+                    <label for="cardholder-name" class="form-label">{{ 'payment.cardForm.nameOnCard' | translate }}</label>
                     <input
                       id="cardholder-name"
                       type="text"
                       pInputText
                       class="form-control"
-                      placeholder="e.g. Mahmoud Ahmed"
+                      [placeholder]="'payment.cardForm.namePlaceholder' | translate"
                       [value]="cardholderName()"
                       (input)="cardholderName.set($any($event.target).value)" />
                   </div>
 
                   <div class="form-group form-col-full">
-                    <label for="card-number" class="form-label">Card Number</label>
+                    <label for="card-number" class="form-label">{{ 'payment.cardForm.cardNumber' | translate }}</label>
                     <div class="input-with-icon">
                       <input
                         id="card-number"
                         type="text"
                         pInputText
                         class="form-control"
-                        placeholder="•••• •••• •••• ••••"
+                        [placeholder]="'payment.cardForm.cardPlaceholder' | translate"
                         maxlength="19"
                         [value]="cardNumber()"
                         (input)="cardNumber.set($any($event.target).value)" />
@@ -266,26 +266,26 @@
                   </div>
 
                   <div class="form-group form-col-half">
-                    <label for="card-expiry" class="form-label">Expiry Date</label>
+                    <label for="card-expiry" class="form-label">{{ 'payment.cardForm.expiryDate' | translate }}</label>
                     <input
                       id="card-expiry"
                       type="text"
                       pInputText
                       class="form-control"
-                      placeholder="MM / YY"
+                      [placeholder]="'payment.cardForm.expiryPlaceholder' | translate"
                       maxlength="5"
                       [value]="cardExpiry()"
                       (input)="cardExpiry.set($any($event.target).value)" />
                   </div>
 
                   <div class="form-group form-col-half">
-                    <label for="card-cvv" class="form-label">CVV / CVC</label>
+                    <label for="card-cvv" class="form-label">{{ 'payment.cardForm.cvv' | translate }}</label>
                     <input
                       id="card-cvv"
                       type="password"
                       pInputText
                       class="form-control"
-                      placeholder="•••"
+                      [placeholder]="'payment.cardForm.cvvPlaceholder' | translate"
                       maxlength="4"
                       [value]="cardCvv()"
                       (input)="cardCvv.set($any($event.target).value)" />
@@ -300,8 +300,8 @@
                   <line x1="10" y1="14" x2="21" y2="3"></line>
                 </svg>
                 <div>
-                  <strong>PayPal Authorization</strong>
-                  <p>You will be securely redirected to PayPal to complete your purchase after clicking confirm.</p>
+                  <strong>{{ 'payment.paypalBanner.title' | translate }}</strong>
+                  <p>{{ 'payment.paypalBanner.desc' | translate }}</p>
                 </div>
               </div>
             } @else {
@@ -315,8 +315,8 @@
                   <polygon points="12 3 2 9 22 9 12 3"></polygon>
                 </svg>
                 <div>
-                  <strong>Bank Transfer Instructions</strong>
-                  <p>Wire reference number and payment instructions will be presented upon order placement.</p>
+                  <strong>{{ 'payment.bankBanner.title' | translate }}</strong>
+                  <p>{{ 'payment.bankBanner.desc' | translate }}</p>
                 </div>
               </div>
             }
@@ -326,7 +326,7 @@
         <!-- ── Right Column: Sticky Summary & Action Dock ── -->
         <aside class="checkout-summary-column" aria-labelledby="order-summary-heading">
           <div class="summary-card">
-            <h2 id="order-summary-heading" class="summary-title">Summary & Payment</h2>
+            <h2 id="order-summary-heading" class="summary-title">{{ 'payment.summary.title' | translate }}</h2>
 
             <div class="summary-line-items">
               @if (state.hasHotel()) {
@@ -334,7 +334,7 @@
                   <div class="item-meta">
                     <span class="item-name">{{ state.hotelBooking()?.hotel?.name }}</span>
                     <small class="item-sub">
-                      {{ state.selectedRoomsCount() }} {{ state.selectedRoomsCount() === 1 ? 'Room' : 'Rooms' }} • {{ state.hotelBooking()?.stayNights }} Nights
+                      {{ (state.selectedRoomsCount() === 1 ? 'payment.summary.room' : 'payment.summary.rooms') | translate:{ count: state.selectedRoomsCount() } }} • {{ 'payment.summary.nights' | translate:{ count: state.hotelBooking()?.stayNights } }}
                     </small>
                   </div>
                   <strong class="item-price">{{ state.hotelPrice() | number:'1.2-2' }} EGP</strong>
@@ -344,9 +344,9 @@
               @if (state.hasTransportation()) {
                 <div class="summary-item">
                   <div class="item-meta">
-                    <span class="item-name">Bus Transportation</span>
+                    <span class="item-name">{{ 'payment.summary.busTransportation' | translate }}</span>
                     <small class="item-sub">
-                      {{ state.selectedSeatsCount() }} {{ state.selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} ({{ state.transportationBooking()?.trip?.bus?.company }})
+                      {{ (state.selectedSeatsCount() === 1 ? 'payment.transport.seat' : 'payment.transport.seats') | translate:{ count: state.selectedSeatsCount() } }} ({{ state.transportationBooking()?.trip?.bus?.company }})
                     </small>
                   </div>
                   <strong class="item-price">{{ state.transportationPrice() | number:'1.2-2' }} EGP</strong>
@@ -355,10 +355,10 @@
 
               <div class="summary-item fees-item">
                 <div class="item-meta">
-                  <span class="item-name">Taxes & Booking Fees</span>
-                  <small class="item-sub">Municipal tourism levy included</small>
+                  <span class="item-name">{{ 'payment.summary.taxesFees' | translate }}</span>
+                  <small class="item-sub">{{ 'payment.summary.tourismLevy' | translate }}</small>
                 </div>
-                <span class="item-free-badge">Included</span>
+                <span class="item-free-badge">{{ 'payment.summary.included' | translate }}</span>
               </div>
             </div>
 
@@ -367,8 +367,8 @@
             <!-- Grand Total Display -->
             <div class="summary-grand-total">
               <div class="total-labels">
-                <span class="total-title">Total Due</span>
-                <small class="total-tax-note">All taxes & fees included</small>
+                <span class="total-title">{{ 'payment.summary.totalDue' | translate }}</span>
+                <small class="total-tax-note">{{ 'payment.summary.allTaxesIncluded' | translate }}</small>
               </div>
               <div class="total-figure">
                 <span class="total-amount">{{ state.totalCombinedPrice() | number:'1.2-2' }}</span>
@@ -383,13 +383,13 @@
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                <span>256-bit SSL Bank-Grade Encryption</span>
+                <span>{{ 'payment.summary.sslEncryption' | translate }}</span>
               </div>
               <div class="security-badge-row">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span>Instant Confirmation & Ticket Generation</span>
+                <span>{{ 'payment.summary.instantConfirmation' | translate }}</span>
               </div>
             </div>
 
@@ -413,9 +413,9 @@
                 (click)="onProcessPayment()"
                 [attr.aria-busy]="isProcessing()">
                 @if (isProcessing()) {
-                  <span>Submitting Booking (Pending Review)...</span>
+                  <span>{{ 'payment.summary.submitting' | translate }}</span>
                 } @else {
-                  <span>Pay {{ state.totalCombinedPrice() | number:'1.2-2' }} EGP</span>
+                  <span>{{ 'payment.summary.payAmount' | translate:{ amount: (state.totalCombinedPrice() | number:'1.2-2') } }}</span>
                 }
               </button>
 
@@ -427,8 +427,8 @@
                 severity="secondary"
                 [outlined]="true"
                 (click)="onClearSummary()"
-                aria-label="Clear itinerary and start over">
-                Clear Itinerary & Return
+                [attr.aria-label]="'payment.summary.clearItineraryAria' | translate">
+                {{ 'payment.summary.clearItinerary' | translate }}
               </button>
             </div>
           </div>
@@ -444,14 +444,14 @@
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
         </div>
-        <h2 class="empty-title">Your Itinerary is Empty</h2>
-        <p class="empty-desc">You do not currently have any active hotel or bus reservations selected in your session.</p>
+        <h2 class="empty-title">{{ 'payment.empty.title' | translate }}</h2>
+        <p class="empty-desc">{{ 'payment.empty.desc' | translate }}</p>
         <div class="empty-actions">
           <a routerLink="/hotels" class="btn-browse-primary">
-            Browse Hotels
+            {{ 'payment.empty.browseHotels' | translate }}
           </a>
           <a routerLink="/buses" class="btn-browse-secondary">
-            Search Bus Trips
+            {{ 'payment.empty.searchBuses' | translate }}
           </a>
         </div>
       </div>
@@ -460,7 +460,7 @@
 
   <!-- ── Order Confirmation Dialog ── -->
   <p-dialog
-    header="Booking Received (Under Review)"
+    [header]="'payment.dialog.header' | translate"
     [visible]="confirmationDialogVisible()"
     (visibleChange)="onConfirmationClosed()"
     [modal]="true"
@@ -474,28 +474,28 @@
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
-      <h3 class="dialog-title">Your Booking Has Been Received!</h3>
+      <h3 class="dialog-title">{{ 'payment.dialog.title' | translate }}</h3>
       <p class="dialog-text">
-        Your reservation request has been submitted with status <strong>PENDING</strong> and is currently under review by our administration. No direct payment has been charged.
+        {{ 'payment.dialog.text' | translate }}
       </p>
 
       <div class="reference-box">
-        <span class="ref-label">Booking Reference:</span>
+        <span class="ref-label">{{ 'payment.dialog.bookingReference' | translate }}</span>
         <strong class="ref-code">{{ confirmedReference() }}</strong>
       </div>
 
-      <div class="booking-ids-list" style="margin: 1rem 0; text-align: left; background: var(--bg-surface-subtle, #f8fafc); padding: 0.85rem 1rem; border-radius: 8px;">
+      <div class="booking-ids-list" style="margin: 1rem 0; text-align: start; background: var(--bg-surface-subtle, #f8fafc); padding: 0.85rem 1rem; border-radius: 8px;">
         @if (createdHotelBooking(); as hb) {
           <div style="margin-bottom: 0.5rem;">
-            🏨 <strong>Hotel Reservation:</strong> Booking #{{ hb.id }} &bull; Status: <span style="color: #d97706; font-weight: 700;">PENDING</span>
+            🏨 <strong>{{ 'payment.dialog.hotelReservation' | translate }}</strong> {{ 'payment.dialog.bookingHash' | translate:{ id: hb.id } }} &bull; {{ 'payment.dialog.status' | translate }} <span style="color: #d97706; font-weight: 700;">PENDING</span>
           </div>
         }
         @if (createdBusBookings().length > 0) {
           <div>
-            🚌 <strong>Bus Seat Reservation(s):</strong>
+            🚌 <strong>{{ 'payment.dialog.busReservations' | translate }}</strong>
             <ul style="margin: 0.25rem 0 0 1.25rem; padding: 0;">
               @for (bb of createdBusBookings(); track bb.id) {
-                <li>Booking #{{ bb.id }} (Trip #{{ bb.busTripId }}, Seat #{{ bb.seatId }}) &bull; Status: <span style="color: #d97706; font-weight: 700;">PENDING</span></li>
+                <li>{{ 'payment.dialog.bookingHash' | translate:{ id: bb.id } }} ({{ 'payment.dialog.tripHash' | translate:{ tripId: bb.busTripId, seatId: bb.seatId } }}) &bull; {{ 'payment.dialog.status' | translate }} <span style="color: #d97706; font-weight: 700;">PENDING</span></li>
               }
             </ul>
           </div>
@@ -510,7 +510,7 @@
             severity="info"
             class="p-button-outlined"
             (click)="confirmationDialogVisible.set(false)">
-            My Hotel Bookings
+            {{ 'payment.dialog.myHotelBookings' | translate }}
           </a>
           <a
             routerLink="/user/bus-bookings"
@@ -518,7 +518,7 @@
             severity="info"
             class="p-button-outlined"
             (click)="confirmationDialogVisible.set(false)">
-            My Bus Bookings
+            {{ 'payment.dialog.myBusBookings' | translate }}
           </a>
         </div>
 
@@ -528,7 +528,7 @@
           class="btn-dialog-close"
           severity="primary"
           (click)="onConfirmationClosed()">
-          Return to Hotels
+          {{ 'payment.dialog.returnToHotels' | translate }}
         </button>
       </div>
     </div>

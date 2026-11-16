@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Bus Seats</span>
+        <span class="current">{{ 'admin.busSeats.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Bus Seats Management</h1>
+      <h1 class="page-title">{{ 'admin.busSeats.title' | translate }}</h1>
       <p class="page-subtitle">
-        Inspect bus cabin layouts, assigned seat identification numbers, vehicle linkages, and seat tier classifications.
+        {{ 'admin.busSeats.subtitle' | translate }}
       </p>
     </div>
 
@@ -39,7 +39,7 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>Refresh</span>
+        <span>{{ 'admin.common.refresh' | translate }}</span>
       </button>
     </div>
   </header>
@@ -49,7 +49,7 @@
     <div class="filters-grid">
       <!-- Search Seat Number -->
       <div class="filter-field search-field">
-        <label for="admin-seat-search" class="filter-label">Search Seat</label>
+        <label for="admin-seat-search" class="filter-label">{{ 'admin.busSeats.searchSeat' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -61,7 +61,7 @@
             id="admin-seat-search"
             type="search"
             class="filter-input"
-            placeholder="Search by seat number (e.g. 1A, 12B)…"
+            [placeholder]="'admin.busSeats.searchPlaceholder' | translate"
             [value]="searchQuery()"
             (input)="onSearchInput($any($event.target).value)"
             aria-label="Search seats"
@@ -71,7 +71,7 @@
 
       <!-- Bus Filter -->
       <div class="filter-field">
-        <label for="admin-seat-bus" class="filter-label">Filter By Bus</label>
+        <label for="admin-seat-bus" class="filter-label">{{ 'admin.busSeats.filterByBus' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">🚌</span>
           <select
@@ -81,7 +81,7 @@
             (change)="onBusChange($any($event.target).value)"
             aria-label="Filter seats by bus"
           >
-            <option value="">All Buses</option>
+            <option value="">{{ 'admin.busSeats.allBuses' | translate }}</option>
             @for (b of buses(); track b.id) {
               <option [value]="b.id">{{ b.busNumber }} ({{ b.company }})</option>
             }
@@ -91,7 +91,7 @@
 
       <!-- Seat Type Filter -->
       <div class="filter-field">
-        <label for="admin-seat-type" class="filter-label">Seat Type</label>
+        <label for="admin-seat-type" class="filter-label">{{ 'admin.busSeats.seatType' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">💺</span>
           <select
@@ -101,7 +101,7 @@
             (change)="onTypeChange($any($event.target).value)"
             aria-label="Filter seats by type"
           >
-            <option value="">All Seat Types</option>
+            <option value="">{{ 'admin.busSeats.allSeatTypes' | translate }}</option>
             <option value="REGULAR">Regular</option>
             <option value="PREMIUM">Premium</option>
             <option value="WINDOW">Window</option>
@@ -114,7 +114,7 @@
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
-        Total Seats: <strong>{{ filteredSeats().length }}</strong>
+        {{ 'admin.busSeats.totalSeats' | translate }} <strong>{{ filteredSeats().length }}</strong>
       </div>
 
       <div class="filter-actions-right">
@@ -128,7 +128,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
-            <span>Clear Filters</span>
+            <span>{{ 'admin.rooms.clearFilters' | translate }}</span>
           </button>
         }
       </div>
@@ -167,10 +167,10 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>Seat Number</th>
-          <th>Assigned Vehicle</th>
-          <th>Seat Classification</th>
+          <th style="width: 80px">{{ 'admin.common.id' | translate }}</th>
+          <th>{{ 'admin.busSeats.colSeatNumber' | translate }}</th>
+          <th>{{ 'admin.busSeats.assignedVehicle' | translate }}</th>
+          <th>{{ 'admin.busSeats.seatClassification' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -203,12 +203,12 @@
           <td colspan="4">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">💺</div>
-              <h3 class="empty-title">No bus seats found</h3>
+              <h3 class="empty-title">{{ 'admin.busSeats.noSeatsFound' | translate }}</h3>
               <p class="empty-desc">
                 @if (hasActiveFilters()) {
-                  No seats match the selected filter criteria.
+                  {{ 'admin.busSeats.noSeatsFilterMatch' | translate }}
                 } @else {
-                  No seats are configured in the system.
+                  {{ 'admin.busSeats.noSeatsConfigured' | translate }}
                 }
               </p>
             </div>

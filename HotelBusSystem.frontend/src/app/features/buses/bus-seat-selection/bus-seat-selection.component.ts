@@ -14,6 +14,7 @@ import {
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom, of, catchError } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { Dialog } from 'primeng/dialog';
 import { Tag } from 'primeng/tag';
@@ -50,6 +51,7 @@ export interface SeatRow {
     Tag,
     Tooltip,
     ButtonModule,
+    TranslatePipe,
   ],
   templateUrl: './bus-seat-selection.component.html',
   styleUrl: './bus-seat-selection.component.css',
@@ -62,6 +64,15 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
+
+  private tr(key: string, params?: Record<string, any>, fallback?: string): string {
+    if (this.translate) {
+      const res = this.translate.instant(key, params);
+      if (res && res !== key) return res;
+    }
+    return fallback || key;
+  }
 
   @Input({ required: true }) trip: EnrichedBusTrip | null = null;
   @Input() visible: boolean = false;
@@ -300,8 +311,8 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
       if (currentSelected.size >= this.maxSeatsLimit) {
         this.messageService.add({
           severity: 'warn',
-          summary: 'Seat Limit Reached',
-          detail: `You can select up to ${this.maxSeatsLimit} seats per booking.`,
+          summary: this.tr('busSeat.messages.limitReachedTitle', undefined, 'Seat Limit Reached'),
+          detail: this.tr('busSeat.messages.limitReachedDetail', { count: this.maxSeatsLimit }, `You can select up to ${this.maxSeatsLimit} seats per booking.`),
           life: 4000,
         });
         return;
@@ -358,8 +369,8 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
             this.selectedSeatIds.set(restored);
             this.messageService.add({
               severity: 'info',
-              summary: 'Selection Restored',
-              detail: `Restored ${restored.size} seat(s) from your previous session.`,
+              summary: this.tr('busSeat.messages.restoredTitle', undefined, 'Selection Restored'),
+              detail: this.tr('busSeat.messages.restoredDetail', { count: restored.size }, `Restored ${restored.size} seat(s) from your previous session.`),
               life: 5000,
             });
           }
@@ -367,8 +378,8 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
           if (hadConflict) {
             this.messageService.add({
               severity: 'warn',
-              summary: 'Seat Unavailable',
-              detail: 'One or more of your previously chosen seats has been booked by another passenger.',
+              summary: this.tr('busSeat.messages.conflictTitle', undefined, 'Seat Unavailable'),
+              detail: this.tr('busSeat.messages.conflictDetail', undefined, 'One or more of your previously chosen seats has been booked by another passenger.'),
               life: 6000,
             });
           }
@@ -402,8 +413,8 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
 
     this.messageService.add({
       severity: 'info',
-      summary: 'Sign In Required',
-      detail: 'Please log in to finalize your booking. Your selected seats have been saved.',
+      summary: this.tr('busSeat.messages.signInRequiredTitle', undefined, 'Sign In Required'),
+      detail: this.tr('busSeat.messages.signInRequiredDetail', undefined, 'Please log in to finalize your booking. Your selected seats have been saved.'),
       life: 4000,
     });
 
@@ -424,8 +435,8 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
     if (seatsToBook.length === 0) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'No Seats Selected',
-        detail: 'Please select at least one available seat to proceed.',
+        summary: this.tr('busSeat.messages.noSeatsSelectedTitle', undefined, 'No Seats Selected'),
+        detail: this.tr('busSeat.messages.noSeatsSelectedDetail', undefined, 'Please select at least one available seat to proceed.'),
         life: 3000,
       });
       return;
@@ -440,11 +451,11 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
       if (this.direction === 'outgoing') {
         const eligible = isOutgoingEligible(this.trip, stayDates, stopId);
         if (!eligible) {
-          const reason = `This outgoing trip is not eligible for your hotel check-in date (${stayDates.checkIn}).`;
+          const reason = this.tr('busSeat.messages.outgoingIneligibleDetail', { date: stayDates.checkIn }, `This outgoing trip is not eligible for your hotel check-in date (${stayDates.checkIn}).`);
           this.error.set(reason);
           this.messageService.add({
             severity: 'error',
-            summary: 'Trip Ineligible',
+            summary: this.tr('busSeat.messages.tripIneligibleTitle', undefined, 'Trip Ineligible'),
             detail: reason,
             life: 6000,
           });
@@ -453,11 +464,11 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
       } else {
         const eligible = isReturnEligible(this.trip, stayDates, stopId);
         if (!eligible) {
-          const reason = `This return trip is not eligible for your hotel check-out date (${stayDates.checkOut}).`;
+          const reason = this.tr('busSeat.messages.returnIneligibleDetail', { date: stayDates.checkOut }, `This return trip is not eligible for your hotel check-out date (${stayDates.checkOut}).`);
           this.error.set(reason);
           this.messageService.add({
             severity: 'error',
-            summary: 'Trip Ineligible',
+            summary: this.tr('busSeat.messages.tripIneligibleTitle', undefined, 'Trip Ineligible'),
             detail: reason,
             life: 6000,
           });
@@ -505,8 +516,12 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
 
     this.messageService.add({
       severity: 'success',
-      summary: 'Added to Booking Summary',
-      detail: `${seatsToBook.length} seat(s) for ${this.trip.originStop?.name || 'Origin'} → ${this.trip.destinationStop?.name || 'Destination'} added to your summary.`,
+      summary: this.tr('busSeat.messages.addedToSummaryTitle', undefined, 'Added to Booking Summary'),
+      detail: this.tr('busSeat.messages.addedToSummaryDetail', {
+        count: seatsToBook.length,
+        origin: this.trip.originStop?.name || 'Origin',
+        destination: this.trip.destinationStop?.name || 'Destination'
+      }, `${seatsToBook.length} seat(s) for ${this.trip.originStop?.name || 'Origin'} → ${this.trip.destinationStop?.name || 'Destination'} added to your summary.`),
       life: 4000,
     });
 

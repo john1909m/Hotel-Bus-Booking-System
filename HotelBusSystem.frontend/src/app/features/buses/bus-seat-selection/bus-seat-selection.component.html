@@ -23,10 +23,14 @@
         </div>
         <div class="header-titles">
           <h2 class="dialog-main-title">
-            {{ trip.originStop?.city || 'Origin' }} &rarr; {{ trip.destinationStop?.city || 'Destination' }}
+            {{ trip.originStop?.city || ('busSearch.originTerminal' | translate) }} &rarr; {{ trip.destinationStop?.city || ('busSearch.destinationTerminal' | translate) }}
           </h2>
           <p class="dialog-sub-title">
-            {{ (trip.departureTime || trip.departure) | date:'mediumDate' }} at {{ (trip.departureTime || trip.departure) | date:'shortTime' }} · Coach #{{ trip.bus?.busNumber || trip.busId }}
+            {{ 'busSeat.headerSubtitle' | translate:{
+              date: ((trip.departureTime || trip.departure) | date:'mediumDate'),
+              time: ((trip.departureTime || trip.departure) | date:'shortTime'),
+              coach: (trip.bus?.busNumber || trip.busId)
+            } }}
           </p>
         </div>
       </div>
@@ -40,7 +44,7 @@
     @if (loading()) {
       <div class="seat-dialog-loading" aria-live="polite">
         <div class="loading-spinner-ring" aria-hidden="true"></div>
-        <p class="loading-label">Loading coach seating arrangement & availability...</p>
+        <p class="loading-label">{{ 'busSeat.loading' | translate }}</p>
       </div>
     }
 
@@ -56,12 +60,12 @@
               <path d="M20 6L9 17l-5-5"/>
             </svg>
           </div>
-          <p-tag value="STATUS: PENDING" severity="warn" styleClass="pending-status-tag" />
+          <p-tag [value]="'busSeat.placeholder.statusPending' | translate" severity="warn" styleClass="pending-status-tag" />
         </div>
 
-        <h3 class="placeholder-title">Seat Reservation Created!</h3>
+        <h3 class="placeholder-title">{{ 'busSeat.placeholder.title' | translate }}</h3>
         <p class="placeholder-subtitle">
-          Your seat reservation has been recorded in <strong>PENDING</strong> status and is waiting for administrator confirmation.
+          {{ 'busSeat.placeholder.subtitle' | translate }}
         </p>
 
         <!-- Informative Payment Gateway Notice Card -->
@@ -73,10 +77,9 @@
             </svg>
           </div>
           <div class="notice-body">
-            <h4 class="notice-headline">Payment Gateway Integration Pending</h4>
+            <h4 class="notice-headline">{{ 'busSeat.placeholder.noticeHeadline' | translate }}</h4>
             <p class="notice-text">
-              Direct online credit/debit card processing is currently under integration. No immediate charge has been made to your account.
-              You may complete ticket payment at the departure terminal before boarding, or wait for customer support follow-up.
+              {{ 'busSeat.placeholder.noticeText' | translate }}
             </p>
           </div>
         </div>
@@ -84,7 +87,7 @@
         <!-- Reservation Details Summary Table -->
         <div class="reservation-summary-card">
           <div class="summary-row">
-            <span class="row-label">Booking Reference:</span>
+            <span class="row-label">{{ 'busSeat.placeholder.bookingReference' | translate }}</span>
             <div class="row-value reference-chips">
               @for (booking of createdBookings(); track booking.id) {
                 <span class="ref-badge">#{{ booking.id }}</span>
@@ -93,30 +96,30 @@
           </div>
 
           <div class="summary-row">
-            <span class="row-label">Journey Route:</span>
+            <span class="row-label">{{ 'busSeat.placeholder.journeyRoute' | translate }}</span>
             <span class="row-value font-medium">
               {{ trip.originStop?.name || trip.originStop?.city }} &rarr; {{ trip.destinationStop?.name || trip.destinationStop?.city }}
             </span>
           </div>
 
           <div class="summary-row">
-            <span class="row-label">Departure Schedule:</span>
+            <span class="row-label">{{ 'busSeat.placeholder.departureSchedule' | translate }}</span>
             <span class="row-value">
-              {{ (trip.departureTime || trip.departure) | date:'mediumDate' }} at {{ (trip.departureTime || trip.departure) | date:'shortTime' }}
+              {{ (trip.departureTime || trip.departure) | date:'mediumDate' }} {{ 'busSeat.placeholder.atTime' | translate }} {{ (trip.departureTime || trip.departure) | date:'shortTime' }}
             </span>
           </div>
 
           <div class="summary-row">
-            <span class="row-label">Reserved Seat(s):</span>
+            <span class="row-label">{{ 'busSeat.placeholder.reservedSeats' | translate }}</span>
             <div class="row-value seat-chips-row">
               @for (seat of selectedSeatsList(); track seat.id) {
-                <span class="confirmed-seat-chip">Seat {{ seat.seatNumber }}</span>
+                <span class="confirmed-seat-chip">{{ 'busSeat.placeholder.seatNumber' | translate:{ number: seat.seatNumber } }}</span>
               }
             </div>
           </div>
 
           <div class="summary-row total-highlight">
-            <span class="row-label">Total Reservation Fare:</span>
+            <span class="row-label">{{ 'busSeat.placeholder.totalReservationFare' | translate }}</span>
             <span class="row-value fare-total">
               {{ totalPrice() | number:'1.2-2' }} <small>EGP</small>
             </span>
@@ -137,7 +140,7 @@
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span>View My Bus Bookings</span>
+            <span>{{ 'busSeat.placeholder.viewMyBookings' | translate }}</span>
           </a>
 
           <button
@@ -146,7 +149,7 @@
             (click)="closeDialog()"
             id="close-placeholder-btn"
           >
-            Done
+            {{ 'busSeat.placeholder.done' | translate }}
           </button>
         </div>
 
@@ -178,7 +181,7 @@
           <div class="seat-legend-bar" aria-label="Seat map legend">
             <div class="legend-item">
               <span class="legend-box available-box" aria-hidden="true"></span>
-              <span class="legend-text">Available</span>
+              <span class="legend-text">{{ 'busSeat.legend.available' | translate }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-box selected-box" aria-hidden="true">
@@ -186,7 +189,7 @@
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
               </span>
-              <span class="legend-text">Selected</span>
+              <span class="legend-text">{{ 'busSeat.legend.selected' | translate }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-box booked-box" aria-hidden="true">
@@ -195,11 +198,11 @@
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </span>
-              <span class="legend-text">Booked</span>
+              <span class="legend-text">{{ 'busSeat.legend.booked' | translate }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-box premium-box" aria-hidden="true">★</span>
-              <span class="legend-text">Premium</span>
+              <span class="legend-text">{{ 'busSeat.legend.premium' | translate }}</span>
             </div>
           </div>
 
@@ -213,7 +216,7 @@
                   <span class="wiper-left" aria-hidden="true"></span>
                   <span class="wiper-right" aria-hidden="true"></span>
                 </div>
-                <div class="windshield-label">FRONT / WINDSHIELD</div>
+                <div class="windshield-label">{{ 'busSeat.coach.front' | translate }}</div>
               </div>
 
               <!-- Cockpit Strip: Driver on Left, Entrance on Right -->
@@ -228,7 +231,7 @@
                       <line x1="19.07" y1="19.07" x2="14.12" y2="14.12"></line>
                     </svg>
                   </div>
-                  <span class="cockpit-text">Driver</span>
+                  <span class="cockpit-text">{{ 'busSeat.coach.driver' | translate }}</span>
                 </div>
 
                 <div class="aisle-direction-guide" aria-hidden="true">
@@ -245,7 +248,7 @@
                       <path d="M14 12v.01"></path>
                     </svg>
                   </div>
-                  <span class="cockpit-text">Entrance</span>
+                  <span class="cockpit-text">{{ 'busSeat.coach.entrance' | translate }}</span>
                 </div>
               </div>
 
@@ -266,8 +269,14 @@
                             [class.premium]="seat.seatType === 'PREMIUM'"
                             [disabled]="isSeatBooked(seat.id) || submitting()"
                             (click)="onSeatClick(seat)"
-                            [attr.aria-label]="'Seat ' + seat.seatNumber + ', ' + (seat.seatType || 'Regular') + ', ' + (isSeatBooked(seat.id) ? 'Booked' : (isSeatSelected(seat.id) ? 'Selected' : 'Available'))"
-                            [pTooltip]="'Seat ' + seat.seatNumber + ' (' + (seat.seatType || 'Regular') + ')' + (isSeatBooked(seat.id) ? ' — Already Booked' : ' — ' + (trip.price | number:'1.2-2') + ' EGP')"
+                            [attr.aria-label]="'busSeat.coach.seatAria' | translate:{
+                              number: seat.seatNumber,
+                              type: (seat.seatType || 'Regular'),
+                              status: (isSeatBooked(seat.id) ? ('busSeat.legend.booked' | translate) : (isSeatSelected(seat.id) ? ('busSeat.legend.selected' | translate) : ('busSeat.legend.available' | translate)))
+                            }"
+                            [pTooltip]="isSeatBooked(seat.id)
+                              ? ('busSeat.coach.seatTooltipBooked' | translate:{ number: seat.seatNumber, type: (seat.seatType || 'Regular') })
+                              : ('busSeat.coach.seatTooltipAvailable' | translate:{ number: seat.seatNumber, type: (seat.seatType || 'Regular'), price: (trip.price | number:'1.2-2') })"
                             tooltipPosition="top"
                           >
                             <span class="seat-top-cushion" aria-hidden="true"></span>
@@ -310,8 +319,14 @@
                             [class.premium]="seat.seatType === 'PREMIUM'"
                             [disabled]="isSeatBooked(seat.id) || submitting()"
                             (click)="onSeatClick(seat)"
-                            [attr.aria-label]="'Seat ' + seat.seatNumber + ', ' + (seat.seatType || 'Regular') + ', ' + (isSeatBooked(seat.id) ? 'Booked' : (isSeatSelected(seat.id) ? 'Selected' : 'Available'))"
-                            [pTooltip]="'Seat ' + seat.seatNumber + ' (' + (seat.seatType || 'Regular') + ')' + (isSeatBooked(seat.id) ? ' — Already Booked' : ' — ' + (trip.price | number:'1.2-2') + ' EGP')"
+                            [attr.aria-label]="'busSeat.coach.seatAria' | translate:{
+                              number: seat.seatNumber,
+                              type: (seat.seatType || 'Regular'),
+                              status: (isSeatBooked(seat.id) ? ('busSeat.legend.booked' | translate) : (isSeatSelected(seat.id) ? ('busSeat.legend.selected' | translate) : ('busSeat.legend.available' | translate)))
+                            }"
+                            [pTooltip]="isSeatBooked(seat.id)
+                              ? ('busSeat.coach.seatTooltipBooked' | translate:{ number: seat.seatNumber, type: (seat.seatType || 'Regular') })
+                              : ('busSeat.coach.seatTooltipAvailable' | translate:{ number: seat.seatNumber, type: (seat.seatType || 'Regular'), price: (trip.price | number:'1.2-2') })"
                             tooltipPosition="top"
                           >
                             <span class="seat-top-cushion" aria-hidden="true"></span>
@@ -343,7 +358,7 @@
 
               <!-- Rear Coach Bumper Base -->
               <div class="coach-rear-bumper">
-                <span class="bumper-label">REAR</span>
+                <span class="bumper-label">{{ 'busSeat.coach.rear' | translate }}</span>
               </div>
 
             </div>
@@ -356,14 +371,14 @@
 
           <!-- Trip Overview Card -->
           <div class="journey-overview-card">
-            <h4 class="sidebar-heading">Trip Details</h4>
+            <h4 class="sidebar-heading">{{ 'busSeat.summary.tripDetails' | translate }}</h4>
 
             <div class="overview-stations">
               <div class="station-item">
                 <span class="station-bullet origin-bullet"></span>
                 <div class="station-info">
                   <span class="station-city">{{ trip.originStop?.city }}</span>
-                  <span class="station-name">{{ trip.originStop?.name || 'Main Bus Terminal' }}</span>
+                  <span class="station-name">{{ trip.originStop?.name || ('busSeat.summary.mainTerminal' | translate) }}</span>
                 </div>
               </div>
 
@@ -371,7 +386,7 @@
                 <span class="station-bullet dest-bullet"></span>
                 <div class="station-info">
                   <span class="station-city">{{ trip.destinationStop?.city }}</span>
-                  <span class="station-name">{{ trip.destinationStop?.name || 'Central Bus Terminal' }}</span>
+                  <span class="station-name">{{ trip.destinationStop?.name || ('busSeat.summary.centralTerminal' | translate) }}</span>
                 </div>
               </div>
             </div>
@@ -383,11 +398,11 @@
               </div>
               <div class="meta-item">
                 <span class="meta-icon">🕒</span>
-                <span>Departure: <strong>{{ (trip.departureTime || trip.departure) | date:'shortTime' }}</strong></span>
+                <span>{{ 'busSeat.summary.departureLabel' | translate }} <strong>{{ (trip.departureTime || trip.departure) | date:'shortTime' }}</strong></span>
               </div>
               <div class="meta-item">
                 <span class="meta-icon">🚌</span>
-                <span>Coach: <strong>{{ trip.bus?.company || 'Express Carrier' }} (#{{ trip.bus?.busNumber || trip.busId }})</strong></span>
+                <span>{{ 'busSeat.summary.coachLabel' | translate }} <strong>{{ trip.bus?.company || ('busSeat.summary.expressCarrier' | translate) }} (#{{ trip.bus?.busNumber || trip.busId }})</strong></span>
               </div>
             </div>
           </div>
@@ -395,7 +410,7 @@
           <!-- Selected Seats Box -->
           <div class="selected-seats-card">
             <div class="card-head-row">
-              <h4 class="sidebar-heading">Selected Seats</h4>
+              <h4 class="sidebar-heading">{{ 'busSeat.summary.selectedSeats' | translate }}</h4>
               <span class="count-badge" [class.highlight]="selectedSeatsCount() > 0">
                 {{ selectedSeatsCount() }} / {{ maxSeatsLimit }}
               </span>
@@ -403,14 +418,14 @@
 
             @if (selectedSeatsCount() === 0) {
               <div class="empty-seats-hint">
-                <p>Click on any available seat on the coach map to select it for your journey.</p>
-                <small>You can reserve up to {{ maxSeatsLimit }} seats in one booking.</small>
+                <p>{{ 'busSeat.summary.emptyHint' | translate }}</p>
+                <small>{{ 'busSeat.summary.limitHint' | translate:{ count: maxSeatsLimit } }}</small>
               </div>
             } @else {
               <div class="selected-chips-grid">
                 @for (seat of selectedSeatsList(); track seat.id) {
                   <div class="seat-badge-chip">
-                    <span class="chip-number">Seat {{ seat.seatNumber }}</span>
+                    <span class="chip-number">{{ 'busSeat.placeholder.seatNumber' | translate:{ number: seat.seatNumber } }}</span>
                     @if (seat.seatType && seat.seatType !== 'REGULAR') {
                       <span class="chip-type">({{ seat.seatType }})</span>
                     }
@@ -419,7 +434,7 @@
                       class="btn-remove-seat"
                       (click)="removeSeat(seat.id)"
                       [disabled]="submitting()"
-                      [attr.aria-label]="'Remove seat ' + seat.seatNumber"
+                      [attr.aria-label]="'busSeat.summary.removeSeatAria' | translate:{ number: seat.seatNumber }"
                     >
                       &times;
                     </button>
@@ -431,22 +446,22 @@
 
           <!-- Price & Fare Calculation Breakdown -->
           <div class="fare-calculation-card">
-            <h4 class="sidebar-heading">Fare Summary</h4>
+            <h4 class="sidebar-heading">{{ 'busSeat.summary.fareSummary' | translate }}</h4>
 
             <div class="fare-row">
-              <span>Fare per seat:</span>
+              <span>{{ 'busSeat.summary.farePerSeat' | translate }}</span>
               <span class="fare-num">{{ trip.price | number:'1.2-2' }} EGP</span>
             </div>
 
             <div class="fare-row">
-              <span>Selected seats:</span>
+              <span>{{ 'busSeat.summary.selectedCount' | translate }}</span>
               <span class="fare-num">&times; {{ selectedSeatsCount() }}</span>
             </div>
 
             <div class="fare-divider"></div>
 
             <div class="fare-row fare-total-row">
-              <span>Total Price:</span>
+              <span>{{ 'busSeat.summary.totalPrice' | translate }}</span>
               <span class="grand-total">{{ totalPrice() | number:'1.2-2' }} <small>EGP</small></span>
             </div>
           </div>
@@ -459,8 +474,8 @@
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
               <div>
-                <strong>Sign In to Complete</strong>
-                <p>Booking requires authentication. Your selected seats will be saved so you can resume immediately after logging in.</p>
+                <strong>{{ 'busSeat.summary.signInRequired' | translate }}</strong>
+                <p>{{ 'busSeat.summary.signInHint' | translate }}</p>
               </div>
             </div>
           }
@@ -482,15 +497,15 @@
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
               <span>
-                Add to Booking Summary
+                {{ 'busSeat.summary.addToBookingSummary' | translate }}
                 @if (selectedSeatsCount() > 0) {
-                  ({{ selectedSeatsCount() }} {{ selectedSeatsCount() === 1 ? 'Seat' : 'Seats' }} · {{ totalPrice() | number:'1.2-2' }} EGP)
+                  ({{ selectedSeatsCount() }} {{ (selectedSeatsCount() === 1 ? 'busSeat.summary.seat' : 'busSeat.summary.seats') | translate }} · {{ totalPrice() | number:'1.2-2' }} EGP)
                 }
               </span>
             </button>
 
             <p class="terms-secure-hint">
-              🔒 Pessimistic seat locking protects your reservation at checkout.
+              {{ 'busSeat.summary.pessimisticLockHint' | translate }}
             </p>
           </div>
 
@@ -500,4 +515,3 @@
     }
   }
 </p-dialog>
-

@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Hotel Images</span>
+        <span class="current">{{ 'admin.hotelImages.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Hotel Images Management</h1>
+      <h1 class="page-title">{{ 'admin.hotelImages.title' | translate }}</h1>
       <p class="page-subtitle">
-        Upload, organize, and manage high-resolution hotel and room-type photography directly synced with cloud storage.
+        {{ 'admin.hotelImages.subtitle' | translate }}
       </p>
     </div>
 
@@ -24,14 +24,14 @@
         (click)="openUploadDialog()"
         [disabled]="!selectedHotelId() || loadingHotels()"
         id="admin-upload-image-btn"
-        aria-label="Upload new image"
+        [attr.aria-label]="'admin.hotelImages.uploadNew' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="17 8 12 3 7 8"></polyline>
           <line x1="12" y1="3" x2="12" y2="15"></line>
         </svg>
-        <span>Upload New Image</span>
+        <span>{{ 'admin.hotelImages.uploadNew' | translate }}</span>
       </button>
     </div>
   </header>
@@ -45,7 +45,7 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
-          Select Hotel Property
+          {{ 'admin.hotelImages.selectHotel' | translate }}
         </label>
         <div class="select-wrapper">
           <select
@@ -57,7 +57,7 @@
             aria-label="Choose hotel to manage images"
           >
             @if (hotels().length === 0 && !loadingHotels()) {
-              <option value="">No hotels found in system</option>
+              <option value="">{{ 'admin.hotelImages.noHotelsInSystem' | translate }}</option>
             }
             @for (h of hotels(); track h.id) {
               <option [value]="h.id">
@@ -72,15 +72,15 @@
       @if (selectedHotel()) {
         <div class="hotel-stats-strip">
           <div class="stat-pill">
-            <span class="stat-label">Total Images</span>
+            <span class="stat-label">{{ 'admin.hotelImages.totalImages' | translate }}</span>
             <span class="stat-val">{{ images().length }}</span>
           </div>
           <div class="stat-pill">
-            <span class="stat-label">Hotel Gallery</span>
+            <span class="stat-label">{{ 'admin.hotelImages.hotelGallery' | translate }}</span>
             <span class="stat-val">{{ hotelGalleryCount() }}</span>
           </div>
           <div class="stat-pill">
-            <span class="stat-label">Room Types</span>
+            <span class="stat-label">{{ 'admin.hotelImages.roomTypes' | translate }}</span>
             <span class="stat-val">{{ availableRoomTypes().length }}</span>
           </div>
         </div>
@@ -99,7 +99,7 @@
         </svg>
         <span>{{ errorMessage() }}</span>
       </div>
-      <button type="button" class="btn-retry" (click)="loadHotels()">Retry</button>
+      <button type="button" class="btn-retry" (click)="loadHotels()">{{ 'admin.common.refresh' | translate }}</button>
     </div>
   }
 
@@ -470,7 +470,7 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '92vw', maxWidth: '440px' }"
-    header="Confirm Image Deletion"
+    [header]="'admin.hotelImages.confirmDeleteTitle' | translate"
     (onHide)="cancelDelete()"
   >
     <div class="delete-confirmation-body">

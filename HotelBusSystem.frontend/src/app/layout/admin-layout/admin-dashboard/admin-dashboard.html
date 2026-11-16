@@ -4,13 +4,13 @@
   <header class="dashboard-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.dashboard.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Analytics & Overview</span>
+        <span class="current">{{ 'admin.dashboard.analytics' | translate }}</span>
       </nav>
-      <h1 class="page-title">Admin Dashboard & Analytics</h1>
+      <h1 class="page-title">{{ 'admin.dashboard.title' | translate }}</h1>
       <p class="page-subtitle">
-        Welcome back, <strong>{{ currentUser()?.name || 'Administrator' }}</strong>. Visual platform intelligence queried directly from backend analytics endpoints.
+        {{ 'admin.dashboard.welcome' | translate:{ name: currentUser()?.name || ('admin.layout.administrator' | translate) } }}
       </p>
     </div>
 
@@ -20,7 +20,7 @@
         class="btn-refresh"
         (click)="loadAll()"
         id="admin-dashboard-refresh-all-btn"
-        aria-label="Refresh all analytics data"
+        [attr.aria-label]="'admin.dashboard.refreshAll' | translate"
       >
         <svg
           width="16"
@@ -35,7 +35,7 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>Refresh All</span>
+        <span>{{ 'admin.dashboard.refreshAll' | translate }}</span>
       </button>
     </div>
   </header>
@@ -45,7 +45,7 @@
     <div class="toolbar-content">
       <div class="date-pickers-group">
         <div class="picker-field">
-          <label for="admin-from-date" class="picker-label">Start Date</label>
+          <label for="admin-from-date" class="picker-label">{{ 'admin.dashboard.startDate' | translate }}</label>
           <p-datepicker
             id="admin-from-date"
             [ngModel]="fromDate()"
@@ -61,7 +61,7 @@
         </div>
 
         <div class="picker-field">
-          <label for="admin-to-date" class="picker-label">End Date</label>
+          <label for="admin-to-date" class="picker-label">{{ 'admin.dashboard.endDate' | translate }}</label>
           <p-datepicker
             id="admin-to-date"
             [ngModel]="toDate()"
@@ -97,7 +97,7 @@
       </div>
 
       <div class="preset-buttons-group">
-        <span class="preset-label">Presets:</span>
+        <span class="preset-label">{{ 'admin.dashboard.presets' | translate }}</span>
         <button
           type="button"
           class="btn-preset"
@@ -127,12 +127,12 @@
       <span class="status-indicator">
         <span class="dot" [class.active]="activeFrom() && activeTo()"></span>
         @if (activeFrom() && activeTo()) {
-          Active Window: <strong>{{ activeFrom() }}</strong> to <strong>{{ activeTo() }}</strong>
+          {{ 'admin.dashboard.activeWindow' | translate }} <strong>{{ activeFrom() }}</strong> to <strong>{{ activeTo() }}</strong>
         } @else {
-          Default Window: <strong>Backend Default (Last 30 Days in Africa/Cairo)</strong>
+          {{ 'admin.dashboard.defaultWindow' | translate }} <strong>{{ 'admin.dashboard.defaultWindowNote' | translate }}</strong>
         }
       </span>
-      <span class="status-note">Parameters apply to all analytics cards</span>
+      <span class="status-note">{{ 'admin.dashboard.paramsNote' | translate }}</span>
     </div>
 
     @if (dateError()) {
@@ -151,8 +151,8 @@
   <section class="analytics-card" aria-label="Executive Summary KPIs">
     <div class="card-header">
       <div>
-        <h2 class="card-title">Executive Summary KPIs</h2>
-        <p class="card-subtitle">Aggregate inventory, booking volume, and platform revenue metrics</p>
+        <h2 class="card-title">{{ 'admin.dashboard.kpisTitle' | translate }}</h2>
+        <p class="card-subtitle">{{ 'admin.dashboard.kpisSubtitle' | translate }}</p>
       </div>
       <button
         type="button"
@@ -179,24 +179,24 @@
           <span class="error-icon">⚠️</span>
           <span>{{ summaryError() }}</span>
         </div>
-        <button type="button" class="btn-retry" (click)="loadSummary()">Retry</button>
+        <button type="button" class="btn-retry" (click)="loadSummary()">{{ 'admin.dashboard.retry' | translate }}</button>
       </div>
     } @else if (summaryData(); as s) {
       <div class="kpi-groups-container">
         <!-- Revenue Group -->
         <div class="kpi-group revenue-group">
-          <h3 class="kpi-group-title">Platform Revenue</h3>
+          <h3 class="kpi-group-title">{{ 'admin.dashboard.platformRevenue' | translate }}</h3>
           <div class="kpi-grid">
             <div class="kpi-stat-card primary">
-              <span class="kpi-stat-label">Total Revenue</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.totalRevenue' | translate }}</span>
               <div class="kpi-stat-value">EGP {{ s.revenue | number:'1.2-2' }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Hotel Revenue</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.hotelRevenue' | translate }}</span>
               <div class="kpi-stat-value">EGP {{ s.hotelRevenue | number:'1.2-2' }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Bus Revenue</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.busRevenue' | translate }}</span>
               <div class="kpi-stat-value">EGP {{ s.busRevenue | number:'1.2-2' }}</div>
             </div>
           </div>
@@ -204,22 +204,22 @@
 
         <!-- Bookings Group -->
         <div class="kpi-group">
-          <h3 class="kpi-group-title">Bookings Activity</h3>
+          <h3 class="kpi-group-title">{{ 'admin.dashboard.bookingsActivity' | translate }}</h3>
           <div class="kpi-grid">
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Hotel Bookings</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.hotelBookings' | translate }}</span>
               <div class="kpi-stat-value">{{ s.hotelBookings | number }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Bus Bookings</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.busBookings' | translate }}</span>
               <div class="kpi-stat-value">{{ s.busBookings | number }}</div>
             </div>
             <div class="kpi-stat-card highlight">
-              <span class="kpi-stat-label">Active Bookings</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.activeBookings' | translate }}</span>
               <div class="kpi-stat-value">{{ s.activeBookings | number }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Cancelled Bookings</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.cancelledBookings' | translate }}</span>
               <div class="kpi-stat-value">{{ s.cancelledBookings | number }}</div>
             </div>
           </div>
@@ -227,22 +227,22 @@
 
         <!-- Inventory Group -->
         <div class="kpi-group">
-          <h3 class="kpi-group-title">Platform Infrastructure</h3>
+          <h3 class="kpi-group-title">{{ 'admin.dashboard.infrastructure' | translate }}</h3>
           <div class="kpi-grid">
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Hotels</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.hotels' | translate }}</span>
               <div class="kpi-stat-value">{{ s.totalHotels | number }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Rooms</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.rooms' | translate }}</span>
               <div class="kpi-stat-value">{{ s.totalRooms | number }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Buses</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.buses' | translate }}</span>
               <div class="kpi-stat-value">{{ s.totalBuses | number }}</div>
             </div>
             <div class="kpi-stat-card">
-              <span class="kpi-stat-label">Customers</span>
+              <span class="kpi-stat-label">{{ 'admin.dashboard.customers' | translate }}</span>
               <div class="kpi-stat-value">{{ s.totalCustomers | number }}</div>
             </div>
           </div>
@@ -258,8 +258,8 @@
     <section class="analytics-card" aria-label="Revenue Trends">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Revenue Trends</h2>
-          <p class="card-subtitle">Revenue over time across channels</p>
+          <h2 class="card-title">{{ 'admin.dashboard.revenueTrends' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.revenueOverTime' | translate }}</p>
         </div>
         <div class="card-controls">
           <div class="btn-group">
@@ -268,25 +268,19 @@
               class="btn-toggle"
               [class.active]="revenueGranularity() === 'DAY'"
               (click)="setRevenueGranularity('DAY')"
-            >
-              Day
-            </button>
+            >{{ 'admin.dashboard.day' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="revenueGranularity() === 'WEEK'"
               (click)="setRevenueGranularity('WEEK')"
-            >
-              Week
-            </button>
+            >{{ 'admin.dashboard.week' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="revenueGranularity() === 'MONTH'"
               (click)="setRevenueGranularity('MONTH')"
-            >
-              Month
-            </button>
+            >{{ 'admin.dashboard.month' | translate }}</button>
           </div>
           <button
             type="button"
@@ -310,7 +304,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ revenueError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadRevenue()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadRevenue()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (revenueData(); as r) {
         @if (r.points && r.points.length > 0) {
@@ -324,7 +318,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No revenue data available for this date range.</p>
+            <p>{{ 'admin.dashboard.noRevenueData' | translate }}</p>
           </div>
         }
       }
@@ -334,8 +328,8 @@
     <section class="analytics-card" aria-label="Booking Volume Trends">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Booking Volume Trends</h2>
-          <p class="card-subtitle">Reservation volume across service types</p>
+          <h2 class="card-title">{{ 'admin.dashboard.bookingVolumeTrends' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.reservationVolumeSubtitle' | translate }}</p>
         </div>
         <div class="card-controls">
           <div class="btn-group">
@@ -344,25 +338,19 @@
               class="btn-toggle"
               [class.active]="bookingsGranularity() === 'DAY'"
               (click)="setBookingsGranularity('DAY')"
-            >
-              Day
-            </button>
+            >{{ 'admin.dashboard.day' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="bookingsGranularity() === 'WEEK'"
               (click)="setBookingsGranularity('WEEK')"
-            >
-              Week
-            </button>
+            >{{ 'admin.dashboard.week' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="bookingsGranularity() === 'MONTH'"
               (click)="setBookingsGranularity('MONTH')"
-            >
-              Month
-            </button>
+            >{{ 'admin.dashboard.month' | translate }}</button>
           </div>
           <button
             type="button"
@@ -379,75 +367,59 @@
       <!-- Secondary filter bar for Type & Status -->
       <div class="sub-filter-row">
         <div class="sub-filter-group">
-          <span class="sub-filter-label">Type:</span>
+          <span class="sub-filter-label">{{ 'admin.dashboard.type' | translate }}</span>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsType() === undefined"
             (click)="setBookingsType(undefined)"
-          >
-            All
-          </button>
+          >{{ 'admin.common.all' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsType() === 'HOTEL'"
             (click)="setBookingsType('HOTEL')"
-          >
-            Hotel
-          </button>
+          >{{ 'admin.dashboard.hotel' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsType() === 'BUS'"
             (click)="setBookingsType('BUS')"
-          >
-            Bus
-          </button>
+          >{{ 'admin.dashboard.bus' | translate }}</button>
         </div>
 
         <div class="sub-filter-group">
-          <span class="sub-filter-label">Status:</span>
+          <span class="sub-filter-label">{{ 'admin.dashboard.status' | translate }}</span>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsStatus() === undefined"
             (click)="setBookingsStatus(undefined)"
-          >
-            All
-          </button>
+          >{{ 'admin.common.all' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsStatus() === 'CONFIRMED'"
             (click)="setBookingsStatus('CONFIRMED')"
-          >
-            Confirmed
-          </button>
+          >{{ 'admin.dashboard.confirmed' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsStatus() === 'PENDING'"
             (click)="setBookingsStatus('PENDING')"
-          >
-            Pending
-          </button>
+          >{{ 'admin.dashboard.pending' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsStatus() === 'COMPLETED'"
             (click)="setBookingsStatus('COMPLETED')"
-          >
-            Completed
-          </button>
+          >{{ 'admin.dashboard.completed' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="bookingsStatus() === 'CANCELLED'"
             (click)="setBookingsStatus('CANCELLED')"
-          >
-            Cancelled
-          </button>
+          >{{ 'admin.dashboard.cancelled' | translate }}</button>
         </div>
       </div>
 
@@ -461,7 +433,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ bookingsError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadBookingsTrends()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadBookingsTrends()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (bookingsData(); as b) {
         @if (b.points && b.points.length > 0) {
@@ -475,7 +447,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No booking volume recorded for this filter criteria.</p>
+            <p>{{ 'admin.dashboard.noBookingsData' | translate }}</p>
           </div>
         }
       }
@@ -490,8 +462,8 @@
     <section class="analytics-card" aria-label="Bookings by Status">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Bookings by Status</h2>
-          <p class="card-subtitle">Lifecycle breakdown across reservation states</p>
+          <h2 class="card-title">{{ 'admin.dashboard.bookingsByStatus' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.lifecycleSubtitle' | translate }}</p>
         </div>
         <div class="card-controls">
           <div class="btn-group">
@@ -500,25 +472,19 @@
               class="btn-toggle"
               [class.active]="statusType() === undefined"
               (click)="setStatusType(undefined)"
-            >
-              All
-            </button>
+            >{{ 'admin.common.all' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="statusType() === 'HOTEL'"
               (click)="setStatusType('HOTEL')"
-            >
-              Hotels
-            </button>
+            >{{ 'admin.dashboard.hotels' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="statusType() === 'BUS'"
               (click)="setStatusType('BUS')"
-            >
-              Buses
-            </button>
+            >{{ 'admin.dashboard.buses' | translate }}</button>
           </div>
           <button
             type="button"
@@ -542,7 +508,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ statusError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadBookingsByStatus()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadBookingsByStatus()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (statusData(); as st) {
         @if (st.items && st.items.length > 0) {
@@ -556,7 +522,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No status data available for this range.</p>
+            <p>{{ 'admin.dashboard.noBookingsData' | translate }}</p>
           </div>
         }
       }
@@ -566,8 +532,8 @@
     <section class="analytics-card" aria-label="Top Performing Hotels">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Top Performing Hotels</h2>
-          <p class="card-subtitle">Highest grossing properties and booking destinations</p>
+          <h2 class="card-title">{{ 'admin.dashboard.topHotels' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.topHotelsSubtitle' | translate }}</p>
         </div>
         <div class="card-controls">
           <div class="btn-group">
@@ -576,17 +542,13 @@
               class="btn-toggle"
               [class.active]="topHotelsSortBy() === 'REVENUE'"
               (click)="setTopHotelsSortBy('REVENUE')"
-            >
-              By Revenue
-            </button>
+            >{{ 'admin.dashboard.byRevenue' | translate }}</button>
             <button
               type="button"
               class="btn-toggle"
               [class.active]="topHotelsSortBy() === 'BOOKINGS'"
               (click)="setTopHotelsSortBy('BOOKINGS')"
-            >
-              By Bookings
-            </button>
+            >{{ 'admin.dashboard.byBookings' | translate }}</button>
           </div>
           <button
             type="button"
@@ -602,31 +564,25 @@
 
       <div class="sub-filter-row">
         <div class="sub-filter-group">
-          <span class="sub-filter-label">Show:</span>
+          <span class="sub-filter-label">{{ 'admin.dashboard.show' | translate }}</span>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="topHotelsLimit() === 5"
             (click)="setTopHotelsLimit(5)"
-          >
-            Top 5
-          </button>
+          >{{ 'admin.dashboard.top5' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="topHotelsLimit() === 10"
             (click)="setTopHotelsLimit(10)"
-          >
-            Top 10
-          </button>
+          >{{ 'admin.dashboard.top10' | translate }}</button>
           <button
             type="button"
             class="btn-sub-toggle"
             [class.active]="topHotelsLimit() === 20"
             (click)="setTopHotelsLimit(20)"
-          >
-            Top 20
-          </button>
+          >{{ 'admin.dashboard.top20' | translate }}</button>
         </div>
       </div>
 
@@ -640,7 +596,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ topHotelsError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadTopHotels()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadTopHotels()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (topHotelsData(); as th) {
         @if (th.items && th.items.length > 0) {
@@ -654,7 +610,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No hotel booking records match the criteria.</p>
+            <p>{{ 'admin.dashboard.noHotelRecords' | translate }}</p>
           </div>
         }
       }
@@ -669,8 +625,8 @@
     <section class="analytics-card" aria-label="Hotel Room Occupancy">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Hotel Room Occupancy</h2>
-          <p class="card-subtitle">Room night capacity versus booked night utilization</p>
+          <h2 class="card-title">{{ 'admin.dashboard.roomOccupancy' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.roomOccupancySubtitle' | translate }}</p>
         </div>
         <div class="card-controls">
           <button
@@ -687,7 +643,7 @@
 
       <!-- Hotel ID filter input -->
       <div class="filter-input-row">
-        <label for="occupancy-hotel-id" class="filter-input-label">Filter Hotel ID:</label>
+        <label for="occupancy-hotel-id" class="filter-input-label">{{ 'admin.dashboard.filterHotelId' | translate }}</label>
         <div class="filter-input-box">
           <input
             id="occupancy-hotel-id"
@@ -701,17 +657,13 @@
             type="button"
             class="btn-input-apply"
             (click)="setOccupancyHotelId(hotelInput.value)"
-          >
-            Apply
-          </button>
+          >{{ 'admin.common.apply' | translate }}</button>
           @if (occupancyHotelId() !== undefined) {
             <button
               type="button"
               class="btn-input-clear"
               (click)="hotelInput.value = ''; setOccupancyHotelId('')"
-            >
-              Clear
-            </button>
+            >{{ 'admin.dashboard.clear' | translate }}</button>
           }
         </div>
       </div>
@@ -726,7 +678,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ occupancyError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadOccupancy()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadOccupancy()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (occupancyData(); as occ) {
         @if (occ.items && occ.items.length > 0) {
@@ -740,7 +692,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No hotel occupancy data available for this range.</p>
+            <p>{{ 'admin.dashboard.noOccupancyData' | translate }}</p>
           </div>
         }
       }
@@ -750,8 +702,8 @@
     <section class="analytics-card" aria-label="Bus Trips Utilization">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Bus Trips Utilization</h2>
-          <p class="card-subtitle">Departure seat capacity versus booked passenger utilization</p>
+          <h2 class="card-title">{{ 'admin.dashboard.busTripsUtilization' | translate }}</h2>
+          <p class="card-subtitle">{{ 'admin.dashboard.busTripsSubtitle' | translate }}</p>
         </div>
         <div class="card-controls">
           <button
@@ -768,7 +720,7 @@
 
       <!-- Route ID and Limit filters -->
       <div class="filter-input-row">
-        <label for="bus-route-id" class="filter-input-label">Filter Route ID:</label>
+        <label for="bus-route-id" class="filter-input-label">{{ 'admin.dashboard.filterRouteId' | translate }}</label>
         <div class="filter-input-box">
           <input
             id="bus-route-id"
@@ -782,22 +734,18 @@
             type="button"
             class="btn-input-apply"
             (click)="setBusTripsRouteId(routeInput.value)"
-          >
-            Apply
-          </button>
+          >{{ 'admin.common.apply' | translate }}</button>
           @if (busTripsRouteId() !== undefined) {
             <button
               type="button"
               class="btn-input-clear"
               (click)="routeInput.value = ''; setBusTripsRouteId('')"
-            >
-              Clear
-            </button>
+            >{{ 'admin.dashboard.clear' | translate }}</button>
           }
         </div>
 
         <div class="limit-selector-group">
-          <span class="sub-filter-label">Limit:</span>
+          <span class="sub-filter-label">{{ 'admin.dashboard.limit' | translate }}</span>
           <button
             type="button"
             class="btn-sub-toggle"
@@ -835,7 +783,7 @@
             <span class="error-icon">⚠️</span>
             <span>{{ busTripsError() }}</span>
           </div>
-          <button type="button" class="btn-retry" (click)="loadBusTrips()">Retry</button>
+          <button type="button" class="btn-retry" (click)="loadBusTrips()">{{ 'admin.dashboard.retry' | translate }}</button>
         </div>
       } @else if (busTripsData(); as bt) {
         @if (bt.items && bt.items.length > 0) {
@@ -849,7 +797,7 @@
           </div>
         } @else {
           <div class="empty-chart-state">
-            <p>No bus trip departures recorded for this range.</p>
+            <p>{{ 'admin.dashboard.noBusTripsData' | translate }}</p>
           </div>
         }
       }
@@ -861,8 +809,8 @@
   <section class="analytics-card" aria-label="Payments Breakdown">
     <div class="card-header">
       <div>
-        <h2 class="card-title">Payments Breakdown</h2>
-        <p class="card-subtitle">Settlements by payment method and gateway status</p>
+        <h2 class="card-title">{{ 'admin.dashboard.paymentsBreakdown' | translate }}</h2>
+        <p class="card-subtitle">{{ 'admin.dashboard.paymentsSubtitle' | translate }}</p>
       </div>
       <div class="card-controls">
         <button
@@ -887,13 +835,13 @@
           <span class="error-icon">⚠️</span>
           <span>{{ paymentsError() }}</span>
         </div>
-        <button type="button" class="btn-retry" (click)="loadPayments()">Retry</button>
+        <button type="button" class="btn-retry" (click)="loadPayments()">{{ 'admin.dashboard.retry' | translate }}</button>
       </div>
     } @else if (paymentsData(); as p) {
       @if (p.items && p.items.length > 0) {
         <div class="payments-charts-grid">
           <div class="sub-chart-box">
-            <h3 class="sub-chart-title">By Payment Method (Amount)</h3>
+            <h3 class="sub-chart-title">{{ 'admin.dashboard.byPaymentMethod' | translate }}</h3>
             <div class="chart-container doughnut-container">
               <p-chart
                 type="doughnut"
@@ -905,7 +853,7 @@
           </div>
 
           <div class="sub-chart-box">
-            <h3 class="sub-chart-title">By Transaction Status (Count)</h3>
+            <h3 class="sub-chart-title">{{ 'admin.dashboard.byPaymentStatus' | translate }}</h3>
             <div class="chart-container">
               <p-chart
                 type="bar"
@@ -918,7 +866,7 @@
         </div>
       } @else {
         <div class="empty-chart-state">
-          <p>No recorded payment transactions for this date window.</p>
+          <p>{{ 'admin.dashboard.noPaymentsData' | translate }}</p>
         </div>
       }
     }
@@ -926,14 +874,14 @@
 
   <!-- ─── Quick Access Hub ──────────────────────────────────── -->
   <section class="section-card" aria-label="Quick management access">
-    <h2 class="section-title">Admin Management Modules</h2>
+    <h2 class="section-title">{{ 'admin.dashboard.managementModules' | translate }}</h2>
 
     <div class="modules-grid">
       <a routerLink="/admin/hotels" class="module-link-card">
         <span class="module-icon">🏨</span>
         <div class="module-details">
-          <span class="module-name">Hotels</span>
-          <span class="module-desc">Manage hotel listings, pricing metadata, and locations</span>
+          <span class="module-name">{{ 'admin.nav.hotels' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesHotelsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -941,8 +889,8 @@
       <a routerLink="/admin/rooms" class="module-link-card">
         <span class="module-icon">🛏</span>
         <div class="module-details">
-          <span class="module-name">Rooms</span>
-          <span class="module-desc">Add, edit, and link room inventory to hotels</span>
+          <span class="module-name">{{ 'admin.nav.rooms' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesRoomsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -950,8 +898,8 @@
       <a routerLink="/admin/users" class="module-link-card">
         <span class="module-icon">👤</span>
         <div class="module-details">
-          <span class="module-name">Users</span>
-          <span class="module-desc">View accounts, assign roles, and manage permissions</span>
+          <span class="module-name">{{ 'admin.nav.users' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesUsersDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -959,8 +907,8 @@
       <a routerLink="/admin/buses" class="module-link-card">
         <span class="module-icon">🚌</span>
         <div class="module-details">
-          <span class="module-name">Buses</span>
-          <span class="module-desc">Fleet registry, bus types, and seating capacities</span>
+          <span class="module-name">{{ 'admin.nav.buses' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusesDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -968,8 +916,8 @@
       <a routerLink="/admin/bus-seats" class="module-link-card">
         <span class="module-icon">💺</span>
         <div class="module-details">
-          <span class="module-name">Bus Seats</span>
-          <span class="module-desc">Configure vehicle seating configurations and types</span>
+          <span class="module-name">{{ 'admin.nav.busSeats' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusSeatsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -977,8 +925,8 @@
       <a routerLink="/admin/bus-stops" class="module-link-card">
         <span class="module-icon">🚏</span>
         <div class="module-details">
-          <span class="module-name">Bus Stops</span>
-          <span class="module-desc">Geographic stations, cities, and pickup coordinates</span>
+          <span class="module-name">{{ 'admin.nav.busStops' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusStopsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -986,8 +934,8 @@
       <a routerLink="/admin/bus-routes" class="module-link-card">
         <span class="module-icon">🗺</span>
         <div class="module-details">
-          <span class="module-name">Bus Routes</span>
-          <span class="module-desc">Define routes connecting origin and destination stops</span>
+          <span class="module-name">{{ 'admin.nav.routes' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusRoutesDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -995,8 +943,8 @@
       <a routerLink="/admin/bus-trips" class="module-link-card">
         <span class="module-icon">🛣</span>
         <div class="module-details">
-          <span class="module-name">Bus Trips</span>
-          <span class="module-desc">Schedules, departure/arrival timings, and fares</span>
+          <span class="module-name">{{ 'admin.nav.trips' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusTripsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -1004,8 +952,8 @@
       <a routerLink="/admin/hotel-bookings" class="module-link-card">
         <span class="module-icon">📋</span>
         <div class="module-details">
-          <span class="module-name">Hotel Bookings</span>
-          <span class="module-desc">Guest reservations, check-in dates, and status</span>
+          <span class="module-name">{{ 'admin.nav.hotelBookings' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesHotelBookingsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -1013,8 +961,8 @@
       <a routerLink="/admin/bus-bookings" class="module-link-card">
         <span class="module-icon">🎟</span>
         <div class="module-details">
-          <span class="module-name">Bus Bookings</span>
-          <span class="module-desc">Passenger tickets, seat assignments, and trip bookings</span>
+          <span class="module-name">{{ 'admin.nav.busBookings' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesBusBookingsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>
@@ -1022,8 +970,8 @@
       <a routerLink="/admin/payments" class="module-link-card">
         <span class="module-icon">💳</span>
         <div class="module-details">
-          <span class="module-name">Payments</span>
-          <span class="module-desc">Transaction records, payment methods, and settlements</span>
+          <span class="module-name">{{ 'admin.nav.payments' | translate }}</span>
+          <span class="module-desc">{{ 'admin.dashboard.modulesPaymentsDesc' | translate }}</span>
         </div>
         <span class="module-arrow">→</span>
       </a>

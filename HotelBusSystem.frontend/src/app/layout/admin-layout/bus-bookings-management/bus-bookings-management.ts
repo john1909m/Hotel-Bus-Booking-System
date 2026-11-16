@@ -24,6 +24,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { BusBookingService } from '../../../core/services/bus-booking.service';
@@ -58,6 +59,7 @@ import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
     DialogModule,
     ToastModule,
     TagModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './bus-bookings-management.html',
@@ -74,6 +76,7 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   // ── Core Data Signals ───────────────────────────────────────

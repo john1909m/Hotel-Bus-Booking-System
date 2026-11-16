@@ -4,19 +4,19 @@
   <div class="sidebar-overlay" (click)="closeSidebar()" aria-hidden="true"></div>
 
   <!-- ─── Sidebar ──────────────────────────────────────── -->
-  <aside class="sidebar" role="navigation" aria-label="Admin navigation">
+  <aside class="sidebar" role="navigation" [attr.aria-label]="'admin.layout.brandTitle' | translate">
 
     <!-- Sidebar Brand -->
     <div class="sidebar-brand">
-      <a routerLink="/admin" class="brand-link" aria-label="TravelEase Admin">
+      <a routerLink="/admin" class="brand-link" [attr.aria-label]="'admin.layout.brandTitle' | translate">
         <svg width="26" height="26" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
           <path d="M8 18 C8 18 10 10 14 10 C18 10 20 18 20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/>
           <circle cx="14" cy="10" r="2.5" fill="white"/>
         </svg>
-        <span class="brand-text">TravelEase <small>Admin</small></span>
+        <span class="brand-text">TravelEase <small>{{ 'admin.layout.brandSubtitle' | translate }}</small></span>
       </a>
-      <button class="sidebar-close-btn" (click)="closeSidebar()" aria-label="Close sidebar">✕</button>
+      <button class="sidebar-close-btn" (click)="closeSidebar()" [attr.aria-label]="'admin.layout.closeSidebar' | translate">✕</button>
     </div>
 
     <!-- Nav Items -->
@@ -28,10 +28,10 @@
           [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
           class="nav-item"
           (click)="closeSidebar()"
-          [attr.aria-label]="item.label"
+          [attr.aria-label]="item.labelKey | translate"
         >
           <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
+          <span class="nav-label">{{ item.labelKey | translate }}</span>
         </a>
       }
     </nav>
@@ -44,14 +44,15 @@
         </div>
         <div class="user-details">
           <span class="user-name">{{ currentUser()?.name }}</span>
-          <span class="user-role">Administrator</span>
+          <span class="user-role">{{ 'admin.layout.administrator' | translate }}</span>
         </div>
       </div>
       <button
         type="button"
         class="logout-btn"
         (click)="logout()"
-        aria-label="Sign out"
+        [attr.aria-label]="'admin.layout.signOut' | translate"
+        [title]="'admin.layout.signOut' | translate"
       >
         <span aria-hidden="true">⏻</span>
       </button>
@@ -68,12 +69,24 @@
         (click)="toggleSidebar()"
         [attr.aria-expanded]="sidebarOpen()"
         aria-controls="admin-sidebar"
-        aria-label="Toggle sidebar"
+        [attr.aria-label]="'admin.layout.toggleSidebar' | translate"
       >
         <span></span><span></span><span></span>
       </button>
 
       <div class="topbar-right">
+        <!-- Language Switcher -->
+        <button
+          type="button"
+          class="lang-toggle-btn"
+          (click)="toggleLanguage()"
+          id="admin-lang-toggle-btn"
+          [title]="isArabic() ? 'Switch to English' : 'التحويل إلى العربية'"
+          [attr.aria-label]="isArabic() ? 'Switch to English' : 'التحويل إلى العربية'"
+        >
+          <span class="lang-text">{{ isArabic() ? 'English' : 'عربي' }}</span>
+        </button>
+
         <!-- Theme Toggle -->
         <button
           class="theme-toggle"
@@ -99,9 +112,9 @@
           type="button"
           class="topbar-logout-btn"
           (click)="logout()"
-          aria-label="Sign out"
+          [attr.aria-label]="'admin.layout.signOut' | translate"
         >
-          Sign Out
+          {{ 'admin.layout.signOut' | translate }}
         </button>
       </div>
     </header>

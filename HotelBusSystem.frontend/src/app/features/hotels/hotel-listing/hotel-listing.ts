@@ -14,6 +14,7 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged, of } from 'rxjs
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HotelService } from '../../../core/services/hotel.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { PageHotelDTO,  HotelListParams } from '../../../core/models/Pagination/hotelPage.model';
@@ -32,6 +33,7 @@ type PageState = 'loading' | 'success' | 'empty' | 'error';
     ButtonModule,
     TagModule,
     SkeletonModule,
+    TranslatePipe,
   ],
   templateUrl: './hotel-listing.html',
   styleUrl: './hotel-listing.css',

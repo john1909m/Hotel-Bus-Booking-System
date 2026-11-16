@@ -7,7 +7,7 @@
   [blockScroll]="true"
   [closeOnEscape]="true"
   styleClass="hotel-booking-drawer"
-  ariaLabel="Booking Summary Sidebar">
+  [ariaLabel]="'summary.sidebarAria' | translate">
 
   <!-- ── CUSTOM HEADER ── -->
   <ng-template #header>
@@ -20,12 +20,12 @@
         </svg>
       </div>
       <div class="drawer-header-titles">
-        <h2 class="drawer-title">Booking Summary</h2>
-        <span class="drawer-hotel-name">{{ hasHotel() ? (effectiveHotel()?.name || 'Hotel Reservation') : 'Transportation Reservation' }}</span>
+        <h2 class="drawer-title">{{ 'summary.title' | translate }}</h2>
+        <span class="drawer-hotel-name">{{ hasHotel() ? (effectiveHotel()?.name || ('summary.hotelReservation' | translate)) : ('summary.transportReservation' | translate) }}</span>
       </div>
       @if (effectiveRooms().length > 0) {
         <span class="drawer-rooms-badge">
-          {{ effectiveRooms().length }} {{ effectiveRooms().length === 1 ? 'Room' : 'Rooms' }}
+          {{ effectiveRooms().length }} {{ effectiveRooms().length === 1 ? ('summary.roomSingular' | translate) : ('summary.roomPlural' | translate) }}
         </span>
       }
     </div>
@@ -36,10 +36,10 @@
     <!-- Edit Mode Indicator -->
     @if (activeIsEditMode) {
       <div class="drawer-edit-banner" role="alert">
-        <div class="edit-banner-badge">EDITING</div>
+        <div class="edit-banner-badge">{{ 'summary.editingBadge' | translate }}</div>
         <div class="edit-banner-info">
-          <strong>Modifying Reservation #{{ activeEditingBookingId }}</strong>
-          <small>Submitting will update this existing booking.</small>
+          <strong>{{ 'summary.modifyingReservation' | translate:{ id: activeEditingBookingId } }}</strong>
+          <small>{{ 'summary.submitWillUpdate' | translate }}</small>
         </div>
       </div>
     }
@@ -49,7 +49,7 @@
       <div class="section-top-bar">
         <div class="section-title-wrap">
           <span class="step-tag">A</span>
-          <h3 id="stay-info-heading" class="section-title">Stay Information</h3>
+          <h3 id="stay-info-heading" class="section-title">{{ 'summary.stayInfoTitle' | translate }}</h3>
         </div>
         @if (hasHotel()) {
           <button
@@ -64,27 +64,27 @@
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span>{{ isEditingDates() ? 'Done' : 'Change Dates' }}</span>
+            <span>{{ isEditingDates() ? ('summary.done' | translate) : ('summary.changeDates' | translate) }}</span>
           </button>
         }
       </div>
 
       @if (!hasHotel()) {
         <div class="drawer-info-empty-state my-2">
-          <p-message severity="info" text="No hotel selected. Stay dates and room allocation apply when booking hotel accommodation." styleClass="w-full"></p-message>
+          <p-message severity="info" [text]="'summary.noHotelMessage' | translate" styleClass="w-full"></p-message>
         </div>
       } @else {
         <!-- INLINE DATE PICKERS EDITOR -->
         @if (isEditingDates()) {
           <div class="inline-date-editor-card" role="region" aria-label="Inline Stay Date Editor">
             <div class="editor-header">
-              <span class="editor-title">Update Stay Dates</span>
-              <span class="editor-sub">Dates are updated across your stay, room validity, and transportation options.</span>
+              <span class="editor-title">{{ 'summary.inlineEditorTitle' | translate }}</span>
+              <span class="editor-sub">{{ 'summary.inlineEditorSubtitle' | translate }}</span>
             </div>
 
             <div class="editor-inputs-grid">
               <div class="editor-field">
-                <label for="drawer-checkin-picker" class="editor-label">Check-in Date</label>
+                <label for="drawer-checkin-picker" class="editor-label">{{ 'summary.checkInDateLabel' | translate }}</label>
                 <p-datepicker
                   id="drawer-checkin-picker"
                   [ngModel]="editCheckInDate()"
@@ -101,7 +101,7 @@
               </div>
 
               <div class="editor-field">
-                <label for="drawer-checkout-picker" class="editor-label">Check-out Date</label>
+                <label for="drawer-checkout-picker" class="editor-label">{{ 'summary.checkOutDateLabel' | translate }}</label>
                 <p-datepicker
                   id="drawer-checkout-picker"
                   [ngModel]="editCheckOutDate()"
@@ -129,8 +129,8 @@
         <div class="stay-info-card">
           <div class="stay-dates-row">
             <div class="stay-date-block">
-              <span class="date-label">Check-in</span>
-              <span class="date-val">{{ effectiveCheckIn() || 'Not selected' }}</span>
+              <span class="date-label">{{ 'summary.checkInBadge' | translate }}</span>
+              <span class="date-val">{{ effectiveCheckIn() || ('summary.notSelected' | translate) }}</span>
             </div>
 
             <div class="stay-arrow" aria-hidden="true">
@@ -141,8 +141,8 @@
             </div>
 
             <div class="stay-date-block">
-              <span class="date-label">Check-out</span>
-              <span class="date-val">{{ effectiveCheckOut() || 'Not selected' }}</span>
+              <span class="date-label">{{ 'summary.checkOutBadge' | translate }}</span>
+              <span class="date-val">{{ effectiveCheckOut() || ('summary.notSelected' | translate) }}</span>
             </div>
           </div>
 
@@ -152,11 +152,11 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
-                {{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }} Stay
+                {{ effectiveStayNights() === 1 ? ('summary.nightStay' | translate) : ('summary.nightsStay' | translate:{ count: effectiveStayNights() }) }}
               </span>
             } @else {
               <span class="stay-nights-badge stay-nights-badge--warning">
-                Stay dates required to calculate total price
+                {{ 'summary.datesRequiredNotice' | translate }}
               </span>
             }
           </div>
@@ -169,9 +169,9 @@
       <div class="section-top-bar">
         <div class="section-title-wrap">
           <span class="step-tag step-tag--transport">🚌</span>
-          <h3 id="transport-recom-heading" class="section-title">Transportation Recommendations</h3>
+          <h3 id="transport-recom-heading" class="section-title">{{ 'summary.transportRecommendationsTitle' | translate }}</h3>
         </div>
-        <span class="transport-optional-pill">Optional Add-On</span>
+        <span class="transport-optional-pill">{{ 'summary.optionalAddOn' | translate }}</span>
       </div>
 
       <!-- Destination Bus Stop Info -->
@@ -184,7 +184,7 @@
           <span>
             Hotel Arrival Stop: <strong>{{ hotelBusStop()?.name }}</strong> ({{ hotelBusStop()?.city }})
             @if (hotelBusDistance() !== null) {
-              &bull; {{ hotelBusDistance() | number:'1.1-2' }} km to hotel
+              &bull; {{ 'summary.kmToHotel' | translate:{ distance: (hotelBusDistance() | number:'1.1-2') } }}
             }
           </span>
         </div>
@@ -195,7 +195,7 @@
         <div class="selected-transport-card">
           <div class="transport-card-main">
             <div class="selected-tag-row">
-              <span class="badge-direction">Outgoing Trip</span>
+              <span class="badge-direction">{{ 'summary.outgoingTrip' | translate }}</span>
               <strong class="carrier-name">{{ bookingState.transportationBooking()?.outgoing?.trip?.bus?.company || 'Bus Carrier' }}</strong>
             </div>
             <p class="transport-route-line">
@@ -215,8 +215,8 @@
               type="button"
               class="btn-remove-transport-item"
               (click)="onRemoveOutgoingTrip()"
-              aria-label="Remove Outgoing Bus Trip">
-              &times; Remove
+              [attr.aria-label]="'summary.removeOutgoingTripAria' | translate">
+              &times; {{ 'summary.remove' | translate }}
             </button>
           </div>
         </div>
@@ -226,7 +226,7 @@
         <div class="selected-transport-card">
           <div class="transport-card-main">
             <div class="selected-tag-row">
-              <span class="badge-direction badge-direction--return">Return Trip</span>
+              <span class="badge-direction badge-direction--return">{{ 'summary.returnTrip' | translate }}</span>
               <strong class="carrier-name">{{ bookingState.transportationBooking()?.returnTrip?.trip?.bus?.company || 'Bus Carrier' }}</strong>
             </div>
             <p class="transport-route-line">
@@ -246,7 +246,7 @@
               type="button"
               class="btn-remove-transport-item"
               (click)="onRemoveReturnTrip()"
-              aria-label="Remove Return Bus Trip">
+              [attr.aria-label]="'summary.removeReturnTripAria' | translate">
               &times; Remove
             </button>
           </div>
@@ -260,7 +260,7 @@
             <circle cx="12" cy="12" r="10"></circle>
             <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
           </svg>
-          <span>Select Your Departure Bus Stop:</span>
+          <span>{{ 'summary.selectDepartureStop' | translate }}</span>
         </label>
 
         @if (isLoadingStops()) {
@@ -273,9 +273,9 @@
             optionValue="value"
             [ngModel]="selectedOriginStopId()"
             (ngModelChange)="onOriginStopChange($event)"
-            placeholder="Choose departure terminal or city..."
+            [placeholder]="'summary.chooseDepartureStop' | translate"
             [filter]="true"
-            filterPlaceholder="Search by terminal or city..."
+            [filterPlaceholder]="'summary.searchTerminalOrCity' | translate"
             styleClass="drawer-bus-select"
             [style]="{ width: '100%' }"
             aria-label="Departure Bus Stop">
@@ -296,7 +296,7 @@
 
         <!-- Date-based recommendations notice -->
         <div class="transport-date-notice mt-2">
-          <p-message severity="info" text="Recommendations are based on your stay dates" styleClass="w-full"></p-message>
+          <p-message severity="info" [text]="'summary.recommendationsBasedOnDates' | translate" styleClass="w-full"></p-message>
         </div>
       </div>
 
@@ -312,7 +312,7 @@
             </svg>
           </div>
           <div class="guide-text">
-            <strong>Choose your departure stop above</strong>
+            <strong>{{ 'summary.chooseDepartureAbove' | translate }}</strong>
             <p>Select where you will travel from to view recommended bus trips that arrive on {{ effectiveCheckIn() || 'your stay date' }}.</p>
           </div>
         </div>
@@ -328,7 +328,7 @@
             [class.direction-tab--active]="activeTransportTab() === 'outgoing'"
             [attr.aria-selected]="activeTransportTab() === 'outgoing'"
             (click)="activeTransportTab.set('outgoing')">
-            <span>Outgoing Trips</span>
+            <span>{{ 'summary.outgoingTrips' | translate }}</span>
             @if (outgoingTrips().length > 0) {
               <span class="tab-badge">{{ outgoingTrips().length }}</span>
             }
@@ -340,7 +340,7 @@
             [class.direction-tab--active]="activeTransportTab() === 'return'"
             [attr.aria-selected]="activeTransportTab() === 'return'"
             (click)="activeTransportTab.set('return')">
-            <span>Return Trips</span>
+            <span>{{ 'summary.returnTrips' | translate }}</span>
             @if (returnTrips().length > 0) {
               <span class="tab-badge">{{ returnTrips().length }}</span>
             }
@@ -382,7 +382,7 @@
 
                   <div class="trip-times-grid">
                     <div class="time-col">
-                      <span class="time-sub">Departure</span>
+                      <span class="time-sub">{{ 'summary.departure' | translate }}</span>
                       <strong class="time-val">{{ trip.departureTime | date:'shortTime' }}</strong>
                       <span class="stop-sub">{{ trip.originStop?.name }}</span>
                     </div>
@@ -391,7 +391,7 @@
                       <span class="arrow-indicator">&rarr;</span>
                     </div>
                     <div class="time-col">
-                      <span class="time-sub">Arrival</span>
+                      <span class="time-sub">{{ 'summary.arrival' | translate }}</span>
                       <strong class="time-val">{{ trip.arrivalTime | date:'shortTime' }}</strong>
                       <span class="stop-sub">{{ trip.destinationStop?.name }}</span>
                     </div>
@@ -399,15 +399,15 @@
 
                   <div class="trip-meta-line">
                     @if (trip.distanceFromHotel !== null) {
-                      <span>📍 {{ trip.distanceFromHotel | number:'1.1-2' }} km to hotel</span>
+                      <span>📍 {{ 'summary.kmToHotel' | translate:{ distance: (trip.distanceFromHotel | number:'1.1-2') } }}</span>
                     }
-                    <span>💺 {{ trip.availableSeatsCount }} seats available</span>
+                    <span>💺 {{ 'summary.seatsAvailable' | translate:{ count: trip.availableSeatsCount } }}</span>
                   </div>
 
                   <div class="trip-card-bottom-row">
                     <div class="price-stack">
                       <strong class="ticket-price">{{ trip.price | number:'1.2-2' }} EGP</strong>
-                      <small class="ticket-sub">/ seat</small>
+                      <small class="ticket-sub">{{ 'summary.perSeat' | translate }}</small>
                     </div>
 
                     <button
@@ -415,7 +415,7 @@
                       class="btn-select-trip-action"
                       [disabled]="trip.availableSeatsCount === 0"
                       (click)="onSelectTrip(trip, 'outgoing')">
-                      {{ trip.availableSeatsCount === 0 ? 'Sold Out' : 'Select Trip' }}
+                      {{ trip.availableSeatsCount === 0 ? ('summary.soldOut' | translate) : ('summary.selectTrip' | translate) }}
                     </button>
                   </div>
                 </div>
@@ -423,7 +423,7 @@
             </div>
           } @else if (hasSearchedTrips()) {
             <div class="empty-transport-state">
-              <p>No outgoing bus trips available arriving on {{ effectiveCheckIn() }}.</p>
+              <p>{{ 'summary.noOutgoingTrips' | translate:{ date: effectiveCheckIn() } }}</p>
             </div>
           }
         }
@@ -483,7 +483,7 @@
             </div>
           } @else if (hasSearchedTrips()) {
             <div class="empty-transport-state">
-              <p>No return bus trips available departing on {{ effectiveCheckOut() }}.</p>
+              <p>{{ 'summary.noReturnTrips' | translate:{ date: effectiveCheckOut() } }}</p>
             </div>
           }
         }
@@ -496,7 +496,7 @@
         <div class="section-title-wrap">
           <span class="step-tag">B</span>
           <h3 id="rooms-alloc-heading" class="section-title">
-            Room & Guest Allocation ({{ effectiveRooms().length }})
+            {{ 'summary.roomGuestAllocation' | translate:{ count: effectiveRooms().length } }}
           </h3>
         </div>
         @if (hasHotel() && effectiveRooms().length > 1) {
@@ -504,35 +504,35 @@
             type="button"
             class="btn-auto-distribute"
             (click)="onAutoDistribute()"
-            title="Reset to automatic guest distribution across selected rooms">
-            Auto-Distribute
+            [title]="'summary.autoDistributeTitle' | translate">
+            {{ 'summary.autoDistribute' | translate }}
           </button>
         }
       </div>
 
       @if (!hasHotel()) {
         <div class="drawer-info-empty-state my-2">
-          <p-message severity="info" text="No hotel rooms selected. You are currently booking standalone transportation." styleClass="w-full"></p-message>
+          <p-message severity="info" [text]="'summary.noHotelRoomsMessage' | translate" styleClass="w-full"></p-message>
         </div>
       } @else {
         <!-- Synchronized Overall Reservation Guests Card -->
       <div class="drawer-stay-guests-card">
         <div class="drawer-guests-header">
-          <span class="drawer-guests-title">Reservation Guests</span>
+          <span class="drawer-guests-title">{{ 'summary.reservationGuests' | translate }}</span>
           <span class="drawer-guests-badge">
-            {{ effectiveAdultsCount() + effectiveChildren().length }} {{ (effectiveAdultsCount() + effectiveChildren().length) === 1 ? 'Guest' : 'Guests' }}
+            {{ (effectiveAdultsCount() + effectiveChildren().length) === 1 ? ('summary.guestSingular' | translate) : ('summary.guestPlural' | translate:{ count: (effectiveAdultsCount() + effectiveChildren().length) }) }}
           </span>
         </div>
         <div class="drawer-guest-selectors-row">
           <div class="drawer-guest-ctrl">
-            <span class="ctrl-label">Adults (18+)</span>
+            <span class="ctrl-label">{{ 'summary.adults18' | translate }}</span>
             <div class="drawer-stepper-mini">
               <button
                 type="button"
                 class="btn-stepper-mini"
                 [disabled]="effectiveAdultsCount() <= (effectiveRooms().length > 0 ? effectiveRooms().length : 1)"
                 (click)="onDecreaseTotalAdults()"
-                aria-label="Decrease total adults">
+                [attr.aria-label]="'summary.decreaseTotalAdults' | translate">
                 &minus;
               </button>
               <span class="stepper-val">{{ effectiveAdultsCount() }}</span>
@@ -541,21 +541,21 @@
                 class="btn-stepper-mini"
                 [disabled]="isAdultsIncreaseDisabled"
                 (click)="onIncreaseTotalAdults()"
-                aria-label="Increase total adults">
+                [attr.aria-label]="'summary.increaseTotalAdults' | translate">
                 &plus;
               </button>
             </div>
           </div>
 
           <div class="drawer-guest-ctrl">
-            <span class="ctrl-label">Children (0–17)</span>
+            <span class="ctrl-label">{{ 'summary.children017' | translate }}</span>
             <div class="drawer-stepper-mini">
               <button
                 type="button"
                 class="btn-stepper-mini"
                 [disabled]="effectiveChildren().length === 0"
                 (click)="onDecreaseTotalChildren()"
-                aria-label="Decrease total children">
+                [attr.aria-label]="'summary.decreaseTotalChildren' | translate">
                 &minus;
               </button>
               <span class="stepper-val">{{ effectiveChildren().length }}</span>
@@ -563,7 +563,7 @@
                 type="button"
                 class="btn-stepper-mini"
                 (click)="onIncreaseTotalChildren()"
-                aria-label="Increase total children">
+                [attr.aria-label]="'summary.increaseTotalChildren' | translate">
                 &plus;
               </button>
             </div>
@@ -574,11 +574,11 @@
           <div class="drawer-capacity-summary-line" [class.line--exceeded]="effectiveRequiredCapacity() > effectiveTotalRoomCapacity()">
             @if (effectiveRequiredCapacity() > effectiveTotalRoomCapacity()) {
               <span class="cap-warning-badge">
-                ⚠ Exceeds Combined Capacity: {{ effectiveRequiredCapacity() }} / {{ effectiveTotalRoomCapacity() }}
+                {{ 'summary.exceedsCombinedCapacity' | translate:{ required: effectiveRequiredCapacity(), total: effectiveTotalRoomCapacity() } }}
               </span>
             } @else {
               <span class="cap-ok-badge">
-                ✓ Combined Capacity: {{ effectiveRequiredCapacity() }} / {{ effectiveTotalRoomCapacity() }}
+                {{ 'summary.combinedCapacityOk' | translate:{ required: effectiveRequiredCapacity(), total: effectiveTotalRoomCapacity() } }}
               </span>
             }
           </div>
@@ -592,10 +592,10 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          <h4>No Rooms Selected</h4>
-          <p>Please browse the available rooms catalog and select at least one room to continue.</p>
+          <h4>{{ 'summary.noRoomsSelected' | translate }}</h4>
+          <p>{{ 'summary.noRoomsSelectedDesc' | translate }}</p>
           <button type="button" class="btn btn-secondary btn-sm" (click)="onReturnToBrowsingRooms()">
-            Browse Rooms
+            {{ 'summary.browseRooms' | translate }}
           </button>
         </div>
       } @else {
@@ -610,20 +610,20 @@
                     <strong class="room-number">Room #{{ room.roomNumber }}</strong>
                     <span class="room-type-tag">{{ getRoomTypeLabel(room.roomType) }}</span>
                   </div>
-                  <span class="room-cap-hint">Max Occupancy: {{ room.capacity }} guests</span>
+                  <span class="room-cap-hint">{{ 'summary.maxOccupancy' | translate:{ count: room.capacity } }}</span>
                 </div>
 
                 <div class="room-card-right">
                   <div class="room-price-stack">
                     <span class="room-nightly-rate">{{ room.pricePerNight | number:'1.2-2' }} EGP</span>
-                    <span class="room-nightly-sub">/ night</span>
+                    <span class="room-nightly-sub">{{ 'summary.perNight' | translate }}</span>
                   </div>
                   <button
                     type="button"
                     class="btn-remove-room"
                     (click)="onRemoveRoom(room.id)"
-                    title="Remove this room from selection"
-                    [attr.aria-label]="'Remove Room #' + room.roomNumber">
+                    [title]="'summary.removeRoomTitle' | translate"
+                    [attr.aria-label]="'summary.removeRoomAria' | translate:{ number: room.roomNumber }">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -636,11 +636,11 @@
               <div class="room-occupancy-status" [class.status--overload]="isRoomOverCapacity(room)">
                 @if (isRoomOverCapacity(room)) {
                   <span class="occupancy-pill pill--danger">
-                    ⚠ Exceeds capacity: {{ getRoomRequiredCapacity(room.id) }} / {{ room.capacity }} guests
+                    {{ 'summary.exceedsCapacity' | translate:{ required: getRoomRequiredCapacity(room.id), capacity: room.capacity } }}
                   </span>
                 } @else {
                   <span class="occupancy-pill pill--ok">
-                    ✓ Occupancy: {{ getRoomRequiredCapacity(room.id) }} / {{ room.capacity }} guests
+                    {{ 'summary.occupancyOk' | translate:{ required: getRoomRequiredCapacity(room.id), capacity: room.capacity } }}
                   </span>
                 }
               </div>
@@ -649,8 +649,8 @@
               <div class="room-allocation-block">
                 <div class="alloc-row">
                   <div class="alloc-meta">
-                    <span class="alloc-label">Adults in this room</span>
-                    <small class="alloc-sub">Age 18+ (min 1 per room)</small>
+                    <span class="alloc-label">{{ 'summary.adultsInRoom' | translate }}</span>
+                    <small class="alloc-sub">{{ 'summary.minAdultPerRoom' | translate }}</small>
                   </div>
                   <div class="alloc-stepper">
                     <button
@@ -658,7 +658,7 @@
                       class="btn-stepper-mini"
                       [disabled]="!canDecreaseAdults(room)"
                       (click)="onDecreaseAdults(room.id)"
-                      [attr.aria-label]="'Decrease adults in room ' + room.roomNumber">
+                      [attr.aria-label]="'summary.decreaseAdultsInRoom' | translate:{ number: room.roomNumber }">
                       &minus;
                     </button>
                     <span class="stepper-count">{{ getRoomAdults(room.id) }}</span>
@@ -667,7 +667,7 @@
                       class="btn-stepper-mini"
                       [disabled]="!canIncreaseAdults(room)"
                       (click)="onIncreaseAdults(room.id)"
-                      [attr.aria-label]="'Increase adults in room ' + room.roomNumber">
+                      [attr.aria-label]="'summary.increaseAdultsInRoom' | translate:{ number: room.roomNumber }">
                       &plus;
                     </button>
                   </div>
@@ -678,33 +678,33 @@
               <div class="room-children-block">
                 <div class="children-block-header">
                   <div>
-                    <span class="alloc-label">Children in this room</span>
-                    <small class="policy-hint">Ages 0–11: Free &bull; Ages 12–17: Capacity +1</small>
+                    <span class="alloc-label">{{ 'summary.childrenInRoom' | translate }}</span>
+                    <small class="policy-hint">{{ 'summary.childrenRules' | translate }}</small>
                   </div>
                   <button
                     type="button"
                     class="btn-add-child-room"
                     [disabled]="!canAddChild(room)"
                     (click)="onAddChild(room.id)"
-                    [attr.aria-label]="'Add child to room ' + room.roomNumber">
-                    + Add Child
+                    [attr.aria-label]="'summary.addChildAria' | translate:{ number: room.roomNumber }">
+                    {{ 'summary.addChild' | translate }}
                   </button>
                 </div>
 
                 @if (getRoomChildren(room.id).length === 0) {
-                  <p class="no-children-note">No children assigned to this room.</p>
+                  <p class="no-children-note">{{ 'summary.noChildrenInRoom' | translate }}</p>
                 } @else {
                   <div class="children-table">
                     @for (child of getRoomChildren(room.id); track child.id; let cIdx = $index) {
                       <div class="child-picker-row" [class.row--unselected]="child.age === null">
-                        <span class="child-index-label">Child {{ cIdx + 1 }}</span>
+                        <span class="child-index-label">{{ 'summary.childIndex' | translate:{ number: cIdx + 1 } }}</span>
                         <div class="child-age-wrapper">
                           <select
                             class="child-age-select"
                             [class.select--missing]="child.age === null"
                             (change)="onChildAgeSelected(child.id, $event)"
-                            [attr.aria-label]="'Select age for Child ' + (cIdx + 1) + ' in room ' + room.roomNumber">
-                            <option value="" disabled [selected]="child.age === null">Select Age (0–17)</option>
+                            [attr.aria-label]="'summary.selectAgeAria' | translate:{ number: cIdx + 1, roomNumber: room.roomNumber }">
+                            <option value="" disabled [selected]="child.age === null">{{ 'summary.selectAgePlaceholder' | translate }}</option>
                             @for (age of availableChildAges; track age) {
                               <option [value]="age" [selected]="child.age === age" [disabled]="isChildAgeDisabled(child, age, room)">
                                 {{ age === 0 ? 'Under 1 (0 yrs)' : age + ' yrs' }}
@@ -718,7 +718,7 @@
                           class="btn-delete-child"
                           (click)="onRemoveChild(child.id, room.id)"
                           title="Remove child"
-                          [attr.aria-label]="'Remove Child ' + (cIdx + 1)">
+                          [attr.aria-label]="'summary.removeChildAria' | translate:{ number: cIdx + 1 }">
                           &times;
                         </button>
                       </div>
@@ -730,7 +730,7 @@
               <!-- Stay Cost Subtotal -->
               @if (getRoomStayCost(room); as roomCost) {
                 <div class="room-stay-subtotal">
-                  <span>Room Stay Subtotal ({{ effectiveStayNights() }} nights):</span>
+                  <span>{{ 'summary.roomStaySubtotal' | translate:{ count: effectiveStayNights() } }}</span>
                   <strong>{{ roomCost | number:'1.2-2' }} EGP</strong>
                 </div>
               }
@@ -745,7 +745,7 @@
     <section class="drawer-section pricing-breakdown-section" aria-labelledby="pricing-breakdown-heading">
       <div class="section-title-wrap">
         <span class="step-tag">C</span>
-        <h3 id="pricing-breakdown-heading" class="section-title">Price Breakdown</h3>
+        <h3 id="pricing-breakdown-heading" class="section-title">{{ 'summary.priceBreakdown' | translate }}</h3>
       </div>
 
       <div class="pricing-card">
@@ -759,21 +759,21 @@
             }
 
             <div class="price-line total-nightly-line">
-              <span>Combined Nightly Rate:</span>
+              <span>{{ 'summary.combinedNightlyRate' | translate }}</span>
               <strong>{{ effectiveTotalNightlyRate() | number:'1.2-2' }} EGP</strong>
             </div>
 
             <div class="price-line duration-line">
-              <span>Stay Duration:</span>
+              <span>{{ 'summary.stayDuration' | translate }}</span>
               @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0) {
                 <span>{{ effectiveStayNights() }} {{ effectiveStayNights() === 1 ? 'Night' : 'Nights' }}</span>
               } @else {
-                <span class="text-pending">Select valid dates</span>
+                <span class="text-pending">{{ 'summary.selectValidDates' | translate }}</span>
               }
             </div>
 
             <div class="price-line hotel-subtotal-line">
-              <span>Hotel Subtotal:</span>
+              <span>{{ 'summary.hotelSubtotal' | translate }}</span>
               <strong>{{ (effectiveTotalStayCost() || 0) | number:'1.2-2' }} EGP</strong>
             </div>
           </div>
@@ -786,17 +786,17 @@
           }
 
           <div class="transportation-breakdown-section">
-            <span class="transport-breakdown-heading">{{ hasHotel() ? 'Optional Transportation:' : 'Selected Transportation:' }}</span>
+            <span class="transport-breakdown-heading">{{ hasHotel() ? ('summary.optionalTransportHeading' | translate) : ('summary.selectedTransportHeading' | translate) }}</span>
 
             @if (bookingState.hasOutgoingTrip()) {
               <div class="transport-subtotal-row">
                 <div class="transport-breakdown-info">
-                  <span class="badge badge-mini">Outgoing</span>
+                  <span class="badge badge-mini">{{ 'summary.outgoingBadge' | translate }}</span>
                   <span>{{ bookingState.transportationBooking()?.outgoing?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.outgoing?.destinationStop?.name }} ({{ bookingState.transportationBooking()?.outgoing?.selectedSeats?.length }} seats)</span>
                 </div>
                 <div class="transport-breakdown-price">
                   <strong>{{ bookingState.outgoingTripPrice() | number:'1.2-2' }} EGP</strong>
-                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveOutgoingTrip()" aria-label="Remove Outgoing Bus">&times;</button>
+                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveOutgoingTrip()" [attr.aria-label]="'summary.removeOutgoingBusAria' | translate">&times;</button>
                 </div>
               </div>
             }
@@ -804,18 +804,18 @@
             @if (bookingState.hasReturnTrip()) {
               <div class="transport-subtotal-row">
                 <div class="transport-breakdown-info">
-                  <span class="badge badge-mini badge-mini--return">Return</span>
+                  <span class="badge badge-mini badge-mini--return">{{ 'summary.returnBadge' | translate }}</span>
                   <span>{{ bookingState.transportationBooking()?.returnTrip?.originStop?.name }} &rarr; {{ bookingState.transportationBooking()?.returnTrip?.destinationStop?.name }} ({{ bookingState.transportationBooking()?.returnTrip?.selectedSeats?.length }} seats)</span>
                 </div>
                 <div class="transport-breakdown-price">
                   <strong>{{ bookingState.returnTripPrice() | number:'1.2-2' }} EGP</strong>
-                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveReturnTrip()" aria-label="Remove Return Bus">&times;</button>
+                  <button type="button" class="btn-remove-trans-sub" (click)="onRemoveReturnTrip()" [attr.aria-label]="'summary.removeReturnBusAria' | translate">&times;</button>
                 </div>
               </div>
             }
 
             <div class="transport-subtotal-total">
-              <span>Transportation Subtotal:</span>
+              <span>{{ 'summary.transportSubtotal' | translate }}</span>
               <strong>{{ bookingState.transportationPrice() | number:'1.2-2' }} EGP</strong>
             </div>
           </div>
@@ -826,10 +826,10 @@
         <div class="grand-total-block">
           <div class="grand-total-labels">
             <span class="total-label">
-              {{ hasHotel() ? (bookingState.hasTransportation() ? 'Grand Total' : 'Total Estimated Stay') : 'Transportation Total' }}
+              {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotal' | translate) : ('summary.totalEstimatedStay' | translate)) : ('summary.transportationTotal' | translate) }}
             </span>
             <small class="total-note">
-              {{ hasHotel() ? (bookingState.hasTransportation() ? 'Hotel accommodation plus bus transportation' : 'All selected rooms for full stay') : 'Bus ticket reservations' }}
+              {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotalNote' | translate) : ('summary.totalEstimatedStayNote' | translate)) : ('summary.transportationTotalNote' | translate) }}
             </small>
           </div>
           <div class="grand-total-amount">
@@ -838,7 +838,7 @@
                 <span class="total-number">{{ (effectiveTotalStayCost()! + bookingState.transportationPrice()) | number:'1.2-2' }}</span>
                 <span class="total-currency">EGP</span>
               } @else {
-                <span class="total-pending">Dates Required</span>
+                <span class="total-pending">{{ 'summary.datesRequired' | translate }}</span>
               }
             } @else {
               <span class="total-number">{{ bookingState.transportationPrice() | number:'1.2-2' }}</span>
@@ -853,7 +853,7 @@
     <section class="drawer-section confirmation-section" aria-labelledby="confirmation-heading">
       <div class="section-title-wrap">
         <span class="step-tag">D</span>
-        <h3 id="confirmation-heading" class="section-title">Confirmation</h3>
+        <h3 id="confirmation-heading" class="section-title">{{ 'summary.confirmation' | translate }}</h3>
       </div>
 
       <!-- Validation Errors Checklist -->
@@ -865,7 +865,7 @@
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <strong>Action Needed Before Confirmation:</strong>
+            <strong>{{ 'summary.actionNeeded' | translate }}</strong>
           </div>
           <ul class="validation-list">
             @for (err of validationErrors; track err) {
@@ -878,11 +878,11 @@
       <!-- Backend Error Callout -->
       @if (errorMessage) {
         <div class="error-callout" role="alert">
-          <strong>Notice:</strong>
+          <strong>{{ 'summary.notice' | translate }}</strong>
           <p>{{ errorMessage }}</p>
           @if (errorStatus === 401 || errorStatus === 403) {
             <a [routerLink]="['/login']" [queryParams]="{ returnUrl: currentUrl }" class="btn-login-redirect">
-              Sign In to Your Account
+              {{ 'summary.signInAccount' | translate }}
             </a>
           }
         </div>
@@ -895,7 +895,7 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <span>You can proceed to payment. If not signed in, you'll be prompted during checkout.</span>
+          <span>{{ 'summary.checkoutNotice' | translate }}</span>
         </div>
       }
 
@@ -909,12 +909,12 @@
           severity="primary"
           [disabled]="!canContinueToPayment() || isSubmitting || (hasHotel() && (!canSubmit || validationErrors.length > 0))"
           (click)="onContinueToPayment()"
-          aria-label="Continue to payment page">
+          [attr.aria-label]="'summary.continueToPaymentAria' | translate">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
             <line x1="1" y1="10" x2="23" y2="10"></line>
           </svg>
-          <span>Continue to Payment</span>
+          <span>{{ 'summary.continueToPayment' | translate }}</span>
         </button>
 
         <button
@@ -925,12 +925,12 @@
           severity="danger"
           [outlined]="true"
           (click)="onClearSummary()"
-          aria-label="Clear all hotel and transportation selections">
+          [attr.aria-label]="'summary.clearSummaryAria' | translate">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
-          <span>Clear Summary</span>
+          <span>{{ 'summary.clearSummary' | translate }}</span>
         </button>
 
         <button
@@ -941,8 +941,8 @@
           severity="secondary"
           [outlined]="true"
           (click)="onReturnToBrowsingRooms()"
-          aria-label="Return to browsing rooms">
-          Return to Browsing Rooms
+          [attr.aria-label]="'summary.returnToRoomsAria' | translate">
+          {{ 'summary.returnToRooms' | translate }}
         </button>
       </div>
     </section>

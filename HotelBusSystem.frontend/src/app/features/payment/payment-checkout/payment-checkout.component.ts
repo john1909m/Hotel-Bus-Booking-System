@@ -9,6 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { BookingStateService } from '../../../core/services/booking-state.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -41,6 +42,7 @@ export interface PaymentOption {
     DialogModule,
     InputTextModule,
     MessageModule,
+    TranslatePipe,
   ],
   templateUrl: './payment-checkout.component.html',
   styleUrl: './payment-checkout.component.css',
@@ -52,6 +54,15 @@ export class PaymentCheckoutComponent {
   private readonly hotelBookingService = inject(HotelBookingService);
   private readonly busBookingService = inject(BusBookingService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService, { optional: true });
+
+  private tr(key: string, params?: Record<string, any>, fallback?: string): string {
+    if (this.translate) {
+      const res = this.translate.instant(key, params);
+      if (res && res !== key) return res;
+    }
+    return fallback || key;
+  }
 
   // ── Payment Methods ─────────────────────────────────────────
   readonly paymentMethods: readonly PaymentOption[] = [
@@ -113,33 +124,33 @@ export class PaymentCheckoutComponent {
 
   validateBooking(): { isValid: boolean; error?: string } {
     if (!this.state.hasAnySelection()) {
-      return { isValid: false, error: 'Your itinerary is empty. Please select a hotel or bus trips to proceed.' };
+      return { isValid: false, error: this.tr('payment.validation.itineraryEmpty', undefined, 'Your itinerary is empty. Please select a hotel or bus trips to proceed.') };
     }
 
     if (!this.authService.isAuthenticated()) {
-      return { isValid: false, error: 'You must be signed in to complete your reservation. Please sign in.' };
+      return { isValid: false, error: this.tr('payment.validation.mustBeSignedIn', undefined, 'You must be signed in to complete your reservation. Please sign in.') };
     }
 
     if (this.state.hasHotel()) {
       const hb = this.state.hotelBooking();
       if (!hb || !hb.hotel || !hb.selectedRooms || hb.selectedRooms.length === 0) {
-        return { isValid: false, error: 'Hotel selection is incomplete. Please select at least one room.' };
+        return { isValid: false, error: this.tr('payment.validation.hotelIncomplete', undefined, 'Hotel selection is incomplete. Please select at least one room.') };
       }
       if (!hb.checkIn || !hb.checkOut) {
-        return { isValid: false, error: 'Check-in and check-out dates are required.' };
+        return { isValid: false, error: this.tr('payment.validation.datesRequired', undefined, 'Check-in and check-out dates are required.') };
       }
       if (hb.adultsCount < 1) {
-        return { isValid: false, error: 'At least one adult guest is required.' };
+        return { isValid: false, error: this.tr('payment.validation.adultRequired', undefined, 'At least one adult guest is required.') };
       }
     }
 
     if (this.state.hasTransportation()) {
       const tb = this.state.transportationBooking();
       if (tb?.outgoing && (!tb.outgoing.trip?.id || !tb.outgoing.selectedSeats || tb.outgoing.selectedSeats.length === 0)) {
-        return { isValid: false, error: 'Outgoing bus trip has no seats selected.' };
+        return { isValid: false, error: this.tr('payment.validation.outgoingNoSeats', undefined, 'Outgoing bus trip has no seats selected.') };
       }
       if (tb?.returnTrip && (!tb.returnTrip.trip?.id || !tb.returnTrip.selectedSeats || tb.returnTrip.selectedSeats.length === 0)) {
-        return { isValid: false, error: 'Return bus trip has no seats selected.' };
+        return { isValid: false, error: this.tr('payment.validation.returnNoSeats', undefined, 'Return bus trip has no seats selected.') };
       }
     }
 
@@ -156,7 +167,7 @@ export class PaymentCheckoutComponent {
           const tripName = `${tb.outgoing.trip.bus?.company || 'Bus Trip'} (${tb.outgoing.originStop?.name || 'Origin'} → ${tb.outgoing.destinationStop?.name || 'Destination'})`;
           return {
             isValid: false,
-            error: `Outgoing bus trip "${tripName}" is no longer eligible for your hotel check-in date (${hb.checkIn}). Please update your transportation selection before proceeding.`,
+            error: this.tr('payment.validation.outgoingIneligible', { name: tripName, date: hb.checkIn }, `Outgoing bus trip "${tripName}" is no longer eligible for your hotel check-in date (${hb.checkIn}). Please update your transportation selection before proceeding.`),
           };
         }
       }
@@ -168,7 +179,7 @@ export class PaymentCheckoutComponent {
           const tripName = `${tb.returnTrip.trip.bus?.company || 'Bus Trip'} (${tb.returnTrip.originStop?.name || 'Origin'} → ${tb.returnTrip.destinationStop?.name || 'Destination'})`;
           return {
             isValid: false,
-            error: `Return bus trip "${tripName}" is no longer eligible for your hotel check-out date (${hb.checkOut}). Please update your transportation selection before proceeding.`,
+            error: this.tr('payment.validation.returnIneligible', { name: tripName, date: hb.checkOut }, `Return bus trip "${tripName}" is no longer eligible for your hotel check-out date (${hb.checkOut}). Please update your transportation selection before proceeding.`),
           };
         }
       }
@@ -346,6 +357,13 @@ export class PaymentCheckoutComponent {
   }
 
   getRoomTypeLabel(type: roomType | string): string {
+    const key = `enums.roomType.${type}`;
+    if (this.translate) {
+      const translated = this.translate.instant(key);
+      if (translated && translated !== key) {
+        return translated;
+      }
+    }
     switch (type) {
       case 'SINGLE': return 'Single Room';
       case 'DOUBLE': return 'Double Room';

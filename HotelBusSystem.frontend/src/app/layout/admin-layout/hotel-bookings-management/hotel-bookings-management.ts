@@ -25,6 +25,7 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
@@ -51,6 +52,7 @@ import { calculateGuestBreakdown } from '../../../core/utils/guest-rules.util';
     ToastModule,
     TagModule,
     SelectModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './hotel-bookings-management.html',
@@ -63,6 +65,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   private readonly hotelService = inject(HotelService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly bookings = signal<HotelBookingDTO[]>([]);

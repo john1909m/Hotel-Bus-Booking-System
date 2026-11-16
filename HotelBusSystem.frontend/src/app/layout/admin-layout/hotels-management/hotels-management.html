@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Hotels Management</span>
+        <span class="current">{{ 'admin.hotels.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Hotels Management</h1>
+      <h1 class="page-title">{{ 'admin.hotels.title' | translate }}</h1>
       <p class="page-subtitle">
-        Manage hotel listings, pricing metadata, location coordinates, and operational schedules.
+        {{ 'admin.hotels.subtitle' | translate }}
       </p>
     </div>
 
@@ -23,13 +23,13 @@
         class="btn-primary-action"
         (click)="openCreateDialog()"
         id="admin-add-hotel-btn"
-        aria-label="Add new hotel"
+        [attr.aria-label]="'admin.hotels.addNew' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Add New Hotel</span>
+        <span>{{ 'admin.hotels.addNew' | translate }}</span>
       </button>
     </div>
   </header>
@@ -39,7 +39,7 @@
     <div class="filters-grid">
       <!-- Search Keyword -->
       <div class="filter-field search-field">
-        <label for="admin-hotel-search" class="filter-label">Search Query</label>
+        <label for="admin-hotel-search" class="filter-label">{{ 'admin.common.search' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -51,7 +51,7 @@
             id="admin-hotel-search"
             type="search"
             class="filter-input"
-            placeholder="Search by hotel name or keyword…"
+            [placeholder]="'admin.hotels.searchPlaceholder' | translate"
             [value]="searchQuery()"
             (input)="onSearchInput($any($event.target).value)"
             aria-label="Search hotels by name"
@@ -61,7 +61,7 @@
 
       <!-- City Filter -->
       <div class="filter-field">
-        <label for="admin-hotel-city" class="filter-label">City</label>
+        <label for="admin-hotel-city" class="filter-label">{{ 'admin.hotels.fieldCity' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -72,7 +72,7 @@
             id="admin-hotel-city"
             type="text"
             class="filter-input"
-            placeholder="Filter by city…"
+            [placeholder]="'admin.hotels.filterCityPlaceholder' | translate"
             [value]="cityFilter()"
             (input)="onCityInput($any($event.target).value)"
             (keydown.enter)="$event.preventDefault()"
@@ -83,7 +83,7 @@
 
       <!-- Min Rating Filter -->
       <div class="filter-field">
-        <label for="admin-hotel-rating" class="filter-label">Rating</label>
+        <label for="admin-hotel-rating" class="filter-label">{{ 'admin.hotels.ratingLabel' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -97,7 +97,7 @@
             (change)="onRatingChange($any($event.target).value)"
             aria-label="Filter by minimum rating"
           >
-            <option value="">All Ratings</option>
+            <option value="">{{ 'admin.hotels.allRatings' | translate }}</option>
             <option value="4.5">4.5★ &amp; above</option>
             <option value="4.0">4.0★ &amp; above</option>
             <option value="3.5">3.5★ &amp; above</option>
@@ -108,7 +108,7 @@
 
       <!-- Sort Filter -->
       <div class="filter-field">
-        <label for="admin-hotel-sort" class="filter-label">Sort Order</label>
+        <label for="admin-hotel-sort" class="filter-label">{{ 'admin.hotels.sortOrder' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -150,7 +150,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
-            Clear Filters
+            {{ 'admin.common.reset' | translate }}
           </button>
         }
 
@@ -158,13 +158,13 @@
           type="button"
           class="btn-secondary"
           (click)="loadHotels()"
-          title="Reload hotel dataset"
+          [title]="'admin.common.refresh' | translate"
           id="admin-refresh-hotels-btn"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
-          Refresh
+          {{ 'admin.common.refresh' | translate }}
         </button>
       </div>
     </div>
@@ -181,7 +181,7 @@
         </svg>
         <span>{{ errorMessage() }}</span>
       </div>
-      <button type="button" class="btn-retry" (click)="loadHotels()">Retry</button>
+      <button type="button" class="btn-retry" (click)="loadHotels()">{{ 'common.retry' | translate }}</button>
     </div>
   }
 
@@ -204,13 +204,13 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px;">ID</th>
-          <th>Hotel Name</th>
-          <th>Location</th>
-          <th style="width: 120px;">Rating</th>
+          <th style="width: 80px;">{{ 'admin.common.id' | translate }}</th>
+          <th>{{ 'admin.hotels.colHotel' | translate }}</th>
+          <th>{{ 'admin.hotels.colCityAddress' | translate }}</th>
+          <th style="width: 120px;">{{ 'admin.hotels.colRating' | translate }}</th>
           <th style="width: 150px;">Check-In / Out</th>
           <th style="width: 150px;">Coordinates</th>
-          <th style="width: 140px; text-align: center;">Actions</th>
+          <th style="width: 140px; text-align: center;">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -283,7 +283,7 @@
                 type="button"
                 class="action-btn edit-btn"
                 (click)="openEditDialog(hotel)"
-                title="Edit {{ hotel.name }}"
+                [title]="'admin.common.edit' | translate"
                 [attr.aria-label]="'Edit ' + hotel.name"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -295,7 +295,7 @@
                 type="button"
                 class="action-btn delete-btn"
                 (click)="confirmDelete(hotel)"
-                title="Delete {{ hotel.name }}"
+                [title]="'admin.common.delete' | translate"
                 [attr.aria-label]="'Delete ' + hotel.name"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -321,7 +321,7 @@
                   <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
               </div>
-              <h3>No hotels found</h3>
+              <h3>{{ 'admin.common.noRecords' | translate }}</h3>
               <p>
                 @if (hasActiveFilters()) {
                   No hotels matched your active query filters.
@@ -331,9 +331,9 @@
               </p>
               <div class="empty-actions">
                 @if (hasActiveFilters()) {
-                  <button type="button" class="btn-secondary" (click)="clearFilters()">Clear Filters</button>
+                  <button type="button" class="btn-secondary" (click)="clearFilters()">{{ 'admin.common.reset' | translate }}</button>
                 }
-                <button type="button" class="btn-primary-action" (click)="openCreateDialog()">Add First Hotel</button>
+                <button type="button" class="btn-primary-action" (click)="openCreateDialog()">{{ 'admin.hotels.addNew' | translate }}</button>
               </div>
             </div>
           </td>
@@ -349,7 +349,7 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '92vw', maxWidth: '640px' }"
-    [header]="isEditMode() ? 'Edit Hotel Details' : 'Add New Hotel'"
+    [header]="(isEditMode() ? 'admin.hotels.editHotel' : 'admin.hotels.addNew') | translate"
     (onHide)="closeDialog()"
   >
     <form [formGroup]="hotelForm" (ngSubmit)="saveHotel()" class="dialog-form" novalidate>
@@ -357,7 +357,7 @@
 
         <!-- Name -->
         <div class="form-group full-width">
-          <label for="hotel-form-name" class="form-label required">Hotel Name</label>
+          <label for="hotel-form-name" class="form-label required">{{ 'admin.hotels.fieldHotelName' | translate }}</label>
           <input
             id="hotel-form-name"
             pInputText
@@ -372,7 +372,7 @@
 
         <!-- City -->
         <div class="form-group">
-          <label for="hotel-form-city" class="form-label required">City</label>
+          <label for="hotel-form-city" class="form-label required">{{ 'admin.hotels.fieldCity' | translate }}</label>
           <input
             id="hotel-form-city"
             pInputText
@@ -387,7 +387,7 @@
 
         <!-- Address -->
         <div class="form-group">
-          <label for="hotel-form-address" class="form-label required">Address</label>
+          <label for="hotel-form-address" class="form-label required">{{ 'admin.hotels.fieldAddress' | translate }}</label>
           <input
             id="hotel-form-address"
             pInputText
@@ -415,7 +415,7 @@
 
         <!-- Rating -->
         <div class="form-group">
-          <label for="hotel-form-rating" class="form-label">Rating (0 - 5)</label>
+          <label for="hotel-form-rating" class="form-label">{{ 'admin.hotels.fieldRating' | translate }}</label>
           <p-inputNumber
             id="hotel-form-rating"
             formControlName="rating"
@@ -434,7 +434,7 @@
 
         <!-- Latitude -->
         <div class="form-group">
-          <label for="hotel-form-latitude" class="form-label required">Latitude</label>
+          <label for="hotel-form-latitude" class="form-label required">{{ 'admin.hotels.fieldLatitude' | translate }}</label>
           <p-inputNumber
             id="hotel-form-latitude"
             formControlName="latitude"
@@ -452,7 +452,7 @@
 
         <!-- Longitude -->
         <div class="form-group">
-          <label for="hotel-form-longitude" class="form-label required">Longitude</label>
+          <label for="hotel-form-longitude" class="form-label required">{{ 'admin.hotels.fieldLongitude' | translate }}</label>
           <p-inputNumber
             id="hotel-form-longitude"
             formControlName="longitude"
@@ -508,7 +508,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -519,7 +519,7 @@
             <span class="spinner-inline" aria-hidden="true"></span>
             <span>Saving…</span>
           } @else {
-            <span>{{ isEditMode() ? 'Save Changes' : 'Create Hotel' }}</span>
+            <span>{{ (isEditMode() ? 'admin.common.save' : 'admin.common.add') | translate }}</span>
           }
         </button>
       </div>
@@ -533,7 +533,7 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '92vw', maxWidth: '440px' }"
-    header="Confirm Hotel Deletion"
+    [header]="'admin.common.confirmDelete' | translate"
     (onHide)="cancelDelete()"
   >
     <div class="delete-confirmation-body">
@@ -551,7 +551,7 @@
       </p>
 
       <p class="delete-subtext">
-        This action cannot be undone. Any rooms or reservations linked to this hotel will also be affected.
+        {{ 'admin.common.confirmDeleteMsg' | translate }}
       </p>
 
       <div class="dialog-actions">
@@ -561,7 +561,7 @@
           (click)="cancelDelete()"
           [disabled]="deleting()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="button"
@@ -573,7 +573,7 @@
             <span class="spinner-inline" aria-hidden="true"></span>
             <span>Deleting…</span>
           } @else {
-            <span>Delete Hotel</span>
+            <span>{{ 'admin.common.delete' | translate }}</span>
           }
         </button>
       </div>

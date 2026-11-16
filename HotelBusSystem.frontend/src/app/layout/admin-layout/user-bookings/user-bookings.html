@@ -5,8 +5,8 @@
   <header class="page-header">
     <div class="header-left">
       <div class="title-with-badge">
-        <h1 class="page-title">User Bookings</h1>
-        <span class="page-subtitle">View and audit combined customer hotel and bus reservations</span>
+        <h1 class="page-title">{{ 'admin.userBookings.title' | translate }}</h1>
+        <span class="page-subtitle">{{ 'admin.userBookings.combinedSubtitle' | translate }}</span>
       </div>
     </div>
   </header>
@@ -18,7 +18,7 @@
       <!-- User Selector -->
       <div class="filter-field user-picker-field">
         <label for="admin-user-select" class="filter-label">
-          Customer User <span class="required-star">*</span>
+          {{ 'admin.userBookings.customerUser' | translate }} <span class="required-star">*</span>
         </label>
         <p-select
           id="admin-user-select"
@@ -29,7 +29,7 @@
           optionValue="value"
           [filter]="true"
           filterBy="label,name,email"
-          placeholder="Search and select user by name or email..."
+          [placeholder]="'admin.userBookings.searchUserPlaceholder' | translate"
           styleClass="w-full"
           [style]="{ width: '100%' }"
           appendTo="body"
@@ -39,7 +39,7 @@
 
       <!-- Linked Booking Type Filter -->
       <div class="filter-field">
-        <label for="admin-user-type-filter" class="filter-label">Booking Type</label>
+        <label for="admin-user-type-filter" class="filter-label">{{ 'admin.userBookings.bookingType' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">📑</span>
           <select
@@ -58,7 +58,7 @@
 
       <!-- Status Filter -->
       <div class="filter-field">
-        <label for="admin-user-status-filter" class="filter-label">Status</label>
+        <label for="admin-user-status-filter" class="filter-label">{{ 'admin.common.status' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">🏷️</span>
           <select
@@ -68,18 +68,18 @@
             (ngModelChange)="onStatusChange($event)"
             aria-label="Filter by booking status"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="ALL">{{ 'admin.trips.allStatuses' | translate }}</option>
+            <option value="PENDING">{{ 'admin.dashboard.pending' | translate }}</option>
+            <option value="CONFIRMED">{{ 'admin.dashboard.confirmed' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.dashboard.completed' | translate }}</option>
+            <option value="CANCELLED">{{ 'admin.dashboard.cancelled' | translate }}</option>
           </select>
         </div>
       </div>
 
       <!-- Payment Method Filter -->
       <div class="filter-field">
-        <label for="admin-user-payment-filter" class="filter-label">Payment Method</label>
+        <label for="admin-user-payment-filter" class="filter-label">{{ 'admin.userBookings.paymentMethod' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">💳</span>
           <select
@@ -89,12 +89,12 @@
             (ngModelChange)="onPaymentMethodChange($event)"
             aria-label="Filter by payment method"
           >
-            <option value="ALL">All Payment Methods</option>
+            <option value="ALL">{{ 'admin.userBookings.allPaymentMethods' | translate }}</option>
             <option value="CREDIT_CARD">Credit Card</option>
             <option value="DEBIT_CARD">Debit Card</option>
             <option value="PAYPAL">PayPal</option>
             <option value="BANK_TRANSFER">Bank Transfer</option>
-            <option value="No payment">No payment</option>
+            <option value="No payment">{{ 'admin.userBookings.noPayment' | translate }}</option>
           </select>
         </div>
       </div>
@@ -104,9 +104,9 @@
     @if (selectedUserId()) {
       <div class="filter-toolbar">
         <div class="results-badge">
-          Active Customer: <strong>{{ selectedUser()?.name }}</strong> &lt;{{ selectedUser()?.email }}&gt;
+          {{ 'admin.userBookings.activeCustomer' | translate }} <strong>{{ selectedUser()?.name }}</strong> &lt;{{ selectedUser()?.email }}&gt;
           <span class="count-divider">•</span>
-          Showing Bookings: <strong>{{ totalLoadedCount() }}</strong>
+          {{ 'admin.userBookings.showingBookings' | translate }} <strong>{{ totalLoadedCount() }}</strong>
         </div>
       </div>
     }
@@ -117,9 +117,9 @@
     <section class="empty-prompt-card" aria-label="Customer selection guide">
       <div class="empty-state">
         <div class="empty-icon" aria-hidden="true">👤</div>
-        <h3 class="empty-title">Select a Customer</h3>
+        <h3 class="empty-title">{{ 'admin.userBookings.selectCustomer' | translate }}</h3>
         <p class="empty-desc">
-          Choose a customer from the dropdown above to load and inspect their hotel stays and bus reservations.
+          {{ 'admin.userBookings.selectCustomerDesc' | translate }}
         </p>
       </div>
     </section>
@@ -135,7 +135,7 @@
           <div class="section-card-header">
             <div class="section-title-wrapper">
               <span class="section-icon" aria-hidden="true">🏨</span>
-              <h2 class="section-title">Hotel Bookings</h2>
+              <h2 class="section-title">{{ 'admin.userBookings.hotelBookingsSection' | translate }}</h2>
               <span class="section-count-badge">{{ displayedHotelBookings().length }}</span>
             </div>
           </div>
@@ -164,13 +164,13 @@
           >
             <ng-template pTemplate="header">
               <tr>
-                <th style="width: 90px">ID</th>
-                <th style="width: 100px">Type</th>
-                <th style="width: 130px">Status</th>
-                <th>Hotel &amp; Stay Dates</th>
-                <th style="width: 100px; text-align: center">Guests</th>
-                <th style="width: 130px">Price</th>
-                <th style="width: 160px">Payment</th>
+                <th style="width: 90px">{{ 'admin.common.id' | translate }}</th>
+                <th style="width: 100px">{{ 'admin.rooms.colType' | translate }}</th>
+                <th style="width: 130px">{{ 'admin.common.status' | translate }}</th>
+                <th>{{ 'admin.userBookings.hotelDates' | translate }}</th>
+                <th style="width: 100px; text-align: center">{{ 'admin.userBookings.guests' | translate }}</th>
+                <th style="width: 130px">{{ 'admin.userBookings.price' | translate }}</th>
+                <th style="width: 160px">{{ 'admin.userBookings.payment' | translate }}</th>
               </tr>
             </ng-template>
 
@@ -216,9 +216,9 @@
                 <td colspan="7">
                   <div class="empty-state">
                     <div class="empty-icon" aria-hidden="true">🏨</div>
-                    <h3 class="empty-title">No hotel bookings found</h3>
+                    <h3 class="empty-title">{{ 'admin.hotelBookings.noBookingsFound' | translate }}</h3>
                     <p class="empty-desc">
-                      No hotel reservations match the chosen filters for this customer.
+                      {{ 'admin.userBookings.noHotelBookingsMatch' | translate }}
                     </p>
                   </div>
                 </td>
@@ -234,7 +234,7 @@
           <div class="section-card-header">
             <div class="section-title-wrapper">
               <span class="section-icon" aria-hidden="true">🚌</span>
-              <h2 class="section-title">Bus Bookings</h2>
+              <h2 class="section-title">{{ 'admin.userBookings.busBookingsSection' | translate }}</h2>
               <span class="section-count-badge">{{ displayedBusBookings().length }}</span>
             </div>
           </div>
@@ -266,7 +266,7 @@
                 <th style="width: 90px">ID</th>
                 <th style="width: 100px">Type</th>
                 <th style="width: 130px">Status</th>
-                <th>Trip &amp; Seat Assignment</th>
+                <th>{{ 'admin.userBookings.tripSeatAssignment' | translate }}</th>
                 <th style="width: 100px; text-align: center">Guests</th>
                 <th style="width: 130px">Price</th>
                 <th style="width: 160px">Payment</th>
@@ -315,9 +315,9 @@
                 <td colspan="7">
                   <div class="empty-state">
                     <div class="empty-icon" aria-hidden="true">🚌</div>
-                    <h3 class="empty-title">No bus bookings found</h3>
+                    <h3 class="empty-title">{{ 'admin.busBookings.noBookingsFound' | translate }}</h3>
                     <p class="empty-desc">
-                      No bus reservations match the chosen filters for this customer.
+                      {{ 'admin.userBookings.noBusBookingsMatch' | translate }}
                     </p>
                   </div>
                 </td>

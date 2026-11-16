@@ -18,6 +18,7 @@ import { UIChart } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DatePickerModule } from 'primeng/datepicker';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Services
 import { AuthService } from '../../../core/services/auth.service';
@@ -76,6 +77,7 @@ import {
     ButtonModule,
     SkeletonModule,
     DatePickerModule,
+    TranslatePipe,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
@@ -85,6 +87,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly analyticsService = inject(AnalyticsService);
   private readonly themeService = inject(ThemeService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly currentUser = this.authService.currentUser;

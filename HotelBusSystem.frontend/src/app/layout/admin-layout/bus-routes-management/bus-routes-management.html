@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Bus Routes</span>
+        <span class="current">{{ 'admin.routes.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Bus Routes Management</h1>
+      <h1 class="page-title">{{ 'admin.routes.title' | translate }}</h1>
       <p class="page-subtitle">
-        Configure travel transit corridors, inter-terminal connections, origin and destination stops, and expected journey durations.
+        {{ 'admin.routes.subtitle' | translate }}
       </p>
     </div>
 
@@ -23,13 +23,13 @@
         class="btn-primary-action"
         (click)="openCreateDialog()"
         id="admin-add-route-btn"
-        aria-label="Add new bus route"
+        [attr.aria-label]="'admin.routes.addNew' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Add New Route</span>
+        <span>{{ 'admin.routes.addNew' | translate }}</span>
       </button>
 
       <button
@@ -53,7 +53,7 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>Refresh</span>
+        <span>{{ 'admin.common.refresh' | translate }}</span>
       </button>
     </div>
   </header>
@@ -63,7 +63,7 @@
     <div class="filters-grid">
       <!-- Search Keyword -->
       <div class="filter-field search-field">
-        <label for="admin-route-search" class="filter-label">Quick Filter</label>
+        <label for="admin-route-search" class="filter-label">{{ 'admin.routes.quickFilter' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,7 +75,7 @@
             id="admin-route-search"
             type="search"
             class="filter-input"
-            placeholder="Search route name…"
+            [placeholder]="'admin.routes.searchPlaceholder' | translate"
             [value]="searchFilter()"
             (input)="onSearchFilter($any($event.target).value)"
             aria-label="Filter routes"
@@ -85,7 +85,7 @@
 
       <!-- Sort By -->
       <div class="filter-field">
-        <label for="admin-route-sort" class="filter-label">Sort By</label>
+        <label for="admin-route-sort" class="filter-label">{{ 'admin.routes.sortBy' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">🗺</span>
           <select
@@ -95,9 +95,9 @@
             (change)="onSortChange($any($event.target).value)"
             aria-label="Sort routes"
           >
-            <option value="id">ID</option>
-            <option value="name">Route Name</option>
-            <option value="duration">Duration</option>
+            <option value="id">{{ 'admin.common.id' | translate }}</option>
+            <option value="name">{{ 'admin.routes.routeName' | translate }}</option>
+            <option value="duration">{{ 'admin.routes.duration' | translate }}</option>
           </select>
         </div>
       </div>
@@ -106,7 +106,7 @@
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
-        Total Routes: <strong>{{ totalElements() }}</strong>
+        {{ 'admin.routes.totalRoutes' | translate }} <strong>{{ totalElements() }}</strong>
       </div>
     </div>
   </section>
@@ -147,12 +147,12 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>Route Name</th>
-          <th>Origin Terminal</th>
-          <th>Destination Terminal</th>
-          <th>Est. Duration</th>
-          <th style="width: 110px; text-align: right">Actions</th>
+          <th style="width: 80px">{{ 'admin.common.id' | translate }}</th>
+          <th>{{ 'admin.routes.routeName' | translate }}</th>
+          <th>{{ 'admin.routes.originTerminal' | translate }}</th>
+          <th>{{ 'admin.routes.destinationTerminal' | translate }}</th>
+          <th>{{ 'admin.routes.estDuration' | translate }}</th>
+          <th style="width: 110px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -216,9 +216,9 @@
           <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🗺</div>
-              <h3 class="empty-title">No bus routes found</h3>
+              <h3 class="empty-title">{{ 'admin.routes.noRoutesFound' | translate }}</h3>
               <p class="empty-desc">
-                No route itineraries have been recorded in the database yet. Click "Add New Route" to create one.
+                {{ 'admin.routes.noRoutesDesc' | translate }}
               </p>
             </div>
           </td>
@@ -231,7 +231,7 @@
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
-    [header]="isEditMode() ? 'Edit Bus Route' : 'Add New Bus Route'"
+    [header]="(isEditMode() ? 'admin.routes.editRoute' : 'admin.routes.addNew') | translate"
     [style]="{ width: '90vw', maxWidth: '560px' }"
     [draggable]="false"
     [resizable]="false"
@@ -243,7 +243,7 @@
         <!-- Route Name -->
         <div class="form-group full-width">
           <label for="routeName" class="form-label">
-            Route Name <span class="required-star">*</span>
+            {{ 'admin.routes.routeName' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="routeName"
@@ -292,7 +292,7 @@
         <!-- Duration in minutes -->
         <div class="form-group full-width">
           <label for="duration" class="form-label">
-            Estimated Duration (Minutes) <span class="required-star">*</span>
+            {{ 'admin.routes.estDuration' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="duration"
@@ -324,7 +324,7 @@
           [disabled]="saving() || routeForm.invalid"
           id="admin-save-route-btn"
         >
-          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Route' : 'Create Route') }}
+          {{ (saving() ? 'admin.routes.saving' : (isEditMode() ? 'admin.routes.updateRoute' : 'admin.routes.createRoute')) | translate }}
         </button>
       </div>
     </form>
@@ -334,7 +334,7 @@
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
-    header="Confirm Route Deletion"
+    [header]="'admin.routes.confirmDeleteTitle' | translate"
     [style]="{ width: '90vw', maxWidth: '440px' }"
     [draggable]="false"
     [resizable]="false"
@@ -348,13 +348,13 @@
           <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-      <h3 class="delete-title">Delete Bus Route?</h3>
+      <h3 class="delete-title">{{ 'admin.routes.deleteTitle' | translate }}</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete route
+        {{ 'admin.routes.deletePrompt' | translate }}
         <strong class="delete-entity-name">
           {{ routeToDelete()?.name }}
         </strong>?
-        This action cannot be undone.
+        {{ 'admin.rooms.cannotBeUndone' | translate }}
       </p>
     </div>
 
@@ -374,7 +374,7 @@
         [disabled]="deleting()"
         id="admin-confirm-delete-route-btn"
       >
-        {{ deleting() ? 'Deleting…' : 'Delete Route' }}
+        {{ (deleting() ? 'admin.routes.deleting' : 'admin.routes.deleteRoute') | translate }}
       </button>
     </div>
   </p-dialog>

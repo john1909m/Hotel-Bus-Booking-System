@@ -24,6 +24,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { RoomService } from '../../../core/services/room.service';
@@ -45,6 +46,7 @@ import { PagedModelRoomDto } from '../../../core/models/Pagination/roomPage.mode
     DialogModule,
     ToastModule,
     TagModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './rooms-management.html',
@@ -56,6 +58,7 @@ export class RoomsManagement implements OnInit, OnDestroy {
   private readonly hotelService = inject(HotelService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
 

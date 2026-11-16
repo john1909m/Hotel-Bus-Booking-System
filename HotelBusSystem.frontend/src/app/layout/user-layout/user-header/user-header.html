@@ -15,19 +15,30 @@
 
     <!-- Desktop Navigation -->
     <nav class="nav-desktop" aria-label="Customer navigation">
-      <a routerLink="/" class="nav-link">Home</a>
-      <a routerLink="/hotels" routerLinkActive="active" class="nav-link">Hotels</a>
-      <a routerLink="/user/hotel-bookings" routerLinkActive="active" class="nav-link">My Hotel Bookings</a>
-      <a routerLink="/user/bus-bookings" routerLinkActive="active" class="nav-link">My Bus Bookings</a>
+      <a routerLink="/" class="nav-link">{{ 'userHeader.home' | translate }}</a>
+      <a routerLink="/hotels" routerLinkActive="active" class="nav-link">{{ 'userHeader.hotels' | translate }}</a>
+      <a routerLink="/user/hotel-bookings" routerLinkActive="active" class="nav-link">{{ 'userHeader.myHotelBookings' | translate }}</a>
+      <a routerLink="/user/bus-bookings" routerLinkActive="active" class="nav-link">{{ 'userHeader.myBusBookings' | translate }}</a>
     </nav>
 
     <!-- Right Controls -->
     <div class="header-actions">
 
+      <!-- Language Switcher -->
+      <button
+        class="lang-toggle-btn"
+        (click)="toggleLanguage()"
+        [attr.aria-label]="isArabic() ? ('userHeader.langSwitchAria' | translate) : 'تغيير اللغة إلى العربية'"
+        id="user-lang-toggle-btn"
+      >
+        <span class="lang-icon" aria-hidden="true">🌐</span>
+        <span class="lang-text">{{ isArabic() ? 'English' : 'العربية' }}</span>
+      </button>
+
       <!-- Theme Toggle -->
       <button
         class="theme-toggle"
-        [attr.aria-label]="theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        [attr.aria-label]="theme() === 'dark' ? ('userHeader.switchToLight' | translate) : ('userHeader.switchToDark' | translate)"
         (click)="toggleTheme()"
         id="user-theme-toggle-btn"
       >
@@ -39,11 +50,11 @@
       </button>
 
       @if (isAuthenticated()) {
-        <span class="user-greeting">Hi, {{ currentUser()?.name }}</span>
-        <button type="button" (click)="logout()" class="btn-primary" aria-label="Sign out">Sign Out</button>
+        <span class="user-greeting">{{ 'userHeader.greeting' | translate:{ name: currentUser()?.name } }}</span>
+        <button type="button" (click)="logout()" class="btn-primary" [attr.aria-label]="'userHeader.signOutAria' | translate">{{ 'userHeader.signOut' | translate }}</button>
       } @else {
-        <a routerLink="/login" class="btn-ghost">Login</a>
-        <a routerLink="/register" class="btn-primary">Register</a>
+        <a routerLink="/login" class="btn-ghost">{{ 'userHeader.login' | translate }}</a>
+        <a routerLink="/register" class="btn-primary">{{ 'userHeader.register' | translate }}</a>
       }
 
       <!-- Mobile Hamburger -->
@@ -53,7 +64,7 @@
         (click)="toggleMenu()"
         [attr.aria-expanded]="menuOpen()"
         aria-controls="user-mobile-menu"
-        aria-label="Toggle navigation menu"
+        [attr.aria-label]="'userHeader.toggleMenuAria' | translate"
         id="user-hamburger-btn"
       >
         <span></span><span></span><span></span>
@@ -70,17 +81,25 @@
     aria-label="Mobile customer navigation"
   >
     <nav class="mobile-nav">
-      <a routerLink="/" class="mobile-link" (click)="closeMenu()">Home</a>
-      <a routerLink="/hotels" routerLinkActive="active" class="mobile-link" (click)="closeMenu()">Hotels</a>
-      <a routerLink="/user/hotel-bookings" class="mobile-link" (click)="closeMenu()">My Hotel Bookings</a>
-      <a routerLink="/user/bus-bookings" class="mobile-link" (click)="closeMenu()">My Bus Bookings</a>
+      <a routerLink="/" class="mobile-link" (click)="closeMenu()">{{ 'userHeader.home' | translate }}</a>
+      <a routerLink="/hotels" routerLinkActive="active" class="mobile-link" (click)="closeMenu()">{{ 'userHeader.hotels' | translate }}</a>
+      <a routerLink="/user/hotel-bookings" class="mobile-link" (click)="closeMenu()">{{ 'userHeader.myHotelBookings' | translate }}</a>
+      <a routerLink="/user/bus-bookings" class="mobile-link" (click)="closeMenu()">{{ 'userHeader.myBusBookings' | translate }}</a>
       <div class="mobile-actions">
+        <button
+          class="lang-toggle-btn w-full mb-2"
+          (click)="toggleLanguage()"
+          [attr.aria-label]="isArabic() ? ('userHeader.langSwitchAria' | translate) : 'تغيير اللغة إلى العربية'"
+        >
+          <span class="lang-icon" aria-hidden="true">🌐</span>
+          <span class="lang-text">{{ isArabic() ? 'English' : 'العربية' }}</span>
+        </button>
         @if (isAuthenticated()) {
-          <div class="user-greeting-mobile">Hi, {{ currentUser()?.name }}</div>
-          <button type="button" (click)="logout()" class="btn-primary w-full">Sign Out</button>
+          <div class="user-greeting-mobile">{{ 'userHeader.greeting' | translate:{ name: currentUser()?.name } }}</div>
+          <button type="button" (click)="logout()" class="btn-primary w-full">{{ 'userHeader.signOut' | translate }}</button>
         } @else {
-          <a routerLink="/login" class="btn-ghost w-full" (click)="closeMenu()">Login</a>
-          <a routerLink="/register" class="btn-primary w-full" (click)="closeMenu()">Register</a>
+          <a routerLink="/login" class="btn-ghost w-full" (click)="closeMenu()">{{ 'userHeader.login' | translate }}</a>
+          <a routerLink="/register" class="btn-primary w-full" (click)="closeMenu()">{{ 'userHeader.register' | translate }}</a>
         }
       </div>
     </nav>

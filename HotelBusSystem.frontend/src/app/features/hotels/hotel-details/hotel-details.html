@@ -7,21 +7,21 @@
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>Back to Hotels</span>
+        <span>{{ 'hotelDetails.backToHotels' | translate }}</span>
       </a>
 
       <ol class="breadcrumbs-list">
-        <li><a routerLink="/">Home</a></li>
+        <li><a routerLink="/">{{ 'hotelDetails.home' | translate }}</a></li>
         <li class="separator" aria-hidden="true">/</li>
-        <li><a routerLink="/hotels">Hotels</a></li>
+        <li><a routerLink="/hotels">{{ 'hotelDetails.hotels' | translate }}</a></li>
         <li class="separator" aria-hidden="true">/</li>
         <li class="current" aria-current="page">
           @if (hotelState() === 'success') {
             {{ hotel()?.name }}
           } @else if (hotelState() === 'loading') {
-            <span>Loading...</span>
+            <span>{{ 'hotelDetails.loading' | translate }}</span>
           } @else {
-            <span>Hotel Details</span>
+            <span>{{ 'hotelDetails.hotelDetails' | translate }}</span>
           }
         </li>
       </ol>
@@ -30,7 +30,7 @@
 
   <!-- ── HOTEL LOADING STATE (SKELETON) ── -->
   @if (hotelState() === 'loading') {
-    <div class="hotel-skeleton-wrapper" aria-busy="true" aria-label="Loading hotel details">
+    <div class="hotel-skeleton-wrapper" aria-busy="true" [attr.aria-label]="'hotelDetails.loadingDetails' | translate">
       <div class="skeleton-hero">
         <div class="skeleton-pill"></div>
         <div class="skeleton-title"></div>
@@ -55,7 +55,7 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h2>Hotel Not Found</h2>
+      <h2>{{ 'hotelDetails.notFoundTitle' | translate }}</h2>
       <p class="error-msg">{{ hotelError() }}</p>
       <div class="state-actions">
         <button type="button" class="btn btn-secondary" (click)="retryLoad()">
@@ -64,10 +64,10 @@
             <polyline points="1 20 1 14 7 14"></polyline>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          Try Again
+          {{ 'hotelDetails.tryAgain' | translate }}
         </button>
         <a routerLink="/hotels" class="btn btn-primary">
-          Browse All Hotels
+          {{ 'hotelDetails.browseAllHotels' | translate }}
         </a>
       </div>
     </section>
@@ -92,7 +92,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
-              <span>{{ h.rating | number:'1.1-1' }} Stars</span>
+              <span>{{ h.rating | number:'1.1-1' }} {{ 'hotelDetails.starsCount' | translate }}</span>
             </div>
           }
 
@@ -123,7 +123,7 @@
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
                 <circle cx="12" cy="9" r="2.5"></circle>
               </svg>
-              <span>View on Google Maps</span>
+              <span>{{ 'hotelDetails.viewOnMaps' | translate }}</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="external-icon">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                 <polyline points="15 3 21 3 21 9"></polyline>
@@ -136,7 +136,7 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
               </svg>
-              <span>Map location unavailable</span>
+              <span>{{ 'hotelDetails.mapUnavailable' | translate }}</span>
             </span>
           }
         </div>
@@ -155,7 +155,7 @@
                 [class.gallery-chip--active]="galleryFilter() === 'GENERAL'"
                 (click)="setGalleryFilter('GENERAL')"
                 [attr.aria-pressed]="galleryFilter() === 'GENERAL'">
-                <span>Hotel</span>
+                <span>{{ 'hotelDetails.gallery.hotelChip' | translate }}</span>
               </button>
               <button
                 type="button"
@@ -163,7 +163,7 @@
                 [class.gallery-chip--active]="galleryFilter() === 'ALL'"
                 (click)="setGalleryFilter('ALL')"
                 [attr.aria-pressed]="galleryFilter() === 'ALL'">
-                <span>All ({{ allHotelImages().length }})</span>
+                <span>{{ 'hotelDetails.gallery.allChip' | translate:{ count: allHotelImages().length } }}</span>
               </button>
               @for (roomType of distinctImageRoomTypes(); track roomType) {
                 <button
@@ -203,7 +203,7 @@
               <div class="error-text-wrap">
                 <p class="error-msg">{{ galleryError() }}</p>
                 <button type="button" class="btn btn-secondary btn-sm" (click)="retryGalleryLoad()">
-                  Retry Loading Photos
+                  {{ 'hotelDetails.gallery.retryBtn' | translate }}
                 </button>
               </div>
             </div>
@@ -223,7 +223,7 @@
                   <span class="hotel-tag-city">{{ h.city }}</span>
                   <span class="hotel-tag-name">{{ h.name }}</span>
                 </div>
-                <span class="banner-subtext">No photos yet</span>
+                <span class="banner-subtext">{{ 'hotelDetails.gallery.emptySubtext' | translate }}</span>
               </div>
             </div>
           }
@@ -232,10 +232,10 @@
           @if (galleryState() === 'success' && filteredGalleryImages().length === 0) {
             <div class="gallery-empty-state-card" role="status">
               <div class="empty-state-icon" aria-hidden="true">📷</div>
-              <h3 class="empty-state-title">No photos yet</h3>
-              <p class="empty-state-desc">No photos available under the "{{ galleryFilter() }}" category.</p>
+              <h3 class="empty-state-title">{{ 'hotelDetails.gallery.emptyCategoryTitle' | translate }}</h3>
+              <p class="empty-state-desc">{{ 'hotelDetails.gallery.emptyCategoryDesc' | translate:{ category: galleryFilter() } }}</p>
               <button type="button" class="btn btn-secondary btn-sm" (click)="setGalleryFilter('ALL')">
-                View All Photos
+                {{ 'hotelDetails.gallery.viewAllBtn' | translate }}
               </button>
             </div>
           }
@@ -273,21 +273,21 @@
                     <span>{{ activeImageIndex() + 1 }} / {{ totalGalleryImages() }}</span>
                   </span>
 
-                  <button type="button" class="btn-enlarge-pill" (click)="$event.stopPropagation(); openLightbox()" aria-label="Enlarge image in fullscreen view">
+                  <button type="button" class="btn-enlarge-pill" (click)="$event.stopPropagation(); openLightbox()" [attr.aria-label]="'hotelDetails.gallery.enlargeAria' | translate">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <polyline points="15 3 21 3 21 9"></polyline>
                       <polyline points="9 21 3 21 3 15"></polyline>
                       <line x1="21" y1="3" x2="14" y2="10"></line>
                       <line x1="3" y1="21" x2="10" y2="14"></line>
                     </svg>
-                    <span>View Full Size</span>
+                    <span>{{ 'hotelDetails.gallery.viewFullSize' | translate }}</span>
                   </button>
                 </div>
               </div>
 
               <!-- Thumbnail Strip (Shown if > 1 image) -->
               @if (totalGalleryImages() > 1) {
-                <div class="gallery-thumbs-track" role="tablist" aria-label="Photo thumbnails">
+                <div class="gallery-thumbs-track" role="tablist" [attr.aria-label]="'hotelDetails.photoThumbnails' | translate">
                   @for (img of filteredGalleryImages(); track img.id; let idx = $index) {
                     <button type="button"
                             class="thumb-btn"
@@ -317,15 +317,15 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              Check-in & Check-out
+              {{ 'hotelDetails.checkInOutTitle' | translate }}
             </h3>
             <div class="timings-grid">
               <div class="timing-block">
-                <span class="timing-label">Check-in</span>
+                <span class="timing-label">{{ 'hotelDetails.checkInTitle' | translate }}</span>
                 <span class="timing-val">{{ h.checkInTime || '14:00' }}</span>
               </div>
               <div class="timing-block">
-                <span class="timing-label">Check-out</span>
+                <span class="timing-label">{{ 'hotelDetails.checkOutTitle' | translate }}</span>
                 <span class="timing-val">{{ h.checkOutTime || '11:00' }}</span>
               </div>
             </div>
@@ -337,7 +337,7 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
               </svg>
-              Guest Rating & Class
+              {{ 'hotelDetails.guestRatingClass' | translate }}
             </h3>
             <div class="stars-summary">
               <div class="stars-row" aria-hidden="true">
@@ -347,14 +347,14 @@
                   </svg>
                 }
               </div>
-              <span class="rating-number">{{ h.rating ? (h.rating | number:'1.1-1') : 'Unrated' }}</span>
+              <span class="rating-number">{{ h.rating ? (h.rating | number:'1.1-1') : ('hotelDetails.unrated' | translate) }}</span>
             </div>
-            <p class="standards-note">Verified accommodation standards</p>
+            <p class="standards-note">{{ 'hotelDetails.verifiedStandards' | translate }}</p>
           </div>
 
           <!-- Quick Jump Button -->
           <a href="#hotel-rooms-section" class="btn btn-primary btn-jump-rooms">
-            <span>Browse Available Rooms</span>
+            <span>{{ 'hotelDetails.browseRooms' | translate }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <polyline points="19 12 12 19 5 12"></polyline>
@@ -365,13 +365,13 @@
 
       <!-- ── DESCRIPTION & AMENITIES CARD ── -->
       <section class="hotel-about-card" aria-labelledby="about-hotel-heading">
-        <h2 id="about-hotel-heading" class="section-title">About {{ h.name }}</h2>
+        <h2 id="about-hotel-heading" class="section-title">{{ 'hotelDetails.aboutHotel' | translate:{ name: h.name } }}</h2>
         <div class="hotel-desc-text">
           <p>{{ h.description || 'Welcome to ' + h.name + ', offering comfortable accommodations and convenient access to local attractions in ' + h.city + '.' }}</p>
         </div>
 
         <div class="hotel-amenities-strip">
-          <h3 class="amenities-title">Property Highlights</h3>
+          <h3 class="amenities-title">{{ 'hotelDetails.highlights.title' | translate }}</h3>
           <ul class="amenities-list">
             <li class="amenity-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -380,35 +380,35 @@
                 <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
                 <line x1="12" y1="20" x2="12.01" y2="20"></line>
               </svg>
-              <span>High-Speed Wi-Fi</span>
+              <span>{{ 'hotelDetails.highlights.wifi' | translate }}</span>
             </li>
             <li class="amenity-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
                 <polyline points="17 2 12 7 7 2"></polyline>
               </svg>
-              <span>Climate Control (AC)</span>
+              <span>{{ 'hotelDetails.highlights.ac' | translate }}</span>
             </li>
             <li class="amenity-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 14 14"></polyline>
               </svg>
-              <span>24/7 Front Desk</span>
+              <span>{{ 'hotelDetails.highlights.frontDesk' | translate }}</span>
             </li>
             <li class="amenity-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              <span>Prime City Access</span>
+              <span>{{ 'hotelDetails.highlights.cityAccess' | translate }}</span>
             </li>
             <li class="amenity-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
-              <span>Daily Housekeeping</span>
+              <span>{{ 'hotelDetails.highlights.housekeeping' | translate }}</span>
             </li>
           </ul>
         </div>
@@ -426,10 +426,10 @@
             </svg>
           </div>
           <div class="confirmation-title-wrap">
-            <span class="confirmation-kicker">{{ updateSuccessNotice() ? 'Reservation Updated' : 'Reservation Successful' }}</span>
-            <h3 class="confirmation-title">{{ updateSuccessNotice() ? 'Hotel Booking Updated' : 'Hotel Booking Created' }}</h3>
+            <span class="confirmation-kicker">{{ updateSuccessNotice() ? ('hotelDetails.confirmation.reservationUpdated' | translate) : ('hotelDetails.confirmation.reservationSuccessful' | translate) }}</span>
+            <h3 class="confirmation-title">{{ updateSuccessNotice() ? ('hotelDetails.confirmation.hotelBookingUpdated' | translate) : ('hotelDetails.confirmation.hotelBookingCreated' | translate) }}</h3>
             <p class="confirmation-subtitle">
-              {{ updateSuccessNotice() || 'Your reservation has been created and registered with the hotel booking service.' }}
+              {{ updateSuccessNotice() || ('hotelDetails.confirmation.defaultSuccessMsg' | translate) }}
             </p>
           </div>
           <div class="confirmation-header-badges">
@@ -441,7 +441,7 @@
               type="button"
               class="btn-dismiss-confirmation"
               (click)="dismissConfirmation()"
-              title="Dismiss confirmation">
+              [title]="'hotelDetails.confirmation.dismiss' | translate">
               &times;
             </button>
           </div>
@@ -455,18 +455,18 @@
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span>Confirmed Rooms &amp; Guest Allocation</span>
+              <span>{{ 'hotelDetails.confirmation.confirmedRoomsTitle' | translate }}</span>
             </h4>
             <div class="conf-rooms-chips-list">
               @for (item of confirmedRoomAllocations(); track item.roomNumber) {
                 <div class="conf-room-chip">
                   <div class="conf-room-badge">
-                    <strong>Room {{ item.roomNumber }}</strong>
+                    <strong>{{ 'hotelDetails.confirmation.roomBadge' | translate:{ number: item.roomNumber } }}</strong>
                   </div>
                   <span class="conf-room-sep">—</span>
                   <span class="conf-room-allocation">
-                    {{ item.adults }} {{ item.adults === 1 ? 'Adult' : 'Adults' }},
-                    {{ item.children }} {{ item.children === 1 ? 'Child' : 'Children' }}
+                    {{ item.adults }} {{ item.adults === 1 ? ('hotelDetails.confirmation.adultSingular' | translate) : ('hotelDetails.confirmation.adultPlural' | translate) }},
+                    {{ item.children }} {{ item.children === 1 ? ('hotelDetails.confirmation.childSingular' | translate) : ('hotelDetails.confirmation.childPlural' | translate) }}
                   </span>
                 </div>
               }
@@ -476,32 +476,32 @@
 
         <div class="confirmation-details-grid">
           <div class="conf-detail-item">
-            <span class="conf-label">Booking Reference</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.bookingReference' | translate }}</span>
             <span class="conf-val conf-ref-highlight">#{{ booking.id }}</span>
           </div>
 
           <div class="conf-detail-item">
-            <span class="conf-label">Property</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.property' | translate }}</span>
             <span class="conf-val">{{ booking.hotelName || h.name }}</span>
           </div>
 
           <div class="conf-detail-item">
-            <span class="conf-label">Check-in</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.checkIn' | translate }}</span>
             <span class="conf-val">{{ booking.checkIn }}</span>
           </div>
 
           <div class="conf-detail-item">
-            <span class="conf-label">Check-out</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.checkOut' | translate }}</span>
             <span class="conf-val">{{ booking.checkOut }}</span>
           </div>
 
           <div class="conf-detail-item">
-            <span class="conf-label">Guests Registered</span>
-            <span class="conf-val">{{ booking.guests }} Total ({{ booking.adults || booking.guests }} Adults)</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.guestsRegistered' | translate }}</span>
+            <span class="conf-val">{{ 'hotelDetails.confirmation.totalGuests' | translate:{ total: booking.guests, adults: booking.adults || booking.guests } }}</span>
           </div>
 
           <div class="conf-detail-item">
-            <span class="conf-label">Authoritative Total Price</span>
+            <span class="conf-label">{{ 'hotelDetails.confirmation.authoritativeTotalPrice' | translate }}</span>
             <span class="conf-val conf-price-highlight">{{ booking.totalPrice | number:'1.2-2' }} EGP</span>
           </div>
         </div>
@@ -509,14 +509,14 @@
         @if (booking.status === 'PENDING') {
           <div class="conf-status-explanation pending" role="note">
             <div class="conf-status-text">
-              <strong>Status: PENDING</strong> — Your booking request has been created and is awaiting property confirmation / review. You can track its progress under <em>My Bookings</em>.
+              <strong>{{ 'hotelDetails.statusPending' | translate }}</strong> — {{ 'hotelDetails.confirmation.statusPendingText' | translate }} <em>{{ 'hotelDetails.confirmation.myBookings' | translate }}</em>.
             </div>
           </div>
         } @else if (booking.status === 'CONFIRMED') {
           <div class="conf-status-explanation confirmed" role="note">
             <span class="conf-status-icon" aria-hidden="true">✓</span>
             <div class="conf-status-text">
-              <strong>Status: CONFIRMED</strong> — Your hotel reservation is confirmed and guaranteed.
+              <strong>{{ 'hotelDetails.statusConfirmed' | translate }}</strong> — {{ 'hotelDetails.confirmation.statusConfirmedText' | translate }}
             </div>
           </div>
         }
@@ -529,13 +529,13 @@
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
             </svg>
-            View My Bookings
+            {{ 'hotelDetails.confirmation.viewMyBookings' | translate }}
           </a>
           <a routerLink="/hotels" class="btn btn-secondary">
-            Browse More Hotels
+            {{ 'hotelDetails.confirmation.browseMoreHotels' | translate }}
           </a>
           <button type="button" class="btn btn-outline" (click)="dismissConfirmation()">
-            Dismiss
+            {{ 'hotelDetails.dismissConfirm' | translate }}
           </button>
         </div>
       </section>
@@ -547,15 +547,15 @@
         <div class="edit-banner-left">
           <span class="edit-banner-icon" aria-hidden="true">✏️</span>
           <div class="edit-banner-text">
-            <strong>Editing Reservation #{{ editingBookingId() }}</strong>
-            <p>Select your preferred rooms and stay dates, then click <strong>View Summary</strong> to review and confirm your changes.</p>
+            <strong>{{ 'hotelDetails.editMode.editingTitle' | translate:{ id: editingBookingId() } }}</strong>
+            <p>{{ 'hotelDetails.editMode.editingDesc' | translate }}</p>
           </div>
         </div>
         <div class="edit-banner-actions">
           <button
             type="button"
             pButton
-            label="Save Changes"
+            [label]="'hotelDetails.editMode.saveChanges' | translate"
             icon="pi pi-check"
             class="p-button-sm p-button-success"
             [disabled]="!canSubmitBooking() || isSubmittingBooking()"
@@ -564,7 +564,7 @@
           <button
             type="button"
             pButton
-            label="View Summary"
+            [label]="'hotelDetails.editMode.viewSummary' | translate"
             icon="pi pi-receipt"
             class="p-button-sm p-button-primary"
             (click)="openSidebar()">
@@ -572,7 +572,7 @@
           <button
             type="button"
             pButton
-            label="Switch to New Booking"
+            [label]="'hotelDetails.editMode.switchToNewBooking' | translate"
             icon="pi pi-times"
             class="p-button-sm p-button-outlined p-button-secondary btn-cancel-edit"
             (click)="cancelEditing()">
@@ -595,8 +595,8 @@
               </svg>
             </div>
             <div>
-              <h3 class="dates-card-title">Select Your Stay Dates</h3>
-              <p class="dates-card-subtitle">Choose check-in and check-out dates to check room availability and calculate total stay costs.</p>
+              <h3 class="dates-card-title">{{ 'hotelDetails.stayDates.title' | translate }}</h3>
+              <p class="dates-card-subtitle">{{ 'hotelDetails.stayDates.subtitle' | translate }}</p>
             </div>
           </div>
 
@@ -605,14 +605,14 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
-              {{ stayNights() }} {{ stayNights() === 1 ? 'Night' : 'Nights' }} Stay
+              {{ stayNights() === 1 ? ('hotelDetails.stayDates.nightStay' | translate) : ('hotelDetails.stayDates.nightsStay' | translate:{ count: stayNights() }) }}
             </span>
           }
         </div>
 
         <div class="stay-dates-inputs-row">
           <div class="date-input-field">
-            <label for="main-checkin" class="date-label">Check-in Date</label>
+            <label for="main-checkin" class="date-label">{{ 'hotelDetails.stayDates.checkInDate' | translate }}</label>
             <input
               pInputText
               type="date"
@@ -626,7 +626,7 @@
           </div>
 
           <div class="date-input-field">
-            <label for="main-checkout" class="date-label">Check-out Date</label>
+            <label for="main-checkout" class="date-label">{{ 'hotelDetails.stayDates.checkOutDate' | translate }}</label>
             <input
               pInputText
               type="date"
@@ -649,9 +649,9 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
-                <span>Adults</span>
+                <span>{{ 'hotelDetails.stayDates.adults' | translate }}</span>
               </span>
-              <small class="guest-group-sub">Ages 18+ (min 1)</small>
+              <small class="guest-group-sub">{{ 'hotelDetails.stayDates.adultsSub' | translate }}</small>
             </div>
             <div class="guest-counter-control">
               <button
@@ -659,7 +659,7 @@
                 class="btn-guest-counter"
                 (click)="decreaseAdults()"
                 [disabled]="adultsCount() <= (selectedRooms().length > 0 ? selectedRooms().length : 1)"
-                aria-label="Decrease adults count">
+                [attr.aria-label]="'hotelDetails.stayDates.decreaseAdults' | translate">
                 &minus;
               </button>
               <span class="guest-counter-value" aria-live="polite">{{ adultsCount() }}</span>
@@ -668,7 +668,7 @@
                 class="btn-guest-counter"
                 (click)="increaseAdults()"
                 [disabled]="isAdultsIncreaseDisabled()"
-                aria-label="Increase adults count">
+                [attr.aria-label]="'hotelDetails.stayDates.increaseAdults' | translate">
                 &plus;
               </button>
             </div>
@@ -682,9 +682,9 @@
                   <path d="M9 21v-2a4 4 0 0 1 3-3.87"></path>
                   <circle cx="9" cy="7" r="4"></circle>
                 </svg>
-                <span>Children</span>
+                <span>{{ 'hotelDetails.stayDates.children' | translate }}</span>
               </span>
-              <small class="guest-group-sub">Ages 0–17 (under 12 free)</small>
+              <small class="guest-group-sub">{{ 'hotelDetails.stayDates.childrenSub' | translate }}</small>
             </div>
             <div class="guest-counter-control">
               <button
@@ -692,7 +692,7 @@
                 class="btn-guest-counter"
                 (click)="removeLastChild()"
                 [disabled]="children().length === 0"
-                aria-label="Decrease children count">
+                [attr.aria-label]="'hotelDetails.stayDates.decreaseChildren' | translate">
                 &minus;
               </button>
               <span class="guest-counter-value" aria-live="polite">{{ totalChildrenCount() }}</span>
@@ -700,7 +700,7 @@
                 type="button"
                 class="btn-guest-counter"
                 (click)="addChild()"
-                aria-label="Increase children count">
+                [attr.aria-label]="'hotelDetails.stayDates.increaseChildren' | translate">
                 &plus;
               </button>
             </div>
@@ -710,12 +710,12 @@
         <!-- Child Ages Dropdowns if children are present -->
         @if (children().length > 0) {
           <div class="child-ages-bar">
-            <span class="child-ages-prompt">Child ages (under 12 stay free):</span>
+            <span class="child-ages-prompt">{{ 'hotelDetails.stayDates.childAgesPrompt' | translate }}</span>
             <div class="child-ages-grid">
               @for (child of children(); track child.id; let idx = $index) {
                 <div class="child-age-item">
                   <label [for]="'main-child-age-' + child.id" class="child-age-label">
-                    Child {{ idx + 1 }}:
+                    {{ 'hotelDetails.stayDates.childNumber' | translate:{ idx: idx + 1 } }}
                   </label>
                   <select
                     [id]="'main-child-age-' + child.id"
@@ -723,10 +723,10 @@
                     [value]="child.age ?? ''"
                     (change)="onChildAgeSelect(child.id, $event)"
                     [attr.aria-label]="'Age for child ' + (idx + 1)">
-                    <option value="" disabled [selected]="child.age === null">Age</option>
+                    <option value="" disabled [selected]="child.age === null">{{ 'hotelDetails.stayDates.agePlaceholder' | translate }}</option>
                     @for (age of availableChildAges; track age) {
                       <option [value]="age" [selected]="child.age === age" [disabled]="isChildAgeDisabled(child, age)">
-                        {{ age === 0 ? 'Under 1' : age + ' yrs' }} {{ age < 12 ? '(Free)' : (isChildAgeDisabled(child, age) ? '(Exceeds Capacity)' : '(Chargeable)') }}
+                        {{ age === 0 ? ('hotelDetails.stayDates.underOne' | translate) : ('hotelDetails.stayDates.yearsOld' | translate:{ age: age }) }} {{ age < 12 ? ('hotelDetails.stayDates.free' | translate) : (isChildAgeDisabled(child, age) ? ('hotelDetails.stayDates.exceedsCapacity' | translate) : ('hotelDetails.stayDates.chargeable' | translate)) }}
                       </option>
                     }
                   </select>
@@ -747,7 +747,7 @@
               </svg>
             </div>
             <div class="capacity-warning-content">
-              <strong>Capacity Exceeded:</strong>
+              <strong>{{ 'hotelDetails.stayDates.capacityExceededTitle' | translate }}</strong>
               <p>
                 The selected {{ selectedRooms().length === 1 ? 'room accommodates' : 'rooms accommodate' }}
                 up to {{ totalRoomCapacity() }} chargeable guests, but your current selection requires {{ requiredCapacity() }}
@@ -768,7 +768,7 @@
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <span>Please select arrival and departure dates to view complete stay rates.</span>
+            <span>{{ 'hotelDetails.stayDates.selectDatesHint' | translate }}</span>
           </div>
         }
       </div>
@@ -780,21 +780,21 @@
       <main class="hotel-content-col" id="hotel-rooms-section" aria-labelledby="rooms-heading">
         <div class="rooms-header">
           <div class="rooms-header-text">
-            <h2 id="rooms-heading" class="rooms-title">Accommodations & Available Rooms</h2>
-            <p class="rooms-subtitle">Select your preferred rooms from the inventory below to build your booking.</p>
+            <h2 id="rooms-heading" class="rooms-title">{{ 'hotelDetails.rooms.title' | translate }}</h2>
+            <p class="rooms-subtitle">{{ 'hotelDetails.rooms.subtitle' | translate }}</p>
           </div>
 
           <!-- Filter & Sort Controls -->
           <div class="rooms-controls-bar">
             <!-- Room Type Filter Chips -->
-            <div class="room-type-chips" role="radiogroup" aria-label="Filter by room type">
+            <div class="room-type-chips" role="radiogroup" [attr.aria-label]="'hotelDetails.rooms.filterAria' | translate">
               <button
                 type="button"
                 class="type-chip"
                 [class.active]="selectedRoomType() === 'ALL'"
                 (click)="onRoomTypeFilterChange('ALL')"
                 aria-pressed="selectedRoomType() === 'ALL'">
-                All ({{ roomTypeCounts()['ALL'] }})
+                {{ 'hotelDetails.rooms.allChip' | translate:{ count: roomTypeCounts()['ALL'] } }}
               </button>
               <button
                 type="button"
@@ -802,7 +802,7 @@
                 [class.active]="selectedRoomType() === 'SINGLE'"
                 (click)="onRoomTypeFilterChange('SINGLE')"
                 aria-pressed="selectedRoomType() === 'SINGLE'">
-                Single ({{ roomTypeCounts()['SINGLE'] }})
+                {{ 'hotelDetails.rooms.singleChip' | translate:{ count: roomTypeCounts()['SINGLE'] } }}
               </button>
               <button
                 type="button"
@@ -810,7 +810,7 @@
                 [class.active]="selectedRoomType() === 'DOUBLE'"
                 (click)="onRoomTypeFilterChange('DOUBLE')"
                 aria-pressed="selectedRoomType() === 'DOUBLE'">
-                Double ({{ roomTypeCounts()['DOUBLE'] }})
+                {{ 'hotelDetails.rooms.doubleChip' | translate:{ count: roomTypeCounts()['DOUBLE'] } }}
               </button>
               <button
                 type="button"
@@ -818,7 +818,7 @@
                 [class.active]="selectedRoomType() === 'SUITE'"
                 (click)="onRoomTypeFilterChange('SUITE')"
                 aria-pressed="selectedRoomType() === 'SUITE'">
-                Suite ({{ roomTypeCounts()['SUITE'] }})
+                {{ 'hotelDetails.rooms.suiteChip' | translate:{ count: roomTypeCounts()['SUITE'] } }}
               </button>
               <button
                 type="button"
@@ -826,21 +826,21 @@
                 [class.active]="selectedRoomType() === 'DELUXE'"
                 (click)="onRoomTypeFilterChange('DELUXE')"
                 aria-pressed="selectedRoomType() === 'DELUXE'">
-                Deluxe ({{ roomTypeCounts()['DELUXE'] }})
+                {{ 'hotelDetails.rooms.deluxeChip' | translate:{ count: roomTypeCounts()['DELUXE'] } }}
               </button>
             </div>
 
             <!-- Sort Dropdown -->
             <div class="sort-control">
-              <label for="roomsSortSelect" class="sort-label">Sort by:</label>
+              <label for="roomsSortSelect" class="sort-label">{{ 'hotelDetails.rooms.sortBy' | translate }}</label>
               <select
                 id="roomsSortSelect"
                 class="sort-select"
                 (change)="onSortChange($event)">
-                <option value="default">Default Order</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="capacity-desc">Capacity: Largest First</option>
+                <option value="default">{{ 'hotelDetails.rooms.sortDefault' | translate }}</option>
+                <option value="price-asc">{{ 'hotelDetails.rooms.sortPriceAsc' | translate }}</option>
+                <option value="price-desc">{{ 'hotelDetails.rooms.sortPriceDesc' | translate }}</option>
+                <option value="capacity-desc">{{ 'hotelDetails.rooms.sortCapacityDesc' | translate }}</option>
               </select>
             </div>
           </div>
@@ -848,7 +848,7 @@
 
         <!-- ── ROOMS LOADING SKELETON ── -->
         @if (roomsState() === 'loading') {
-          <div class="rooms-skeleton-grid" aria-busy="true" aria-label="Loading rooms">
+          <div class="rooms-skeleton-grid" aria-busy="true" [attr.aria-label]="'hotelDetails.rooms.loadingAria' | translate">
             @for (i of [1, 2, 3, 4]; track i) {
               <div class="skeleton-room-card">
                 <div class="skeleton-room-header"></div>
@@ -866,10 +866,10 @@
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <h3>Unable to Load Rooms</h3>
+            <h3>{{ 'hotelDetails.rooms.unableToLoad' | translate }}</h3>
             <p>{{ roomsError() }}</p>
             <button type="button" class="btn btn-secondary btn-sm" (click)="loadRooms(h.id)">
-              Retry Loading Rooms
+              {{ 'hotelDetails.rooms.retry' | translate }}
             </button>
           </div>
         }
@@ -881,11 +881,11 @@
               <rect x="2" y="4" width="20" height="16" rx="2"></rect>
               <line x1="2" y1="10" x2="22" y2="10"></line>
             </svg>
-            <h3>No Rooms Found</h3>
-            <p>There are currently no rooms available matching your filter criteria at this hotel.</p>
+            <h3>{{ 'hotelDetails.rooms.noRoomsFound' | translate }}</h3>
+            <p>{{ 'hotelDetails.rooms.noRoomsDesc' | translate }}</p>
             @if (selectedRoomType() !== 'ALL') {
               <button type="button" class="btn btn-secondary btn-sm" (click)="onRoomTypeFilterChange('ALL')">
-                View All Room Categories
+                {{ 'hotelDetails.rooms.viewAllCategories' | translate }}
               </button>
             }
           </div>
@@ -893,7 +893,7 @@
 
         <!-- ── ROOMS GRID ── -->
         @if (roomsState() === 'success') {
-          <div class="rooms-grid" role="list" aria-label="Available rooms list">
+          <div class="rooms-grid" role="list" [attr.aria-label]="'hotelDetails.rooms.availableRoomsAria' | translate">
             @for (room of filteredRooms(); track trackByRoomId($index, room)) {
               <article
                 class="room-card"
@@ -904,13 +904,13 @@
                 <!-- Room Card Header -->
                 <div class="room-card-header">
                   <div class="room-header-top">
-                    <span class="room-number">Room #{{ room.roomNumber }}</span>
-                    <div class="room-capacity-badge" title="Maximum Occupancy">
+                    <span class="room-number">{{ 'hotelDetails.rooms.roomNumber' | translate:{ number: room.roomNumber } }}</span>
+                    <div class="room-capacity-badge" [title]="'hotelDetails.rooms.maxOccupancyTitle' | translate">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                       </svg>
-                      <span>Up to <strong>{{ room.capacity }}</strong> guests</span>
+                      <span>{{ 'hotelDetails.rooms.upToGuests' | translate:{ count: room.capacity } }}</span>
                     </div>
                   </div>
 
@@ -919,7 +919,7 @@
                       {{ getRoomTypeLabel(room.roomType) }}
                     </span>
                     @if (isRoomBooked(room.id, room.roomNumber)) {
-                      <span class="room-badge badge-booked">Booked</span>
+                      <span class="room-badge badge-booked">{{ 'hotelDetails.rooms.bookedBadge' | translate }}</span>
                     }
                   </div>
                 </div>
@@ -945,7 +945,7 @@
                           <circle cx="8.5" cy="8.5" r="1.5"></circle>
                           <polyline points="21 15 16 10 5 21"></polyline>
                         </svg>
-                        <span>{{ getRoomImages(room.roomType).length }} {{ getRoomImages(room.roomType).length === 1 ? 'Photo' : 'Photos' }}</span>
+                        <span>{{ getRoomImages(room.roomType).length === 1 ? ('hotelDetails.rooms.photoCount' | translate) : ('hotelDetails.rooms.photosCount' | translate:{ count: getRoomImages(room.roomType).length }) }}</span>
                       </span>
                       <span class="room-image-hover-cue" aria-hidden="true">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -967,7 +967,7 @@
                         loading="lazy"
                       />
                       <span class="room-image-badge room-image-badge--empty">
-                        <span>No photos yet</span>
+                        <span>{{ 'hotelDetails.rooms.noPhotosYet' | translate }}</span>
                       </span>
                     </div>
                   </div>
@@ -984,7 +984,7 @@
                 <div class="room-card-footer">
                   <div class="room-pricing">
                     <span class="price-val">{{ room.pricePerNight | number:'1.2-2' }} EGP</span>
-                    <span class="price-unit">per night</span>
+                    <span class="price-unit">{{ 'hotelDetails.rooms.perNight' | translate }}</span>
                   </div>
 
                   <button
@@ -1006,24 +1006,24 @@
                         <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
                         <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                       </svg>
-                      <span>Checking...</span>
+                      <span>{{ 'hotelDetails.rooms.checking' | translate }}</span>
                     } @else if (isRoomBooked(room.id, room.roomNumber)) {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                       </svg>
-                      <span>Booked</span>
+                      <span>{{ 'hotelDetails.rooms.booked' | translate }}</span>
                     } @else if (isRoomSelected(room.id)) {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
-                      <span>Selected</span>
+                      <span>{{ 'hotelDetails.rooms.selected' | translate }}</span>
                     } @else {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
-                      <span>Select Room</span>
+                      <span>{{ 'hotelDetails.rooms.selectRoom' | translate }}</span>
                     }
                   </button>
                 </div>
@@ -1033,17 +1033,17 @@
 
           <!-- Pagination -->
           @if (totalRoomsPages() > 1) {
-            <nav class="rooms-pagination" aria-label="Rooms pages navigation">
+            <nav class="rooms-pagination" [attr.aria-label]="'hotelDetails.rooms.paginationAria' | translate">
               <button
                 type="button"
                 class="page-btn page-nav-btn"
                 [disabled]="isFirstPage()"
                 (click)="previousRoomsPage()"
-                aria-label="Previous rooms page">
+                [attr.aria-label]="'hotelDetails.rooms.prevAria' | translate">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
-                <span>Prev</span>
+                <span>{{ 'hotelDetails.rooms.prev' | translate }}</span>
               </button>
 
               <div class="page-numbers">
@@ -1064,8 +1064,8 @@
                 class="page-btn page-nav-btn"
                 [disabled]="isLastPage()"
                 (click)="nextRoomsPage()"
-                aria-label="Next rooms page">
-                <span>Next</span>
+                [attr.aria-label]="'hotelDetails.rooms.nextAria' | translate">
+                <span>{{ 'hotelDetails.rooms.next' | translate }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>

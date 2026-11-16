@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, signal }
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, forkJoin, of, switchMap, map, catchError, finalize, Observable } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { Tag } from 'primeng/tag';
 import { Toast } from 'primeng/toast';
@@ -40,6 +41,7 @@ export interface EnrichedBusTrip extends BusTripDTO {
     Tag,
     Toast,
     BusSeatSelectionComponent,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './bus-search-results.html',
@@ -54,6 +56,15 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
   private readonly busTripService = inject(BusTripService);
   private readonly busService = inject(BusService);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
+
+  private tr(key: string, params?: Record<string, any>, fallback?: string): string {
+    if (this.translate) {
+      const res = this.translate.instant(key, params);
+      if (res && res !== key) return res;
+    }
+    return fallback || key;
+  }
 
   private routeSub?: Subscription;
 
@@ -102,14 +113,14 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     if (!origin || !destination || !departureDate) {
-      this.paramError.set('Please provide an origin city, destination city, and departure date.');
+      this.paramError.set(this.tr('busSearch.validation.missingParams', undefined, 'Please provide an origin city, destination city, and departure date.'));
       this.loading.set(false);
       this.trips.set([]);
       return;
     }
 
     if (origin.toLowerCase() === destination.toLowerCase()) {
-      this.paramError.set('Origin and destination cannot be the same city.');
+      this.paramError.set(this.tr('busSearch.validation.sameCity', undefined, 'Origin and destination cannot be the same city.'));
       this.loading.set(false);
       this.trips.set([]);
       return;
@@ -117,7 +128,7 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (departureDate < todayStr) {
-      this.paramError.set('Departure date cannot be in the past.');
+      this.paramError.set(this.tr('busSearch.validation.pastDate', undefined, 'Departure date cannot be in the past.'));
       this.loading.set(false);
       this.trips.set([]);
       return;
@@ -235,7 +246,7 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Bus search execution error:', err);
-        this.error.set('Failed to retrieve bus trips. Please check your network connection and try again.');
+        this.error.set(this.tr('busSearch.validation.networkError', undefined, 'Failed to retrieve bus trips. Please check your network connection and try again.'));
         this.trips.set([]);
       },
     });
@@ -427,8 +438,8 @@ export class BusSearchResultsComponent implements OnInit, OnDestroy {
   onBookingComplete(bookings: BusBookingDTO[]): void {
     this.messageService.add({
       severity: 'success',
-      summary: 'Added to Booking Summary',
-      detail: `Successfully added ${bookings.length} seat(s) to your booking summary.`,
+      summary: this.tr('busSearch.validation.toastAddedSummary', undefined, 'Added to Booking Summary'),
+      detail: this.tr('busSearch.validation.toastAddedDetail', { count: bookings.length }, `Successfully added ${bookings.length} seat(s) to your booking summary.`),
       life: 5000,
     });
   }

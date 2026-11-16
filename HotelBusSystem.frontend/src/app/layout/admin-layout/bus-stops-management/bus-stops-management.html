@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Bus Stops</span>
+        <span class="current">{{ 'admin.busStops.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Bus Stops &amp; Stations</h1>
+      <h1 class="page-title">{{ 'admin.busStops.stationTerminal' | translate }}</h1>
       <p class="page-subtitle">
-        Manage bus station terminals, transit pick-up points, municipal cities, and geographical GPS coordinates.
+        {{ 'admin.busStops.subtitle' | translate }}
       </p>
     </div>
 
@@ -23,13 +23,13 @@
         class="btn-primary-action"
         (click)="openCreateDialog()"
         id="admin-add-stop-btn"
-        aria-label="Add new bus stop"
+        [attr.aria-label]="'admin.busStops.addNew' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Add New Bus Stop</span>
+        <span>{{ 'admin.busStops.addNew' | translate }}</span>
       </button>
 
       <button
@@ -53,7 +53,7 @@
         >
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
         </svg>
-        <span>Refresh</span>
+        <span>{{ 'admin.common.refresh' | translate }}</span>
       </button>
     </div>
   </header>
@@ -63,7 +63,7 @@
     <div class="filters-grid">
       <!-- Search Keyword -->
       <div class="filter-field search-field">
-        <label for="admin-stop-search" class="filter-label">Search Query</label>
+        <label for="admin-stop-search" class="filter-label">{{ 'admin.common.search' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,7 +75,7 @@
             id="admin-stop-search"
             type="search"
             class="filter-input"
-            placeholder="Search station name or street address…"
+            [placeholder]="'admin.busStops.searchPlaceholder' | translate"
             [value]="searchQuery()"
             (input)="onSearchInput($any($event.target).value)"
             aria-label="Search bus stops"
@@ -85,7 +85,7 @@
 
       <!-- City Filter -->
       <div class="filter-field">
-        <label for="admin-stop-city" class="filter-label">City</label>
+        <label for="admin-stop-city" class="filter-label">{{ 'admin.common.city' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">📍</span>
           <input
@@ -105,7 +105,7 @@
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
-        Total Bus Stops: <strong>{{ totalElements() }}</strong>
+        {{ 'admin.busStops.totalStops' | translate }} <strong>{{ totalElements() }}</strong>
       </div>
 
       <div class="filter-actions-right">
@@ -119,7 +119,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
-            <span>Clear Filters</span>
+            <span>{{ 'admin.rooms.clearFilters' | translate }}</span>
           </button>
         }
       </div>
@@ -162,12 +162,12 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>Station / Stop Name</th>
-          <th>City</th>
-          <th>Street Address</th>
-          <th>Coordinates (Lat, Long)</th>
-          <th style="width: 110px; text-align: right">Actions</th>
+          <th style="width: 80px">{{ 'admin.common.id' | translate }}</th>
+          <th>{{ 'admin.busStops.stationName' | translate }}</th>
+          <th>{{ 'admin.busStops.colCity' | translate }}</th>
+          <th>{{ 'admin.busStops.streetAddress' | translate }}</th>
+          <th>{{ 'admin.busStops.coordinates' | translate }}</th>
+          <th style="width: 110px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -227,12 +227,12 @@
           <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">🚏</div>
-              <h3 class="empty-title">No bus stops found</h3>
+              <h3 class="empty-title">{{ 'admin.busStops.noStopsFound' | translate }}</h3>
               <p class="empty-desc">
                 @if (hasActiveFilters()) {
-                  No bus stops match your filter query.
+                  {{ 'admin.busStops.noStopsFilterMatch' | translate }}
                 } @else {
-                  No transit stops have been registered yet. Click "Add New Bus Stop" to create one.
+                  {{ 'admin.busStops.noStopsRegistered' | translate }}
                 }
               </p>
             </div>
@@ -246,7 +246,7 @@
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
-    [header]="isEditMode() ? 'Edit Bus Stop' : 'Add New Bus Stop'"
+    [header]="(isEditMode() ? 'admin.busStops.editStop' : 'admin.busStops.addNew') | translate"
     [style]="{ width: '90vw', maxWidth: '560px' }"
     [draggable]="false"
     [resizable]="false"
@@ -258,7 +258,7 @@
         <!-- Station / Stop Name -->
         <div class="form-group full-width">
           <label for="stopName" class="form-label">
-            Stop Name <span class="required-star">*</span>
+            {{ 'admin.busStops.fieldStopName' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="stopName"
@@ -275,7 +275,7 @@
         <!-- City -->
         <div class="form-group">
           <label for="stopCity" class="form-label">
-            City <span class="required-star">*</span>
+            {{ 'admin.busStops.fieldCity' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="stopCity"
@@ -292,7 +292,7 @@
         <!-- Street Address -->
         <div class="form-group">
           <label for="stopAddress" class="form-label">
-            Street Address <span class="required-star">*</span>
+            {{ 'admin.busStops.streetAddress' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="stopAddress"
@@ -309,7 +309,7 @@
         <!-- Latitude -->
         <div class="form-group">
           <label for="stopLatitude" class="form-label">
-            Latitude <span class="required-star">*</span>
+            {{ 'admin.busStops.fieldLatitude' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="stopLatitude"
@@ -327,7 +327,7 @@
         <!-- Longitude -->
         <div class="form-group">
           <label for="stopLongitude" class="form-label">
-            Longitude <span class="required-star">*</span>
+            {{ 'admin.busStops.fieldLongitude' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="stopLongitude"
@@ -359,7 +359,7 @@
           [disabled]="saving() || stopForm.invalid"
           id="admin-save-stop-btn"
         >
-          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Stop' : 'Create Stop') }}
+          {{ (saving() ? 'admin.busStops.saving' : (isEditMode() ? 'admin.busStops.updateStop' : 'admin.busStops.createStop')) | translate }}
         </button>
       </div>
     </form>
@@ -369,7 +369,7 @@
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
-    header="Confirm Stop Deletion"
+    [header]="'admin.busStops.confirmDeleteTitle' | translate"
     [style]="{ width: '90vw', maxWidth: '440px' }"
     [draggable]="false"
     [resizable]="false"
@@ -383,13 +383,13 @@
           <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-      <h3 class="delete-title">Delete Bus Stop?</h3>
+      <h3 class="delete-title">{{ 'admin.busStops.deleteTitle' | translate }}</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete stop
+        {{ 'admin.busStops.deletePrompt' | translate }}
         <strong class="delete-entity-name">
           {{ stopToDelete()?.name }} ({{ stopToDelete()?.city }})
         </strong>?
-        This action cannot be undone.
+        {{ 'admin.rooms.cannotBeUndone' | translate }}
       </p>
     </div>
 
@@ -409,7 +409,7 @@
         [disabled]="deleting()"
         id="admin-confirm-delete-stop-btn"
       >
-        {{ deleting() ? 'Deleting…' : 'Delete Stop' }}
+        {{ (deleting() ? 'admin.busStops.deleting' : 'admin.busStops.deleteStop') | translate }}
       </button>
     </div>
   </p-dialog>

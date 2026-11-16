@@ -7,7 +7,7 @@
     (click)="toggleOpen()"
     [attr.aria-expanded]="isOpen()"
     aria-controls="ai-chat-dialog"
-    aria-label="Toggle TravelEase AI Assistant"
+    [attr.aria-label]="'aiChat.launcher.ariaLabel' | translate"
   >
     <div class="launcher-icon-wrapper">
       @if (isOpen()) {
@@ -24,10 +24,10 @@
         </svg>
       }
     </div>
-    <span class="launcher-badge" [class.badge-mock]="aiChatService.isMockMode()" title="AI Assistant Status">
+    <span class="launcher-badge" [class.badge-mock]="aiChatService.isMockMode()" [title]="'aiChat.launcher.status' | translate">
       <span class="pulse-dot"></span>
     </span>
-    <span class="launcher-label">Ask AI</span>
+    <span class="launcher-label">{{ 'aiChat.launcher.label' | translate }}</span>
   </button>
 
   <!-- Expandable Chat Panel Window -->
@@ -52,9 +52,9 @@
             <span class="online-dot"></span>
           </div>
           <div>
-            <h2 id="ai-chat-header-title" class="header-title">TravelEase AI</h2>
+            <h2 id="ai-chat-header-title" class="header-title">{{ 'aiChat.header.title' | translate }}</h2>
             <div class="header-status-row">
-              <span class="status-indicator">{{ aiChatService.isMockMode() ? 'Offline Mode' : 'Online' }}</span>
+              <span class="status-indicator">{{ (aiChatService.isMockMode() ? 'aiChat.header.offline' : 'aiChat.header.online') | translate }}</span>
               <span class="dot-separator">•</span>
               <button
                 type="button"
@@ -62,9 +62,9 @@
                 [class.pill-mock]="aiChatService.isMockMode()"
                 [class.pill-live]="!aiChatService.isMockMode()"
                 (click)="toggleMockMode()"
-                [title]="aiChatService.isMockMode() ? 'Switch to Live API Mode' : 'Switch to Local Mock Mode'"
+                [title]="(aiChatService.isMockMode() ? 'aiChat.header.switchToLive' : 'aiChat.header.switchToMock') | translate"
               >
-                {{ aiChatService.isMockMode() ? 'Mock Mode' : 'Live API' }}
+                {{ (aiChatService.isMockMode() ? 'aiChat.header.mockMode' : 'aiChat.header.liveApi') | translate }}
               </button>
             </div>
           </div>
@@ -75,8 +75,8 @@
             type="button"
             class="header-action-btn"
             (click)="clearHistory()"
-            title="Start new conversation"
-            aria-label="Start new conversation"
+            [title]="'aiChat.header.newChat' | translate"
+            [attr.aria-label]="'aiChat.header.newChat' | translate"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
@@ -87,8 +87,8 @@
             type="button"
             class="header-action-btn close-btn"
             (click)="close()"
-            title="Minimize Chat"
-            aria-label="Close chat"
+            [title]="'aiChat.header.minimize' | translate"
+            [attr.aria-label]="'aiChat.header.close' | translate"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -102,7 +102,7 @@
       @if (aiChatService.isMockMode()) {
         <div class="mock-info-banner">
           <span class="banner-icon">⚡</span>
-          <span class="banner-text">Mock Mode active. Using simulated travel responses for UI preview.</span>
+          <span class="banner-text">{{ 'aiChat.banners.mockNotice' | translate }}</span>
         </div>
       }
 
@@ -111,10 +111,10 @@
         <div class="auth-warning-banner">
           <div class="auth-warning-content">
             <span class="auth-warning-icon">🔒</span>
-            <span>Sign in to complete bookings and access personalized features.</span>
+            <span>{{ 'aiChat.banners.authWarning' | translate }}</span>
           </div>
           <button type="button" class="btn-signin-link" (click)="redirectToLogin()">
-            Sign In
+            {{ 'aiChat.banners.signIn' | translate }}
           </button>
         </div>
       }
@@ -123,17 +123,17 @@
       @if (aiChatService.lastError()) {
         <div class="error-banner">
           <div class="error-text">
-            <strong>Notice:</strong> {{ aiChatService.lastError() }}
+            <strong>{{ 'aiChat.banners.notice' | translate }}</strong> {{ aiChatService.lastError() }}
           </div>
           <div class="error-actions">
             @if (aiChatService.lastErrorCode() === 503 && !aiChatService.isMockMode()) {
               <button type="button" class="btn-error-action" (click)="toggleMockMode()">
-                Switch to Mock Mode
+                {{ 'aiChat.banners.switchToMock' | translate }}
               </button>
             }
             @if (aiChatService.failedMessage()) {
               <button type="button" class="btn-error-action retry-btn" (click)="retry()">
-                Retry
+                {{ 'aiChat.banners.retry' | translate }}
               </button>
             }
           </div>
@@ -145,23 +145,23 @@
         <div class="inchat-wizard-overlay">
           <div class="inchat-wizard-header">
             <div class="wizard-title-block">
-              <span class="wizard-badge">Hotel Reservation</span>
+              <span class="wizard-badge">{{ 'aiChat.hotelWizard.badge' | translate }}</span>
               <h3 class="wizard-title">{{ hbs.hotel.name }}</h3>
             </div>
-            <button type="button" class="wizard-close-btn" (click)="cancelHotelBooking()" title="Cancel Booking">✕</button>
+            <button type="button" class="wizard-close-btn" (click)="cancelHotelBooking()" [title]="'aiChat.hotelWizard.cancelBooking' | translate">✕</button>
           </div>
 
           <!-- Wizard Breadcrumbs -->
           <div class="wizard-steps-nav">
-            <span class="step-dot" [class.active]="hbs.step === 'dates'" [class.done]="hbs.step !== 'dates'">1. Dates</span>
+            <span class="step-dot" [class.active]="hbs.step === 'dates'" [class.done]="hbs.step !== 'dates'">{{ 'aiChat.hotelWizard.stepDates' | translate }}</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'origin'" [class.done]="hbs.step === 'rooms' || hbs.step === 'summary' || hbs.step === 'confirmed'">2. Origin</span>
+            <span class="step-dot" [class.active]="hbs.step === 'origin'" [class.done]="hbs.step === 'rooms' || hbs.step === 'summary' || hbs.step === 'confirmed'">{{ 'aiChat.hotelWizard.stepOrigin' | translate }}</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'rooms'" [class.done]="hbs.step === 'summary' || hbs.step === 'confirmed'">3. Room</span>
+            <span class="step-dot" [class.active]="hbs.step === 'rooms'" [class.done]="hbs.step === 'summary' || hbs.step === 'confirmed'">{{ 'aiChat.hotelWizard.stepRoom' | translate }}</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'summary'" [class.done]="hbs.step === 'confirmed'">4. Summary</span>
+            <span class="step-dot" [class.active]="hbs.step === 'summary'" [class.done]="hbs.step === 'confirmed'">{{ 'aiChat.hotelWizard.stepSummary' | translate }}</span>
             <span class="step-sep">›</span>
-            <span class="step-dot" [class.active]="hbs.step === 'confirmed'">5. Confirmed</span>
+            <span class="step-dot" [class.active]="hbs.step === 'confirmed'">{{ 'aiChat.hotelWizard.stepConfirmed' | translate }}</span>
           </div>
 
           <!-- Wizard Error -->
@@ -173,7 +173,7 @@
           @if (hbs.step === 'dates') {
             <div class="wizard-step-body">
               <div class="wizard-form-group">
-                <label class="wizard-label">Check-in Date</label>
+                <label class="wizard-label">{{ 'aiChat.hotelWizard.checkInDate' | translate }}</label>
                 <input
                   type="date"
                   class="wizard-input"
@@ -184,7 +184,7 @@
               </div>
 
               <div class="wizard-form-group">
-                <label class="wizard-label">Check-out Date</label>
+                <label class="wizard-label">{{ 'aiChat.hotelWizard.checkOutDate' | translate }}</label>
                 <input
                   type="date"
                   class="wizard-input"
@@ -196,7 +196,7 @@
 
               <div class="wizard-row-2">
                 <div class="wizard-form-group">
-                  <label class="wizard-label">Adults</label>
+                  <label class="wizard-label">{{ 'aiChat.hotelWizard.adults' | translate }}</label>
                   <input
                     type="number"
                     class="wizard-input"
@@ -207,34 +207,34 @@
                   />
                 </div>
                 <div class="wizard-form-group">
-                  <label class="wizard-label">Children</label>
+                  <label class="wizard-label">{{ 'aiChat.hotelWizard.children' | translate }}</label>
                   <select
                     class="wizard-input"
                     [ngModel]="hbs.childCount"
                     (ngModelChange)="setHotelChildCount($event)"
                   >
-                    <option [value]="0">0 Children</option>
-                    <option [value]="1">1 Child</option>
-                    <option [value]="2">2 Children</option>
-                    <option [value]="3">3 Children</option>
-                    <option [value]="4">4 Children</option>
+                    <option [value]="0">{{ 'aiChat.hotelWizard.zeroChildren' | translate }}</option>
+                    <option [value]="1">{{ 'aiChat.hotelWizard.oneChild' | translate }}</option>
+                    <option [value]="2">{{ 'aiChat.hotelWizard.numChildren' | translate:{ count: 2 } }}</option>
+                    <option [value]="3">{{ 'aiChat.hotelWizard.numChildren' | translate:{ count: 3 } }}</option>
+                    <option [value]="4">{{ 'aiChat.hotelWizard.numChildren' | translate:{ count: 4 } }}</option>
                   </select>
                 </div>
               </div>
 
               @if (hbs.childCount > 0) {
                 <div class="wizard-children-ages">
-                  <span class="wizard-hint">Child ages (children under 12 are free):</span>
+                  <span class="wizard-hint">{{ 'aiChat.hotelWizard.childAgesHint' | translate }}</span>
                   <div class="child-ages-row">
                     @for (age of hbs.childAges; track $index) {
                       <div class="child-age-item">
-                        <label>Child #{{ $index + 1 }}</label>
+                        <label>{{ 'aiChat.hotelWizard.childNumber' | translate:{ number: ($index + 1) } }}</label>
                         <select
                           class="wizard-select-sm"
                           [ngModel]="age"
                           (ngModelChange)="setHotelChildAge($index, $event)"
                         >
-                          <option *ngFor="let a of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]" [value]="a">{{ a }} yrs</option>
+                          <option *ngFor="let a of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]" [value]="a">{{ 'aiChat.hotelWizard.yrs' | translate:{ age: a } }}</option>
                         </select>
                       </div>
                     }
@@ -249,7 +249,7 @@
                   [disabled]="hbs.loading"
                   (click)="proceedFromDates()"
                 >
-                  {{ hbs.loading ? 'Searching...' : 'Continue to Rooms & Transport →' }}
+                  {{ (hbs.loading ? 'aiChat.hotelWizard.searching' : 'aiChat.hotelWizard.continueToRooms') | translate }}
                 </button>
               </div>
             </div>
@@ -258,9 +258,9 @@
           <!-- Step 2: Origin City Selection for Bus Suggestions -->
           @if (hbs.step === 'origin') {
             <div class="wizard-step-body">
-              <span class="wizard-subhead">Which city will you be traveling from?</span>
+              <span class="wizard-subhead">{{ 'aiChat.hotelWizard.originQuestion' | translate }}</span>
               <p class="wizard-hint-text">
-                Select your departure city to view eligible bus trips to {{ hbs.hotel.name }} in {{ hbs.hotel.city || 'your destination' }}:
+                {{ 'aiChat.hotelWizard.originHint' | translate:{ hotel: hbs.hotel.name, city: (hbs.hotel.city || '') } }}
               </p>
 
               <div class="city-chips-grid">
@@ -277,14 +277,14 @@
               </div>
 
               <div class="wizard-actions-split">
-                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingDates()">← Change Dates</button>
+                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingDates()">{{ 'aiChat.hotelWizard.changeDates' | translate }}</button>
                 <button
                   type="button"
                   class="btn-wizard-secondary"
                   (click)="skipOriginCity()"
-                  title="Proceed to room selection without bus suggestions"
+                  [title]="'aiChat.hotelWizard.skipBusTitle' | translate"
                 >
-                  Skip Bus →
+                  {{ 'aiChat.hotelWizard.skipBus' | translate }}
                 </button>
               </div>
             </div>
@@ -302,13 +302,13 @@
                     (click)="selectHotelRoom(room)"
                   >
                     <div class="room-card-top">
-                      <span class="room-type-name">{{ room.roomType || 'Room ' + room.roomNumber }}</span>
-                      <span class="room-rate">EGP {{ room.pricePerNight }} / night</span>
+                      <span class="room-type-name">{{ room.roomType || ('aiChat.hotelWizard.roomNumber' | translate:{ number: room.roomNumber }) }}</span>
+                      <span class="room-rate">{{ 'aiChat.hotelWizard.pricePerNight' | translate:{ price: room.pricePerNight } }}</span>
                     </div>
                     <div class="room-card-details">
-                      <span>👥 Capacity: {{ room.capacity }} guests</span>
+                      <span>{{ 'aiChat.hotelWizard.capacity' | translate:{ capacity: room.capacity } }}</span>
                       @if (room.roomNumber) {
-                        <span>🚪 Room #{{ room.roomNumber }}</span>
+                        <span>{{ 'aiChat.hotelWizard.roomDoor' | translate:{ number: room.roomNumber } }}</span>
                       }
                     </div>
                   </div>
@@ -316,86 +316,86 @@
               </div>
 
               <div class="wizard-actions-split">
-                <button type="button" class="btn-wizard-secondary" (click)="backToOriginFromRooms()">← Back</button>
+                <button type="button" class="btn-wizard-secondary" (click)="backToOriginFromRooms()">{{ 'aiChat.hotelWizard.back' | translate }}</button>
                 <button
                   type="button"
                   class="btn-wizard-primary"
                   [disabled]="!hbs.selectedRoom || hbs.loading"
                   (click)="createHotelBookingDraft()"
                 >
-                  {{ hbs.loading ? 'Creating Draft...' : 'Review Summary →' }}
+                  {{ (hbs.loading ? 'aiChat.hotelWizard.creatingDraft' : 'aiChat.hotelWizard.reviewSummary') | translate }}
                 </button>
               </div>
             </div>
           }
 
-          <!-- Step 3: Booking Summary (Draft) -->
+          <!-- Step 4: Booking Summary (Draft) -->
           @if (hbs.step === 'summary' && hbs.draft) {
             <div class="wizard-step-body">
-              <span class="wizard-subhead">Booking Summary & Price Review:</span>
+              <span class="wizard-subhead">{{ 'aiChat.hotelWizard.summaryTitle' | translate }}</span>
               <div class="wizard-summary-card">
                 <div class="summary-line">
-                  <span class="lbl">Hotel:</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.hotelLabel' | translate }}</span>
                   <span class="val">{{ hbs.draft.hotelName }}</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Room:</span>
-                  <span class="val">{{ hbs.draft.roomType }} (Room {{ hbs.draft.roomNumber }})</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.roomLabel' | translate }}</span>
+                  <span class="val">{{ hbs.draft.roomType }} ({{ 'aiChat.hotelWizard.roomNumber' | translate:{ number: hbs.draft.roomNumber } }})</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Dates:</span>
-                  <span class="val">{{ hbs.draft.checkInDate }} to {{ hbs.draft.checkOutDate }} ({{ hbs.draft.nights }} nights)</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.datesLabel' | translate }}</span>
+                  <span class="val">{{ hbs.draft.checkInDate }} to {{ hbs.draft.checkOutDate }} ({{ 'aiChat.hotelWizard.nights' | translate:{ count: hbs.draft.nights } }})</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Guests:</span>
-                  <span class="val">{{ hbs.draft.adults }} Adults{{ (hbs.draft.childAges?.length || 0) > 0 ? ', ' + hbs.draft.childAges?.length + ' Children' : '' }}</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.guestsLabel' | translate }}</span>
+                  <span class="val">{{ 'aiChat.hotelWizard.adultsCount' | translate:{ count: hbs.draft.adults } }}{{ (hbs.draft.childAges?.length || 0) > 0 ? ', ' + ('aiChat.hotelWizard.childrenCount' | translate:{ count: hbs.draft.childAges?.length }) : '' }}</span>
                 </div>
                 <div class="summary-divider"></div>
                 <div class="summary-line">
-                  <span class="lbl">Nightly Rate:</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.nightlyRate' | translate }}</span>
                   <span class="val">EGP {{ hbs.draft.pricePerNight }}</span>
                 </div>
                 <div class="summary-line total-line">
-                  <span class="lbl">Total Price:</span>
+                  <span class="lbl">{{ 'aiChat.hotelWizard.totalPrice' | translate }}</span>
                   <span class="val highlight">EGP {{ hbs.draft.totalPrice }}</span>
                 </div>
-                <div class="draft-ttl-note">⏱️ Draft reserved. Price is guaranteed upon confirmation.</div>
+                <div class="draft-ttl-note">{{ 'aiChat.hotelWizard.draftReservedNote' | translate }}</div>
               </div>
 
               <div class="wizard-actions-split">
-                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingRoom()">← Change Room</button>
+                <button type="button" class="btn-wizard-secondary" (click)="editHotelBookingRoom()">{{ 'aiChat.hotelWizard.changeRoom' | translate }}</button>
                 <button
                   type="button"
                   class="btn-wizard-confirm"
                   [disabled]="hbs.loading"
                   (click)="confirmHotelBooking()"
                 >
-                  {{ hbs.loading ? 'Confirming...' : 'Confirm Hotel Booking ✓' }}
+                  {{ (hbs.loading ? 'aiChat.hotelWizard.confirming' : 'aiChat.hotelWizard.confirmBooking') | translate }}
                 </button>
               </div>
             </div>
           }
 
-          <!-- Step 4: Confirmed State -->
+          <!-- Step 5: Confirmed State -->
           @if (hbs.step === 'confirmed' && hbs.confirmedBooking) {
             <div class="wizard-step-body confirmed-step">
               <div class="success-icon-badge">✓</div>
-              <h4 class="confirmed-title">Booking Confirmed!</h4>
-              <p class="confirmed-ref">Reference: <strong>#{{ hbs.confirmedBooking.bookingId || hbs.confirmedBooking.id }}</strong></p>
+              <h4 class="confirmed-title">{{ 'aiChat.hotelWizard.bookingConfirmed' | translate }}</h4>
+              <p class="confirmed-ref">{{ 'aiChat.hotelWizard.reference' | translate:{ id: (hbs.confirmedBooking.bookingId || hbs.confirmedBooking.id) } }}</p>
               
               <div class="confirmed-details-box">
                 <div>🏨 {{ hbs.confirmedBooking.hotelName }}</div>
                 <div>📅 {{ hbs.confirmedBooking.checkInDate }} to {{ hbs.confirmedBooking.checkOutDate }}</div>
                 <div>🛏️ {{ hbs.confirmedBooking.roomType }}</div>
-                <div>💳 Paid Total: <strong>EGP {{ hbs.confirmedBooking.totalPrice }}</strong></div>
+                <div>💳 {{ 'aiChat.hotelWizard.paidTotal' | translate:{ price: hbs.confirmedBooking.totalPrice } }}</div>
               </div>
 
               <div class="wizard-actions-split">
                 <a routerLink="/user/hotel-bookings" class="btn-wizard-primary" (click)="cancelHotelBooking(); close()">
-                  View in My Bookings →
+                  {{ 'aiChat.hotelWizard.viewInMyBookings' | translate }}
                 </a>
                 <button type="button" class="btn-wizard-secondary" (click)="cancelHotelBooking()">
-                  Back to Chat
+                  {{ 'aiChat.hotelWizard.backToChat' | translate }}
                 </button>
               </div>
             </div>
@@ -408,27 +408,27 @@
         <div class="inchat-wizard-overlay">
           <div class="inchat-wizard-header">
             <div class="wizard-title-block">
-              <span class="wizard-badge bus-badge">Bus Trip Booking</span>
+              <span class="wizard-badge bus-badge">{{ 'aiChat.busWizard.badge' | translate }}</span>
               <h3 class="wizard-title">{{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</h3>
             </div>
-            <button type="button" class="wizard-close-btn" (click)="cancelBusBooking()" title="Cancel Booking">✕</button>
+            <button type="button" class="wizard-close-btn" (click)="cancelBusBooking()" [title]="'aiChat.busWizard.cancelBooking' | translate">✕</button>
           </div>
 
           <!-- Step 1: Seat Map Selection -->
           @if (bbs.step === 'seats') {
             <div class="wizard-step-body">
               <div class="bus-seat-legend">
-                <span class="legend-item"><span class="legend-box available"></span> Available</span>
-                <span class="legend-item"><span class="legend-box selected"></span> Selected</span>
-                <span class="legend-item"><span class="legend-box booked"></span> Booked</span>
+                <span class="legend-item"><span class="legend-box available"></span> {{ 'aiChat.busWizard.available' | translate }}</span>
+                <span class="legend-item"><span class="legend-box selected"></span> {{ 'aiChat.busWizard.selected' | translate }}</span>
+                <span class="legend-item"><span class="legend-box booked"></span> {{ 'aiChat.busWizard.booked' | translate }}</span>
               </div>
 
               <div class="bus-cockpit">
-                <span>🚌 Front / Windshield</span>
+                <span>{{ 'aiChat.busWizard.front' | translate }}</span>
               </div>
 
               @if (bbs.loading) {
-                <div class="wizard-loading-indicator">Loading seat map...</div>
+                <div class="wizard-loading-indicator">{{ 'aiChat.busWizard.loadingSeats' | translate }}</div>
               } @else {
                 <div class="bus-seats-grid">
                   @for (seat of bbs.allSeats; track seat.id) {
@@ -439,7 +439,7 @@
                       [class.seat-selected]="bbs.selectedSeat?.id === seat.id"
                       [disabled]="bbs.bookedSeatIds.has(seat.id)"
                       (click)="selectBusSeat(seat)"
-                      [title]="'Seat ' + seat.seatNumber + (bbs.bookedSeatIds.has(seat.id) ? ' (Occupied)' : '')"
+                      [title]="(bbs.bookedSeatIds.has(seat.id) ? 'aiChat.busWizard.seatOccupied' : 'aiChat.busWizard.seatTitle') | translate:{ number: seat.seatNumber }"
                     >
                       {{ seat.seatNumber }}
                     </button>
@@ -449,7 +449,7 @@
 
               @if (bbs.selectedSeat) {
                 <div class="selected-seat-badge">
-                  Selected Seat: <strong>{{ bbs.selectedSeat.seatNumber }}</strong> • Rate: <strong>EGP {{ bbs.trip.price }}</strong>
+                  {{ 'aiChat.busWizard.selectedSeatBadge' | translate:{ number: bbs.selectedSeat.seatNumber, price: bbs.trip.price } }}
                 </div>
               }
 
@@ -460,7 +460,7 @@
                   [disabled]="!bbs.selectedSeat || bbs.loading"
                   (click)="proceedToBusSummary()"
                 >
-                  Review Booking Details →
+                  {{ 'aiChat.busWizard.reviewBookingDetails' | translate }}
                 </button>
               </div>
             </div>
@@ -469,40 +469,40 @@
           <!-- Step 2: Bus Summary -->
           @if (bbs.step === 'summary' && bbs.selectedSeat) {
             <div class="wizard-step-body">
-              <span class="wizard-subhead">Trip Summary & Price:</span>
+              <span class="wizard-subhead">{{ 'aiChat.busWizard.summaryTitle' | translate }}</span>
               <div class="wizard-summary-card">
                 <div class="summary-line">
-                  <span class="lbl">Route:</span>
+                  <span class="lbl">{{ 'aiChat.busWizard.route' | translate }}</span>
                   <span class="val">{{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Departure:</span>
+                  <span class="lbl">{{ 'aiChat.busWizard.departure' | translate }}</span>
                   <span class="val">{{ bbs.trip.departureTime | date:'medium' }}</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Bus Company:</span>
+                  <span class="lbl">{{ 'aiChat.busWizard.busCompany' | translate }}</span>
                   <span class="val">{{ bbs.trip.routeName || bbs.trip.busCompany || 'TravelEase Express' }}</span>
                 </div>
                 <div class="summary-line">
-                  <span class="lbl">Seat Number:</span>
-                  <span class="val highlight">Seat {{ bbs.selectedSeat.seatNumber }} ({{ bbs.selectedSeat.seatType || 'Standard' }})</span>
+                  <span class="lbl">{{ 'aiChat.busWizard.seatNumber' | translate }}</span>
+                  <span class="val highlight">{{ 'aiChat.busWizard.seatStandard' | translate:{ number: bbs.selectedSeat.seatNumber, type: (bbs.selectedSeat.seatType || 'Standard') } }}</span>
                 </div>
                 <div class="summary-divider"></div>
                 <div class="summary-line total-line">
-                  <span class="lbl">Total Ticket Price:</span>
+                  <span class="lbl">{{ 'aiChat.busWizard.totalTicketPrice' | translate }}</span>
                   <span class="val highlight">EGP {{ bbs.trip.price }}</span>
                 </div>
               </div>
 
               <div class="wizard-actions-split">
-                <button type="button" class="btn-wizard-secondary" (click)="editBusSeatSelection()">← Change Seat</button>
+                <button type="button" class="btn-wizard-secondary" (click)="editBusSeatSelection()">{{ 'aiChat.busWizard.changeSeat' | translate }}</button>
                 <button
                   type="button"
                   class="btn-wizard-confirm"
                   [disabled]="bbs.loading"
                   (click)="confirmBusBooking()"
                 >
-                  {{ bbs.loading ? 'Confirming Ticket...' : 'Confirm Ticket ✓' }}
+                  {{ (bbs.loading ? 'aiChat.busWizard.confirmingTicket' : 'aiChat.busWizard.confirmTicket') | translate }}
                 </button>
               </div>
             </div>
@@ -512,22 +512,22 @@
           @if (bbs.step === 'confirmed' && bbs.confirmedBooking) {
             <div class="wizard-step-body confirmed-step">
               <div class="success-icon-badge">✓</div>
-              <h4 class="confirmed-title">Bus Ticket Confirmed!</h4>
-              <p class="confirmed-ref">Ticket ID: <strong>#{{ bbs.confirmedBooking.id }}</strong></p>
+              <h4 class="confirmed-title">{{ 'aiChat.busWizard.ticketConfirmed' | translate }}</h4>
+              <p class="confirmed-ref">{{ 'aiChat.busWizard.ticketId' | translate:{ id: bbs.confirmedBooking.id } }}</p>
 
               <div class="confirmed-details-box">
                 <div>🚌 {{ getTripOrigin(bbs.trip) }} ➔ {{ getTripDestination(bbs.trip) }}</div>
-                <div>💺 Seat: <strong>{{ bbs.selectedSeat?.seatNumber }}</strong></div>
+                <div>💺 {{ 'aiChat.busWizard.seat' | translate:{ number: bbs.selectedSeat?.seatNumber } }}</div>
                 <div>🕒 {{ bbs.trip.departureTime | date:'short' }}</div>
-                <div>💳 Amount: <strong>EGP {{ bbs.trip.price }}</strong></div>
+                <div>💳 {{ 'aiChat.busWizard.amount' | translate:{ price: bbs.trip.price } }}</div>
               </div>
 
               <div class="wizard-actions-split">
                 <a routerLink="/user/bus-bookings" class="btn-wizard-primary" (click)="cancelBusBooking(); close()">
-                  View My Bus Bookings →
+                  {{ 'aiChat.busWizard.viewMyBusBookings' | translate }}
                 </a>
                 <button type="button" class="btn-wizard-secondary" (click)="cancelBusBooking()">
-                  Back to Chat
+                  {{ 'aiChat.busWizard.backToChat' | translate }}
                 </button>
               </div>
             </div>
@@ -564,12 +564,12 @@
                   <div class="draft-card-header">
                     <div class="draft-title-row">
                       <span class="draft-badge" [ngClass]="'draft-status-' + draft.status.toLowerCase()">
-                        {{ draft.status === 'CREATED' ? 'Draft Reservation' : draft.status }}
+                        {{ draft.status === 'CREATED' ? ('aiChat.draftCard.draftReservation' | translate) : draft.status }}
                       </span>
                       <span class="draft-ref-id">#{{ draft.id }}</span>
                     </div>
                     @if (draft.status === 'CREATED' && draft.expiresAt) {
-                      <span class="draft-expires-text">⏱️ Expires: {{ draft.expiresAt | date:'shortTime' }}</span>
+                      <span class="draft-expires-text">{{ 'aiChat.draftCard.expires' | translate:{ time: (draft.expiresAt | date:'shortTime') } }}</span>
                     }
                   </div>
 
@@ -578,7 +578,7 @@
                     <!-- Hotel Details -->
                     <div class="draft-section">
                       <div class="draft-section-title">
-                        <span>🏨 Hotel & Room</span>
+                        <span>{{ 'aiChat.draftCard.hotelAndRoom' | translate }}</span>
                       </div>
                       <div class="draft-hotel-name">{{ draft.hotelName }}</div>
                       
@@ -586,18 +586,18 @@
                         <div class="draft-multi-rooms">
                           @for (r of draft.rooms; track (r.roomId ?? $index)) {
                             <div class="draft-room-line">
-                              <span>🛏️ {{ r.roomType || 'Room' }} (Room #{{ r.roomNumber }})</span>
+                              <span>🛏️ {{ r.roomType || ('aiChat.draftCard.roomFallback' | translate) }} ({{ 'aiChat.draftCard.roomDoor' | translate:{ number: r.roomNumber } }})</span>
                               @if (r.pricePerNight) {
-                                <span class="draft-sub-rate">EGP {{ r.pricePerNight }} / night</span>
+                                <span class="draft-sub-rate">{{ 'aiChat.draftCard.subRate' | translate:{ price: r.pricePerNight } }}</span>
                               }
                             </div>
                           }
                         </div>
                       } @else if (draft.roomType || draft.roomNumber) {
                         <div class="draft-room-line">
-                          <span>🛏️ {{ draft.roomType || 'Standard' }} (Room #{{ draft.roomNumber }})</span>
+                          <span>🛏️ {{ draft.roomType || 'Standard' }} ({{ 'aiChat.draftCard.roomDoor' | translate:{ number: draft.roomNumber } }})</span>
                           @if (draft.pricePerNight) {
-                            <span class="draft-sub-rate">EGP {{ draft.pricePerNight }} / night</span>
+                            <span class="draft-sub-rate">{{ 'aiChat.draftCard.subRate' | translate:{ price: draft.pricePerNight } }}</span>
                           }
                         </div>
                       }
@@ -606,18 +606,18 @@
                     <!-- Stay Dates & Guests -->
                     <div class="draft-section">
                       <div class="draft-section-title">
-                        <span>📅 Stay Dates & Guests</span>
+                        <span>{{ 'aiChat.draftCard.stayDatesAndGuests' | translate }}</span>
                       </div>
                       <div class="draft-detail-row">
-                        <span class="detail-label">Dates:</span>
-                        <span class="detail-val">{{ draft.checkInDate }} ➔ {{ draft.checkOutDate }} ({{ draft.nights }} nights)</span>
+                        <span class="detail-label">{{ 'aiChat.draftCard.datesLabel' | translate }}</span>
+                        <span class="detail-val">{{ draft.checkInDate }} ➔ {{ draft.checkOutDate }} ({{ 'aiChat.hotelWizard.nights' | translate:{ count: draft.nights } }})</span>
                       </div>
                       <div class="draft-detail-row">
-                        <span class="detail-label">Guests:</span>
+                        <span class="detail-label">{{ 'aiChat.draftCard.guestsLabel' | translate }}</span>
                         <span class="detail-val">
-                          {{ draft.adults || draft.guests }} Adult(s)
+                          {{ 'aiChat.draftCard.adultsCount' | translate:{ count: (draft.adults || draft.guests) } }}
                           @if (draft.childAges && draft.childAges.length > 0) {
-                            • {{ draft.childAges.length }} Child(ren) (Ages: {{ draft.childAges.join(', ') }})
+                            • {{ 'aiChat.draftCard.childrenCount' | translate:{ count: draft.childAges.length, ages: draft.childAges.join(', ') } }}
                           }
                         </span>
                       </div>
@@ -627,11 +627,11 @@
                     @if (draft.goingTripId || draft.returnTripId) {
                       <div class="draft-section">
                         <div class="draft-section-title">
-                          <span>🚌 Transportation</span>
+                          <span>{{ 'aiChat.draftCard.transportation' | translate }}</span>
                         </div>
                         @if (draft.goingTripId) {
                           <div class="draft-transport-item">
-                            <div class="transport-direction">Outgoing Trip:</div>
+                            <div class="transport-direction">{{ 'aiChat.draftCard.outgoingTrip' | translate }}</div>
                             <div class="transport-route">{{ draft.goingTripOrigin }} ➔ {{ draft.goingTripDestination }}</div>
                             <div class="transport-meta">
                               <span>🕒 {{ draft.goingTripDepartureTime | date:'short' }}</span>
@@ -648,7 +648,7 @@
                         }
                         @if (draft.returnTripId) {
                           <div class="draft-transport-item">
-                            <div class="transport-direction">Return Trip:</div>
+                            <div class="transport-direction">{{ 'aiChat.draftCard.returnTrip' | translate }}</div>
                             <div class="transport-route">{{ draft.returnTripOrigin }} ➔ {{ draft.returnTripDestination }}</div>
                             <div class="transport-meta">
                               <span>🕒 {{ draft.returnTripDepartureTime | date:'short' }}</span>
@@ -670,24 +670,24 @@
                     <div class="draft-section draft-pricing-section">
                       @if (draft.hotelTotal) {
                         <div class="draft-price-line">
-                          <span>Hotel Total ({{ draft.nights }} nights):</span>
+                          <span>{{ 'aiChat.draftCard.hotelTotal' | translate:{ count: draft.nights } }}</span>
                           <span>EGP {{ draft.hotelTotal }}</span>
                         </div>
                       }
                       @if (draft.goingTransportPrice) {
                         <div class="draft-price-line">
-                          <span>Outgoing Bus:</span>
+                          <span>{{ 'aiChat.draftCard.outgoingBus' | translate }}</span>
                           <span>EGP {{ draft.goingTransportPrice }}</span>
                         </div>
                       }
                       @if (draft.returnTransportPrice) {
                         <div class="draft-price-line">
-                          <span>Return Bus:</span>
+                          <span>{{ 'aiChat.draftCard.returnBus' | translate }}</span>
                           <span>EGP {{ draft.returnTransportPrice }}</span>
                         </div>
                       }
                       <div class="draft-total-row">
-                        <span class="total-label">Total Price:</span>
+                        <span class="total-label">{{ 'aiChat.draftCard.totalPrice' | translate }}</span>
                         <span class="total-amount">EGP {{ draft.totalPrice }}</span>
                       </div>
                     </div>
@@ -697,7 +697,7 @@
                       <div class="draft-error-alert" role="alert">
                         <span class="draft-error-icon">⚠️</span>
                         <div class="draft-error-msg">
-                          <strong>Confirmation Error:</strong> {{ draftErr }}
+                          <strong>{{ 'aiChat.draftCard.confirmationError' | translate }}</strong> {{ draftErr }}
                         </div>
                       </div>
                     }
@@ -707,21 +707,21 @@
                       <div class="draft-confirmed-banner">
                         <div class="confirmed-badge-row">
                           <span class="confirmed-check">✓</span>
-                          <strong>Booking Submitted!</strong>
+                          <strong>{{ 'aiChat.draftCard.bookingSubmitted' | translate }}</strong>
                         </div>
                         <p class="confirmed-ref-info">
-                          Hotel Booking Reference: <strong>#{{ draft.bookingId || draft.id }}</strong>
+                          {{ 'aiChat.draftCard.hotelBookingRef' | translate:{ id: (draft.bookingId || draft.id) } }}
                           @if (draft.busBookingIds && draft.busBookingIds.length > 0) {
                             <br />
-                            Bus Booking Reference(s): <strong>#{{ draft.busBookingIds.join(', #') }}</strong>
+                            {{ 'aiChat.draftCard.busBookingRefs' | translate:{ ids: draft.busBookingIds.join(', #') } }}
                           }
                         </p>
                         <p class="confirmed-pending-notice">
-                          ℹ️ Your booking is currently under administrative review (PENDING). An administrator will verify and approve your booking. Payment has not been processed.
+                          {{ 'aiChat.draftCard.pendingNotice' | translate }}
                         </p>
                         <div class="confirmed-actions">
                           <a routerLink="/user/hotel-bookings" class="btn-card-action-btn primary" (click)="close()">
-                            View My Bookings →
+                            {{ 'aiChat.draftCard.viewMyBookings' | translate }}
                           </a>
                         </div>
                       </div>
@@ -730,14 +730,14 @@
                     <!-- Cancelled Banner -->
                     @if (draft.status === 'CANCELLED') {
                       <div class="draft-cancelled-banner">
-                        <span>Draft reservation has been cancelled.</span>
+                        <span>{{ 'aiChat.draftCard.cancelled' | translate }}</span>
                       </div>
                     }
 
                     <!-- Expired Banner -->
                     @if (draft.status === 'EXPIRED') {
                       <div class="draft-expired-banner">
-                        <span>This draft has expired. Please search again to make a fresh reservation.</span>
+                        <span>{{ 'aiChat.draftCard.expired' | translate }}</span>
                       </div>
                     }
                   </div>
@@ -751,7 +751,7 @@
                         (click)="cancelDraft(draft)"
                         [disabled]="confirmingDraftId() === draft.id"
                       >
-                        Cancel draft
+                        {{ 'aiChat.draftCard.cancelDraft' | translate }}
                       </button>
                       <button
                         type="button"
@@ -760,9 +760,9 @@
                         [disabled]="confirmingDraftId() === draft.id"
                       >
                         @if (confirmingDraftId() === draft.id) {
-                          <span class="btn-spinner"></span> Confirming...
+                          <span class="btn-spinner"></span> {{ 'aiChat.draftCard.confirming' | translate }}
                         } @else {
-                          Confirm booking ✓
+                          {{ 'aiChat.draftCard.confirmBooking' | translate }}
                         }
                       </button>
                     </div>
@@ -775,7 +775,7 @@
                 @for (res of msg.results; track $index) {
                   @if ((res.type === 'HOTEL' || res.type === 'HOTEL_DETAILS') && res.data) {
                     <div class="structured-cards-deck">
-                      <div class="cards-deck-title">Hotel Recommendations:</div>
+                      <div class="cards-deck-title">{{ 'aiChat.results.hotelRecommendations' | translate }}</div>
                       <div class="cards-deck-grid">
                         @for (hotel of getHotelList(res.data); track (hotel.id ?? $index)) {
                           <div class="card-item hotel-result-card">
@@ -793,7 +793,7 @@
                                 <span class="meta-address">{{ hotel.address }}</span>
                               }
                               @if (hotel.minPrice) {
-                                <span class="meta-price">from <strong>EGP {{ hotel.minPrice }}</strong> / night</span>
+                                <span class="meta-price">{{ 'aiChat.results.fromPricePerNight' | translate:{ price: hotel.minPrice } }}</span>
                               }
                             </div>
                             <div class="card-item-footer">
@@ -802,14 +802,14 @@
                                 class="btn-card-action-btn primary"
                                 (click)="startHotelBooking(hotel)"
                               >
-                                Book Now
+                                {{ 'aiChat.results.bookNow' | translate }}
                               </button>
                               <a
                                 [routerLink]="['/hotels', hotel.id]"
                                 class="btn-card-action-btn secondary"
                                 (click)="close()"
                               >
-                                View Hotel & Rooms →
+                                {{ 'aiChat.results.viewHotelAndRooms' | translate }}
                               </a>
                             </div>
                           </div>
@@ -821,7 +821,7 @@
                   <!-- Structured Bus Search Cards (BUS_SEARCH or BUS_TRIP) -->
                   @if ((res.type === 'BUS_SEARCH' || res.type === 'BUS_TRIP') && res.data) {
                     <div class="structured-cards-deck">
-                      <div class="cards-deck-title">Available Bus Trips:</div>
+                      <div class="cards-deck-title">{{ 'aiChat.results.availableBusTrips' | translate }}</div>
                       <div class="cards-deck-grid">
                         @for (trip of getBusTripList(res.data); track (trip.id ?? trip.tripId ?? $index)) {
                           <div class="card-item bus-result-card">
@@ -833,7 +833,7 @@
                             </div>
                             <div class="card-item-meta">
                               @if (trip.departureTime) {
-                                <span>🕒 Departs: {{ trip.departureTime | date:'shortTime' }}</span>
+                                <span>{{ 'aiChat.results.departs' | translate:{ time: (trip.departureTime | date:'shortTime') } }}</span>
                               }
                               @if (trip.routeName || trip.busCompany) {
                                 <span>🚌 {{ trip.routeName || trip.busCompany }}</span>
@@ -845,7 +845,7 @@
                                 class="btn-card-action-btn primary"
                                 (click)="selectBusTripForSummary(trip)"
                               >
-                                Select
+                                {{ 'aiChat.results.select' | translate }}
                               </button>
                               <a
                                 [routerLink]="['/buses/results']"
@@ -853,7 +853,7 @@
                                 class="btn-card-action-btn secondary"
                                 (click)="close()"
                               >
-                                View Trips →
+                                {{ 'aiChat.results.viewTrips' | translate }}
                               </a>
                             </div>
                           </div>
@@ -865,7 +865,7 @@
                   <!-- Structured Available Room Cards (ROOM) -->
                   @if (res.type === 'ROOM' && res.data) {
                     <div class="structured-cards-deck">
-                      <div class="cards-deck-title">Available Rooms:</div>
+                      <div class="cards-deck-title">{{ 'aiChat.results.availableRooms' | translate }}</div>
                       <div class="cards-deck-grid">
                         @for (room of getRoomList(res.data); track (room.id ?? $index)) {
                           <div class="card-item room-result-card">
@@ -880,7 +880,7 @@
                                 <span>🏨 {{ room.hotelName }}</span>
                               }
                               @if (room.capacity) {
-                                <span>👥 Capacity: {{ room.capacity }} guests</span>
+                                <span>{{ 'aiChat.results.capacity' | translate:{ capacity: room.capacity } }}</span>
                               }
                             </div>
                             @if (room.hotelId) {
@@ -890,7 +890,7 @@
                                   class="btn-card-action-btn secondary"
                                   (click)="close()"
                                 >
-                                  View Hotel Details →
+                                  {{ 'aiChat.results.viewHotelDetails' | translate }}
                                 </a>
                               </div>
                             }
@@ -905,7 +905,7 @@
               <!-- Missing Information Prompt Chips -->
               @if (msg.missingInformation && msg.missingInformation.length > 0) {
                 <div class="missing-info-block">
-                  <span class="missing-info-label">Please specify:</span>
+                  <span class="missing-info-label">{{ 'aiChat.results.pleaseSpecify' | translate }}</span>
                   <div class="missing-chips">
                     @for (info of msg.missingInformation; track info) {
                       <button
@@ -934,7 +934,7 @@
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
               </svg>
             </div>
-            <div class="typing-indicator" aria-label="AI Assistant is thinking...">
+            <div class="typing-indicator" [attr.aria-label]="'aiChat.footer.aiThinking' | translate">
               <span class="dot"></span>
               <span class="dot"></span>
               <span class="dot"></span>
@@ -945,7 +945,7 @@
         <!-- Suggested Prompt Chips (when few messages) -->
         @if (aiChatService.messages().length <= 1) {
           <div class="suggested-prompts-section">
-            <span class="suggested-title">Try asking:</span>
+            <span class="suggested-title">{{ 'aiChat.footer.tryAsking' | translate }}</span>
             <div class="suggested-chips-grid">
               @for (prompt of suggestedPrompts; track prompt) {
                 <button
@@ -953,7 +953,7 @@
                   class="suggested-chip"
                   (click)="sendSuggested(prompt)"
                 >
-                  {{ prompt }}
+                  {{ prompt | translate }}
                 </button>
               }
             </div>
@@ -972,15 +972,15 @@
               <span class="wave-bar"></span>
             </div>
             <span class="listening-text">
-              {{ selectedSpeechLang() === 'ar-EG' ? 'جارٍ الاستماع...' : 'Listening...' }}
+              {{ (selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.listeningAr' : 'aiChat.footer.listening') | translate }}
             </span>
             <button
               type="button"
               class="btn-stop-listening"
               (click)="speechService.stop()"
-              [title]="selectedSpeechLang() === 'ar-EG' ? 'إيقاف الاستماع' : 'Stop listening'"
+              [title]="(selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.stopListeningAr' : 'aiChat.footer.stopListening') | translate"
             >
-              {{ selectedSpeechLang() === 'ar-EG' ? 'إيقاف' : 'Stop' }}
+              {{ (selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.stopAr' : 'aiChat.footer.stop') | translate }}
             </button>
           </div>
         }
@@ -993,7 +993,7 @@
               type="button"
               class="speech-error-dismiss"
               (click)="clearSpeechError()"
-              aria-label="Dismiss error"
+              [attr.aria-label]="'aiChat.footer.speechDismissError' | translate"
             >
               ✕
             </button>
@@ -1005,7 +1005,7 @@
             <textarea
               #messageInput
               class="chat-textarea"
-              placeholder="Ask about hotels, buses, or trips..."
+              [placeholder]="'aiChat.footer.inputPlaceholder' | translate"
               rows="1"
               maxlength="2000"
               [ngModel]="currentInput()"
@@ -1013,7 +1013,7 @@
               name="chatInput"
               (keydown)="onKeyDown($event)"
               [disabled]="aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
-              aria-label="Message TravelEase AI Assistant"
+              [attr.aria-label]="'aiChat.footer.inputAriaLabel' | translate"
             ></textarea>
             
             <div class="input-actions-cluster">
@@ -1022,7 +1022,7 @@
                 type="button"
                 class="btn-speech-lang"
                 (click)="toggleSpeechLanguage()"
-                [title]="selectedSpeechLang() === 'ar-EG' ? 'Switch to English' : 'التحويل إلى العربية'"
+                [title]="(selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.switchToEn' : 'aiChat.footer.switchToAr') | translate"
                 aria-label="Toggle speech input language"
               >
                 {{ selectedSpeechLang() === 'ar-EG' ? 'عربي' : 'EN' }}
@@ -1038,9 +1038,9 @@
                   (click)="toggleSpeechInput()"
                   [disabled]="aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
                   [title]="speechService.isListening()
-                    ? (selectedSpeechLang() === 'ar-EG' ? 'إيقاف الاستماع' : 'Stop listening')
-                    : (selectedSpeechLang() === 'ar-EG' ? 'تحدث إلى المساعد' : 'Speak your message')"
-                  [attr.aria-label]="speechService.isListening() ? 'Stop voice input' : 'Start voice input'"
+                    ? ((selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.stopListeningAr' : 'aiChat.footer.stopListening') | translate)
+                    : ((selectedSpeechLang() === 'ar-EG' ? 'aiChat.footer.speakMessageAr' : 'aiChat.footer.speakMessage') | translate)"
+                  [attr.aria-label]="speechService.isListening() ? ('aiChat.footer.stopListening' | translate) : ('aiChat.footer.speakMessage' | translate)"
                 >
                   <svg class="mic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
@@ -1058,8 +1058,8 @@
                   pButton
                   class="p-button-rounded p-button-text speech-mic-btn disabled"
                   disabled
-                  title="Voice input requires Google Chrome, Microsoft Edge, or Apple Safari."
-                  aria-label="Voice input not supported in this browser"
+                  [title]="'aiChat.footer.speechNotSupported' | translate"
+                  [attr.aria-label]="'aiChat.footer.speechNotSupportedAria' | translate"
                 >
                   <svg class="mic-svg muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="2" y1="2" x2="22" y2="22"></line>
@@ -1078,7 +1078,7 @@
                 type="submit"
                 class="send-btn"
                 [disabled]="!currentInput().trim() || aiChatService.isLoading() || (!aiChatService.isMockMode() && !authService.isAuthenticated())"
-                aria-label="Send message"
+                [attr.aria-label]="'aiChat.footer.sendAriaLabel' | translate"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -1089,7 +1089,7 @@
           </div>
 
           <div class="input-footer-row">
-            <span class="footer-hint">Press Enter to send, Shift+Enter for new line</span>
+            <span class="footer-hint">{{ 'aiChat.footer.inputHint' | translate }}</span>
             <span class="char-counter" [class.char-counter-warn]="currentInput().length > 1800">
               {{ currentInput().length }}/2000
             </span>

@@ -7,11 +7,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-logout-confirmation-dialog',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule],
+  imports: [CommonModule, DialogModule, ButtonModule, TranslatePipe],
   templateUrl: './logout-confirmation-dialog.component.html',
   styleUrl: './logout-confirmation-dialog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

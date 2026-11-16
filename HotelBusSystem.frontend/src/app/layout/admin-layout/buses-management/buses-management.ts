@@ -25,6 +25,7 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { BusService } from '../../../core/services/bus.service';
@@ -47,6 +48,7 @@ import { PageBusDTO, BusListParams } from '../../../core/models/Pagination/busPa
     ToastModule,
     TagModule,
     ProgressSpinnerModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './buses-management.html',
@@ -59,6 +61,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   private readonly busBookingService = inject(BusBookingService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
 

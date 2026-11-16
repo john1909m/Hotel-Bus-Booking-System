@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, NavigationStart } from '@angular/router';
 import { firstValueFrom, of, catchError, forkJoin, Subscription, filter } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AiChatService } from '../../../core/services/ai-chat.service';
 import { AiService } from '../../../core/services/ai.service';
@@ -83,7 +84,7 @@ export interface InChatBusBooking {
 @Component({
   selector: 'app-ai-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, BusSeatSelectionComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, BusSeatSelectionComponent, TranslatePipe],
   templateUrl: './ai-chat-widget.component.html',
   styleUrl: './ai-chat-widget.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +103,15 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
   protected readonly authService = inject(AuthService);
   protected readonly speechService = inject(SpeechInputService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService, { optional: true });
+
+  private tr(key: string, params?: Record<string, any>, fallback?: string): string {
+    if (this.translate) {
+      const res = this.translate.instant(key, params);
+      if (res && res !== key) return res;
+    }
+    return fallback || key;
+  }
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInput?: ElementRef<HTMLTextAreaElement>;
@@ -279,10 +289,10 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
   }
 
   readonly suggestedPrompts: string[] = [
-    '🏨 Find hotels in Cairo under 2000 EGP',
-    '🚌 Bus trips from Cairo to Alexandria',
-    '🏖️ Top resorts in Sharm El Sheikh',
-    '📋 Where can I view my bookings?'
+    'aiChat.footer.promptCairoHotels',
+    'aiChat.footer.promptBusTrips',
+    'aiChat.footer.promptResorts',
+    'aiChat.footer.promptMyBookings',
   ];
 
   ngOnInit(): void {
@@ -427,7 +437,8 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
   }
 
   sendSuggested(prompt: string): void {
-    this.currentInput.set(prompt);
+    const text = this.tr(prompt, undefined, prompt);
+    this.currentInput.set(text);
     this.send();
   }
 
@@ -629,9 +640,9 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
   getRoomSelectionTitle(adults: number, childAges?: number[]): string {
     const children = childAges ? childAges.length : 0;
     if (children > 0) {
-      return `Select a room for ${adults} adult(s) and ${children} child(ren):`;
+      return this.tr('aiChat.hotelWizard.selectRoomWithChildren', { adults, children }, `Select a room for ${adults} adult(s) and ${children} child(ren):`);
     }
-    return `Select a room for ${adults} adult(s):`;
+    return this.tr('aiChat.hotelWizard.selectRoomAdultsOnly', { adults }, `Select a room for ${adults} adult(s):`);
   }
 
   proceedFromDates(): void {
@@ -639,15 +650,15 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
     if (!s) return;
 
     if (!s.checkIn || !s.checkOut) {
-      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Please select both check-in and check-out dates.' } : null));
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: this.tr('aiChat.hotelWizard.errors.datesRequired', undefined, 'Please select both check-in and check-out dates.') } : null));
       return;
     }
     if (s.checkIn < this.getTodayDateString()) {
-      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Check-in date cannot be in the past.' } : null));
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: this.tr('aiChat.hotelWizard.errors.checkInPast', undefined, 'Check-in date cannot be in the past.') } : null));
       return;
     }
     if (s.checkOut <= s.checkIn) {
-      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: 'Check-out date must be after check-in date.' } : null));
+      this.hotelBookingState.update((curr) => (curr ? { ...curr, error: this.tr('aiChat.hotelWizard.errors.checkOutAfter', undefined, 'Check-out date must be after check-in date.') } : null));
       return;
     }
 

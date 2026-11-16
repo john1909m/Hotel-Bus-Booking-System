@@ -20,6 +20,7 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Services & Models
 import { BusBookingService } from '../../../core/services/bus-booking.service';
@@ -50,6 +51,7 @@ import { BusDTO } from '../../../core/models/Bus/bus.model';
     ToastModule,
     TagModule,
     SelectButtonModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './BusBookings.component.html',
@@ -65,6 +67,7 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   private readonly busService = inject(BusService);
   private readonly authService = inject(AuthService);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   // State Signals
@@ -90,12 +93,18 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
     const completedCount = list.filter((b) => b.status === 'COMPLETED').length;
     const cancelledCount = list.filter((b) => b.status === 'CANCELLED').length;
 
+    const allLabel = this.translate?.instant('myBusBookings.status.all') || 'All';
+    const pendingLabel = this.translate?.instant('myBusBookings.status.pending') || 'Pending';
+    const confirmedLabel = this.translate?.instant('myBusBookings.status.confirmed') || 'Confirmed';
+    const completedLabel = this.translate?.instant('myBusBookings.status.completed') || 'Completed';
+    const cancelledLabel = this.translate?.instant('myBusBookings.status.cancelled') || 'Cancelled';
+
     return [
-      { label: `All (${list.length})`, value: 'ALL' },
-      { label: `Pending (${pendingCount})`, value: 'PENDING' },
-      { label: `Confirmed (${confirmedCount})`, value: 'CONFIRMED' },
-      { label: `Completed (${completedCount})`, value: 'COMPLETED' },
-      { label: `Cancelled (${cancelledCount})`, value: 'CANCELLED' },
+      { label: `${allLabel} (${list.length})`, value: 'ALL' },
+      { label: `${pendingLabel} (${pendingCount})`, value: 'PENDING' },
+      { label: `${confirmedLabel} (${confirmedCount})`, value: 'CONFIRMED' },
+      { label: `${completedLabel} (${completedCount})`, value: 'COMPLETED' },
+      { label: `${cancelledLabel} (${cancelledCount})`, value: 'CANCELLED' },
     ];
   });
 
@@ -119,6 +128,11 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(status: string): string {
+    const key = `myBusBookings.status.${status?.toLowerCase()}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (status?.toUpperCase()) {
       case 'PENDING':
         return 'Pending';
@@ -367,6 +381,11 @@ export class BusBookingsComponent implements OnInit, OnDestroy {
   }
 
   getStatusDescription(status: Status | string): string {
+    const key = `myBusBookings.statusDesc.${status?.toLowerCase()}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (status?.toUpperCase()) {
       case 'CONFIRMED':
         return 'Travel reservation confirmed & seat guaranteed';

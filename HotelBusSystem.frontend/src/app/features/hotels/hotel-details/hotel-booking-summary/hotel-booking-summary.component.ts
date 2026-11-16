@@ -25,6 +25,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MessageModule } from 'primeng/message';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { BusStopService } from '../../../../core/services/bus-stop.service';
 import { BusRouteService } from '../../../../core/services/bus-route.service';
@@ -85,6 +86,7 @@ export interface BusStopOption {
     DatePickerModule,
     MessageModule,
     BusSeatSelectionComponent,
+    TranslatePipe,
   ],
   templateUrl: './hotel-booking-summary.component.html',
   styleUrl: './hotel-booking-summary.component.css',
@@ -94,6 +96,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
   readonly bookingState = inject(BookingStateService);
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService, { optional: true });
 
   private readonly busStopService = inject(BusStopService);
   private readonly busRouteService = inject(BusRouteService);
@@ -921,6 +924,11 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
   }
 
   getRoomTypeLabel(type: roomType | string): string {
+    const key = `enums.roomType.${type}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (type) {
       case 'SINGLE': return 'Single Room';
       case 'DOUBLE': return 'Double Room';

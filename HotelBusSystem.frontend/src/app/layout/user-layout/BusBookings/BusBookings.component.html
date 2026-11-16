@@ -7,19 +7,17 @@
   <header class="page-header">
     <div class="header-text">
       <div class="header-badge-row">
-        <span class="header-category-badge">Passenger Portal</span>
+        <span class="header-category-badge">{{ 'myBusBookings.categoryBadge' | translate }}</span>
         <span class="header-count-badge" id="bus-bookings-count-badge">
           @if (selectedStatus() !== 'ALL') {
-            {{ filteredCount() }} of {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+            {{ 'myBusBookings.countOf' | translate:{ filtered: filteredCount(), total: totalCount(), label: (totalCount() === 1 ? ('myBusBookings.reservationSingular' | translate) : ('myBusBookings.reservationPlural' | translate)) } }}
           } @else {
-            {{ totalCount() }} {{ totalCount() === 1 ? 'Reservation' : 'Reservations' }}
+            {{ 'myBusBookings.countAll' | translate:{ total: totalCount(), label: (totalCount() === 1 ? ('myBusBookings.reservationSingular' | translate) : ('myBusBookings.reservationPlural' | translate)) } }}
           }
         </span>
       </div>
-      <h1 class="page-title">My Bus Bookings</h1>
-      <p class="page-subtitle">
-        Review your intercity bus tickets, travel schedules, seat allocations, and reservation statuses.
-      </p>
+      <h1 class="page-title">{{ 'myBusBookings.pageTitle' | translate }}</h1>
+      <p class="page-subtitle">{{ 'myBusBookings.pageSubtitle' | translate }}</p>
     </div>
 
     <div class="header-actions">
@@ -29,7 +27,7 @@
         [disabled]="loading()"
         (click)="loadMyBookings()"
         id="refresh-bus-bookings-btn"
-        aria-label="Refresh my bus bookings list"
+        [attr.aria-label]="'myBusBookings.refreshAria' | translate"
       >
         <svg
           class="refresh-icon"
@@ -48,7 +46,7 @@
           <polyline points="1 20 1 14 7 14"></polyline>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
         </svg>
-        <span>Refresh</span>
+        <span>{{ 'myBusBookings.refresh' | translate }}</span>
       </button>
 
       <a routerLink="/" class="btn btn-primary" id="explore-trips-btn">
@@ -56,14 +54,14 @@
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        <span>Explore Trips</span>
+        <span>{{ 'myBusBookings.exploreTrips' | translate }}</span>
       </a>
     </div>
   </header>
 
   <!-- ─── LOADING SKELETON ─────────────────────────────────── -->
   @if (loading()) {
-    <div class="bookings-skeleton-grid" aria-busy="true" aria-label="Loading bus bookings">
+    <div class="bookings-skeleton-grid" aria-busy="true" [attr.aria-label]="'myBusBookings.loadingAria' | translate">
       @for (i of [1, 2, 3]; track i) {
         <div class="booking-skeleton-card"></div>
       }
@@ -80,10 +78,10 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h2>Unable to Load Bus Bookings</h2>
+      <h2>{{ 'myBusBookings.unableToLoad' | translate }}</h2>
       <p class="error-msg">{{ error() }}</p>
       <button type="button" class="btn btn-primary" (click)="loadMyBookings()" id="retry-bus-bookings-btn">
-        Try Again
+        {{ 'myBusBookings.tryAgain' | translate }}
       </button>
     </section>
   }
@@ -101,12 +99,12 @@
           <circle cx="16.5" cy="14.5" r="1"></circle>
         </svg>
       </div>
-      <h2>No Bus Bookings Yet</h2>
+      <h2>{{ 'myBusBookings.noBookingsTitle' | translate }}</h2>
       <p class="empty-desc">
-        You haven't reserved any bus tickets yet. Browse available intercity routes and reserve your preferred seat.
+        {{ 'myBusBookings.noBookingsDesc' | translate }}
       </p>
       <a routerLink="/" class="btn btn-primary" id="empty-state-browse-trips-btn">
-        Browse Available Bus Trips
+        {{ 'myBusBookings.browseTrips' | translate }}
       </a>
     </section>
   }
@@ -118,7 +116,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
         </svg>
-        <span>Filter by Status</span>
+        <span>{{ 'myBusBookings.filterByStatus' | translate }}</span>
       </div>
       <p-selectbutton
         [options]="statusOptions()"
@@ -127,7 +125,7 @@
         optionLabel="label"
         optionValue="value"
         [allowEmpty]="false"
-        ariaLabel="Filter bus reservations by status">
+        [ariaLabel]="'myBusBookings.filterAria' | translate">
       </p-selectbutton>
     </div>
   }
@@ -141,12 +139,12 @@
           <line x1="1" y1="1" x2="23" y2="23"></line>
         </svg>
       </div>
-      <h2>No {{ getStatusLabel(selectedStatus()) }} Bus Bookings</h2>
+      <h2>{{ 'myBusBookings.noStatusTitle' | translate:{ status: getStatusLabel(selectedStatus()) } }}</h2>
       <p class="empty-desc">
-        You do not have any bus reservations currently marked as <strong>{{ getStatusLabel(selectedStatus()) }}</strong>.
+        {{ 'myBusBookings.noStatusDesc' | translate:{ status: getStatusLabel(selectedStatus()) } }}
       </p>
       <button type="button" class="btn btn-secondary" (click)="resetStatusFilter()">
-        View All Bookings
+        {{ 'myBusBookings.viewAllBookings' | translate }}
       </button>
     </section>
   }
@@ -185,9 +183,9 @@
             <div class="schedule-strip">
               <!-- Origin Departure -->
               <div class="terminal-box origin-box">
-                <span class="terminal-type">Origin / Departure</span>
+                <span class="terminal-type">{{ 'myBusBookings.originDeparture' | translate }}</span>
                 <span class="terminal-name">
-                  {{ getOriginStop(booking.busTripId)?.name || getOriginStop(booking.busTripId)?.city || 'Origin Terminal' }}
+                  {{ getOriginStop(booking.busTripId)?.name || getOriginStop(booking.busTripId)?.city || ('myBusBookings.originTerminalDefault' | translate) }}
                 </span>
                 @if (getDepartureTime(booking.busTripId); as depTime) {
                   <span class="terminal-time">{{ depTime | date:'mediumDate' }} · {{ depTime | date:'shortTime' }}</span>
@@ -210,14 +208,14 @@
 
               <!-- Destination Arrival -->
               <div class="terminal-box dest-box">
-                <span class="terminal-type">Destination / Arrival</span>
+                <span class="terminal-type">{{ 'myBusBookings.destinationArrival' | translate }}</span>
                 <span class="terminal-name">
-                  {{ getDestinationStop(booking.busTripId)?.name || getDestinationStop(booking.busTripId)?.city || 'Destination Terminal' }}
+                  {{ getDestinationStop(booking.busTripId)?.name || getDestinationStop(booking.busTripId)?.city || ('myBusBookings.destinationTerminalDefault' | translate) }}
                 </span>
                 @if (getArrivalTime(booking.busTripId); as arrTime) {
                   <span class="terminal-time">{{ arrTime | date:'mediumDate' }} · {{ arrTime | date:'shortTime' }}</span>
                 } @else {
-                  <span class="terminal-time text-muted">Scheduled Arrival</span>
+                  <span class="terminal-time text-muted">{{ 'myBusBookings.scheduledArrival' | translate }}</span>
                 }
               </div>
             </div>
@@ -226,7 +224,7 @@
             <div class="booking-details-grid">
               <!-- Seat Allocation -->
               <div class="detail-item">
-                <span class="detail-label">Assigned Seat</span>
+                <span class="detail-label">{{ 'myBusBookings.assignedSeat' | translate }}</span>
                 <span class="detail-val seat-highlight">
                   💺 {{ getSeatDisplayName(booking.seatId) }}
                 </span>
@@ -234,7 +232,7 @@
 
               <!-- Bus & Service -->
               <div class="detail-item">
-                <span class="detail-label">Bus &amp; Operator</span>
+                <span class="detail-label">{{ 'myBusBookings.busOperator' | translate }}</span>
                 <span class="detail-val">
                   🚌 {{ getBusDisplayName(booking.busTripId) }}
                 </span>
@@ -242,7 +240,7 @@
 
               <!-- Booking Date -->
               <div class="detail-item">
-                <span class="detail-label">Booked On</span>
+                <span class="detail-label">{{ 'myBusBookings.bookedOn' | translate }}</span>
                 <span class="detail-val">
                   📅 {{ booking.bookingDate | date:'mediumDate' }}
                 </span>
@@ -250,7 +248,7 @@
 
               <!-- Ticket Price -->
               <div class="detail-item total-price-item">
-                <span class="detail-label">Fare Price</span>
+                <span class="detail-label">{{ 'myBusBookings.farePrice' | translate }}</span>
                 <span class="detail-val price-highlight">
                   {{ booking.price | number:'1.2-2' }} <small>EGP</small>
                 </span>
@@ -267,18 +265,18 @@
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
-                <span>Confirmed travel ticket. Please present booking reference #{{ booking.id }} when boarding.</span>
+                <span>{{ 'myBusBookings.confirmedFooter' | translate:{ id: booking.id } }}</span>
               } @else if (booking.status === 'PENDING') {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <span>Reservation pending review or payment confirmation.</span>
+                <span>{{ 'myBusBookings.pendingFooter' | translate }}</span>
               } @else if (booking.status === 'CANCELLED') {
-                <span class="cancelled-text">This reservation has been cancelled. Seat assignment was released.</span>
+                <span class="cancelled-text">{{ 'myBusBookings.cancelledFooter' | translate }}</span>
               } @else if (booking.status === 'COMPLETED') {
-                <span>Travel completed. Thank you for choosing TravelEase.</span>
+                <span>{{ 'myBusBookings.completedFooter' | translate }}</span>
               }
             </span>
 
@@ -289,7 +287,7 @@
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-                <span>Cancellations are handled by administration. Please contact support to modify or cancel.</span>
+                <span>{{ 'myBusBookings.cancellationNotice' | translate }}</span>
               </div>
             </div>
           </div>

@@ -7,13 +7,13 @@
   <header class="page-header">
     <div class="header-text">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <span>Admin Portal</span>
+        <span>{{ 'admin.layout.portal' | translate }}</span>
         <span class="sep">/</span>
-        <span class="current">Users Management</span>
+        <span class="current">{{ 'admin.users.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Users Management</h1>
+      <h1 class="page-title">{{ 'admin.users.title' | translate }}</h1>
       <p class="page-subtitle">
-        Manage system users, administer accounts, assign access roles (Admin/User), and update profile records.
+        {{ 'admin.users.subtitle' | translate }}
       </p>
     </div>
 
@@ -23,13 +23,13 @@
         class="btn-primary-action"
         (click)="openCreateDialog()"
         id="admin-add-user-btn"
-        aria-label="Add new user"
+        [attr.aria-label]="'admin.users.addNew' | translate"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Add New User</span>
+        <span>{{ 'admin.users.addNew' | translate }}</span>
       </button>
     </div>
   </header>
@@ -39,7 +39,7 @@
     <div class="filters-grid">
       <!-- Search Query -->
       <div class="filter-field search-field">
-        <label for="admin-user-search" class="filter-label">Search Query</label>
+        <label for="admin-user-search" class="filter-label">{{ 'admin.common.search' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -51,7 +51,7 @@
             id="admin-user-search"
             type="search"
             class="filter-input"
-            placeholder="Search by name, email, or keyword…"
+            [placeholder]="'admin.users.searchPlaceholder' | translate"
             [value]="searchQuery()"
             (input)="onSearchInput($any($event.target).value)"
             aria-label="Search users"
@@ -61,7 +61,7 @@
 
       <!-- Role Filter -->
       <div class="filter-field">
-        <label for="admin-user-role" class="filter-label">Role</label>
+        <label for="admin-user-role" class="filter-label">{{ 'admin.users.colRole' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">👤</span>
           <select
@@ -71,16 +71,16 @@
             (change)="onRoleChange($any($event.target).value)"
             aria-label="Filter by user role"
           >
-            <option value="">All Roles</option>
-            <option value="USER">Customer (USER)</option>
-            <option value="ADMIN">Administrator (ADMIN)</option>
+            <option value="">{{ 'admin.users.allRoles' | translate }}</option>
+            <option value="USER">{{ 'admin.users.customerRole' | translate }}</option>
+            <option value="ADMIN">{{ 'admin.users.adminRole' | translate }}</option>
           </select>
         </div>
       </div>
 
       <!-- Sort Order -->
       <div class="filter-field">
-        <label for="admin-user-sort" class="filter-label">Sort Order</label>
+        <label for="admin-user-sort" class="filter-label">{{ 'admin.users.sortOrder' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -96,10 +96,10 @@
             (change)="onSortChange($any($event.target).value)"
             aria-label="Sort users"
           >
-            <option value="">Default (ID Descending)</option>
-            <option value="name,asc">Name: A to Z</option>
-            <option value="name,desc">Name: Z to A</option>
-            <option value="email,asc">Email: A to Z</option>
+            <option value="">{{ 'admin.users.sortDefault' | translate }}</option>
+            <option value="name,asc">{{ 'admin.users.sortNameAsc' | translate }}</option>
+            <option value="name,desc">{{ 'admin.users.sortNameDesc' | translate }}</option>
+            <option value="email,asc">{{ 'admin.users.sortEmailAsc' | translate }}</option>
           </select>
         </div>
       </div>
@@ -108,7 +108,7 @@
     <!-- Filter Actions Bar -->
     <div class="filter-toolbar">
       <div class="results-badge">
-        Total Users: <strong>{{ totalElements() }}</strong>
+        {{ 'admin.users.totalUsers' | translate }} <strong>{{ totalElements() }}</strong>
       </div>
 
       <div class="filter-actions-right">
@@ -122,7 +122,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
-            <span>Clear Filters</span>
+            <span>{{ 'admin.rooms.clearFilters' | translate }}</span>
           </button>
         }
       </div>
@@ -165,12 +165,12 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>Name &amp; Account</th>
-          <th>Email Address</th>
-          <th>Phone Number</th>
-          <th>Role</th>
-          <th style="width: 110px; text-align: right">Actions</th>
+          <th style="width: 80px">{{ 'admin.common.id' | translate }}</th>
+          <th>{{ 'admin.users.colName' | translate }}</th>
+          <th>{{ 'admin.users.colEmail' | translate }}</th>
+          <th>{{ 'admin.users.colPhone' | translate }}</th>
+          <th>{{ 'admin.users.colRole' | translate }}</th>
+          <th style="width: 110px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -183,7 +183,7 @@
             <div class="user-name-cell">
               <span class="table-cell-title">{{ u.name }}</span>
               @if (u.id === currentAdminId()) {
-                <span class="table-cell-subtitle">(You)</span>
+                <span class="table-cell-subtitle">{{ 'admin.users.youBadge' | translate }}</span>
               }
             </div>
           </td>
@@ -237,12 +237,12 @@
           <td colspan="6">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">👤</div>
-              <h3 class="empty-title">No users found</h3>
+              <h3 class="empty-title">{{ 'admin.users.noUsersFound' | translate }}</h3>
               <p class="empty-desc">
                 @if (hasActiveFilters()) {
-                  No users match your filter criteria. Try clearing your search filters.
+                  {{ 'admin.users.noUsersFilterMatch' | translate }}
                 } @else {
-                  No user accounts are registered in the system yet.
+                  {{ 'admin.users.noUsersRegistered' | translate }}
                 }
               </p>
             </div>
@@ -256,7 +256,7 @@
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
-    [header]="isEditMode() ? 'Edit User' : 'Add New User'"
+    [header]="(isEditMode() ? 'admin.users.editUser' : 'admin.users.addNew') | translate"
     [style]="{ width: '90vw', maxWidth: '540px' }"
     [draggable]="false"
     [resizable]="false"
@@ -268,7 +268,7 @@
         <!-- Full Name -->
         <div class="form-group full-width">
           <label for="userName" class="form-label">
-            Full Name <span class="required-star">*</span>
+            {{ 'admin.users.fieldName' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="userName"
@@ -285,7 +285,7 @@
         <!-- Email -->
         <div class="form-group full-width">
           <label for="userEmail" class="form-label">
-            Email Address <span class="required-star">*</span>
+            {{ 'admin.users.fieldEmail' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="userEmail"
@@ -302,7 +302,7 @@
         <!-- Phone Number -->
         <div class="form-group">
           <label for="userPhone" class="form-label">
-            Phone Number <span class="required-star">*</span>
+            {{ 'admin.users.fieldPhone' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="userPhone"
@@ -319,7 +319,7 @@
         <!-- Role -->
         <div class="form-group">
           <label for="userRole" class="form-label">
-            Role <span class="required-star">*</span>
+            {{ 'admin.users.fieldRole' | translate }} <span class="required-star">*</span>
           </label>
           <select id="userRole" class="form-select" formControlName="role">
             <option value="USER">Customer (USER)</option>
@@ -333,7 +333,7 @@
         <!-- Password -->
         <div class="form-group full-width">
           <label for="userPassword" class="form-label">
-            {{ isEditMode() ? 'New Password (Optional)' : 'Password' }}
+            {{ (isEditMode() ? 'admin.users.newPasswordOptional' : 'admin.users.fieldPassword') | translate }}
             @if (!isEditMode()) { <span class="required-star">*</span> }
           </label>
           <input
@@ -341,11 +341,11 @@
             type="password"
             class="form-input"
             formControlName="password"
-            [placeholder]="isEditMode() ? 'Leave blank to retain current password' : 'Enter account password'"
+            [placeholder]="(isEditMode() ? 'admin.users.leavePasswordBlank' : 'admin.users.enterPassword') | translate"
             autocomplete="new-password"
           />
           @if (isEditMode()) {
-            <span class="password-note">Leave empty to keep existing password intact.</span>
+            <span class="password-note">{{ 'admin.users.passwordNote' | translate }}</span>
           }
           @if (userForm.get('password')?.touched && userForm.get('password')?.errors) {
             <span class="form-error">Password must be at least 6 characters.</span>
@@ -369,7 +369,7 @@
           [disabled]="saving() || userForm.invalid"
           id="admin-save-user-btn"
         >
-          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update User' : 'Create User') }}
+          {{ (saving() ? 'admin.users.saving' : (isEditMode() ? 'admin.users.updateUser' : 'admin.users.createUser')) | translate }}
         </button>
       </div>
     </form>
@@ -379,7 +379,7 @@
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
-    header="Confirm User Deletion"
+    [header]="'admin.users.confirmDeleteTitle' | translate"
     [style]="{ width: '90vw', maxWidth: '440px' }"
     [draggable]="false"
     [resizable]="false"
@@ -393,15 +393,15 @@
           <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-      <h3 class="delete-title">Delete User Account?</h3>
+      <h3 class="delete-title">{{ 'admin.users.deleteTitle' | translate }}</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete user
+        {{ 'admin.users.deletePrompt' | translate }}
         <strong class="delete-entity-name">{{ userToDelete()?.name }} ({{ userToDelete()?.email }})</strong>?
-        This action cannot be undone.
+        {{ 'admin.rooms.cannotBeUndone' | translate }}
       </p>
       @if (userToDelete()?.id === currentAdminId()) {
         <div class="form-error" style="font-weight: 600">
-          ⚠️ Warning: You cannot delete your own active administrator account!
+          {{ 'admin.users.cannotDeleteSelf' | translate }}
         </div>
       }
     </div>
@@ -422,7 +422,7 @@
         [disabled]="deleting() || userToDelete()?.id === currentAdminId()"
         id="admin-confirm-delete-user-btn"
       >
-        {{ deleting() ? 'Deleting…' : 'Delete User' }}
+        {{ (deleting() ? 'admin.users.deleting' : 'admin.users.deleteUser') | translate }}
       </button>
     </div>
   </p-dialog>

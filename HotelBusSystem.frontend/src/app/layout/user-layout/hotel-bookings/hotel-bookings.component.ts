@@ -14,6 +14,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { HotelBookingDTO } from '../../../core/models/Hotel/hotel-booking.model';
@@ -22,7 +23,7 @@ import { calculateGuestBreakdown, GuestBreakdown } from '../../../core/utils/gue
 @Component({
   selector: 'app-hotel-bookings',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, ToastModule, FormsModule, SelectButtonModule],
+  imports: [CommonModule, DecimalPipe, DatePipe, RouterLink, ToastModule, FormsModule, SelectButtonModule, TranslatePipe],
   providers: [MessageService],
   templateUrl: './hotel-bookings.component.html',
   styleUrl: './hotel-bookings.component.css',
@@ -32,6 +33,7 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
   private readonly hotelBookingService = inject(HotelBookingService);
   private readonly authService = inject(AuthService);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   readonly bookings = signal<HotelBookingDTO[]>([]);
@@ -49,12 +51,18 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
     const completedCount = list.filter((b) => b.status === 'COMPLETED').length;
     const cancelledCount = list.filter((b) => b.status === 'CANCELLED').length;
 
+    const allLabel = this.translate?.instant('myHotelBookings.status.all') || 'All';
+    const pendingLabel = this.translate?.instant('myHotelBookings.status.pending') || 'Pending';
+    const confirmedLabel = this.translate?.instant('myHotelBookings.status.confirmed') || 'Confirmed';
+    const completedLabel = this.translate?.instant('myHotelBookings.status.completed') || 'Completed';
+    const cancelledLabel = this.translate?.instant('myHotelBookings.status.cancelled') || 'Cancelled';
+
     return [
-      { label: `All (${list.length})`, value: 'ALL' },
-      { label: `Pending (${pendingCount})`, value: 'PENDING' },
-      { label: `Confirmed (${confirmedCount})`, value: 'CONFIRMED' },
-      { label: `Completed (${completedCount})`, value: 'COMPLETED' },
-      { label: `Cancelled (${cancelledCount})`, value: 'CANCELLED' },
+      { label: `${allLabel} (${list.length})`, value: 'ALL' },
+      { label: `${pendingLabel} (${pendingCount})`, value: 'PENDING' },
+      { label: `${confirmedLabel} (${confirmedCount})`, value: 'CONFIRMED' },
+      { label: `${completedLabel} (${completedCount})`, value: 'COMPLETED' },
+      { label: `${cancelledLabel} (${cancelledCount})`, value: 'CANCELLED' },
     ];
   });
 
@@ -78,6 +86,11 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(status: string): string {
+    const key = `myHotelBookings.status.${status?.toLowerCase()}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (status?.toUpperCase()) {
       case 'PENDING':
         return 'Pending';
@@ -152,6 +165,11 @@ export class HotelBookingsComponent implements OnInit, OnDestroy {
   }
 
   getStatusDescription(status: string): string {
+    const key = `myHotelBookings.statusDesc.${status?.toLowerCase()}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (status?.toUpperCase()) {
       case 'CONFIRMED':
         return 'Reservation confirmed by the property';

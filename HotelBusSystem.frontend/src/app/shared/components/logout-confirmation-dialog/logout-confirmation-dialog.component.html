@@ -1,5 +1,5 @@
 <p-dialog
-  header="Confirm Sign Out"
+  [header]="'logoutDialog.title' | translate"
   [(visible)]="visible"
   [modal]="true"
   [closable]="true"
@@ -20,9 +20,9 @@
       </svg>
     </div>
     <div class="logout-dialog-text">
-      <p class="logout-dialog-prompt">Are you sure you want to sign out?</p>
+      <p class="logout-dialog-prompt">{{ 'logoutDialog.prompt' | translate }}</p>
       <p class="logout-dialog-help">
-        You will be logged out of your current session. You will need to sign back in to view or manage your reservations.
+        {{ 'logoutDialog.help' | translate }}
       </p>
     </div>
   </div>
@@ -32,20 +32,20 @@
       <button
         type="button"
         pButton
-        label="Cancel"
+        [label]="'logoutDialog.cancel' | translate"
         icon="pi pi-times"
         class="p-button-outlined p-button-secondary"
         (click)="onCancel()"
-        aria-label="Cancel sign out">
+        [attr.aria-label]="'logoutDialog.cancelAria' | translate">
       </button>
       <button
         type="button"
         pButton
-        label="Sign Out"
+        [label]="'logoutDialog.confirm' | translate"
         icon="pi pi-sign-out"
         class="p-button-primary"
         (click)="onConfirm()"
-        aria-label="Confirm sign out">
+        [attr.aria-label]="'logoutDialog.confirmAria' | translate">
       </button>
     </div>
   </ng-template>

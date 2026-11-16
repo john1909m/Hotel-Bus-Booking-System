@@ -198,7 +198,7 @@
         @if (stopsError()) {
           <div class="validation-banner error-banner" role="alert">
             <span>{{ stopsError() }}</span>
-            <button type="button" class="btn-retry-stops" (click)="loadBusStops()">Retry</button>
+            <button type="button" class="btn-retry-stops" (click)="loadBusStops()">{{ 'common.retry' | translate }}</button>
           </div>
         }
 

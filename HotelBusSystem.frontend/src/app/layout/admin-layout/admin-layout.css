@@ -261,6 +261,23 @@
   margin-left: auto;
 }
 
+.lang-toggle-btn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.lang-toggle-btn:hover {
+  border-color: var(--color-primary);
+  background: rgba(99, 102, 241, 0.08);
+}
+
 /* ─── Theme Toggle ──────────────────────────────────────── */
 .theme-toggle {
   display: flex;
@@ -404,5 +421,43 @@
 
   .topbar-logout-btn {
     display: none;
+  }
+}
+
+/* ─── RTL Direction Support ──────────────────────────────── */
+:host-context([dir="rtl"]) .sidebar,
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+  border-right: none;
+  border-left: 1px solid var(--border-color);
+}
+
+:host-context([dir="rtl"]) .admin-content,
+[dir="rtl"] .admin-content {
+  margin-right: 260px;
+  margin-left: 0;
+}
+
+:host-context([dir="rtl"]) .topbar-right,
+[dir="rtl"] .topbar-right {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+  :host-context([dir="rtl"]) .sidebar,
+  [dir="rtl"] .sidebar {
+    transform: translateX(100%);
+  }
+
+  :host-context([dir="rtl"]) .admin-shell.sidebar-open .sidebar,
+  [dir="rtl"] .admin-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  :host-context([dir="rtl"]) .admin-content,
+  [dir="rtl"] .admin-content {
+    margin-right: 0;
   }
 }

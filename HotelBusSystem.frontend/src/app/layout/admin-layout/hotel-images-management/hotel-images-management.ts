@@ -26,6 +26,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Services & Models
 import { HotelService } from '../../../core/services/hotel.service';
@@ -54,6 +55,7 @@ export type ImageCategoryFilter = 'ALL' | 'HOTEL_GALLERY' | string;
     ProgressBarModule,
     ProgressSpinnerModule,
     SafeImageUrlPipe,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './hotel-images-management.html',
@@ -67,6 +69,7 @@ export class HotelImagesManagement implements OnInit, OnDestroy {
   private readonly imageUploadService = inject(ImageUploadService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   // ── State Signals ──────────────────────────────────────────

@@ -24,6 +24,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { UserService } from '../../../core/services/user.service';
@@ -43,6 +44,7 @@ import { PageUserDto } from '../../../core/models/Pagination/userPage.model';
     DialogModule,
     ToastModule,
     TagModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './users-management.html',
@@ -54,6 +56,7 @@ export class UsersManagement implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
 

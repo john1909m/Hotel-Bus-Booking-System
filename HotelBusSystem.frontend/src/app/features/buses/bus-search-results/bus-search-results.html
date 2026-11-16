@@ -5,11 +5,11 @@
 
   <!-- Breadcrumb Navigation -->
   <nav class="results-breadcrumb" aria-label="Breadcrumb">
-    <a routerLink="/" class="breadcrumb-link">Home</a>
+    <a routerLink="/" class="breadcrumb-link">{{ 'busSearch.breadcrumbHome' | translate }}</a>
     <span class="breadcrumb-separator">/</span>
-    <a routerLink="/" fragment="transportation" class="breadcrumb-link">Bus Travel</a>
+    <a routerLink="/" fragment="transportation" class="breadcrumb-link">{{ 'busSearch.breadcrumbBus' | translate }}</a>
     <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">Search Results</span>
+    <span class="breadcrumb-current">{{ 'busSearch.breadcrumbResults' | translate }}</span>
   </nav>
 
   <!-- ═══════════════════════════════════════════════════════
@@ -18,10 +18,10 @@
   <header class="criteria-header-card">
     <div class="header-left-col">
       <div class="header-badge-row">
-        <span class="route-type-badge">Intercity Express</span>
+        <span class="route-type-badge">{{ 'busSearch.intercityExpress' | translate }}</span>
         @if (!loading() && !paramError() && !error()) {
           <span class="trip-count-badge">
-            {{ trips().length }} {{ trips().length === 1 ? 'Trip Available' : 'Trips Available' }}
+            {{ (trips().length === 1 ? 'busSearch.tripAvailable' : 'busSearch.tripsAvailable') | translate:{ count: trips().length } }}
           </span>
         }
       </div>
@@ -32,13 +32,13 @@
           <span class="route-arrow" aria-hidden="true">&rarr;</span>
           <span>{{ destination() }}</span>
         } @else {
-          <span>Bus Trip Search</span>
+          <span>{{ 'busSearch.tripSearch' | translate }}</span>
         }
       </h1>
 
       @if (departureDate()) {
         <p class="departure-date-sub">
-          📅 Scheduled departures for <strong>{{ departureDate() | date:'fullDate' }}</strong>
+          📅 {{ 'busSearch.scheduledDepartures' | translate:{ date: (departureDate() | date:'fullDate') } }}
         </p>
       }
     </div>
@@ -49,13 +49,13 @@
         class="btn-modify-search"
         (click)="modifySearch()"
         id="modify-search-top-btn"
-        aria-label="Modify search criteria on the landing page"
+        [attr.aria-label]="'busSearch.modifySearchAria' | translate"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <span>Modify Search</span>
+        <span>{{ 'busSearch.modifySearch' | translate }}</span>
       </button>
     </div>
   </header>
@@ -72,10 +72,10 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h2>Invalid Search Criteria</h2>
+      <h2>{{ 'busSearch.invalidCriteria' | translate }}</h2>
       <p class="error-msg">{{ paramError() }}</p>
       <a routerLink="/" fragment="transportation" class="btn btn-primary" id="return-search-form-btn">
-        Return to Bus Search Form
+        {{ 'busSearch.returnToSearch' | translate }}
       </a>
     </section>
   }
@@ -84,7 +84,7 @@
        LOADING SKELETONS
   ════════════════════════════════════════════════════════ -->
   @if (loading() && !paramError()) {
-    <div class="trips-skeleton-list" aria-busy="true" aria-label="Loading scheduled bus trips">
+    <div class="trips-skeleton-list" aria-busy="true" [attr.aria-label]="'busSearch.loadingTripsAria' | translate">
       @for (i of [1, 2, 3]; track i) {
         <div class="trip-skeleton-card"></div>
       }
@@ -103,14 +103,14 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h2>Unable to Load Bus Trips</h2>
+      <h2>{{ 'busSearch.unableToLoad' | translate }}</h2>
       <p class="error-msg">{{ error() }}</p>
       <div class="error-actions">
         <button type="button" class="btn btn-primary" (click)="retrySearch()" id="retry-search-btn">
-          Try Again
+          {{ 'busSearch.tryAgain' | translate }}
         </button>
         <button type="button" class="btn btn-secondary" (click)="modifySearch()">
-          Change Route
+          {{ 'busSearch.changeRoute' | translate }}
         </button>
       </div>
     </section>
@@ -131,15 +131,15 @@
           <circle cx="16.5" cy="14.5" r="1"></circle>
         </svg>
       </div>
-      <h2>No Bus Trips Found</h2>
+      <h2>{{ 'busSearch.noTripsFound' | translate }}</h2>
       <p class="empty-desc">
-        We couldn't find any scheduled trips connecting <strong>{{ origin() }}</strong> to <strong>{{ destination() }}</strong> on {{ departureDate() | date:'mediumDate' }}.
+        {{ 'busSearch.noTripsDesc' | translate:{ origin: origin(), destination: destination(), date: (departureDate() | date:'mediumDate') } }}
       </p>
       <p class="empty-hint">
-        Bus lines may run on alternate days, or you can try swapping your origin and destination cities.
+        {{ 'busSearch.noTripsHint' | translate }}
       </p>
       <button type="button" class="btn btn-primary" (click)="modifySearch()" id="empty-modify-search-btn">
-        Modify Search Criteria
+        {{ 'busSearch.modifySearch' | translate }}
       </button>
     </section>
   }
@@ -157,12 +157,12 @@
 
             <!-- Origin Terminal -->
             <div class="terminal-col origin-col">
-              <span class="terminal-label">Departure</span>
+              <span class="terminal-label">{{ 'busSearch.departure' | translate }}</span>
               <span class="terminal-time">
                 {{ (trip.departureTime || trip.departure) | date:'shortTime' }}
               </span>
               <span class="terminal-name">
-                {{ trip.originStop?.name || trip.originStop?.city || 'Origin Terminal' }}
+                {{ trip.originStop?.name || trip.originStop?.city || ('busSearch.originTerminal' | translate) }}
               </span>
               <span class="terminal-city">{{ trip.originStop?.city }}</span>
             </div>
@@ -177,18 +177,18 @@
               </div>
               <span class="duration-pill">{{ trip.formattedDuration }}</span>
               @if (trip.isOvernight) {
-                <span class="overnight-badge">+1 Day Arrival</span>
+                <span class="overnight-badge">{{ 'busSearch.overnight' | translate }}</span>
               }
             </div>
 
             <!-- Destination Terminal -->
             <div class="terminal-col dest-col">
-              <span class="terminal-label">Arrival</span>
+              <span class="terminal-label">{{ 'busSearch.arrival' | translate }}</span>
               <span class="terminal-time">
                 {{ trip.arrivalTime | date:'shortTime' }}
               </span>
               <span class="terminal-name">
-                {{ trip.destinationStop?.name || trip.destinationStop?.city || 'Destination Terminal' }}
+                {{ trip.destinationStop?.name || trip.destinationStop?.city || ('busSearch.destinationTerminal' | translate) }}
               </span>
               <span class="terminal-city">{{ trip.destinationStop?.city }}</span>
             </div>
@@ -199,17 +199,17 @@
           <div class="trip-footer-bar">
             <div class="trip-carrier-info">
               <span class="carrier-badge">
-                🚌 {{ trip.bus?.company || 'Express Coach' }}
+                🚌 {{ trip.bus?.company || ('busSearch.defaultCarrier' | translate) }}
               </span>
               <span class="bus-model-text">
-                Coach #{{ trip.bus?.busNumber || trip.busId }}
+                {{ 'busSearch.coachNumber' | translate:{ number: (trip.bus?.busNumber || trip.busId) } }}
               </span>
               <p-tag [value]="trip.status" severity="success" styleClass="trip-status-tag" />
             </div>
 
             <div class="trip-fare-action">
               <div class="fare-box">
-                <span class="fare-label">Fare Price</span>
+                <span class="fare-label">{{ 'busSearch.farePrice' | translate }}</span>
                 <span class="fare-amount">
                   {{ trip.price | number:'1.2-2' }} <small>EGP</small>
                 </span>
@@ -220,9 +220,9 @@
                 class="btn-select-trip"
                 (click)="onSelectSeats(trip)"
                 id="select-seats-btn-{{ trip.id }}"
-                aria-label="Select seats for trip departing at {{ (trip.departureTime || trip.departure) | date:'shortTime' }}"
+                [attr.aria-label]="'busSearch.selectSeatsAria' | translate:{ time: ((trip.departureTime || trip.departure) | date:'shortTime') }"
               >
-                <span>Select Seats</span>
+                <span>{{ 'busSearch.selectSeats' | translate }}</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 12h14m-7-7l7 7-7 7"/>
                 </svg>
@@ -245,4 +245,3 @@
   />
 
 </div>
-

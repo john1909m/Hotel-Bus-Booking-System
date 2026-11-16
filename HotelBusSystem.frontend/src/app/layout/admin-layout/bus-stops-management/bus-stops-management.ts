@@ -23,6 +23,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 // Core Models & Services
 import { BusStopService } from '../../../core/services/bus-stop.service';
@@ -41,6 +42,7 @@ import { PageBusStopDTO, BusStopListParams } from '../../../core/models/Paginati
     ButtonModule,
     DialogModule,
     ToastModule,
+    TranslatePipe,
   ],
   providers: [MessageService],
   templateUrl: './bus-stops-management.html',
@@ -51,6 +53,7 @@ export class BusStopsManagement implements OnInit, OnDestroy {
   private readonly busStopService = inject(BusStopService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
   private readonly citySubject$ = new Subject<string>();

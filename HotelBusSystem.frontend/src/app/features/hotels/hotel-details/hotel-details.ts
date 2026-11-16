@@ -20,6 +20,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HotelService } from '../../../core/services/hotel.service';
 import { RoomService } from '../../../core/services/room.service';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
@@ -71,6 +72,7 @@ type CapacityValidationStatus = 'no-rooms' | 'missing-age' | 'exceeded' | 'valid
     HotelTransportationRecommendationsComponent,
     SafeImageUrlPipe,
     ImageLightboxComponent,
+    TranslatePipe,
   ],
   templateUrl: './hotel-details.html',
   styleUrl: './hotel-details.css',
@@ -85,6 +87,7 @@ export class HotelDetails implements OnInit, OnDestroy {
   readonly hotelBookingService = inject(HotelBookingService);
   readonly authService = inject(AuthService);
   readonly bookingStateService = inject(BookingStateService);
+  private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   // ── Hotel State ─────────────────────────────────────────────
@@ -980,6 +983,11 @@ export class HotelDetails implements OnInit, OnDestroy {
   }
 
   getRoomTypeLabel(type: roomType | string): string {
+    const key = `enums.roomType.${type}`;
+    const translated = this.translate?.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
     switch (type) {
       case 'SINGLE': return 'Single Room';
       case 'DOUBLE': return 'Double Room';
