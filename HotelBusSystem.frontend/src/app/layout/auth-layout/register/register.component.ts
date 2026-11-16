@@ -7,6 +7,7 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { RegisterRequest } from '../../../core/models/Auth/register.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -30,9 +31,15 @@ export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  readonly themeService = inject(ThemeService);
 
+  readonly theme = this.themeService.theme;
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
 
   registerForm: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

@@ -318,9 +318,16 @@ export class BusTripsManagement implements OnInit, OnDestroy {
     }
   }
 
-  getBusLabel(busId: number): string {
-    const found = this.buses().find((b) => b.id === busId);
-    return found ? `${found.busNumber} (${found.company})` : `Bus #${busId}`;
+  getBusLabel(busId?: number | null, trip?: any): string {
+    if (trip?.bus?.company || trip?.bus?.busNumber) {
+      return `${trip.bus.busNumber || ''} (${trip.bus.company || ''})`.trim();
+    }
+    const resolvedId = busId ?? trip?.busId ?? trip?.bus?.id;
+    if (!resolvedId) {
+      return 'Unassigned Vehicle';
+    }
+    const found = this.buses().find((b) => b.id === resolvedId);
+    return found ? `${found.busNumber} (${found.company})` : `Bus #${resolvedId}`;
   }
 
   getRouteLabel(routeId: number): string {
@@ -475,6 +482,8 @@ export class BusTripsManagement implements OnInit, OnDestroy {
           next: (created) => {
             this.saving.set(false);
             this.dialogVisible.set(false);
+            created.busId = created.busId || payload.busId;
+            created.routeId = created.routeId || payload.routeId;
             this.messageService.add({
               severity: 'success',
               summary: 'Trip Scheduled',

@@ -220,6 +220,25 @@ describe('HotelBookingsManagement Component', () => {
     );
   });
 
+  it('should handle onHotelChange with string/event values gracefully (Item C2)', () => {
+    component.ngOnInit();
+    component.onHotelChange('0: 102'); // simulated Angular ngValue DOM change event
+    expect(mockRoomService.getRoomsByHotelId).toHaveBeenCalledWith(102);
+    expect(component.selectedHotelId()).toBe(102);
+  });
+
+  it('displayedBookings filters matching records for searchFilter (Item C3)', () => {
+    component.ngOnInit();
+    expect(component.displayedBookings().length).toBe(2);
+
+    component.searchFilter.set('10'); // matches booking with userId 10
+    expect(component.displayedBookings().length).toBe(1);
+    expect(component.displayedBookings()[0].id).toBe(1);
+
+    component.searchFilter.set('Nonexistent');
+    expect(component.displayedBookings().length).toBe(0);
+  });
+
   it('should reject manual guest value above room capacity (maximum) and block save', () => {
     component.ngOnInit();
 

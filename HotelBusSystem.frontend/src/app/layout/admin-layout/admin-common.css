@@ -191,6 +191,12 @@
   font-size: 0.95rem;
 }
 
+.results-badge .matching-count {
+  margin-left: 0.35rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 .filter-actions-right {
   display: flex;
   align-items: center;

@@ -164,19 +164,23 @@ export class AiChatService {
         this.failedMessage.set(trimmed);
         this.lastErrorCode.set(err.status || 0);
 
-        let errorMsg = 'Failed to connect to the AI Assistant. Please try again.';
-        if (err.status === 400) {
-          errorMsg = err.error?.message || 'Invalid message. Must not be empty or exceed 2000 characters.';
-        } else if (err.status === 401) {
-          errorMsg = 'Please sign in to chat with the TravelEase AI Assistant.';
-        } else if (err.status === 403) {
-          errorMsg = 'Access denied. You do not have permission to use the AI assistant.';
-        } else if (err.status === 429) {
-          errorMsg = 'Too many requests. Please wait a few moments before trying again.';
-        } else if (err.status === 503) {
-          errorMsg = 'The AI Assistant is temporarily unavailable on the server (Google Gemini API key not yet configured).';
-        } else if (err.status === 500) {
-          errorMsg = 'Server encountered an error processing your request. Please try again.';
+        let errorMsg = err.error?.message;
+        if (!errorMsg || typeof errorMsg !== 'string' || !errorMsg.trim()) {
+          if (err.status === 400) {
+            errorMsg = 'Invalid message. Must not be empty or exceed 2000 characters.';
+          } else if (err.status === 401) {
+            errorMsg = 'Please sign in to chat with the TravelEase AI Assistant.';
+          } else if (err.status === 403) {
+            errorMsg = 'Access denied. You do not have permission to use the AI assistant.';
+          } else if (err.status === 429) {
+            errorMsg = 'Too many requests. Please wait a few moments before trying again.';
+          } else if (err.status === 503) {
+            errorMsg = 'The AI Assistant is temporarily unavailable. Please try again later.';
+          } else if (err.status === 500) {
+            errorMsg = 'Server encountered an error processing your request. Please try again.';
+          } else {
+            errorMsg = 'Failed to connect to the AI Assistant. Please try again.';
+          }
         }
 
         this.lastError.set(errorMsg);

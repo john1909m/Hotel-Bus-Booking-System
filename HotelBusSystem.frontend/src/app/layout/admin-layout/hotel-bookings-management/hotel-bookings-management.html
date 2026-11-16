@@ -126,6 +126,9 @@
     <div class="filter-toolbar">
       <div class="results-badge">
         Total Bookings: <strong>{{ totalElements() }}</strong>
+        @if (searchFilter().trim()) {
+          <span class="matching-count">({{ displayedBookings().length }} matching)</span>
+        }
       </div>
     </div>
   </section>
@@ -307,7 +310,7 @@
             >
               <option [ngValue]="null" disabled>Select Hotel Property</option>
               @for (h of hotels(); track h.id) {
-                <option [ngValue]="h.id">{{ h.name }} ({{ h.city }})</option>
+                <option [ngValue]="h.id" [value]="h.id">{{ h.name }} ({{ h.city }})</option>
               }
             </select>
           } @else if (selectedHotelName()) {

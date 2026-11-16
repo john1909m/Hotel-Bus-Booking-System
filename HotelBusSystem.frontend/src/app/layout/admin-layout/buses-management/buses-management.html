@@ -266,7 +266,7 @@
                 title="Auto-Generate Missing Seats"
               >
                 @if (generatingBusId() === bus.id) {
-                  <p-progressSpinner styleClass="w-1rem h-1rem" strokeWidth="4" />
+                  <p-progressSpinner styleClass="btn-inline-spinner" strokeWidth="4" />
                 } @else {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
@@ -521,7 +521,7 @@
             id="admin-auto-generate-seats-btn"
           >
             @if (generatingSeats()) {
-              <p-progressSpinner styleClass="w-1rem h-1rem inline-spinner" strokeWidth="4" />
+              <p-progressSpinner styleClass="btn-inline-spinner" strokeWidth="4" />
               <span>Generating Seats…</span>
             } @else {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -556,7 +556,7 @@
             [disabled]="generatingSeats() || loadingSeats()"
           >
             @if (generatingSeats()) {
-              <p-progressSpinner styleClass="w-1rem h-1rem inline-spinner" strokeWidth="4" />
+              <p-progressSpinner styleClass="btn-inline-spinner" strokeWidth="4" />
               <span>Generating {{ selectedBusForSeats()?.capacity }} Seats Now…</span>
             } @else {
               <span>Generate {{ selectedBusForSeats()?.capacity }} Seats Now</span>

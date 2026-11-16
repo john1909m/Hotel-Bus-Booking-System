@@ -230,10 +230,34 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
         }
       ]);
       this.shouldScrollToBottom = true;
-    } catch (err) {
+    } catch (err: any) {
       this.confirmingDraftId.set(null);
-      const errorMsg = extractErrorMessage(err, 'Booking confirmation failed. Please try again.');
+      const isExpired = err?.status === 410 || err?.code === 'DRAFT_EXPIRED';
+      const isNotFound = err?.status === 404 || err?.code === 'DRAFT_NOT_FOUND';
+
+      if (isExpired) {
+        draft.status = 'EXPIRED';
+      }
+
+      const errorMsg = extractErrorMessage(err, isExpired
+        ? 'This booking draft has expired. Please create a new draft.'
+        : 'Booking confirmation failed. Please try again.');
+
       this.setDraftError(draftId, errorMsg);
+
+      if (isExpired || isNotFound) {
+        this.aiChatService.messages.update((list) => [
+          ...list,
+          {
+            id: this.generateUUID(),
+            sender: 'assistant',
+            text: `⚠️ Draft #${draftId} is no longer valid (${errorMsg}). Would you like me to help you find another stay or trip?`,
+            timestamp: new Date(),
+            isMock: false,
+          }
+        ]);
+      }
+
       this.shouldScrollToBottom = true;
     }
   }

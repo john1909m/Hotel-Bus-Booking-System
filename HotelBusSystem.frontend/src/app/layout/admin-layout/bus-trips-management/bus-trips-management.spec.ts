@@ -289,4 +289,22 @@ describe('BusTripsManagement Component', () => {
       status: 'CANCELLED',
     });
   });
+
+  it('getBusLabel resolves bus from busId, trip object, or unassigned fallback (Item C4)', () => {
+    component.ngOnInit();
+
+    // From busId
+    expect(component.getBusLabel(10)).toBe('BUS-100 (GoBus)');
+
+    // From trip.bus object
+    const tripWithBus = {
+      id: 1,
+      busId: null,
+      bus: { id: 10, busNumber: 'B-999', company: 'GoBus' },
+    };
+    expect(component.getBusLabel(null, tripWithBus)).toBe('B-999 (GoBus)');
+
+    // Unassigned fallback when neither is present
+    expect(component.getBusLabel(null, { id: 2, busId: null })).toBe('Unassigned Vehicle');
+  });
 });

@@ -2,6 +2,26 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 
 /**
+ * Standard backend field-level validation error structure.
+ */
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
+/**
+ * Standard post-pull backend error response contract (ErrorResponse.java).
+ */
+export interface ApiErrorResponse {
+  timestamp?: string;
+  status?: number;
+  code?: string;
+  message?: string;
+  path?: string;
+  errors?: ApiFieldError[];
+}
+
+/**
  * Known backend error keys and their customer-friendly messages.
  */
 const ERROR_CODE_MAP: Record<string, string> = {
@@ -19,7 +39,8 @@ const ERROR_CODE_MAP: Record<string, string> = {
 };
 
 /**
- * Extracts a customer-friendly error message from an error response.
+ * Extracts a customer-friendly error message from an error response,
+ * respecting structured field-level errors and domain error codes from the backend.
  */
 export function extractErrorMessage(error: unknown, fallbackMessage = 'An unexpected error occurred. Please try again.'): string {
   if (!error) return fallbackMessage;
@@ -34,16 +55,23 @@ export function extractErrorMessage(error: unknown, fallbackMessage = 'An unexpe
   if (rawError instanceof HttpErrorResponse || (rawError && typeof rawError === 'object' && 'status' in rawError)) {
     const httpErr = rawError as HttpErrorResponse;
 
+    // Check for structured field validation errors first
+    const fieldMsg = formatFieldErrors(httpErr.error);
+
     // 401 / 403 Authentication
     if (httpErr.status === 401 || httpErr.status === 403) {
-      return 'Authentication required. Please log in to complete your reservation.';
+      const msg = extractRawMessage(httpErr.error);
+      if (msg) return translateErrorMessage(msg);
+      return httpErr.status === 401
+        ? 'Authentication required. Please log in to complete your reservation.'
+        : 'Access denied. You do not have permission for this action.';
     }
 
     // 409 Conflict
     if (httpErr.status === 409) {
       const msg = extractRawMessage(httpErr.error);
       if (msg) return translateErrorMessage(msg);
-      return 'The selected seat is no longer available. It may have just been booked by another passenger.';
+      return 'The selected resource is no longer available or conflicts with an existing reservation.';
     }
 
     // 404 Not Found
@@ -53,14 +81,37 @@ export function extractErrorMessage(error: unknown, fallbackMessage = 'An unexpe
       return 'The requested resource was not found.';
     }
 
+    // 410 Gone (Draft Expired)
+    if (httpErr.status === 410) {
+      const msg = extractRawMessage(httpErr.error);
+      if (msg) return translateErrorMessage(msg);
+      return 'This booking draft has expired. Please create a new booking.';
+    }
+
+    // 429 Too Many Requests (Rate Limit)
+    if (httpErr.status === 429) {
+      const msg = extractRawMessage(httpErr.error);
+      if (msg) return translateErrorMessage(msg);
+      return 'Too many requests. Please wait a moment and try again.';
+    }
+
+    // 503 Service Unavailable
+    if (httpErr.status === 503) {
+      const msg = extractRawMessage(httpErr.error);
+      if (msg) return translateErrorMessage(msg);
+      return 'Service is temporarily unavailable. Please try again later.';
+    }
+
     // 400 Bad Request
     if (httpErr.status === 400) {
+      if (fieldMsg) return fieldMsg;
       const msg = extractRawMessage(httpErr.error);
       if (msg) return translateErrorMessage(msg);
       return 'Invalid reservation request. Please review your details and try again.';
     }
 
     // Other backend error body
+    if (fieldMsg) return fieldMsg;
     const bodyMsg = extractRawMessage(httpErr.error);
     if (bodyMsg) {
       return translateErrorMessage(bodyMsg);
@@ -72,6 +123,26 @@ export function extractErrorMessage(error: unknown, fallbackMessage = 'An unexpe
   }
 
   return fallbackMessage;
+}
+
+function formatFieldErrors(errorBody: unknown): string | null {
+  if (!errorBody || typeof errorBody !== 'object') return null;
+  const errObj = errorBody as Record<string, unknown>;
+
+  // Check array of { field, message }
+  if (Array.isArray(errObj['errors']) && errObj['errors'].length > 0) {
+    const fieldDetails = (errObj['errors'] as ApiFieldError[])
+      .map(e => e.message || (e.field ? `${e.field} is invalid` : ''))
+      .filter(Boolean);
+
+    if (fieldDetails.length > 0) {
+      // Deduplicate messages
+      const unique = Array.from(new Set(fieldDetails));
+      return unique.join('; ');
+    }
+  }
+
+  return null;
 }
 
 function extractRawMessage(errorBody: unknown): string | null {
@@ -105,7 +176,7 @@ function translateErrorMessage(msg: string): string {
     return 'This bus trip has already departed.';
   }
   if (msg.toLowerCase().includes('not bookable') || msg.toLowerCase().includes('unavailable')) {
-    return 'This bus trip is not available for booking.';
+    return msg;
   }
 
   return msg;
@@ -119,5 +190,7 @@ export function handleError(error: HttpErrorResponse): Observable<never> {
   (err as any).status = error.status;
   (err as any).error = error.error;
   (err as any).rawError = error;
+  (err as any).code = (error.error as any)?.code;
+  (err as any).fieldErrors = (error.error as any)?.errors;
   return throwError(() => err);
 }

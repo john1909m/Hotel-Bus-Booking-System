@@ -313,8 +313,17 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
     return found ? `Room ${found.roomNumber} (${found.roomType})` : `Room #${roomId}`;
   }
 
-  onHotelChange(val: string | number | null): void {
-    const hotelId = val ? Number(val) : null;
+  onHotelChange(val?: string | number | null): void {
+    const raw = val !== undefined && val !== null ? val : this.bookingForm.get('hotelId')?.value;
+    let hotelId: number | null = null;
+    if (typeof raw === 'number' && !isNaN(raw)) {
+      hotelId = raw;
+    } else if (typeof raw === 'string') {
+      const parsed = raw.includes(':') ? raw.split(':')[1]?.trim() : raw;
+      const num = Number(parsed);
+      hotelId = !isNaN(num) && num > 0 ? num : null;
+    }
+
     this.selectedHotelId.set(hotelId);
     this.capacityError.set(null);
 

@@ -45,6 +45,15 @@
 }
 
 .btn-action-generate-seats {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
   color: var(--color-primary, #009B77) !important;
 }
 
@@ -55,6 +64,25 @@
 .btn-action-generate-seats:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+:host ::ng-deep .btn-inline-spinner.p-progressspinner,
+:host ::ng-deep .btn-action-generate-seats .p-progressspinner,
+:host ::ng-deep .btn-auto-generate .p-progressspinner,
+:host ::ng-deep .btn-primary-action .p-progressspinner {
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  vertical-align: middle !important;
+}
+
+:host ::ng-deep .btn-inline-spinner .p-progressspinner-svg,
+:host ::ng-deep .btn-action-generate-seats .p-progressspinner-svg,
+:host ::ng-deep .btn-auto-generate .p-progressspinner-svg,
+:host ::ng-deep .btn-primary-action .p-progressspinner-svg {
+  width: 15px !important;
+  height: 15px !important;
 }
 
 .inline-spinner {
