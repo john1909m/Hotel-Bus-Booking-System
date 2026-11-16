@@ -188,9 +188,9 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
   it('invalid inline date range (check-out before check-in) shows error message and does not save', () => {
     component.openDateEditor();
 
-    // Check-out earlier than check-in
-    const newIn = new Date(2026, 10, 15);
-    const newOut = new Date(2026, 10, 12);
+    // Check-out earlier than check-in (future dates)
+    const newIn = new Date(2026, 11, 15);
+    const newOut = new Date(2026, 11, 12);
 
     (component as any).editCheckInDate.set(newIn);
     (component as any).editCheckOutDate.set(newOut);

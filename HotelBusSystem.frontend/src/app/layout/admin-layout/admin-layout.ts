@@ -48,6 +48,7 @@ export class AdminLayout implements OnInit {
     { label: 'Trips',          route: '/admin/bus-trips',       icon: '🛣' },
     { label: 'Hotel Bookings', route: '/admin/hotel-bookings',  icon: '📋' },
     { label: 'Bus Bookings',   route: '/admin/bus-bookings',    icon: '🎟' },
+    { label: 'User Bookings',  route: '/admin/user-bookings',   icon: '📑' },
     { label: 'Payments',       route: '/admin/payments',        icon: '💳' },
   ];
 

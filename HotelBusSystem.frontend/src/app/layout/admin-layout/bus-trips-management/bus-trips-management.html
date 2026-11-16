@@ -233,8 +233,8 @@
           </td>
           <td>
             <div class="timing-cell">
-              <strong>{{ trip.departure | date:'mediumDate' }}</strong>
-              <span>{{ trip.departure | date:'shortTime' }}</span>
+              <strong>{{ (trip.departureTime || trip.departure) | date:'mediumDate' }}</strong>
+              <span>{{ (trip.departureTime || trip.departure) | date:'shortTime' }}</span>
             </div>
           </td>
           <td>

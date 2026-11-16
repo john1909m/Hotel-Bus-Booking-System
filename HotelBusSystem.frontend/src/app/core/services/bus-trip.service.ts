@@ -22,6 +22,11 @@ export class BusTripService {
    */
   createBusTrip(payload: BusTripRequestDTO): Observable<BusTripDTO> {
     return this.http.post<BusTripDTO>(this.apiUrl, payload).pipe(
+      map((trip) => ({
+        ...trip,
+        departure: trip.departureTime || trip.departure,
+        departureTime: trip.departureTime || trip.departure,
+      })),
       catchError(handleError)
     );
   }
@@ -32,6 +37,11 @@ export class BusTripService {
    */
   getBusTripById(id: number): Observable<BusTripDTO> {
     return this.http.get<BusTripDTO>(`${this.apiUrl}/${id}`).pipe(
+      map((trip) => ({
+        ...trip,
+        departure: trip.departureTime || trip.departure,
+        departureTime: trip.departureTime || trip.departure,
+      })),
       catchError(handleError)
     );
   }
@@ -61,8 +71,15 @@ export class BusTripService {
         const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
         const size = res?.page?.size ?? res?.size ?? 10;
         const number = res?.page?.number ?? res?.number ?? 0;
+        const rawContent = res?.content || [];
+        const content = rawContent.map((t: any) => ({
+          ...t,
+          departure: t.departureTime || t.departure,
+          departureTime: t.departureTime || t.departure,
+        }));
         return {
           ...res,
+          content,
           totalElements,
           totalPages,
           size,
@@ -145,6 +162,11 @@ export class BusTripService {
    */
   updateBusTrip(id: number, payload: BusTripRequestDTO): Observable<BusTripDTO> {
     return this.http.put<BusTripDTO>(`${this.apiUrl}/${id}`, payload).pipe(
+      map((trip) => ({
+        ...trip,
+        departure: trip.departureTime || trip.departure,
+        departureTime: trip.departureTime || trip.departure,
+      })),
       catchError(handleError)
     );
   }

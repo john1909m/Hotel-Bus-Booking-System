@@ -1,0 +1,159 @@
+@import '../admin-common.css';
+
+.user-bookings-grid {
+  grid-template-columns: 2.5fr 1fr 1fr 1.2fr;
+}
+
+@media (max-width: 1024px) {
+  .user-bookings-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-bookings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.user-picker-field {
+  min-width: 280px;
+}
+
+.count-divider {
+  margin: 0 0.5rem;
+  color: var(--text-muted);
+}
+
+.empty-prompt-card {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  margin-top: 1rem;
+}
+
+.user-bookings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-icon {
+  font-size: 1.25rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.section-count-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-primary-light, rgba(53, 198, 160, 0.15));
+  color: var(--color-primary, #10b981);
+}
+
+.booking-id-tag {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.badge-type {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-hotel {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.badge-bus {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.booking-status-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.booking-details-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.guests-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--bg-surface-secondary, rgba(0, 0, 0, 0.05));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.price-text {
+  font-family: var(--font-tight, sans-serif);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+}
+
+.payment-method-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.payment-method-badge.badge-paid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.payment-method-badge.badge-unpaid {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}

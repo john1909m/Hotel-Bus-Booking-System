@@ -224,7 +224,7 @@
           </td>
           <td>
             <p-tag
-              [value]="bus.busType || 'STANDARD'"
+              [value]="getCoachTypeDisplay(bus.busType)"
               severity="info"
               styleClass="bus-type-tag"
             />
@@ -254,6 +254,24 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M4 18v3m16-3v3M4 11V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5M4 11h16m-16 0v7h16v-7"/>
                 </svg>
+              </button>
+
+              <!-- Auto-Generate Seats Action -->
+              <button
+                type="button"
+                class="btn-action btn-action-generate-seats"
+                (click)="generateSeatsFromAction(bus, $event)"
+                [disabled]="generatingSeats()"
+                [attr.aria-label]="'Generate missing seats for ' + bus.busNumber"
+                title="Auto-Generate Missing Seats"
+              >
+                @if (generatingBusId() === bus.id) {
+                  <p-progressSpinner styleClass="w-1rem h-1rem" strokeWidth="4" />
+                } @else {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                }
               </button>
 
               <!-- Edit Bus Action -->
@@ -376,12 +394,9 @@
           <label for="busType" class="form-label">
             Coach Type <span class="required-star">*</span>
           </label>
-          <select id="busType" class="form-select" formControlName="busType" [value]="selectedBusForSeats()"
-            (change)="onTypeChange($any($event.target).value)"
-          >
-            <option value=" ">All Types</option>
-            @for(type of buses(); track type.id){
-                <option [value]="type.id">{{type.busType}}</option>
+          <select id="busType" class="form-select" formControlName="busType">
+            @for (type of coachTypes(); track type) {
+              <option [value]="type">{{ type }}</option>
             }
           </select>
           @if (busForm.get('busType')?.touched && busForm.get('busType')?.errors?.['required']) {
@@ -505,10 +520,15 @@
             [disabled]="generatingSeats() || loadingSeats()"
             id="admin-auto-generate-seats-btn"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
-            <span>{{ generatingSeats() ? 'Generating Seats…' : 'Auto-Generate Seats' }}</span>
+            @if (generatingSeats()) {
+              <p-progressSpinner styleClass="w-1rem h-1rem inline-spinner" strokeWidth="4" />
+              <span>Generating Seats…</span>
+            } @else {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+              <span>Auto-Generate Seats</span>
+            }
           </button>
         }
       </div>
@@ -533,9 +553,14 @@
             type="button"
             class="btn-primary-action"
             (click)="autoGenerateSeatsForCurrentBus()"
-            [disabled]="generatingSeats()"
+            [disabled]="generatingSeats() || loadingSeats()"
           >
-            <span>Generate {{ selectedBusForSeats()?.capacity }} Seats Now</span>
+            @if (generatingSeats()) {
+              <p-progressSpinner styleClass="w-1rem h-1rem inline-spinner" strokeWidth="4" />
+              <span>Generating {{ selectedBusForSeats()?.capacity }} Seats Now…</span>
+            } @else {
+              <span>Generate {{ selectedBusForSeats()?.capacity }} Seats Now</span>
+            }
           </button>
         </div>
       }

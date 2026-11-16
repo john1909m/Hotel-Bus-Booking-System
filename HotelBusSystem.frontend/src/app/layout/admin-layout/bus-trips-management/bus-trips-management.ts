@@ -107,7 +107,7 @@ export class BusTripsManagement implements OnInit, OnDestroy {
         const routeLabel = (this.getRouteLabel(trip.routeId) || '').toLowerCase();
         const tripIdStr = String(trip.id);
         const statusStr = (trip.status || '').toLowerCase();
-        const departureStr = (trip.departure || '').toLowerCase();
+        const departureStr = (trip.departureTime || trip.departure || '').toLowerCase();
         const arrivalStr = (trip.arrivalTime || '').toLowerCase();
         const priceStr = String(trip.price);
 
@@ -371,8 +371,10 @@ export class BusTripsManagement implements OnInit, OnDestroy {
     this.isEditMode.set(true);
     this.editingTripId.set(trip.id);
 
-    const depStr = trip.departure ? trip.departure.slice(0, 16) : '';
-    const arrStr = trip.arrivalTime ? trip.arrivalTime.slice(0, 16) : '';
+    const rawDep = trip.departureTime || trip.departure || '';
+    const rawArr = trip.arrivalTime || '';
+    const depStr = rawDep ? rawDep.slice(0, 16) : '';
+    const arrStr = rawArr ? rawArr.slice(0, 16) : '';
 
     this.tripForm.patchValue({
       busId: trip.busId,
@@ -416,11 +418,17 @@ export class BusTripsManagement implements OnInit, OnDestroy {
 
     this.saving.set(true);
 
+    const formatLocalDateTime = (val: string): string => {
+      if (!val) return '';
+      const str = String(val).trim();
+      return str.length === 16 ? `${str}:00` : str;
+    };
+
     const payload: BusTripRequestDTO = {
       busId: Number(formVal.busId),
       routeId: Number(formVal.routeId),
-      departure: String(formVal.departure),
-      arrivalTime: String(formVal.arrivalTime),
+      departureTime: formatLocalDateTime(formVal.departure),
+      arrivalTime: formatLocalDateTime(formVal.arrivalTime),
       price: Number(formVal.price),
       status: formVal.status as status,
     };

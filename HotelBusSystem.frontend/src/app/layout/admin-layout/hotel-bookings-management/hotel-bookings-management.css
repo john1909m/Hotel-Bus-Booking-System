@@ -60,3 +60,47 @@
   border-color: rgba(53, 198, 160, 0.3);
 }
 
+.guest-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.guest-range-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-surface-secondary, rgba(0, 0, 0, 0.05));
+  color: var(--color-primary);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.guest-range-badge.badge-warning {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.capacity-warning-badge {
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.rooms-loading-state,
+.empty-rooms-hint {
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+

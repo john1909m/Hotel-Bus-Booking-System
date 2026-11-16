@@ -91,6 +91,35 @@ export class BusesManagement implements OnInit, OnDestroy {
   readonly currentBusSeats = signal<BusSeatDTO[]>([]);
   readonly loadingSeats = signal<boolean>(false);
   readonly generatingSeats = signal<boolean>(false);
+  readonly generatingBusId = signal<number | null>(null);
+
+  readonly coachTypes = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const b of this.buses()) {
+      if (b.busType && b.busType.trim()) {
+        const val = b.busType.trim();
+        if (!/^\d+$/.test(val)) {
+          set.add(val);
+        }
+      }
+    }
+    const currentVal = this.busForm?.get('busType')?.value;
+    if (currentVal && typeof currentVal === 'string' && currentVal.trim() && !/^\d+$/.test(currentVal.trim())) {
+      set.add(currentVal.trim());
+    }
+    if (set.size === 0) {
+      set.add('STANDARD');
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
+
+  getCoachTypeDisplay(busType?: string): string {
+    if (!busType || !busType.trim()) return 'STANDARD';
+    if (/^\d+$/.test(busType.trim())) {
+      return 'STANDARD';
+    }
+    return busType;
+  }
 
   readonly totalElements = computed(
     () => this.pageData()?.totalElements ?? this.pageData()?.page?.totalElements ?? 0
@@ -220,11 +249,6 @@ export class BusesManagement implements OnInit, OnDestroy {
     this.currentPage.set(pageIndex);
     this.loadBuses();
   }
-  onTypeChange(val: string): void{
-    const id = val ? parseInt(val, 10) : null;
-    this.selectedBusId.set(isNaN(id as any)? null : id);
-    this.loadBuses();
-  }
   // ── Seat Generation Logic ──────────────────────────────────
   determineSeatType(seatNum: number, capacity: number): seatType {
     if (seatNum <= Math.min(4, capacity)) {
@@ -259,7 +283,12 @@ export class BusesManagement implements OnInit, OnDestroy {
     targetCapacity: number,
     onSuccess?: (createdCount: number) => void
   ): void {
+    if (this.generatingSeats()) {
+      return;
+    }
     this.generatingSeats.set(true);
+    this.generatingBusId.set(bus.id);
+
     this.busSeatService
       .getBusSeatsByBusId(bus.id)
       .pipe(takeUntil(this.destroy$))
@@ -281,6 +310,7 @@ export class BusesManagement implements OnInit, OnDestroy {
 
           if (toCreate.length === 0) {
             this.generatingSeats.set(false);
+            this.generatingBusId.set(null);
             if (onSuccess) onSuccess(0);
             return;
           }
@@ -291,6 +321,7 @@ export class BusesManagement implements OnInit, OnDestroy {
             .subscribe({
               next: (created) => {
                 this.generatingSeats.set(false);
+                this.generatingBusId.set(null);
                 if (this.selectedBusForSeats()?.id === bus.id) {
                   this.loadSeatsForBus(bus);
                 }
@@ -298,6 +329,7 @@ export class BusesManagement implements OnInit, OnDestroy {
               },
               error: (err) => {
                 this.generatingSeats.set(false);
+                this.generatingBusId.set(null);
                 this.messageService.add({
                   severity: 'error',
                   summary: 'Seat Generation Error',
@@ -309,6 +341,7 @@ export class BusesManagement implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.generatingSeats.set(false);
+          this.generatingBusId.set(null);
           this.messageService.add({
             severity: 'error',
             summary: 'Seat Inspection Error',
@@ -327,7 +360,7 @@ export class BusesManagement implements OnInit, OnDestroy {
       busNumber: '',
       company: '',
       capacity: 45,
-      busType: 'STANDARD',
+      busType: this.coachTypes()[0] || 'STANDARD',
     });
     this.dialogVisible.set(true);
   }
@@ -339,7 +372,7 @@ export class BusesManagement implements OnInit, OnDestroy {
       busNumber: bus.busNumber,
       company: bus.company,
       capacity: bus.capacity,
-      busType: bus.busType || 'STANDARD',
+      busType: this.getCoachTypeDisplay(bus.busType),
     });
     this.dialogVisible.set(true);
   }
@@ -634,6 +667,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   }
 
   autoGenerateSeatsForCurrentBus(): void {
+    if (this.generatingSeats()) return;
     const bus = this.selectedBusForSeats();
     if (!bus) return;
 
@@ -645,6 +679,31 @@ export class BusesManagement implements OnInit, OnDestroy {
         life: 4000,
       });
       this.loadSeatsForBus(bus);
+    });
+  }
+
+  generateSeatsFromAction(bus: BusDTO, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.generatingSeats()) return;
+
+    this.autoGenerateSeatsForBus(bus, bus.capacity, (count) => {
+      if (count > 0) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Seats Generated',
+          detail: `Successfully generated ${count} missing seats for bus "${bus.busNumber}".`,
+          life: 4000,
+        });
+      } else {
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Seats Up to Date',
+          detail: `All ${bus.capacity} seats already exist for bus "${bus.busNumber}".`,
+          life: 4000,
+        });
+      }
     });
   }
 

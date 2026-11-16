@@ -168,6 +168,12 @@ export const routes: Routes = [
         title: 'TravelEase Admin — Bus Bookings',
       },
       {
+        path: 'user-bookings',
+        loadComponent: () =>
+          import('./layout/admin-layout/user-bookings/user-bookings').then(m => m.UserBookings),
+        title: 'TravelEase Admin — User Bookings',
+      },
+      {
         path: 'payments',
         loadComponent: () =>
           import('./layout/admin-layout/payments-management/payments-management').then(m => m.PaymentsManagement),

@@ -293,37 +293,63 @@
     <form [formGroup]="bookingForm" (ngSubmit)="saveBooking()" class="dialog-form" id="admin-hotel-booking-form">
       <div class="form-grid">
 
-        <!-- Hotel Property Name (Edit Mode) -->
-        @if (isEditMode() && selectedHotelName()) {
-          <div class="form-group full-width hotel-name-display-box">
-            <span class="hotel-display-label">Hotel Property</span>
+        <!-- Hotel Property Selection -->
+        <div class="form-group full-width">
+          <label for="bookingHotelId" class="form-label">
+            Hotel Property <span class="required-star">*</span>
+          </label>
+          @if (hotels().length > 0) {
+            <select
+              id="bookingHotelId"
+              class="form-select"
+              formControlName="hotelId"
+              (change)="onHotelChange($any($event.target).value)"
+            >
+              <option [ngValue]="null" disabled>Select Hotel Property</option>
+              @for (h of hotels(); track h.id) {
+                <option [ngValue]="h.id">{{ h.name }} ({{ h.city }})</option>
+              }
+            </select>
+          } @else if (selectedHotelName()) {
             <div class="hotel-display-value">
               <span class="hotel-icon" aria-hidden="true">🏨</span>
               <strong>{{ selectedHotelName() }}</strong>
             </div>
-          </div>
-        }
+          }
+        </div>
 
         <!-- Room Selection -->
         <div class="form-group full-width">
           <label for="bookingRoomId" class="form-label">
             Select Room <span class="required-star">*</span>
           </label>
-          @if (rooms().length > 0) {
-            <select id="bookingRoomId" class="form-select" formControlName="roomId">
-              <option [ngValue]="null" disabled>Select Hotel Room</option>
-              @for (r of rooms(); track r.id) {
-                <option [ngValue]="r.id">{{ getRoomLabel(r.id) }} — ${{ r.pricePerNight }}/night (Cap: {{ r.capacity }})</option>
-              }
-            </select>
-          } @else {
-            <input
+          @if (loadingRooms()) {
+            <div class="rooms-loading-state">
+              <span class="spinner" aria-hidden="true">⏳</span>
+              <span>Loading hotel rooms...</span>
+            </div>
+          } @else if (hotelRooms().length > 0) {
+            <p-select
               id="bookingRoomId"
-              type="number"
-              class="form-input"
+              [options]="roomOptions()"
               formControlName="roomId"
-              placeholder="Enter Room ID"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Hotel Room"
+              styleClass="w-full"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+              (onChange)="onRoomSelect($event.value)"
             />
+          } @else {
+            <div class="empty-rooms-hint">
+              <span>No rooms available for the selected hotel property.</span>
+            </div>
+          }
+          @if (capacityError()) {
+            <div class="capacity-warning-badge" role="alert">
+              ⚠️ {{ capacityError() }}
+            </div>
           }
           @if (bookingForm.get('roomId')?.touched && bookingForm.get('roomId')?.errors?.['required']) {
             <span class="form-error">Room selection is required.</span>
@@ -362,22 +388,29 @@
           }
         </div>
 
-        <!-- Number of Guests -->
+        <!-- Number of Guests with Range Indicator -->
         <div class="form-group full-width">
-          <label for="guests" class="form-label">
-            Number of Guests <span class="required-star">*</span>
-          </label>
+          <div class="guest-label-row">
+            <label for="guests" class="form-label">
+              Number of Guests <span class="required-star">*</span>
+            </label>
+            <span class="guest-range-badge" [class.badge-warning]="capacityError()">
+              Range: [{{ minGuests() }} – {{ maxGuests() }}]
+            </span>
+          </div>
           <input
             id="guests"
             type="number"
             class="form-input"
             formControlName="guests"
-            min="1"
-            max="20"
-            placeholder="1"
+            [min]="minGuests()"
+            [max]="maxGuests()"
+            placeholder="Guests"
           />
-          @if (bookingForm.get('guests')?.touched && bookingForm.get('guests')?.errors) {
-            <span class="form-error">Guests must be between 1 and 20.</span>
+          @if (bookingForm.get('guests')?.value < minGuests() || bookingForm.get('guests')?.value > maxGuests()) {
+            <span class="form-error">
+              Guest count must be within the valid range [{{ minGuests() }} – {{ maxGuests() }}].
+            </span>
           }
         </div>
 

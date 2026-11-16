@@ -249,4 +249,44 @@ describe('BusTripsManagement Component', () => {
     expect(mockBusTripService.deleteBusTrip).toHaveBeenCalledWith(1);
     expect(component.allBusTripsCache()).toBeNull();
   });
+
+  it('should correctly populate form in openEditDialog when trip uses departureTime and format ISO with :00 on save', () => {
+    component.ngOnInit();
+    const tripWithDepartureTime: BusTripDTO = {
+      id: 5,
+      busId: 10,
+      routeId: 20,
+      departureTime: '2026-12-15T09:30:00',
+      arrivalTime: '2026-12-15T13:30:00',
+      price: 180,
+      status: 'SCHEDULED',
+    };
+
+    component.openEditDialog(tripWithDepartureTime);
+
+    expect(component.isEditMode()).toBe(true);
+    expect(component.editingTripId()).toBe(5);
+    expect(component.tripForm.value.departure).toBe('2026-12-15T09:30');
+    expect(component.tripForm.value.arrivalTime).toBe('2026-12-15T13:30');
+    expect(component.tripForm.value.price).toBe(180);
+    expect(component.tripForm.value.status).toBe('SCHEDULED');
+
+    // Change status and time
+    component.tripForm.patchValue({
+      departure: '2026-12-15T10:00',
+      arrivalTime: '2026-12-15T14:00',
+      status: 'CANCELLED',
+    });
+
+    component.saveTrip();
+
+    expect(mockBusTripService.updateBusTrip).toHaveBeenCalledWith(5, {
+      busId: 10,
+      routeId: 20,
+      departureTime: '2026-12-15T10:00:00',
+      arrivalTime: '2026-12-15T14:00:00',
+      price: 180,
+      status: 'CANCELLED',
+    });
+  });
 });

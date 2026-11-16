@@ -18,7 +18,7 @@ export interface BusTripDTO {
 
 
 export interface BusTripRequestDTO {
-    departure: string;
+    departureTime: string;
     arrivalTime: string;
     price: number;
     status: status;

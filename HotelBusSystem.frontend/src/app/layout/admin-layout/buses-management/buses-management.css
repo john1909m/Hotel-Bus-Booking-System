@@ -44,6 +44,24 @@
   background: rgba(2, 132, 199, 0.08) !important;
 }
 
+.btn-action-generate-seats {
+  color: var(--color-primary, #009B77) !important;
+}
+
+.btn-action-generate-seats:hover:not(:disabled) {
+  background: rgba(0, 155, 119, 0.1) !important;
+}
+
+.btn-action-generate-seats:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inline-spinner {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
 /* Seats Dialog & Card Grid Styling */
 .seats-popup-container {
   display: flex;
