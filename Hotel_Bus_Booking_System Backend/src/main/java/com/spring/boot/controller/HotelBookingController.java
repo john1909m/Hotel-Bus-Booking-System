@@ -35,7 +35,6 @@ public class HotelBookingController {
     @Operation(summary = "Create a hotel booking",
                description = "Creates a single or multi-room booking. Requires adults (>= 1) and optional childAges (0-17). Children under 12 are free and do not count against room capacity. Plain guests count accepted for backward compatibility.")
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<HotelBookingDto> createHotelBooking(@Valid @RequestBody HotelBookingRequestDto hotelBookingRequestDto) {
         UserDto userDto = (UserDto) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userDto.getId();
