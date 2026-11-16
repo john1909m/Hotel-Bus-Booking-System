@@ -6,12 +6,14 @@ import { of } from 'rxjs';
 import { PublicHeader } from './public-header';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { LanguageService } from '../../../core/services/language.service';
 
 describe('PublicHeader - Logout Confirmation Flow (Part D)', () => {
   let component: PublicHeader;
   let mockAuthService: any;
   let mockRouter: any;
   let mockThemeService: any;
+  let mockLanguageService: any;
   let injector: Injector;
 
   beforeEach(() => {
@@ -31,11 +33,17 @@ describe('PublicHeader - Logout Confirmation Flow (Part D)', () => {
       toggle: vi.fn(),
     };
 
+    mockLanguageService = {
+      currentLanguage: signal('en'),
+      toggleLanguage: vi.fn(),
+    };
+
     injector = Injector.create({
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: Router, useValue: mockRouter },
         { provide: ThemeService, useValue: mockThemeService },
+        { provide: LanguageService, useValue: mockLanguageService },
         PublicHeader,
       ],
     });
@@ -70,6 +78,11 @@ describe('PublicHeader - Logout Confirmation Flow (Part D)', () => {
     expect(component.showLogoutConfirm()).toBe(false);
     expect(mockAuthService.logout).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('delegates toggleLanguage to LanguageService', () => {
+    component.toggleLanguage();
+    expect(mockLanguageService.toggleLanguage).toHaveBeenCalledTimes(1);
   });
 });
 

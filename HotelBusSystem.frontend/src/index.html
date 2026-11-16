@@ -9,12 +9,16 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Prevent theme flash -->
+  <!-- Prevent theme & language flash -->
   <script>
     (function () {
-      var saved = localStorage.getItem('te-theme');
-      var preferred = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', preferred);
+      var savedTheme = localStorage.getItem('te-theme');
+      var preferredTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', preferredTheme);
+
+      var savedLang = localStorage.getItem('te-lang') || 'en';
+      document.documentElement.setAttribute('lang', savedLang);
+      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
     })();
   </script>
 </head>

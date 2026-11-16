@@ -2,7 +2,7 @@
   <!-- Top Navbar -->
   <header class="auth-navbar" role="banner">
     <div class="auth-nav-inner">
-      <a routerLink="/" class="brand" aria-label="TravelEase Home">
+      <a routerLink="/" class="brand" [attr.aria-label]="'nav.homeAria' | translate">
         <span class="brand-icon" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="14" cy="14" r="14" fill="var(--color-primary)"/>
@@ -14,11 +14,22 @@
       </a>
 
       <div class="auth-nav-actions">
+        <!-- Language Toggle -->
+        <button
+          type="button"
+          class="lang-toggle-btn"
+          (click)="toggleLanguage()"
+          [attr.aria-label]="'common.switchLanguage' | translate"
+          id="auth-reg-lang-toggle-btn"
+        >
+          <span class="lang-text">{{ currentLanguage() === 'en' ? 'العربية' : 'English' }}</span>
+        </button>
+
         <!-- Theme Toggle -->
         <button
           type="button"
           class="theme-toggle"
-          [attr.aria-label]="theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          [attr.aria-label]="theme() === 'dark' ? ('nav.switchToLight' | translate) : ('nav.switchToDark' | translate)"
           (click)="toggleTheme()"
           id="auth-reg-theme-toggle-btn"
         >
@@ -30,12 +41,12 @@
         </button>
 
         <!-- Back to Home -->
-        <a routerLink="/" class="btn-back-home" aria-label="Back to home page">
+        <a routerLink="/" class="btn-back-home" [attr.aria-label]="'auth.backToHome' | translate">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          <span>Back to Home</span>
+          <span>{{ 'auth.backToHome' | translate }}</span>
         </a>
       </div>
     </div>
@@ -45,8 +56,8 @@
     <div class="auth-card">
       <!-- Header -->
       <div class="auth-header">
-        <h1 class="auth-title">Create Account</h1>
-        <p class="auth-subtitle">Join TravelEase to start booking hotels & buses seamlessly</p>
+        <h1 class="auth-title">{{ 'auth.registerTitle' | translate }}</h1>
+        <p class="auth-subtitle">{{ 'auth.registerSubtitle' | translate }}</p>
       </div>
 
     <!-- Error Banner -->
@@ -60,73 +71,73 @@
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
       <!-- Full Name -->
       <div class="form-group">
-        <label for="reg-name" class="form-label">Full Name</label>
+        <label for="reg-name" class="form-label">{{ 'auth.fullNameLabel' | translate }}</label>
         <div class="input-wrapper">
           <input
             pInputText
             id="reg-name"
             type="text"
             formControlName="name"
-            placeholder="John Doe"
+            [placeholder]="'auth.fullNamePlaceholder' | translate"
             autocomplete="name"
             class="w-full"
           />
         </div>
         @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
           <small class="field-error">
-            @if (registerForm.get('name')?.errors?.['required']) { Name is required. }
-            @else if (registerForm.get('name')?.errors?.['minlength']) { Name must be at least 2 characters. }
+            @if (registerForm.get('name')?.errors?.['required']) { {{ 'auth.nameRequired' | translate }} }
+            @else if (registerForm.get('name')?.errors?.['minlength']) { {{ 'auth.nameMinLength' | translate }} }
           </small>
         }
       </div>
 
       <!-- Email -->
       <div class="form-group">
-        <label for="reg-email" class="form-label">Email address</label>
+        <label for="reg-email" class="form-label">{{ 'auth.emailLabel' | translate }}</label>
         <div class="input-wrapper">
           <input
             pInputText
             id="reg-email"
             type="email"
             formControlName="email"
-            placeholder="you@example.com"
+            [placeholder]="'auth.emailPlaceholder' | translate"
             autocomplete="email"
             class="w-full"
           />
         </div>
         @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
           <small class="field-error">
-            @if (registerForm.get('email')?.errors?.['required']) { Email is required. }
-            @else if (registerForm.get('email')?.errors?.['email']) { Please enter a valid email address. }
+            @if (registerForm.get('email')?.errors?.['required']) { {{ 'auth.emailRequired' | translate }} }
+            @else if (registerForm.get('email')?.errors?.['email']) { {{ 'auth.emailInvalid' | translate }} }
           </small>
         }
       </div>
 
       <!-- Phone Number -->
       <div class="form-group">
-        <label for="reg-phone" class="form-label">Phone Number</label>
+        <label for="reg-phone" class="form-label">{{ 'auth.phoneLabel' | translate }}</label>
         <div class="input-wrapper">
           <input
             pInputText
             id="reg-phone"
             type="tel"
             formControlName="phoneNumber"
-            placeholder="+20 123 456 7890"
+            [placeholder]="'auth.phonePlaceholder' | translate"
             autocomplete="tel"
             class="w-full"
           />
         </div>
         @if (registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched) {
           <small class="field-error">
-            @if (registerForm.get('phoneNumber')?.errors?.['required']) { Phone number is required. }
-            @else if (registerForm.get('phoneNumber')?.errors?.['pattern']) { Please enter a valid phone number. }
+            @if (registerForm.get('phoneNumber')?.errors?.['required']) { {{ 'auth.phoneRequired' | translate }} }
+            @else if (registerForm.get('phoneNumber')?.errors?.['pattern']) { {{ 'auth.phoneInvalid' | translate }} }
           </small>
         }
       </div>
 
       <!-- Password -->
       <div class="form-group">
-        <label for="reg-password" class="form-label">Password</label>
+        <label for="reg-password" class="form-label">{{ 'auth.passwordLabel' | translate }}</label>
         <div class="input-wrapper">
           <p-password
             id="reg-password"
@@ -139,15 +150,15 @@
         </div>
         @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
           <small class="field-error">
-            @if (registerForm.get('password')?.errors?.['required']) { Password is required. }
-            @else if (registerForm.get('password')?.errors?.['minlength']) { Password must be at least 6 characters. }
+            @if (registerForm.get('password')?.errors?.['required']) { {{ 'auth.passwordRequired' | translate }} }
+            @else if (registerForm.get('password')?.errors?.['minlength']) { {{ 'auth.passwordMinLength' | translate }} }
           </small>
         }
       </div>
 
       <p-button
         type="submit"
-        label="Create Account"
+        [label]="'auth.createAccountBtn' | translate"
         [loading]="isSubmitting()"
         [disabled]="isSubmitting()"
         styleClass="btn-auth-submit w-full"
@@ -155,7 +166,7 @@
     </form>
 
     <div class="auth-footer">
-      <p>Already have an account? <a routerLink="/login" class="auth-link">Sign in</a></p>
+      <p>{{ 'auth.haveAccount' | translate }} <a routerLink="/login" class="auth-link">{{ 'auth.signInLink' | translate }}</a></p>
     </div>
   </div>
   </div>

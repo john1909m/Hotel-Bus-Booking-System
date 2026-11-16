@@ -5,6 +5,8 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -22,6 +24,14 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([authInterceptor]),
     ),
+    provideTranslateService({
+      fallbackLang: 'en',
+      lang: 'en',
+    }),
+    provideTranslateHttpLoader({
+      prefix: './assets/i18n/',
+      suffix: '.json',
+    }),
     providePrimeNG({
       theme: {
         preset: Aura,

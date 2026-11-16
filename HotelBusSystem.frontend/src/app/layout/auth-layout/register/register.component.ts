@@ -2,12 +2,14 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { LanguageService } from '../../../core/services/language.service';
 import { RegisterRequest } from '../../../core/models/Auth/register.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -18,6 +20,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
+    TranslatePipe,
     InputTextModule,
     PasswordModule,
     ButtonModule,
@@ -31,14 +34,21 @@ export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
   readonly themeService = inject(ThemeService);
 
   readonly theme = this.themeService.theme;
+  readonly currentLanguage = this.languageService.currentLanguage;
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   toggleTheme(): void {
     this.themeService.toggle();
+  }
+
+  toggleLanguage(): void {
+    this.languageService.toggleLanguage();
   }
 
   registerForm: FormGroup = this.fb.group({
@@ -75,11 +85,11 @@ export class RegisterComponent {
       error: (err: HttpErrorResponse) => {
         this.isSubmitting.set(false);
         if (err.status === 400 && err.error?.message?.includes('Email.already.exists')) {
-          this.errorMessage.set('This email address is already registered. Please sign in or use another email.');
+          this.errorMessage.set(this.translate.instant('auth.emailAlreadyRegistered'));
         } else if (err.status === 0) {
-          this.errorMessage.set('Cannot connect to server. Please check your network connection.');
+          this.errorMessage.set(this.translate.instant('auth.networkError'));
         } else {
-          this.errorMessage.set(err.error?.message || 'Registration failed. Please check your details and try again.');
+          this.errorMessage.set(err.error?.message || this.translate.instant('auth.registrationFailed'));
         }
       },
     });

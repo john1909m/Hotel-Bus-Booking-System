@@ -35,10 +35,22 @@ export function isBackendApiRequest(url: string): boolean {
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Only attach withCredentials and backend auth to requests targeting the exact backend origin
+  // Only attach withCredentials, Accept-Language, and backend auth to requests targeting the exact backend origin
   if (isBackendApiRequest(req.url)) {
+    let currentLang = 'en';
+    try {
+      if (typeof localStorage !== 'undefined') {
+        currentLang = localStorage.getItem('te-lang') || 'en';
+      }
+    } catch {
+      // Storage access may be blocked; fallback to en
+    }
+
     const clonedRequest = req.clone({
       withCredentials: true,
+      setHeaders: {
+        'Accept-Language': currentLang === 'ar' ? 'ar' : 'en',
+      },
     });
     return next(clonedRequest);
   }

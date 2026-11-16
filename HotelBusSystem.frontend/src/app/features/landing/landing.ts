@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 
 import { BusStopService } from '../../core/services/bus-stop.service';
@@ -33,6 +34,7 @@ function notPastDateValidator(control: AbstractControl): ValidationErrors | null
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './landing.html',
   styleUrl: './landing.css',
@@ -63,14 +65,14 @@ export class Landing implements OnInit {
     { validators: differentCitiesValidator }
   );
 
-  readonly trustItems: { icon: SafeHtml; title: string; desc: string }[] = [
+  readonly trustItems: { icon: SafeHtml; titleKey: string; descKey: string }[] = [
     {
       icon: this.sanitizer.bypassSecurityTrustHtml(`
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
         </svg>`),
-      title: 'Carefully Selected Stays',
-      desc: 'Quality hotels for every journey.',
+      titleKey: 'landing.trust1Title',
+      descKey: 'landing.trust1Desc',
     },
     {
       icon: this.sanitizer.bypassSecurityTrustHtml(`
@@ -78,46 +80,46 @@ export class Landing implements OnInit {
           <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/>
           <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
         </svg>`),
-      title: 'Convenient Travel Planning',
-      desc: 'Hotels and buses, all in one place.',
+      titleKey: 'landing.trust2Title',
+      descKey: 'landing.trust2Desc',
     },
     {
       icon: this.sanitizer.bypassSecurityTrustHtml(`
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>`),
-      title: 'Transparent Information',
-      desc: 'Clear details, no hidden costs.',
+      titleKey: 'landing.trust3Title',
+      descKey: 'landing.trust3Desc',
     },
     {
       icon: this.sanitizer.bypassSecurityTrustHtml(`
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.92 18z"/>
         </svg>`),
-      title: 'Reliable Support',
-      desc: "We're here when you need us.",
+      titleKey: 'landing.trust4Title',
+      descKey: 'landing.trust4Desc',
     },
   ];
 
   readonly destinations = [
     {
-      name: 'Cairo',
-      tagline: 'Rich history, timeless beauty',
+      nameKey: 'landing.destCairoTitle',
+      taglineKey: 'landing.destCairoDesc',
       image: 'assets/images/cairo.jpg',
     },
     {
-      name: 'Sharm El Sheikh',
-      tagline: 'Crystal waters, endless adventure',
+      nameKey: 'landing.destSharmTitle',
+      taglineKey: 'landing.destSharmDesc',
       image: 'assets/images/sharm.jpg',
     },
     {
-      name: 'Alexandria',
-      tagline: 'Mediterranean charm, classic vibe',
+      nameKey: 'landing.destAlexTitle',
+      taglineKey: 'landing.destAlexDesc',
       image: 'assets/images/alexandria.jpg',
     },
     {
-      name: 'Hurghada',
-      tagline: 'Sun, sea and pure relaxation',
+      nameKey: 'landing.destHurghadaTitle',
+      taglineKey: 'landing.destHurghadaDesc',
       image: 'assets/images/hurghada.jpg',
     },
   ];

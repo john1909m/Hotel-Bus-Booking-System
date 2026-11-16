@@ -241,3 +241,36 @@ p-password .p-inputtext:focus,
   color: var(--text-muted) !important;
   cursor: pointer !important;
 }
+
+/* ─── RTL (Arabic) Adjustments ───────────────────────────── */
+[dir="rtl"] {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir="rtl"] body {
+  font-family: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+}
+
+[dir="rtl"] .p-password input,
+[dir="rtl"] .p-password .p-inputtext {
+  padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+}
+
+[dir="rtl"] .p-password .p-password-toggle-mask-icon,
+[dir="rtl"] .p-password .p-password-mask-icon,
+[dir="rtl"] .p-password .p-password-unmask-icon {
+  right: auto !important;
+  left: 1rem !important;
+}
+
+/* Mirror forward-pointing and back icons in RTL */
+[dir="rtl"] .destination-arrow svg,
+[dir="rtl"] .view-all-link svg,
+[dir="rtl"] .cta-secondary svg,
+[dir="rtl"] .promo-cta svg,
+[dir="rtl"] .cta-primary svg,
+[dir="rtl"] .btn-back-home svg {
+  transform: scaleX(-1);
+}
+
