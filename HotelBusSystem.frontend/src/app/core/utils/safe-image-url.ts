@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
-export const DEFAULT_IMAGE_PLACEHOLDER = '/assets/images/hotel-placeholder.svg';
+export const DEFAULT_IMAGE_PLACEHOLDER = '/assets/images/imgPlaceHolder.jpg';
 
 /**
  * Validates whether a candidate image URL is safe and belongs to the configured Cloudflare R2 public origin.
