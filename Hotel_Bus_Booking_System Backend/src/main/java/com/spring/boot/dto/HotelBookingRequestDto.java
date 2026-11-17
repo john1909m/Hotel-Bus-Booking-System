@@ -46,6 +46,9 @@ public class HotelBookingRequestDto {
     @Schema(description = "Booking status", example = "CONFIRMED")
     private com.spring.boot.enums.BookingStatus status;
 
+    @Schema(description = "User ID (optional, admin only)", example = "1")
+    private Long userId;
+
     public HotelBookingRequestDto(LocalDate checkIn, LocalDate checkOut, Integer guests, Long roomId) {
         this.checkIn = checkIn;
         this.checkOut = checkOut;

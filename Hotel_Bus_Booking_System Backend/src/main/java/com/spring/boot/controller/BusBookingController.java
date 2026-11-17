@@ -33,7 +33,7 @@ public class BusBookingController {
     private final BusBookingService busBookingService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<BusBookingDto> createBusBooking(@Valid @RequestBody BusBookingRequestDto busBookingRequestDto) {
         BusBookingDto createdBusBooking = busBookingService.createBusBooking(busBookingRequestDto);
         return new ResponseEntity<>(createdBusBooking, HttpStatus.CREATED);

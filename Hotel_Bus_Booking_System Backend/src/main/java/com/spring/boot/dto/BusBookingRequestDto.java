@@ -27,7 +27,6 @@ public class BusBookingRequestDto {
 
     private BigDecimal price;
 
-    @NotNull(message = "User ID is required")
     private Long userId; // Reference to user (costumer)
 
     @NotNull(message = "Bus trip ID is required")

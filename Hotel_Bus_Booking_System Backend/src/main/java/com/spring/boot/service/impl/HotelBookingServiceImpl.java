@@ -2,6 +2,7 @@ package com.spring.boot.service.impl;
 
 import com.spring.boot.dto.HotelBookingDto;
 import com.spring.boot.dto.HotelBookingRequestDto;
+import com.spring.boot.dto.UserDto;
 import com.spring.boot.enums.BookingStatus;
 import com.spring.boot.exception.BookingConflictException;
 import com.spring.boot.exception.ErrorCode;
@@ -72,6 +73,25 @@ public class HotelBookingServiceImpl implements HotelBookingService {
     @Override
     @Transactional
     public HotelBookingDto createHotelBooking(HotelBookingRequestDto hotelBookingRequestDto, Long userId) {
+        // Resolve booking owner
+        User user;
+        UserDto currentUser = SecurityUtils.getCurrentUser();
+        boolean isAdmin = SecurityUtils.isCurrentUserAdmin();
+        Long requestedUserId = hotelBookingRequestDto.getUserId();
+
+        if (isAdmin && requestedUserId != null) {
+            user = userRepository.findById(requestedUserId)
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
+        } else if (currentUser != null) {
+            user = userRepository.findById(currentUser.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
+        } else if (userId != null) {
+            user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
+        } else {
+            throw new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found"));
+        }
+
         // Validate dates
         LocalDate checkIn = hotelBookingRequestDto.getCheckIn();
         LocalDate checkOut = hotelBookingRequestDto.getCheckOut();
@@ -84,10 +104,6 @@ public class HotelBookingServiceImpl implements HotelBookingService {
         if (!checkOut.isAfter(checkIn)) {
             throw new IllegalArgumentException(ErrorCode.HOTEL_BOOKING_CHECK_OUT_BEFORE_CHECK_IN);
         }
-
-        // Validate user exists
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(bundleMessageService.getMessage("error.user_not_found")));
 
         // Resolve room IDs: prefer roomIds list, fallback to roomId
         List<Long> requestedRoomIds = hotelBookingRequestDto.getRoomIds();

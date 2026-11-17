@@ -33,7 +33,7 @@ public class BusFeatureServiceImpl implements BusFeatureService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "bus-features", key = "'all'")
+//    @Cacheable(value = "bus-features", key = "'all'")
     public List<BusFeatureDto> getAllFeatures() {
         return busFeatureRepository.findAll().stream()
                 .map(busFeatureMapper::busFeatureToBusFeatureDto)
