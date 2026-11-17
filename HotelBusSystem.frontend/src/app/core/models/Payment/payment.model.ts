@@ -17,15 +17,15 @@ export interface PaymentDTO {
     paymentMethod: paymentMethod;
     paymentStatus: paymentStatus;
     transactionDate: string;
-    hotelBookingId: number;
-    busBookingId: number;
+    hotelBookingId?: number | null;
+    busBookingId?: number | null;
 }
 
 export interface PaymentRequestDTO {
     amount: number;
     paymentMethod: paymentMethod;
     paymentStatus: paymentStatus;
-    transactionDate: string;
-    hotelBookingId: number;
-    busBookingId: number;
+    transactionDate?: string | null;
+    hotelBookingId?: number | null;
+    busBookingId?: number | null;
 }

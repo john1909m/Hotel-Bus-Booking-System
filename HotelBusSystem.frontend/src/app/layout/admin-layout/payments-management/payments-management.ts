@@ -122,7 +122,7 @@ export class PaymentsManagement implements OnInit, OnDestroy {
     paymentStatus: ['COMPLETED', [Validators.required]],
     transactionDate: ['', [Validators.required]],
     bookingType: ['HOTEL', [Validators.required]],
-    bookingId: [1, [Validators.required, Validators.min(1)]],
+    bookingId: [null],
   });
 
   ngOnInit(): void {
@@ -185,17 +185,24 @@ export class PaymentsManagement implements OnInit, OnDestroy {
   }
 
   formatMethod(m: paymentMethod | string): string {
+    const icon = this.getMethodIcon(m);
+    const key = `enums.paymentMethod.${m}`;
+    const label = this.translate?.instant(key);
+    const text = label && label !== key ? label : m;
+    return icon ? `${icon} ${text}` : text;
+  }
+
+  getMethodIcon(m: paymentMethod | string): string {
     switch (m) {
       case 'CREDIT_CARD':
-        return '💳 Credit Card';
       case 'DEBIT_CARD':
-        return '💳 Debit Card';
+        return '💳';
       case 'PAYPAL':
-        return '🅿️ PayPal';
+        return '🅿️';
       case 'BANK_TRANSFER':
-        return '🏦 Bank Transfer';
+        return '🏦';
       default:
-        return m;
+        return '💳';
     }
   }
 
@@ -230,7 +237,7 @@ export class PaymentsManagement implements OnInit, OnDestroy {
       paymentStatus: 'COMPLETED',
       transactionDate: dateStr,
       bookingType: 'HOTEL',
-      bookingId: 1,
+      bookingId: null,
     });
     this.dialogVisible.set(true);
   }
@@ -240,9 +247,15 @@ export class PaymentsManagement implements OnInit, OnDestroy {
     this.editingPaymentId.set(p.id);
 
     const dateStr = p.transactionDate ? p.transactionDate.slice(0, 16) : '';
-    const isHotel = !!p.hotelBookingId;
-    const bType = isHotel ? 'HOTEL' : 'BUS';
-    const bId = isHotel ? p.hotelBookingId : (p.busBookingId || 1);
+    let bType = 'NONE';
+    let bId: number | null = null;
+    if (p.hotelBookingId) {
+      bType = 'HOTEL';
+      bId = p.hotelBookingId;
+    } else if (p.busBookingId) {
+      bType = 'BUS';
+      bId = p.busBookingId;
+    }
 
     this.paymentForm.patchValue({
       amount: p.amount,
@@ -276,13 +289,22 @@ export class PaymentsManagement implements OnInit, OnDestroy {
     const formVal = this.paymentForm.getRawValue();
 
     const isHotel = formVal.bookingType === 'HOTEL';
+    const isBus = formVal.bookingType === 'BUS';
+    const rawId = formVal.bookingId != null && formVal.bookingId !== '' ? Number(formVal.bookingId) : null;
+    const validBookingId = rawId && rawId > 0 ? rawId : null;
+
+    let transactionDate = formVal.transactionDate ? String(formVal.transactionDate) : new Date().toISOString();
+    if (transactionDate.length === 16) {
+      transactionDate = `${transactionDate}:00`;
+    }
+
     const payload: PaymentRequestDTO = {
       amount: Number(formVal.amount),
       paymentMethod: formVal.paymentMethod as paymentMethod,
       paymentStatus: formVal.paymentStatus as paymentStatus,
-      transactionDate: String(formVal.transactionDate),
-      hotelBookingId: isHotel ? Number(formVal.bookingId) : 0,
-      busBookingId: !isHotel ? Number(formVal.bookingId) : 0,
+      transactionDate: transactionDate,
+      hotelBookingId: isHotel ? validBookingId : null,
+      busBookingId: isBus ? validBookingId : null,
     };
 
     if (this.isEditMode()) {
