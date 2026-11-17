@@ -215,7 +215,7 @@
                   class="hotel-card-img-wrap"
                   [attr.aria-label]="'hotelListing.viewDetailsAria' | translate:{ name: hotel.name }">
                   <img
-                    [src]="hotel.coverImageUrl"
+                    [src]="hotel.coverImageUrl | safeImageUrl"
                     [alt]="'hotelListing.coverPhotoAlt' | translate:{ name: hotel.name }"
                     class="hotel-card-img"
                     loading="lazy"

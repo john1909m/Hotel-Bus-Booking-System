@@ -1,41 +1,105 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { safeImageUrl, isAllowedImageUrl, DEFAULT_IMAGE_PLACEHOLDER, SafeImageUrlPipe } from './safe-image-url';
 import { environment } from '../../../environments/environment';
 
-describe('safeImageUrl and isAllowedImageUrl', () => {
-  const allowedBase = environment.imagePublicBaseUrl; // 'https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev'
+describe('safeImageUrl and isAllowedImageUrl (Any HTTPS Host)', () => {
+  let warnSpy: any;
 
-  it('should accept valid HTTPS URLs matching the configured Cloudflare R2 origin', () => {
-    const validUrl = `${allowedBase}/hotels/1/gallery/photo1.webp`;
-    expect(isAllowedImageUrl(validUrl)).toBe(true);
-    expect(safeImageUrl(validUrl)).toBe(validUrl);
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
-  it('should reject non-HTTPS URLs', () => {
-    const httpUrl = `http://pub-e3f67119581e41a09e34c0a920c52720.r2.dev/hotels/1/gallery/photo.webp`;
-    expect(isAllowedImageUrl(httpUrl)).toBe(false);
-    expect(safeImageUrl(httpUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+  afterEach(() => {
+    warnSpy.mockRestore();
   });
 
-  it('should reject URLs with different hostnames', () => {
-    const evilUrl = 'https://malicious-site.com/hotels/1/photo.jpg';
-    expect(isAllowedImageUrl(evilUrl)).toBe(false);
-    expect(safeImageUrl(evilUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+  it('should accept valid HTTPS URLs from Cloudflare R2', () => {
+    const r2Url = `${environment.imagePublicBaseUrl}/hotels/1/gallery/photo1.webp`;
+    expect(isAllowedImageUrl(r2Url)).toBe(true);
+    expect(safeImageUrl(r2Url)).toBe(r2Url);
   });
 
-  it('should reject URLs with embedded credentials', () => {
-    const credsUrl = 'https://admin:pass@pub-e3f67119581e41a09e34c0a920c52720.r2.dev/photo.jpg';
+  it('should accept valid HTTPS URLs from Unsplash with complex query parameters intact', () => {
+    const unsplashUrl =
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+    expect(isAllowedImageUrl(unsplashUrl)).toBe(true);
+    expect(safeImageUrl(unsplashUrl)).toBe(unsplashUrl);
+  });
+
+  it('should accept valid HTTPS URLs from any external host or CDN as-is', () => {
+    const hosts = [
+      'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://i.imgur.com/example.png',
+      'https://s3.amazonaws.com/my-bucket/hotels/cover.jpg',
+      'https://storage.googleapis.com/hotel-assets/suite-deluxe.webp',
+      'https://cdn.my-custom-domain.org/photos/room-101.jpg',
+    ];
+
+    for (const url of hosts) {
+      expect(isAllowedImageUrl(url)).toBe(true);
+      expect(safeImageUrl(url)).toBe(url);
+    }
+  });
+
+  it('should accept HTTPS URLs with standard port 443', () => {
+    const port443Url = 'https://example.com:443/images/hotel.jpg';
+    expect(isAllowedImageUrl(port443Url)).toBe(true);
+    expect(safeImageUrl(port443Url)).toBe(port443Url);
+  });
+
+  it('should reject non-HTTPS URLs and return DEFAULT_IMAGE_PLACEHOLDER', () => {
+    const httpUrls = [
+      'http://pub-e3f67119581e41a09e34c0a920c52720.r2.dev/photo.webp',
+      'http://images.unsplash.com/photo-123.jpg',
+      'http://example.com/hotel.png',
+      'ftp://example.com/image.png',
+    ];
+
+    for (const url of httpUrls) {
+      expect(isAllowedImageUrl(url)).toBe(false);
+      expect(safeImageUrl(url)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    }
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('should reject URLs with embedded credentials and return placeholder', () => {
+    const credsUrl = 'https://admin:secret123@example.com/photo.jpg';
     expect(isAllowedImageUrl(credsUrl)).toBe(false);
     expect(safeImageUrl(credsUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('contains credentials')
+    );
   });
 
-  it('should reject URLs with unexpected ports', () => {
-    const portUrl = 'https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev:8443/photo.jpg';
-    expect(isAllowedImageUrl(portUrl)).toBe(false);
-    expect(safeImageUrl(portUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+  it('should reject URLs with non-standard ports and return placeholder', () => {
+    const badPortUrl = 'https://example.com:8443/photo.jpg';
+    expect(isAllowedImageUrl(badPortUrl)).toBe(false);
+    expect(safeImageUrl(badPortUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('non-standard port (8443)')
+    );
   });
 
-  it('should handle null, undefined, and empty string by returning the placeholder', () => {
+  it('should reject URLs exceeding 2048 characters', () => {
+    const longUrl = 'https://example.com/' + 'a'.repeat(2050);
+    expect(isAllowedImageUrl(longUrl)).toBe(false);
+    expect(safeImageUrl(longUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('URL exceeds maximum length')
+    );
+  });
+
+  it('should reject malformed URLs', () => {
+    const malformedList = ['https://', 'just-a-string', '://no-protocol', 'javascript:alert(1)'];
+    for (const item of malformedList) {
+      expect(isAllowedImageUrl(item)).toBe(false);
+      expect(safeImageUrl(item)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    }
+  });
+
+  it('should handle null, undefined, and empty string by returning the placeholder without warning spam', () => {
+    warnSpy.mockClear();
+
     expect(isAllowedImageUrl(null)).toBe(false);
     expect(safeImageUrl(null)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
 
@@ -47,39 +111,22 @@ describe('safeImageUrl and isAllowedImageUrl', () => {
 
     expect(isAllowedImageUrl('   ')).toBe(false);
     expect(safeImageUrl('   ')).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  it('should allow custom placeholder fallback', () => {
+  it('should allow custom placeholder fallback when URL is invalid or empty', () => {
     const customPlaceholder = '/assets/images/custom-fallback.svg';
     expect(safeImageUrl(null, customPlaceholder)).toBe(customPlaceholder);
+    expect(safeImageUrl('http://insecure.com/pic.jpg', customPlaceholder)).toBe(customPlaceholder);
     expect(safeImageUrl('invalid-url', customPlaceholder)).toBe(customPlaceholder);
   });
 
   it('should work correctly with SafeImageUrlPipe transform', () => {
     const pipe = new SafeImageUrlPipe();
-    const validUrl = `${allowedBase}/hotels/1/photo.png`;
+    const validUrl = 'https://images.unsplash.com/photo-hotel-room.jpg?w=600';
     expect(pipe.transform(validUrl)).toBe(validUrl);
     expect(pipe.transform(null)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
-    expect(pipe.transform('bad-url', '/fallback.png')).toBe('/fallback.png');
-  });
-
-  it('should accept legitimate Cloudflare R2 public bucket URLs (*.r2.dev)', () => {
-    const apiPublicUrl =
-      'https://pub-9188aaa3f1d74a5ca857aecc65c7c25f.r2.dev/hotels/1/gallery/e4126a7c-b25b-4e61-b1b9-8489b85be637.jpg';
-    expect(isAllowedImageUrl(apiPublicUrl)).toBe(true);
-    expect(safeImageUrl(apiPublicUrl)).toBe(apiPublicUrl);
-  });
-
-  it('should accept approved external allowlist HTTPS URLs (e.g. images.unsplash.com from CSV)', () => {
-    const unsplashUrl =
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
-    expect(isAllowedImageUrl(unsplashUrl)).toBe(true);
-    expect(safeImageUrl(unsplashUrl)).toBe(unsplashUrl);
-  });
-
-  it('should reject unapproved external HTTPS URLs not in the allowlist', () => {
-    const randomUrl = 'https://some-untrusted-image-host.com/photo.jpg';
-    expect(isAllowedImageUrl(randomUrl)).toBe(false);
-    expect(safeImageUrl(randomUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+    expect(pipe.transform('http://bad-url.com/a.jpg', '/fallback.png')).toBe('/fallback.png');
   });
 });

@@ -109,9 +109,9 @@ describe('HotelListing - Cover Images & Listing Integration', () => {
       expect(safeImageUrlPipe.transform(undefined)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
     });
 
-    it('should fallback to DEFAULT_IMAGE_PLACEHOLDER when coverImageUrl is from an untrusted origin', () => {
-      const untrustedUrl = 'https://malicious-external-site.com/hotel.jpg';
-      const transformed = safeImageUrlPipe.transform(untrustedUrl);
+    it('should fallback to DEFAULT_IMAGE_PLACEHOLDER when coverImageUrl is not HTTPS or contains invalid configuration', () => {
+      const insecureUrl = 'http://insecure-external-site.com/hotel.jpg';
+      const transformed = safeImageUrlPipe.transform(insecureUrl);
 
       expect(transformed).toBe(DEFAULT_IMAGE_PLACEHOLDER);
     });

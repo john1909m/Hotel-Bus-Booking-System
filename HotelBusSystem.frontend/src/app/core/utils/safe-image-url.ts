@@ -4,13 +4,15 @@ import { environment } from '../../../environments/environment';
 export const DEFAULT_IMAGE_PLACEHOLDER = '/assets/images/imgPlaceHolder.jpg';
 
 /**
- * Validates whether a candidate image URL is safe and belongs to the configured Cloudflare R2 public origin.
- * Criteria:
+ * Validates whether a candidate image URL is safe to render.
+ * The URL stored in the database is rendered as-is (any host), provided:
  * - Must be non-empty string <= 2048 characters.
- * - Must use HTTPS protocol strictly.
+ * - Must strictly use the HTTPS protocol.
  * - Must not contain embedded credentials (username/password).
  * - Port must either be empty or standard 443.
- * - Host and origin must match environment.imagePublicBaseUrl exactly.
+ *
+ * URLs failing validation are rejected and fall back to DEFAULT_IMAGE_PLACEHOLDER.
+ * In development mode (!environment.production), rejection reasons are logged to console.warn.
  */
 export function isAllowedImageUrl(url: string | null | undefined): boolean {
   if (!url || typeof url !== 'string') {
@@ -18,7 +20,14 @@ export function isAllowedImageUrl(url: string | null | undefined): boolean {
   }
 
   const trimmed = url.trim();
-  if (!trimmed || trimmed.length > 2048) {
+  if (!trimmed) {
+    return false;
+  }
+
+  if (trimmed.length > 2048) {
+    if (!environment.production) {
+      console.warn(`[safeImageUrl] Rejected: URL exceeds maximum length (2048 characters). Length: ${trimmed.length}`);
+    }
     return false;
   }
 
@@ -27,53 +36,39 @@ export function isAllowedImageUrl(url: string | null | undefined): boolean {
 
     // Protocol must strictly be HTTPS
     if (parsed.protocol !== 'https:') {
+      if (!environment.production) {
+        console.warn(`[safeImageUrl] Rejected: not HTTPS (${parsed.protocol}) for URL: ${trimmed}`);
+      }
       return false;
     }
 
     // Must not contain credentials
     if (parsed.username || parsed.password) {
+      if (!environment.production) {
+        console.warn(`[safeImageUrl] Rejected: contains credentials for URL: ${trimmed}`);
+      }
       return false;
     }
 
     // Port must be empty or standard 443
     if (parsed.port && parsed.port !== '443') {
+      if (!environment.production) {
+        console.warn(`[safeImageUrl] Rejected: non-standard port (${parsed.port}) for URL: ${trimmed}`);
+      }
       return false;
     }
 
-    // Must match the configured image storage public origin, legitimate Cloudflare R2 public bucket (*.r2.dev), or approved external allowlist
-    const configuredBase = new URL(environment.imagePublicBaseUrl);
-    const isConfiguredOrigin = parsed.origin.toLowerCase() === configuredBase.origin.toLowerCase();
-    const isR2DevDomain = /^pub-[a-z0-9]+\.r2\.dev$/i.test(parsed.hostname);
-
-    if (isConfiguredOrigin || isR2DevDomain) {
-      return true;
+    return true;
+  } catch (err: any) {
+    if (!environment.production) {
+      console.warn(`[safeImageUrl] Rejected: malformed URL for input "${trimmed}"`, err?.message ?? err);
     }
-
-    const allowedOrigins: string[] = (environment as any).allowedImageOrigins || [];
-    const isAllowedOrigin = allowedOrigins.some((allowed) => {
-      try {
-        if (allowed === '*') return true;
-        const allowedUrl = new URL(allowed);
-        return (
-          parsed.origin.toLowerCase() === allowedUrl.origin.toLowerCase() ||
-          parsed.hostname.toLowerCase() === allowedUrl.hostname.toLowerCase()
-        );
-      } catch {
-        return (
-          parsed.hostname.toLowerCase() === allowed.toLowerCase() ||
-          parsed.origin.toLowerCase() === allowed.toLowerCase()
-        );
-      }
-    });
-
-    return isAllowedOrigin;
-  } catch {
     return false;
   }
 }
 
 /**
- * Pure helper function returning the validated image URL or the trusted fallback placeholder.
+ * Pure helper function returning the validated image URL as-is or the trusted fallback placeholder.
  */
 export function safeImageUrl(
   url: string | null | undefined,

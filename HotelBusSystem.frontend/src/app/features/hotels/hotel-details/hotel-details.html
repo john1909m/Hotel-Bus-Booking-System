@@ -933,7 +933,7 @@
                       (click)="openRoomLightbox(room.roomType, room.roomNumber)"
                       [attr.aria-label]="'View ' + getRoomImages(room.roomType).length + ' photos for Room ' + room.roomNumber + ' (' + getRoomTypeLabel(room.roomType) + ')'">
                       <img
-                        [src]="primaryImg.url"
+                        [src]="primaryImg.url | safeImageUrl"
                         [alt]="getRoomTypeLabel(room.roomType) + ' - Room ' + room.roomNumber + ' photo'"
                         class="room-card-img"
                         loading="lazy"

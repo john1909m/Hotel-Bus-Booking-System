@@ -221,6 +221,7 @@
                 [alt]="img.roomType ? (selectedHotel()?.name + ' ' + img.roomType + ' Room') : (selectedHotel()?.name + ' Gallery Image')"
                 class="image-thumb"
                 loading="lazy"
+                (error)="onImageError($event)"
               />
 
               <!-- Top Overlay: Sort Order & Category Badge -->
@@ -494,7 +495,11 @@
 
       @if (imageToDelete()?.url) {
         <div class="delete-preview-thumb">
-          <img [src]="imageToDelete()!.url | safeImageUrl" alt="Delete target preview" />
+          <img
+            [src]="imageToDelete()!.url | safeImageUrl"
+            alt="Delete target preview"
+            (error)="onImageError($event)"
+          />
         </div>
       }
 

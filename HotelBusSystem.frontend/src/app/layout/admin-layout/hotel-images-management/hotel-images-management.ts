@@ -35,7 +35,7 @@ import { HotelImageService } from '../../../core/services/hotel-image.service';
 import { ImageUploadService } from '../../../core/services/image-upload.service';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
 import { HotelImageDto } from '../../../core/models/Image/hotel_image.model';
-import { SafeImageUrlPipe } from '../../../core/utils/safe-image-url';
+import { SafeImageUrlPipe, DEFAULT_IMAGE_PLACEHOLDER } from '../../../core/utils/safe-image-url';
 
 
 export type ImageCategoryFilter = 'ALL' | 'HOTEL_GALLERY' | string;
@@ -466,6 +466,15 @@ export class HotelImagesManagement implements OnInit, OnDestroy {
   }
 
   // ── Helpers ────────────────────────────────────────────────
+  readonly defaultPlaceholder = DEFAULT_IMAGE_PLACEHOLDER;
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img && !img.src.includes(DEFAULT_IMAGE_PLACEHOLDER)) {
+      img.src = DEFAULT_IMAGE_PLACEHOLDER;
+    }
+  }
+
   formatFileSize(bytes?: number): string {
     if (!bytes) return '0 B';
     const mb = bytes / (1024 * 1024);
