@@ -246,3 +246,62 @@
   margin-bottom: 0.5rem;
 }
 
+/* ─── Bus Features Table & Form Styles ───────────────────── */
+.bus-features-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.bus-feature-chip {
+  display: inline-block;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-primary-light, rgba(0, 155, 119, 0.1));
+  color: var(--color-primary, #009b77);
+  border: 1px solid rgba(0, 155, 119, 0.25);
+  letter-spacing: 0.03em;
+}
+
+.features-empty-dash {
+  color: var(--text-muted, #94a3b8);
+}
+
+.features-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+}
+
+.feature-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.feat-tag-code {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feat-name-sub {
+  color: var(--text-secondary);
+  font-size: 0.775rem;
+}
+
+.feat-cost {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+

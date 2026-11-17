@@ -645,3 +645,26 @@
   }
 }
 
+/* Onboard Bus Features Pills */
+.trip-features-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.trip-feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light, rgba(0, 155, 119, 0.1));
+  color: var(--color-primary, #009b77);
+  border: 1px solid rgba(0, 155, 119, 0.2);
+}
+
+

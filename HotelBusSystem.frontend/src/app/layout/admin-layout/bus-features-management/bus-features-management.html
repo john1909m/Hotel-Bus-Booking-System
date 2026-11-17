@@ -1,0 +1,342 @@
+<div class="mgmt-container">
+
+  <!-- ─── Toast Notifications ──────────────────────────────── -->
+  <p-toast position="top-right" />
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="header-text">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span>{{ 'admin.layout.portal' | translate }}</span>
+        <span class="sep">/</span>
+        <span class="current">{{ 'admin.busFeatures.title' | translate }}</span>
+      </nav>
+      <h1 class="page-title">{{ 'admin.busFeatures.title' | translate }}</h1>
+      <p class="page-subtitle">
+        {{ 'admin.busFeatures.subtitle' | translate }}
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-primary-action"
+        (click)="openCreateDialog()"
+        id="admin-add-feature-btn"
+        [attr.aria-label]="'admin.busFeatures.addNew' | translate"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>{{ 'admin.busFeatures.addNew' | translate }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Filter & Search Bar ──────────────────────────────── -->
+  <section class="filters-card" aria-label="Filters and search">
+    <div class="filters-grid">
+      <!-- Search Keyword -->
+      <div class="filter-field search-field">
+        <label for="admin-feature-search" class="filter-label">{{ 'admin.common.search' | translate }}</label>
+        <div class="input-wrapper">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="admin-feature-search"
+            type="search"
+            class="filter-input"
+            [placeholder]="'admin.busFeatures.searchPlaceholder' | translate"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            aria-label="Search bus features"
+          />
+        </div>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label for="admin-feature-status" class="filter-label">{{ 'admin.busFeatures.filterStatus' | translate }}</label>
+        <div class="input-wrapper">
+          <select
+            id="admin-feature-status"
+            class="filter-select"
+            [value]="statusFilter()"
+            (change)="onStatusFilterChange($any($event.target).value)"
+            aria-label="Filter features by status"
+          >
+            <option value="ALL">{{ 'admin.busFeatures.allStatuses' | translate }}</option>
+            <option value="ACTIVE">{{ 'admin.busFeatures.active' | translate }}</option>
+            <option value="INACTIVE">{{ 'admin.busFeatures.inactive' | translate }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Error State ──────────────────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-banner-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadFeatures()">{{ 'admin.common.retry' | translate }}</button>
+    </div>
+  }
+
+  <!-- ─── Features Table Card ──────────────────────────────── -->
+  <section class="admin-table-card" aria-label="Bus Features table">
+    <p-table
+      [value]="filteredFeatures()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      styleClass="p-datatable-striped"
+      [tableStyle]="{ 'min-width': '50rem' }"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 80px">{{ 'admin.busFeatures.colId' | translate }}</th>
+          <th>{{ 'admin.busFeatures.colCode' | translate }}</th>
+          <th>{{ 'admin.busFeatures.colNameKey' | translate }}</th>
+          <th>{{ 'admin.busFeatures.colSurcharge' | translate }}</th>
+          <th style="width: 140px">{{ 'admin.busFeatures.colStatus' | translate }}</th>
+          <th style="width: 130px; text-align: center">{{ 'admin.common.actions' | translate }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-feature>
+        <tr>
+          <td><span class="mono-badge">#{{ feature.id }}</span></td>
+          <td>
+            <div class="feature-code-cell">
+              <span class="feature-code-text">{{ feature.code }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="name-key-cell">{{ feature.nameKey }}</span>
+            <small class="name-translated">({{ feature.nameKey | translate }})</small>
+          </td>
+          <td>
+            <span class="surcharge-val">{{ feature.surcharge | number:'1.2-2' }} <small>EGP</small></span>
+          </td>
+          <td>
+            @if (feature.active) {
+              <p-tag [value]="'admin.busFeatures.active' | translate" severity="success" />
+            } @else {
+              <p-tag [value]="'admin.busFeatures.inactive' | translate" severity="warn" />
+            }
+          </td>
+          <td style="text-align: center">
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn-icon-edit"
+                (click)="openEditDialog(feature)"
+                [title]="'admin.busFeatures.editFeature' | translate"
+                [attr.aria-label]="'Edit feature ' + feature.code"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="btn-icon-delete"
+                (click)="confirmDelete(feature)"
+                [title]="'admin.common.delete' | translate"
+                [attr.aria-label]="'Delete feature ' + feature.code"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6" class="table-empty-cell">
+            <div class="empty-state">
+              <span class="empty-icon">✨</span>
+              <p class="empty-text">
+                @if (searchQuery() || statusFilter() !== 'ALL') {
+                  {{ 'admin.busFeatures.noFeaturesFilterMatch' | translate }}
+                } @else {
+                  {{ 'admin.busFeatures.noFeaturesConfigured' | translate }}
+                }
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <!-- ─── Create / Edit Feature Dialog ─────────────────────── -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '520px' }"
+    [header]="(isEditMode() ? 'admin.busFeatures.editFeature' : 'admin.busFeatures.addNew') | translate"
+    (onHide)="closeDialog()"
+  >
+    <form [formGroup]="featureForm" (ngSubmit)="saveFeature()" class="dialog-form" novalidate>
+
+      <!-- Code -->
+      <div class="form-group">
+        <label for="feature-code" class="form-label required">{{ 'admin.busFeatures.fieldCode' | translate }}</label>
+        <input
+          id="feature-code"
+          type="text"
+          class="form-control"
+          formControlName="code"
+          placeholder="e.g. WIFI, AC, CHARGER"
+          style="text-transform: uppercase"
+          autocomplete="off"
+        />
+        @if (featureForm.get('code')?.invalid && featureForm.get('code')?.touched) {
+          <small class="form-error">{{ 'admin.busFeatures.codeRequired' | translate }}</small>
+        }
+      </div>
+
+      <!-- Name Key -->
+      <div class="form-group">
+        <label for="feature-name-key" class="form-label required">{{ 'admin.busFeatures.fieldNameKey' | translate }}</label>
+        <input
+          id="feature-name-key"
+          type="text"
+          class="form-control"
+          formControlName="nameKey"
+          placeholder="e.g. bus.feature.wifi"
+          autocomplete="off"
+        />
+        @if (featureForm.get('nameKey')?.invalid && featureForm.get('nameKey')?.touched) {
+          <small class="form-error">{{ 'admin.busFeatures.nameKeyRequired' | translate }}</small>
+        }
+      </div>
+
+      <!-- Surcharge -->
+      <div class="form-group">
+        <label for="feature-surcharge" class="form-label required">{{ 'admin.busFeatures.fieldSurcharge' | translate }}</label>
+        <input
+          id="feature-surcharge"
+          type="number"
+          step="0.50"
+          min="0"
+          class="form-control"
+          formControlName="surcharge"
+          placeholder="0.00"
+        />
+        @if (featureForm.get('surcharge')?.invalid && featureForm.get('surcharge')?.touched) {
+          <small class="form-error">{{ 'admin.busFeatures.surchargeMin' | translate }}</small>
+        }
+      </div>
+
+      <!-- Active Checkbox -->
+      <div class="form-group-checkbox">
+        <label class="checkbox-container">
+          <input type="checkbox" formControlName="active" id="feature-active-cb" />
+          <span class="checkmark"></span>
+          <span class="checkbox-label">{{ 'admin.busFeatures.fieldActive' | translate }}</span>
+        </label>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDialog()"
+          [disabled]="saving()"
+        >
+          {{ 'admin.common.cancel' | translate }}
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-submit"
+          [disabled]="saving() || featureForm.invalid"
+        >
+          @if (saving()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>{{ 'admin.common.saving' | translate }}</span>
+          } @else {
+            <span>{{ 'admin.common.save' | translate }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- ─── Delete Confirmation Dialog ───────────────────────── -->
+  <p-dialog
+    [(visible)]="deleteDialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '440px' }"
+    [header]="'admin.common.delete' | translate"
+    (onHide)="cancelDelete()"
+  >
+    <div class="delete-confirmation-body">
+      <div class="delete-warning-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+
+      <p class="delete-confirmation-text">
+        {{ 'admin.busFeatures.deleteConfirm' | translate }}
+        <strong>{{ featureToDelete()?.code }}</strong> (#{{ featureToDelete()?.id }})?
+      </p>
+
+      <p class="delete-subtext">
+        {{ 'admin.busFeatures.deleteWarning' | translate }}
+      </p>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="cancelDelete()"
+          [disabled]="deleting()"
+        >
+          {{ 'admin.common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-dialog-danger"
+          (click)="executeDelete()"
+          [disabled]="deleting()"
+        >
+          @if (deleting()) {
+            <span class="spinner-inline" aria-hidden="true"></span>
+            <span>{{ 'admin.common.deleting' | translate }}</span>
+          } @else {
+            <span>{{ 'admin.common.delete' | translate }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </p-dialog>
+
+</div>

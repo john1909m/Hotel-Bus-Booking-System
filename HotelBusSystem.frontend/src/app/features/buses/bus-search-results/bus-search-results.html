@@ -205,6 +205,20 @@
                 {{ 'busSearch.coachNumber' | translate:{ number: (trip.bus?.busNumber || trip.busId) } }}
               </span>
               <p-tag [value]="trip.status" severity="success" styleClass="trip-status-tag" />
+
+              @if (trip.bus?.features; as busFeatures) {
+                @if (busFeatures.length > 0) {
+                  <div class="trip-features-strip">
+                    @for (feat of busFeatures; track feat.id) {
+                      @if (feat.active) {
+                        <span class="trip-feature-pill" [title]="feat.nameKey | translate">
+                          ✨ {{ feat.nameKey | translate }}
+                        </span>
+                      }
+                    }
+                  </div>
+                }
+              }
             </div>
 
             <div class="trip-fare-action">

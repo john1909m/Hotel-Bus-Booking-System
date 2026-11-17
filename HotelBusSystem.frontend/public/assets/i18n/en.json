@@ -1231,7 +1231,8 @@
       "hotelBookings": "Hotel Bookings",
       "busBookings": "Bus Bookings",
       "userBookings": "User Bookings",
-      "payments": "Payments"
+      "payments": "Payments",
+      "busFeatures": "Bus Features"
     },
     "layout": {
       "brandTitle": "TravelEase Admin",
@@ -1633,7 +1634,10 @@
       "errCoachTypeRequired": "Coach type is required.",
       "phBusNumber": "e.g. BUS-101, CAI-702",
       "phCompany": "e.g. SuperJet, GoBus",
-      "phCapacity": "e.g. 45"
+      "phCapacity": "e.g. 45",
+      "colFeatures": "Features",
+      "fieldPriceFactor": "Price Factor",
+      "assignedFeatures": "Assigned Onboard Features"
     },
     "busSeats": {
       "title": "Bus Seats Management",
@@ -2036,6 +2040,48 @@
       "optHotelBooking": "Hotel Room Booking",
       "optBusBooking": "Bus Seat Booking",
       "optStandalone": "None (Standalone)"
+    },
+    "busFeatures": {
+      "title": "Bus Features Management",
+      "subtitle": "Configure onboard amenities (WiFi, AC, chargers) and per-trip surcharges.",
+      "addNew": "Add Bus Feature",
+      "editFeature": "Edit Feature",
+      "colId": "ID",
+      "colCode": "Code",
+      "colNameKey": "Name Key",
+      "colSurcharge": "Surcharge",
+      "colStatus": "Status",
+      "fieldCode": "Feature Code",
+      "fieldNameKey": "Name Key",
+      "fieldSurcharge": "Surcharge (EGP)",
+      "fieldActive": "Active",
+      "filterStatus": "Filter by Status",
+      "allStatuses": "All Statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "searchPlaceholder": "Search by code or key (e.g. WIFI, AC)...",
+      "deleteConfirm": "Are you sure you want to delete feature",
+      "deleteWarning": "Deleting a feature removes it from onboard amenities. This cannot be undone.",
+      "noFeaturesFound": "No bus features found",
+      "noFeaturesFilterMatch": "No features match the selected filter criteria.",
+      "noFeaturesConfigured": "No onboard features are configured yet.",
+      "createdSuccess": "Bus feature created successfully",
+      "updatedSuccess": "Bus feature updated successfully",
+      "deletedSuccess": "Bus feature deleted successfully",
+      "codeRequired": "Feature code is required",
+      "nameKeyRequired": "Name key is required",
+      "surchargeMin": "Surcharge must be greater than or equal to 0.00"
+    }
+  },
+  "bus": {
+    "feature": {
+      "wifi": "WiFi",
+      "ac": "Air Conditioning",
+      "charger": "Power Outlet",
+      "usb_ports": "USB Ports",
+      "snacks": "Complimentary Snacks",
+      "entertainment": "Entertainment Screen",
+      "restroom": "Restroom"
     }
   }
 }

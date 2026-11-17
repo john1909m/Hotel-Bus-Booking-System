@@ -1231,7 +1231,8 @@
       "hotelBookings": "حجوزات الفنادق",
       "busBookings": "حجوزات الحافلات",
       "userBookings": "حجوزات المستخدمين",
-      "payments": "المدفوعات"
+      "payments": "المدفوعات",
+      "busFeatures": "ميزات الحافلات"
     },
     "layout": {
       "brandTitle": "TravelEase الإدارة",
@@ -1633,7 +1634,10 @@
       "errCoachTypeRequired": "نوع الحافلة مطلوب.",
       "phBusNumber": "مثال: BUS-101, CAI-702",
       "phCompany": "مثال: سوبر جيت، جو باص",
-      "phCapacity": "مثال: 45"
+      "phCapacity": "مثال: 45",
+      "colFeatures": "الميزات",
+      "fieldPriceFactor": "معامل السعر",
+      "assignedFeatures": "الميزات المعينة على متن الحافلة"
     },
     "busSeats": {
       "title": "إدارة مقاعد الحافلات",
@@ -2036,6 +2040,48 @@
       "optHotelBooking": "حجز غرفة فندقية",
       "optBusBooking": "حجز مقعد حافلة",
       "optStandalone": "لا شيء (مستقل)"
+    },
+    "busFeatures": {
+      "title": "إدارة ميزات الحافلات",
+      "subtitle": "إعداد وتكوين وسائل الراحة على متن الحافلة (واي فاي، تكييف، شواحن) ورسومها الإضافية.",
+      "addNew": "إضافة ميزة حافلة",
+      "editFeature": "تعديل الميزة",
+      "colId": "المعرف",
+      "colCode": "الرمز",
+      "colNameKey": "مفتاح الاسم",
+      "colSurcharge": "الرسوم الإضافية",
+      "colStatus": "الحالة",
+      "fieldCode": "رمز الميزة",
+      "fieldNameKey": "مفتاح الاسم",
+      "fieldSurcharge": "الرسوم الإضافية (ج.م)",
+      "fieldActive": "نشط",
+      "filterStatus": "تصفية حسب الحالة",
+      "allStatuses": "جميع الحالات",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "searchPlaceholder": "البحث بالرمز أو المفتاح (مثل WIFI، AC)...",
+      "deleteConfirm": "هل أنت متأكد من رغبتك في حذف الميزة",
+      "deleteWarning": "حذف الميزة يزيلها من وسائل الراحة المتاحة للحافلات. لا يمكن التراجع عن هذا الإجراء.",
+      "noFeaturesFound": "لم يتم العثور على أي ميزات",
+      "noFeaturesFilterMatch": "لا توجد ميزات تطابق معايير التصفية المحددة.",
+      "noFeaturesConfigured": "لم يتم تكوين أي ميزات للحافلات بعد.",
+      "createdSuccess": "تم إنشاء ميزة الحافلة بنجاح",
+      "updatedSuccess": "تم تحديث ميزة الحافلة بنجاح",
+      "deletedSuccess": "تم حذف ميزة الحافلة بنجاح",
+      "codeRequired": "رمز الميزة مطلوب",
+      "nameKeyRequired": "مفتاح الاسم مطلوب",
+      "surchargeMin": "يجب أن تكون الرسوم الإضافية أكبر من أو تساوي 0.00"
+    }
+  },
+  "bus": {
+    "feature": {
+      "wifi": "واي فاي",
+      "ac": "تكييف هواء",
+      "charger": "مقبس كهربائي",
+      "usb_ports": "منافذ USB",
+      "snacks": "وجبات خفيفة مجانية",
+      "entertainment": "شاشات ترفيه",
+      "restroom": "دورة مياه"
     }
   }
 }

@@ -48,6 +48,7 @@ export class AdminLayout implements OnInit {
 
     { label: 'Users',          labelKey: 'admin.nav.users',         route: '/admin/users',           icon: '👤' },
     { label: 'Buses',          labelKey: 'admin.nav.buses',         route: '/admin/buses',           icon: '🚌' },
+    { label: 'Bus Features',   labelKey: 'admin.nav.busFeatures',   route: '/admin/bus-features',    icon: '✨' },
     { label: 'Bus Seats',      labelKey: 'admin.nav.busSeats',      route: '/admin/bus-seats',       icon: '💺' },
     { label: 'Bus Stops',      labelKey: 'admin.nav.busStops',      route: '/admin/bus-stops',       icon: '🚏' },
     { label: 'Routes',         labelKey: 'admin.nav.routes',        route: '/admin/bus-routes',      icon: '🗺' },

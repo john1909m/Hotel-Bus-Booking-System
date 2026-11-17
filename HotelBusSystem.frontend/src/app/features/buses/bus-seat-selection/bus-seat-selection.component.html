@@ -32,6 +32,19 @@
               coach: (trip.bus?.busNumber || trip.busId)
             } }}
           </p>
+          @if (trip.bus?.features; as busFeatures) {
+            @if (busFeatures.length > 0) {
+              <div class="dialog-features-row">
+                @for (feat of busFeatures; track feat.id) {
+                  @if (feat.active) {
+                    <span class="dialog-feature-badge" [title]="feat.nameKey | translate">
+                      ✨ {{ feat.nameKey | translate }}
+                    </span>
+                  }
+                }
+              </div>
+            }
+          }
         </div>
       </div>
     }

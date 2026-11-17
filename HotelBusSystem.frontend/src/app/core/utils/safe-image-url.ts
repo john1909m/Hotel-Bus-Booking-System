@@ -40,16 +40,33 @@ export function isAllowedImageUrl(url: string | null | undefined): boolean {
       return false;
     }
 
-    // Must match the configured image storage public origin or a legitimate Cloudflare R2 public bucket domain (*.r2.dev)
+    // Must match the configured image storage public origin, legitimate Cloudflare R2 public bucket (*.r2.dev), or approved external allowlist
     const configuredBase = new URL(environment.imagePublicBaseUrl);
     const isConfiguredOrigin = parsed.origin.toLowerCase() === configuredBase.origin.toLowerCase();
     const isR2DevDomain = /^pub-[a-z0-9]+\.r2\.dev$/i.test(parsed.hostname);
 
-    if (!isConfiguredOrigin && !isR2DevDomain) {
-      return false;
+    if (isConfiguredOrigin || isR2DevDomain) {
+      return true;
     }
 
-    return true;
+    const allowedOrigins: string[] = (environment as any).allowedImageOrigins || [];
+    const isAllowedOrigin = allowedOrigins.some((allowed) => {
+      try {
+        if (allowed === '*') return true;
+        const allowedUrl = new URL(allowed);
+        return (
+          parsed.origin.toLowerCase() === allowedUrl.origin.toLowerCase() ||
+          parsed.hostname.toLowerCase() === allowedUrl.hostname.toLowerCase()
+        );
+      } catch {
+        return (
+          parsed.hostname.toLowerCase() === allowed.toLowerCase() ||
+          parsed.origin.toLowerCase() === allowed.toLowerCase()
+        );
+      }
+    });
+
+    return isAllowedOrigin;
   } catch {
     return false;
   }

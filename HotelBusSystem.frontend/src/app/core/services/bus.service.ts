@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusDTO, BusRequestDTO } from '../models/Bus/bus.model';
+import { BusPricingUpdateRequestDto } from '../models/Bus/bus-feature.model';
 import { PageBusDTO, BusListParams, BusLookupParams } from '../models/Pagination/busPage.model'
 import { handleError } from '../utils/ErrorHandling';;
 
@@ -105,5 +106,13 @@ export class BusService {
     );
   }
 
-
+  /**
+   * PUT /buses/{id}/pricing
+   * Update bus pricing factor and assigned feature IDs (Admin)
+   */
+  updateBusPricing(id: number, payload: BusPricingUpdateRequestDto): Observable<BusDTO> {
+    return this.http.put<BusDTO>(`${this.apiUrl}/${id}/pricing`, payload).pipe(
+      catchError(handleError)
+    );
+  }
 }

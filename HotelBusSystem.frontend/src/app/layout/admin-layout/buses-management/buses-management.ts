@@ -31,7 +31,9 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BusService } from '../../../core/services/bus.service';
 import { BusSeatService } from '../../../core/services/bus-seat.service';
 import { BusBookingService } from '../../../core/services/bus-booking.service';
+import { BusFeaturesService } from '../../../core/services/bus-features.service';
 import { BusDTO, BusRequestDTO } from '../../../core/models/Bus/bus.model';
+import { BusFeatureDto } from '../../../core/models/Bus/bus-feature.model';
 import { BusSeatDTO, BusSeatRequestDTO, seatType } from '../../../core/models/Bus/bus-seat.model';
 import { PageBusDTO, BusListParams } from '../../../core/models/Pagination/busPage.model';
 
@@ -59,6 +61,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   private readonly busService = inject(BusService);
   private readonly busSeatService = inject(BusSeatService);
   private readonly busBookingService = inject(BusBookingService);
+  private readonly busFeaturesService = inject(BusFeaturesService, { optional: true });
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService, { optional: true });
@@ -66,6 +69,7 @@ export class BusesManagement implements OnInit, OnDestroy {
   private readonly searchSubject$ = new Subject<string>();
 
   readonly buses = signal<BusDTO[]>([]);
+  readonly availableFeatures = signal<BusFeatureDto[]>([]);
   readonly pageData = signal<PageBusDTO | null>(null);
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
@@ -162,7 +166,25 @@ export class BusesManagement implements OnInit, OnDestroy {
     company: ['', [Validators.required, Validators.maxLength(100)]],
     capacity: [45, [Validators.required, Validators.min(1), Validators.max(120)]],
     busType: ['STANDARD', [Validators.required]],
+    priceFactor: [1.00, [Validators.min(0.50), Validators.max(3.00)]],
+    featureIds: [[]],
   });
+
+  isFeatureSelected(featureId: number): boolean {
+    const current: number[] = this.busForm.get('featureIds')?.value || [];
+    return current.includes(featureId);
+  }
+
+  toggleFeature(featureId: number): void {
+    const current: number[] = [...(this.busForm.get('featureIds')?.value || [])];
+    const idx = current.indexOf(featureId);
+    if (idx > -1) {
+      current.splice(idx, 1);
+    } else {
+      current.push(featureId);
+    }
+    this.busForm.get('featureIds')?.setValue(current);
+  }
 
   ngOnInit(): void {
     this.searchSubject$
@@ -174,6 +196,20 @@ export class BusesManagement implements OnInit, OnDestroy {
 
     this.loadBuses();
     this.loadSeatCounts();
+    this.loadFeatures();
+  }
+
+  loadFeatures(): void {
+    if (!this.busFeaturesService) return;
+    this.busFeaturesService
+      .getAllFeatures()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (feats) => {
+          this.availableFeatures.set((feats || []).filter((f) => f.active));
+        },
+        error: () => {},
+      });
   }
 
   loadSeatCounts(): void {
@@ -398,6 +434,8 @@ export class BusesManagement implements OnInit, OnDestroy {
       company: '',
       capacity: 45,
       busType: this.coachTypes()[0] || 'STANDARD',
+      priceFactor: 1.00,
+      featureIds: [],
     });
     this.dialogVisible.set(true);
   }
@@ -405,11 +443,14 @@ export class BusesManagement implements OnInit, OnDestroy {
   openEditDialog(bus: BusDTO): void {
     this.isEditMode.set(true);
     this.editingBusId.set(bus.id);
+    const assignedIds = (bus.features || []).map((f) => f.id);
     this.busForm.patchValue({
       busNumber: bus.busNumber,
       company: bus.company,
       capacity: bus.capacity,
       busType: this.getCoachTypeDisplay(bus.busType),
+      priceFactor: bus.priceFactor ?? 1.00,
+      featureIds: assignedIds,
     });
     this.dialogVisible.set(true);
   }
@@ -453,6 +494,14 @@ export class BusesManagement implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (updated) => {
+            const priceFactor = Number(formVal.priceFactor || 1.00);
+            const featureIds: number[] = formVal.featureIds || [];
+            if (typeof this.busService.updateBusPricing === 'function') {
+              this.busService.updateBusPricing(id, { priceFactor, featureIds }).pipe(takeUntil(this.destroy$)).subscribe({
+                next: () => {},
+                error: () => {},
+              });
+            }
             const newCap = updated.capacity;
             // Inspect existing seats for synchronization
             this.busSeatService

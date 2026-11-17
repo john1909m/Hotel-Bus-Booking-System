@@ -69,4 +69,17 @@ describe('safeImageUrl and isAllowedImageUrl', () => {
     expect(isAllowedImageUrl(apiPublicUrl)).toBe(true);
     expect(safeImageUrl(apiPublicUrl)).toBe(apiPublicUrl);
   });
+
+  it('should accept approved external allowlist HTTPS URLs (e.g. images.unsplash.com from CSV)', () => {
+    const unsplashUrl =
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+    expect(isAllowedImageUrl(unsplashUrl)).toBe(true);
+    expect(safeImageUrl(unsplashUrl)).toBe(unsplashUrl);
+  });
+
+  it('should reject unapproved external HTTPS URLs not in the allowlist', () => {
+    const randomUrl = 'https://some-untrusted-image-host.com/photo.jpg';
+    expect(isAllowedImageUrl(randomUrl)).toBe(false);
+    expect(safeImageUrl(randomUrl)).toBe(DEFAULT_IMAGE_PLACEHOLDER);
+  });
 });

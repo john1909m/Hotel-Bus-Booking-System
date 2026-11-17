@@ -183,6 +183,7 @@
           <th>{{ 'admin.buses.operatingCarrier' | translate }}</th>
           <th>{{ 'admin.buses.colCoachType' | translate }}</th>
           <th>{{ 'admin.buses.seatingCapacity' | translate }}</th>
+          <th>{{ 'admin.buses.colFeatures' | translate }}</th>
           <th style="width: 140px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
@@ -216,6 +217,17 @@
               <span>💺 {{ 'admin.buses.seatsCount' | translate:{ count: bus.capacity } }}</span>
               <span class="seats-link-hint">{{ 'admin.nav.busSeats' | translate }}</span>
             </button>
+          </td>
+          <td>
+            @if (bus.features && bus.features.length > 0) {
+              <div class="bus-features-chips">
+                @for (feat of bus.features; track feat.id) {
+                  <span class="bus-feature-chip" [title]="feat.nameKey | translate">{{ feat.code }}</span>
+                }
+              </div>
+            } @else {
+              <span class="features-empty-dash">—</span>
+            }
           </td>
           <td>
             <div class="table-actions">
@@ -379,6 +391,46 @@
             <span class="form-error">{{ 'admin.buses.errCoachTypeRequired' | translate }}</span>
           }
         </div>
+
+        <!-- Price Multiplier / Factor -->
+        @if (isEditMode()) {
+          <div class="form-group">
+            <label for="priceFactor" class="form-label">
+              {{ 'admin.buses.fieldPriceFactor' | translate }} (0.50 - 3.00)
+            </label>
+            <input
+              id="priceFactor"
+              type="number"
+              step="0.05"
+              min="0.50"
+              max="3.00"
+              class="form-input"
+              formControlName="priceFactor"
+              placeholder="1.00"
+            />
+          </div>
+
+          <!-- Assigned Features -->
+          @if (availableFeatures().length > 0) {
+            <div class="form-group full-width">
+              <label class="form-label">{{ 'admin.buses.assignedFeatures' | translate }}</label>
+              <div class="features-checkbox-grid">
+                @for (feat of availableFeatures(); track feat.id) {
+                  <label class="feature-checkbox-item">
+                    <input
+                      type="checkbox"
+                      [checked]="isFeatureSelected(feat.id)"
+                      (change)="toggleFeature(feat.id)"
+                    />
+                    <span class="feat-tag-code">{{ feat.code }}</span>
+                    <span class="feat-name-sub">({{ feat.nameKey | translate }})</span>
+                    <small class="feat-cost">+{{ feat.surcharge | number:'1.2-2' }} EGP</small>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        }
 
       </div>
 

@@ -132,6 +132,12 @@ export const routes: Routes = [
         title: 'TravelEase Admin — Buses Fleet',
       },
       {
+        path: 'bus-features',
+        loadComponent: () =>
+          import('./layout/admin-layout/bus-features-management/bus-features-management').then(m => m.BusFeaturesManagement),
+        title: 'TravelEase Admin — Bus Features',
+      },
+      {
         path: 'bus-seats',
         loadComponent: () =>
           import('./layout/admin-layout/bus-seats-management/bus-seats-management').then(m => m.BusSeatsManagement),

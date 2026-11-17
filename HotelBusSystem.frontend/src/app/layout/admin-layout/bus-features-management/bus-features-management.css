@@ -1,0 +1,57 @@
+@import '../admin-common.css';
+
+.feature-code-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feature-code-text {
+  font-family: var(--font-tight, inherit);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+}
+
+.name-key-cell {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.name-translated {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  margin-top: 0.15rem;
+}
+
+.surcharge-val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group-checkbox {
+  margin: 1rem 0;
+}
+
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.925rem;
+  color: var(--text-primary);
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
