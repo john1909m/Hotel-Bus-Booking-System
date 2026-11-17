@@ -154,18 +154,6 @@
           </button>
         }
 
-        <button
-          type="button"
-          class="btn-secondary"
-          (click)="loadHotels()"
-          [title]="'admin.common.refresh' | translate"
-          id="admin-refresh-hotels-btn"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          {{ 'admin.common.refresh' | translate }}
-        </button>
       </div>
     </div>
   </section>
@@ -208,8 +196,8 @@
           <th>{{ 'admin.hotels.colHotel' | translate }}</th>
           <th>{{ 'admin.hotels.colCityAddress' | translate }}</th>
           <th style="width: 120px;">{{ 'admin.hotels.colRating' | translate }}</th>
-          <th style="width: 150px;">Check-In / Out</th>
-          <th style="width: 150px;">Coordinates</th>
+          <th style="width: 150px;">{{ 'admin.hotels.colCheckInOut' | translate }}</th>
+          <th style="width: 150px;">{{ 'admin.hotels.colCoordinates' | translate }}</th>
           <th style="width: 140px; text-align: center;">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
@@ -363,10 +351,10 @@
             pInputText
             formControlName="name"
             class="w-full"
-            placeholder="e.g. Grand Nile Plaza Hotel"
+            [placeholder]="'admin.hotels.phName' | translate"
           />
           @if (isFieldInvalid('name')) {
-            <small class="field-error">Hotel name is required (max 150 characters).</small>
+            <small class="field-error">{{ 'admin.hotels.errHotelNameRequired' | translate }}</small>
           }
         </div>
 
@@ -378,10 +366,10 @@
             pInputText
             formControlName="city"
             class="w-full"
-            placeholder="e.g. Cairo"
+            [placeholder]="'admin.hotels.phCity' | translate"
           />
           @if (isFieldInvalid('city')) {
-            <small class="field-error">City name is required.</small>
+            <small class="field-error">{{ 'admin.hotels.errCityRequired' | translate }}</small>
           }
         </div>
 
@@ -393,23 +381,23 @@
             pInputText
             formControlName="address"
             class="w-full"
-            placeholder="e.g. Corniche El Nile, Garden City"
+            [placeholder]="'admin.hotels.phAddress' | translate"
           />
           @if (isFieldInvalid('address')) {
-            <small class="field-error">Address is required.</small>
+            <small class="field-error">{{ 'admin.hotels.errAddressRequired' | translate }}</small>
           }
         </div>
 
         <!-- Description -->
         <div class="form-group full-width">
-          <label for="hotel-form-description" class="form-label">Description</label>
+          <label for="hotel-form-description" class="form-label">{{ 'admin.hotels.fieldDescription' | translate }}</label>
           <textarea
             id="hotel-form-description"
             pTextarea
             formControlName="description"
             rows="3"
             class="w-full"
-            placeholder="Highlight hotel amenities, ambiance, and location advantages…"
+            [placeholder]="'admin.hotels.phDescription' | translate"
           ></textarea>
         </div>
 
@@ -425,10 +413,10 @@
             [maxFractionDigits]="1"
             [step]="0.1"
             class="w-full"
-            placeholder="e.g. 4.5"
+            [placeholder]="'admin.hotels.phRating' | translate"
           />
           @if (isFieldInvalid('rating')) {
-            <small class="field-error">Rating must be between 0 and 5.</small>
+            <small class="field-error">{{ 'admin.hotels.errRatingRange' | translate }}</small>
           }
         </div>
 
@@ -443,10 +431,10 @@
             [minFractionDigits]="4"
             [maxFractionDigits]="6"
             class="w-full"
-            placeholder="e.g. 30.0444"
+            [placeholder]="'admin.hotels.phLatitude' | translate"
           />
           @if (isFieldInvalid('latitude')) {
-            <small class="field-error">Valid latitude required (-90 to 90).</small>
+            <small class="field-error">{{ 'admin.hotels.errLatitudeRange' | translate }}</small>
           }
         </div>
 
@@ -461,40 +449,40 @@
             [minFractionDigits]="4"
             [maxFractionDigits]="6"
             class="w-full"
-            placeholder="e.g. 31.2357"
+            [placeholder]="'admin.hotels.phLongitude' | translate"
           />
           @if (isFieldInvalid('longitude')) {
-            <small class="field-error">Valid longitude required (-180 to 180).</small>
+            <small class="field-error">{{ 'admin.hotels.errLongitudeRange' | translate }}</small>
           }
         </div>
 
         <!-- Check-in Time -->
         <div class="form-group">
-          <label for="hotel-form-checkin" class="form-label required">Check-In Time</label>
+          <label for="hotel-form-checkin" class="form-label required">{{ 'admin.hotels.fieldCheckInTime' | translate }}</label>
           <input
             id="hotel-form-checkin"
             pInputText
             formControlName="checkInTime"
             class="w-full"
-            placeholder="e.g. 14:00"
+            [placeholder]="'admin.hotels.phCheckInTime' | translate"
           />
           @if (isFieldInvalid('checkInTime')) {
-            <small class="field-error">Check-in time is required.</small>
+            <small class="field-error">{{ 'admin.hotels.errCheckInRequired' | translate }}</small>
           }
         </div>
 
         <!-- Check-out Time -->
         <div class="form-group">
-          <label for="hotel-form-checkout" class="form-label required">Check-Out Time</label>
+          <label for="hotel-form-checkout" class="form-label required">{{ 'admin.hotels.fieldCheckOutTime' | translate }}</label>
           <input
             id="hotel-form-checkout"
             pInputText
             formControlName="checkOutTime"
             class="w-full"
-            placeholder="e.g. 11:00"
+            [placeholder]="'admin.hotels.phCheckOutTime' | translate"
           />
           @if (isFieldInvalid('checkOutTime')) {
-            <small class="field-error">Check-out time is required.</small>
+            <small class="field-error">{{ 'admin.hotels.errCheckOutRequired' | translate }}</small>
           }
         </div>
 
@@ -517,7 +505,7 @@
         >
           @if (saving()) {
             <span class="spinner-inline" aria-hidden="true"></span>
-            <span>Saving…</span>
+            <span>{{ 'admin.rooms.saving' | translate }}</span>
           } @else {
             <span>{{ (isEditMode() ? 'admin.common.save' : 'admin.common.add') | translate }}</span>
           }
@@ -546,7 +534,7 @@
       </div>
 
       <p class="delete-confirmation-text">
-        Are you sure you want to permanently delete
+        {{ 'admin.hotels.deletePrompt' | translate }}
         <strong>"{{ hotelToDelete()?.name }}"</strong>?
       </p>
 
@@ -571,7 +559,7 @@
         >
           @if (deleting()) {
             <span class="spinner-inline" aria-hidden="true"></span>
-            <span>Deleting…</span>
+            <span>{{ 'admin.rooms.deleting' | translate }}</span>
           } @else {
             <span>{{ 'admin.common.delete' | translate }}</span>
           }

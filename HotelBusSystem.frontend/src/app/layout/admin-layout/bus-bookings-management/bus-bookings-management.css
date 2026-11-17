@@ -388,3 +388,62 @@
   margin-top: 0.85rem;
   line-height: 1.45;
 }
+
+/* ─── Assigned Bus & Inline Seat Generation ───────────────── */
+.bus-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.no-seats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  align-items: flex-start;
+}
+
+.no-seats-msg {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+}
+
+.btn-generate-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-generate-inline:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-generate-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty-trips-hint,
+.select-bus-first-hint {
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}

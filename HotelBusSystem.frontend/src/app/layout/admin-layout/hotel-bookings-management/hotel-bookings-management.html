@@ -31,30 +31,6 @@
         </svg>
         <span>{{ 'admin.hotelBookings.newBooking' | translate }}</span>
       </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="loadBookings()"
-        [disabled]="loading()"
-        id="admin-hotel-bookings-refresh-btn"
-        aria-label="Refresh hotel bookings"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
     </div>
   </header>
 
@@ -95,10 +71,10 @@
             aria-label="Filter by booking status"
           >
             <option value="ANY">{{ 'admin.trips.allStatuses' | translate }}</option>
-            <option value="PENDING">{{ 'admin.dashboard.pending' | translate }}</option>
-            <option value="CONFIRMED">{{ 'admin.dashboard.confirmed' | translate }}</option>
-            <option value="COMPLETED">{{ 'admin.dashboard.completed' | translate }}</option>
-            <option value="CANCELLED">{{ 'admin.dashboard.cancelled' | translate }}</option>
+            <option value="PENDING">{{ 'enums.bookingStatus.PENDING' | translate }}</option>
+            <option value="CONFIRMED">{{ 'enums.bookingStatus.CONFIRMED' | translate }}</option>
+            <option value="COMPLETED">{{ 'enums.bookingStatus.COMPLETED' | translate }}</option>
+            <option value="CANCELLED">{{ 'enums.bookingStatus.CANCELLED' | translate }}</option>
           </select>
         </div>
       </div>
@@ -208,20 +184,36 @@
           </td>
           <td>
             <p-tag
-              [value]="b.status"
+              [value]="('enums.bookingStatus.' + b.status) | translate"
               [severity]="getStatusSeverity(b.status)"
               styleClass="booking-status-tag"
             />
           </td>
           <td>
             <div class="table-actions">
+              <!-- View Details -->
+              <button
+                type="button"
+                class="btn-action btn-action-view"
+                (click)="openDetailsDialog(b)"
+                [attr.aria-label]="('admin.hotelBookings.viewDetails' | translate) + ' #' + b.id"
+                [title]="'admin.hotelBookings.viewDetails' | translate"
+                id="admin-view-hotel-booking-btn-{{ b.id }}"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+
+              <!-- Quick Confirm for PENDING bookings -->
               @if (b.status === 'PENDING') {
                 <button
                   type="button"
                   class="btn-action btn-action-confirm"
                   (click)="confirmBookingStatus(b)"
                   [disabled]="updatingStatusId() === b.id"
-                  [attr.aria-label]="'Confirm booking #' + b.id"
+                  [attr.aria-label]="'Confirm hotel booking #' + b.id"
                   title="Confirm Booking (PENDING -> CONFIRMED)"
                   id="admin-confirm-hotel-booking-btn-{{ b.id }}"
                 >
@@ -236,12 +228,34 @@
                   }
                 </button>
               }
+
+              <!-- Status Transition Dialog Trigger (for non-terminal bookings) -->
+              @if (!isTerminalStatus(b.status)) {
+                <button
+                  type="button"
+                  class="btn-action btn-action-status"
+                  (click)="openStatusChangeDialog(b)"
+                  [attr.aria-label]="('admin.hotelBookings.changeStatus' | translate) + ' #' + b.id"
+                  [title]="'admin.hotelBookings.changeStatus' | translate"
+                  id="admin-status-hotel-booking-btn-{{ b.id }}"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="16 3 21 3 21 8"></polyline>
+                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                    <polyline points="21 16 21 21 16 21"></polyline>
+                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                    <line x1="4" y1="4" x2="9" y2="9"></line>
+                  </svg>
+                </button>
+              }
+
               <button
                 type="button"
                 class="btn-action btn-action-edit"
                 (click)="openEditDialog(b)"
                 [attr.aria-label]="'Edit booking #' + b.id"
                 title="Edit booking"
+                id="admin-edit-hotel-booking-btn-{{ b.id }}"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -254,6 +268,7 @@
                 (click)="openDeleteDialog(b)"
                 [attr.aria-label]="'Cancel/Delete booking #' + b.id"
                 title="Cancel/Delete booking"
+                id="admin-delete-hotel-booking-btn-{{ b.id }}"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"></polyline>
@@ -306,11 +321,11 @@
               id="bookingHotelId"
               class="form-select"
               formControlName="hotelId"
-              (change)="onHotelChange($any($event.target).value)"
+              (change)="onHotelChange()"
             >
               <option [ngValue]="null" disabled>{{ 'admin.hotelBookings.selectHotelPrompt' | translate }}</option>
               @for (h of hotels(); track h.id) {
-                <option [ngValue]="h.id" [value]="h.id">{{ h.name }} ({{ h.city }})</option>
+                <option [ngValue]="h.id">{{ h.name }} ({{ h.city }})</option>
               }
             </select>
           } @else if (selectedHotelName()) {
@@ -355,7 +370,7 @@
             </div>
           }
           @if (bookingForm.get('roomId')?.touched && bookingForm.get('roomId')?.errors?.['required']) {
-            <span class="form-error">Room selection is required.</span>
+            <span class="form-error">{{ 'admin.hotelBookings.errRoomRequired' | translate }}</span>
           }
         </div>
 
@@ -371,7 +386,7 @@
             formControlName="checkIn"
           />
           @if (bookingForm.get('checkIn')?.touched && bookingForm.get('checkIn')?.errors?.['required']) {
-            <span class="form-error">Check-in date is required.</span>
+            <span class="form-error">{{ 'admin.hotelBookings.errCheckInRequired' | translate }}</span>
           }
         </div>
 
@@ -387,7 +402,7 @@
             formControlName="checkOut"
           />
           @if (bookingForm.get('checkOut')?.touched && bookingForm.get('checkOut')?.errors?.['required']) {
-            <span class="form-error">Check-out date is required.</span>
+            <span class="form-error">{{ 'admin.hotelBookings.errCheckOutRequired' | translate }}</span>
           }
         </div>
 
@@ -408,7 +423,7 @@
             formControlName="guests"
             [min]="minGuests()"
             [max]="maxGuests()"
-            placeholder="Guests"
+            [placeholder]="'admin.hotelBookings.phGuests' | translate"
           />
           @if (bookingForm.get('guests')?.value < minGuests() || bookingForm.get('guests')?.value > maxGuests()) {
             <span class="form-error">
@@ -425,12 +440,12 @@
             </label>
             <select id="bookingStatus" class="form-select" formControlName="status">
               @for (st of getAllowedStatuses(initialEditingStatus()); track st) {
-                <option [value]="st">{{ st }}</option>
+                <option [value]="st">{{ ('enums.bookingStatus.' + st) | translate }}</option>
               }
             </select>
 
             @if (bookingForm.get('status')?.touched && bookingForm.get('status')?.errors?.['required']) {
-              <span class="form-error">Status is required.</span>
+              <span class="form-error">{{ 'admin.hotelBookings.errStatusRequired' | translate }}</span>
             }
           </div>
         }
@@ -444,7 +459,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -493,7 +508,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"
@@ -505,6 +520,202 @@
         {{ (deleting() ? 'admin.hotelBookings.deleting' : 'admin.hotelBookings.deleteBooking') | translate }}
       </button>
     </div>
+  </p-dialog>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       1. VIEW BOOKING DETAILS MODAL DIALOG
+  ════════════════════════════════════════════════════════════ -->
+  <p-dialog
+    [(visible)]="detailsDialogVisible"
+    [modal]="true"
+    [header]="('admin.hotelBookings.detailsTitle' | translate) + ' #' + selectedBookingForDetails()?.id"
+    [style]="{ width: '92vw', maxWidth: '640px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeDetailsDialog()"
+  >
+    @if (selectedBookingForDetails(); as b) {
+      <div class="details-modal-content">
+
+        <!-- Status & Reference Header Banner -->
+        <div class="details-header-card">
+          <div class="reference-box">
+            <span class="ref-sub">{{ 'admin.busBookings.bookingReference' | translate }}</span>
+            <span class="ref-main">#{{ b.id }}</span>
+          </div>
+          <div class="status-box">
+            <p-tag [value]="('enums.bookingStatus.' + b.status) | translate" [severity]="getStatusSeverity(b.status)" />
+          </div>
+        </div>
+
+        <!-- Section 1: Customer Information -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">👤</span> {{ 'admin.busBookings.thCustomer' | translate }}
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.hotelBookings.customerName' | translate }}:</span>
+              <span class="field-value">{{ getCustomerName(b.userId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.busBookings.accountId' | translate }}:</span>
+              <span class="field-value font-mono">User #{{ b.userId }}</span>
+            </div>
+            @if (getCustomerEmail(b.userId)) {
+              <div class="detail-field full-row">
+                <span class="field-label">{{ 'admin.hotelBookings.customerEmail' | translate }}:</span>
+                <span class="field-value">{{ getCustomerEmail(b.userId) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Section 2: Hotel & Reservation Details -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">🏨</span> {{ 'admin.hotelBookings.colHotelProperty' | translate }}
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field full-row">
+              <span class="field-label">{{ 'admin.hotelBookings.hotelName' | translate }}:</span>
+              <span class="field-value route-highlight">{{ b.hotelName || ('Hotel #' + b.hotelId) }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.hotelBookings.checkInDateLabel' | translate }}:</span>
+              <span class="field-value">{{ b.checkIn | date:'mediumDate' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.hotelBookings.checkOutDateLabel' | translate }}:</span>
+              <span class="field-value">{{ b.checkOut | date:'mediumDate' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.hotelBookings.reservedRooms' | translate }}:</span>
+              <span class="field-value">
+                @if (b.rooms && b.rooms.length > 0) {
+                  @for (rm of b.rooms; track rm.id; let last = $last) {
+                    Room {{ rm.roomNumber }} ({{ rm.roomType }}){{ !last ? ', ' : '' }}
+                  }
+                } @else {
+                  {{ getRoomLabel(b.roomId) }}
+                }
+              </span>
+            </div>
+            <div class="detail-field">
+              <span class="field-label">{{ 'admin.hotelBookings.guestsCount' | translate }}:</span>
+              <span class="field-value">
+                {{ b.guests }} {{ 'admin.rooms.guests' | translate }}
+                @if (b.adults) {
+                  ({{ b.adults }} adults{{ b.childAges && b.childAges.length > 0 ? ', ' + b.childAges.length + ' children' : '' }})
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Cost -->
+        <div class="details-section">
+          <h4 class="section-title">
+            <span class="section-icon">💳</span> {{ 'admin.hotelBookings.totalPriceLabel' | translate }}
+          </h4>
+          <div class="details-grid-2col">
+            <div class="detail-field full-row">
+              <span class="field-label">{{ 'admin.hotelBookings.totalPriceLabel' | translate }}:</span>
+              <span class="field-value fare-highlight">${{ b.totalPrice | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeDetailsDialog()"
+        >
+          {{ 'admin.common.cancel' | translate }}
+        </button>
+      </div>
+    }
+  </p-dialog>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       2. STATUS TRANSITION CONFIRMATION DIALOG
+  ════════════════════════════════════════════════════════════ -->
+  <p-dialog
+    [(visible)]="statusDialogVisible"
+    [modal]="true"
+    [header]="'admin.hotelBookings.statusDialogTitle' | translate"
+    [style]="{ width: '90vw', maxWidth: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeStatusChangeDialog()"
+  >
+    @if (bookingForStatusChange(); as b) {
+      <div class="status-change-dialog-content">
+        <p class="dialog-intro">
+          Select an allowed target status for hotel booking <strong>#{{ b.id }}</strong> ({{ b.hotelName || ('Hotel #' + b.hotelId) }}).
+        </p>
+
+        <div class="current-status-strip">
+          <span>{{ 'admin.busBookings.currentStatus' | translate }}:</span>
+          <p-tag [value]="('enums.bookingStatus.' + b.status) | translate" [severity]="getStatusSeverity(b.status)" />
+        </div>
+
+        <div class="transition-selector-group">
+          <label class="group-label">{{ 'admin.hotelBookings.permittedTargetStatus' | translate }}:</label>
+          <div class="options-radio-list">
+            @for (st of getAllowedTransitions(b.status); track st) {
+              <label class="radio-option-card" [class.selected]="selectedNewStatus() === st">
+                <input
+                  type="radio"
+                  name="targetHotelStatus"
+                  [value]="st"
+                  [checked]="selectedNewStatus() === st"
+                  (change)="selectedNewStatus.set(st)"
+                />
+                <div class="option-info">
+                  <div class="option-title-row">
+                    <p-tag [value]="('enums.bookingStatus.' + st) | translate" [severity]="getStatusSeverity(st)" />
+                  </div>
+                  <span class="option-desc">
+                    @if (st === 'CONFIRMED') {
+                      {{ 'admin.hotelBookings.securesConfirmed' | translate }}
+                    } @else if (st === 'COMPLETED') {
+                      {{ 'admin.hotelBookings.finalizesCompleted' | translate }}
+                    } @else if (st === 'CANCELLED') {
+                      {{ 'admin.hotelBookings.cancelsReservation' | translate }}
+                    }
+                  </span>
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          type="button"
+          class="btn-dialog-cancel"
+          (click)="closeStatusChangeDialog()"
+          [disabled]="statusChanging()"
+        >
+          {{ 'admin.common.cancel' | translate }}
+        </button>
+        <button
+          type="submit"
+          class="btn-dialog-save"
+          [disabled]="statusChanging() || !selectedNewStatus()"
+          (click)="submitStatusChange()"
+          id="admin-confirm-hotel-status-change-btn"
+        >
+          {{ statusChanging() ? ('admin.hotelBookings.saving' | translate) : ('admin.hotelBookings.changeStatus' | translate) }}
+        </button>
+      </div>
+    }
   </p-dialog>
 
 </div>

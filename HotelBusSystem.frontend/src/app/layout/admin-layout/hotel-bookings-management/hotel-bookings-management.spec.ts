@@ -7,6 +7,7 @@ import { HotelBookingsManagement } from './hotel-bookings-management';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { RoomService } from '../../../core/services/room.service';
 import { HotelService } from '../../../core/services/hotel.service';
+import { UserService } from '../../../core/services/user.service';
 import { MessageService } from 'primeng/api';
 import { HotelBookingDTO } from '../../../core/models/Hotel/hotel-booking.model';
 import { RoomDTO } from '../../../core/models/Room/room.model';
@@ -101,11 +102,16 @@ describe('HotelBookingsManagement Component', () => {
       add: vi.fn(),
     };
 
+    const mockUserService = {
+      getUserById: vi.fn().mockReturnValue(of({ id: 10, name: 'John Doe', email: 'john@example.com' })),
+    };
+
     const injector = Injector.create({
       providers: [
         { provide: HotelBookingService, useValue: mockBookingService },
         { provide: RoomService, useValue: mockRoomService },
         { provide: HotelService, useValue: mockHotelService },
+        { provide: UserService, useValue: mockUserService },
         { provide: MessageService, useValue: mockMessageService },
         { provide: FormBuilder, useClass: FormBuilder },
       ],
@@ -280,5 +286,40 @@ describe('HotelBookingsManagement Component', () => {
       checkIn: '2026-12-01',
       checkOut: '2026-12-05',
     });
+  });
+
+  it('should open and close details dialog with fresh booking data (Item 3.4)', () => {
+    mockBookingService.getHotelBookingById = vi.fn().mockReturnValue(of({
+      ...mockBookings[0],
+      totalPrice: 450,
+    }));
+
+    component.openDetailsDialog(mockBookings[0]);
+
+    expect(component.detailsDialogVisible()).toBe(true);
+    expect(mockBookingService.getHotelBookingById).toHaveBeenCalledWith(1);
+    expect(component.selectedBookingForDetails()?.totalPrice).toBe(450);
+
+    component.closeDetailsDialog();
+    expect(component.detailsDialogVisible()).toBe(false);
+    expect(component.selectedBookingForDetails()).toBeNull();
+  });
+
+  it('should handle lifecycle status transitions and PATCH status (Item 3.3)', () => {
+    // PENDING allows CONFIRMED and CANCELLED
+    expect(component.getAllowedTransitions('PENDING')).toEqual(['CONFIRMED', 'CANCELLED']);
+    expect(component.getAllowedTransitions('CONFIRMED')).toEqual(['COMPLETED', 'CANCELLED']);
+    expect(component.getAllowedTransitions('COMPLETED')).toEqual([]);
+    expect(component.getAllowedTransitions('CANCELLED')).toEqual([]);
+
+    component.openStatusChangeDialog(mockBookings[1]); // PENDING
+    expect(component.statusDialogVisible()).toBe(true);
+    expect(component.selectedNewStatus()).toBe('CONFIRMED');
+
+    component.selectedNewStatus.set('CONFIRMED');
+    component.submitStatusChange();
+
+    expect(mockBookingService.updateHotelBookingStatus).toHaveBeenCalledWith(2, 'CONFIRMED');
+    expect(component.statusDialogVisible()).toBe(false);
   });
 });

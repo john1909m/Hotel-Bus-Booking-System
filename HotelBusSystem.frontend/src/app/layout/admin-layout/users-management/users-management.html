@@ -72,8 +72,8 @@
             aria-label="Filter by user role"
           >
             <option value="">{{ 'admin.users.allRoles' | translate }}</option>
-            <option value="USER">{{ 'admin.users.customerRole' | translate }}</option>
-            <option value="ADMIN">{{ 'admin.users.adminRole' | translate }}</option>
+            <option value="USER">{{ 'enums.userRole.USER' | translate }}</option>
+            <option value="ADMIN">{{ 'enums.userRole.ADMIN' | translate }}</option>
           </select>
         </div>
       </div>
@@ -195,7 +195,7 @@
           </td>
           <td>
             <p-tag
-              [value]="u.role"
+              [value]="('enums.userRole.' + u.role) | translate"
               [severity]="u.role === 'ADMIN' ? 'warn' : 'success'"
               styleClass="user-role-tag"
             />
@@ -275,10 +275,10 @@
             type="text"
             class="form-input"
             formControlName="name"
-            placeholder="e.g. John Doe"
+            [placeholder]="'admin.users.phFullName' | translate"
           />
           @if (userForm.get('name')?.touched && userForm.get('name')?.errors?.['required']) {
-            <span class="form-error">Full name is required.</span>
+            <span class="form-error">{{ 'admin.users.errNameRequired' | translate }}</span>
           }
         </div>
 
@@ -292,10 +292,10 @@
             type="email"
             class="form-input"
             formControlName="email"
-            placeholder="e.g. user@example.com"
+            [placeholder]="'admin.users.phEmail' | translate"
           />
           @if (userForm.get('email')?.touched && userForm.get('email')?.errors) {
-            <span class="form-error">Please provide a valid email address.</span>
+            <span class="form-error">{{ 'admin.users.errEmailValid' | translate }}</span>
           }
         </div>
 
@@ -309,10 +309,10 @@
             type="tel"
             class="form-input"
             formControlName="phoneNumber"
-            placeholder="e.g. +1 555-0199"
+            [placeholder]="'admin.users.phPhone' | translate"
           />
           @if (userForm.get('phoneNumber')?.touched && userForm.get('phoneNumber')?.errors?.['required']) {
-            <span class="form-error">Phone number is required.</span>
+            <span class="form-error">{{ 'admin.users.errPhoneRequired' | translate }}</span>
           }
         </div>
 
@@ -322,11 +322,11 @@
             {{ 'admin.users.fieldRole' | translate }} <span class="required-star">*</span>
           </label>
           <select id="userRole" class="form-select" formControlName="role">
-            <option value="USER">Customer (USER)</option>
-            <option value="ADMIN">Administrator (ADMIN)</option>
+            <option value="USER">{{ 'enums.userRole.USER' | translate }}</option>
+            <option value="ADMIN">{{ 'enums.userRole.ADMIN' | translate }}</option>
           </select>
           @if (userForm.get('role')?.touched && userForm.get('role')?.errors?.['required']) {
-            <span class="form-error">Role is required.</span>
+            <span class="form-error">{{ 'admin.users.errRoleRequired' | translate }}</span>
           }
         </div>
 
@@ -348,7 +348,7 @@
             <span class="password-note">{{ 'admin.users.passwordNote' | translate }}</span>
           }
           @if (userForm.get('password')?.touched && userForm.get('password')?.errors) {
-            <span class="form-error">Password must be at least 6 characters.</span>
+            <span class="form-error">{{ 'admin.users.errPasswordMin' | translate }}</span>
           }
         </div>
 
@@ -361,7 +361,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -413,7 +413,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"

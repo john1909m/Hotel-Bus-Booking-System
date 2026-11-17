@@ -43,6 +43,7 @@ describe('BusesManagement Component', () => {
     };
 
     mockBusSeatService = {
+      getAllBusSeats: vi.fn().mockReturnValue(of([])),
       getSeatsByBusId: vi.fn().mockReturnValue(of([])),
       getBusSeatsByBusId: vi.fn().mockReturnValue(of([])),
       generateSeatsForBus: vi.fn().mockReturnValue(of([])),
@@ -243,6 +244,17 @@ describe('BusesManagement Component', () => {
           busType: 'VIP',
         })
       );
+    });
+
+    it('hasSeats should return true when seat count > 0 and false when 0', () => {
+      const bus: BusDTO = { id: 1, busNumber: 'BUS-101', company: 'GoBus', capacity: 45, busType: 'DELUXE' };
+      expect(component.hasSeats(bus)).toBe(false);
+
+      const map = new Map<number, number>();
+      map.set(1, 45);
+      component.busSeatCountMap.set(map);
+
+      expect(component.hasSeats(bus)).toBe(true);
     });
   });
 });

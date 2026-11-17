@@ -16,32 +16,6 @@
         {{ 'admin.busSeats.subtitle' | translate }}
       </p>
     </div>
-
-    <div class="header-actions">
-      <button
-        type="button"
-        class="btn-refresh"
-        (click)="loadSeats()"
-        [disabled]="loading()"
-        id="admin-bus-seats-refresh-btn"
-        aria-label="Refresh seats list"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
-    </div>
   </header>
 
   <!-- ─── Filter & Search Bar ──────────────────────────────── -->
@@ -102,10 +76,10 @@
             aria-label="Filter seats by type"
           >
             <option value="">{{ 'admin.busSeats.allSeatTypes' | translate }}</option>
-            <option value="REGULAR">Regular</option>
-            <option value="PREMIUM">Premium</option>
-            <option value="WINDOW">Window</option>
-            <option value="AISLE">Aisle</option>
+            <option value="REGULAR">{{ 'enums.seatType.REGULAR' | translate }}</option>
+            <option value="PREMIUM">{{ 'enums.seatType.PREMIUM' | translate }}</option>
+            <option value="WINDOW">{{ 'enums.seatType.WINDOW' | translate }}</option>
+            <option value="AISLE">{{ 'enums.seatType.AISLE' | translate }}</option>
           </select>
         </div>
       </div>
@@ -189,7 +163,7 @@
           </td>
           <td>
             <p-tag
-              [value]="seat.seatType"
+              [value]="('enums.seatType.' + seat.seatType) | translate"
               [severity]="getSeatTypeSeverity(seat.seatType)"
               styleClass="seat-type-tag"
             />

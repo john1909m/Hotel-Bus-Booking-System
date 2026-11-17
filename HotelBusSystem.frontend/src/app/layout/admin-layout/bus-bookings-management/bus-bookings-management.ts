@@ -23,6 +23,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
+import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -39,7 +40,7 @@ import { BusBookingDTO, BusBookingRequestDTO, Status } from '../../../core/model
 import { BusTripDTO } from '../../../core/models/Bus/bus-trip.model';
 import { BusRouteDTO } from '../../../core/models/Bus/bus-route';
 import { BusStopDto } from '../../../core/models/Bus/bus-stop.model';
-import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
+import { BusSeatDTO, BusSeatRequestDTO, seatType } from '../../../core/models/Bus/bus-seat.model';
 import { BusDTO } from '../../../core/models/Bus/bus.model';
 import { UserDto } from '../../../core/models/User/user.model';
 import { PageBusBookingDTO, BusBookingListParams } from '../../../core/models/Pagination/busBookingPage.model';
@@ -59,6 +60,7 @@ import { extractErrorMessage } from '../../../core/utils/ErrorHandling';
     DialogModule,
     ToastModule,
     TagModule,
+    SelectModule,
     TranslatePipe,
   ],
   providers: [MessageService],
@@ -121,6 +123,16 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
   readonly editingBookingId = signal<number | null>(null);
   readonly initialEditingStatus = signal<Status | string>('CONFIRMED');
 
+  // ── Related Lists & Form Selection Signals ─────────────────
+  readonly usersList = signal<UserDto[]>([]);
+  readonly loadingUsers = signal<boolean>(false);
+  readonly buses = signal<BusDTO[]>([]);
+  readonly loadingBuses = signal<boolean>(false);
+  readonly selectedBusIdForForm = signal<number | null>(null);
+  readonly busSeats = signal<BusSeatDTO[]>([]);
+  readonly loadingSeats = signal<boolean>(false);
+  readonly generatingSeats = signal<boolean>(false);
+
   // ── Permanent Delete Dialog Signals ────────────────────────
   readonly deleteDialogVisible = signal<boolean>(false);
   readonly bookingToDelete = signal<BusBookingDTO | null>(null);
@@ -132,6 +144,35 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
   });
 
   readonly firstRow = computed(() => this.currentPage() * this.pageSize());
+
+  readonly userOptions = computed(() =>
+    this.usersList().map((u) => ({
+      label: `${u.name || 'User #' + u.id} (${u.email})`,
+      value: u.id,
+    }))
+  );
+
+  readonly busOptions = computed(() =>
+    this.buses().map((b) => ({
+      label: `${b.busNumber} — ${b.company} (${b.capacity} seats)`,
+      value: b.id,
+    }))
+  );
+
+  readonly tripsForSelectedBus = computed(() => {
+    const busId = this.selectedBusIdForForm();
+    const allTrips = this.trips();
+    if (!busId) return allTrips;
+    return allTrips.filter((t) => t.busId === busId);
+  });
+
+  readonly seatOptions = computed(() =>
+    this.busSeats().map((s) => ({
+      label: `Seat ${s.seatNumber} (${s.seatType || 'REGULAR'})`,
+      value: s.id,
+      seatType: s.seatType,
+    }))
+  );
 
   readonly displayedBookings = computed(() => {
     // Read trigger to recompute when enrichment data arrives
@@ -146,16 +187,18 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
       const userMatch = String(b.userId).includes(q) || (this.userCache.get(b.userId)?.name?.toLowerCase() || '').includes(q);
       const tripMatch = String(b.busTripId).includes(q) || (this.getTripRouteLabel(b.busTripId).toLowerCase()).includes(q);
       const seatMatch = String(b.seatId).includes(q) || (this.seatCache.get(b.seatId)?.seatNumber?.toLowerCase() || '').includes(q);
+      const busMatch = (this.getBusNumberForBooking(b).toLowerCase()).includes(q) || (this.getBusCompanyForBooking(b).toLowerCase()).includes(q);
       const statusMatch = b.status?.toLowerCase().includes(q);
-      return idMatch || userMatch || tripMatch || seatMatch || statusMatch;
+      return idMatch || userMatch || tripMatch || seatMatch || busMatch || statusMatch;
     });
   });
 
   // ── Reactive Form for Create / Edit ────────────────────────
   readonly bookingForm: FormGroup = this.fb.group({
+    busId: [null, [Validators.required]],
     busTripId: [null, [Validators.required]],
-    userId: [1, [Validators.required, Validators.min(1)]],
-    seatId: [1, [Validators.required, Validators.min(1)]],
+    userId: [null, [Validators.required, Validators.min(1)]],
+    seatId: [null, [Validators.required, Validators.min(1)]],
     price: [250, [Validators.required, Validators.min(0)]],
     status: ['CONFIRMED', [Validators.required]],
     bookingDate: ['', [Validators.required]],
@@ -164,6 +207,8 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadAllStops();
     this.loadTripsLookup();
+    this.loadAllUsers();
+    this.loadAllBuses();
     this.loadBookings();
   }
 
@@ -207,6 +252,205 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
         });
         this.enrichmentTrigger.update((n) => n + 1);
       });
+  }
+
+  loadAllUsers(): void {
+    this.loadingUsers.set(true);
+    this.userService
+      .getUsers({ size: 100 })
+      .pipe(
+        catchError(() => of({ content: [] as UserDto[] })),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res) => {
+        this.loadingUsers.set(false);
+        const list = res?.content || [];
+        this.usersList.set(list);
+        list.forEach((u) => {
+          if (u && u.id) this.userCache.set(u.id, u);
+        });
+        this.enrichmentTrigger.update((n) => n + 1);
+      });
+  }
+
+  loadAllBuses(): void {
+    this.loadingBuses.set(true);
+    this.busService
+      .getAllBuses({ size: 100 })
+      .pipe(
+        catchError(() => of({ content: [] as BusDTO[] })),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res) => {
+        this.loadingBuses.set(false);
+        const list = res?.content || [];
+        this.buses.set(list);
+        list.forEach((b) => {
+          if (b && b.id) this.busCache.set(b.id, b);
+        });
+        this.enrichmentTrigger.update((n) => n + 1);
+      });
+  }
+
+  onBusSelect(busId: number | null): void {
+    this.selectedBusIdForForm.set(busId);
+    this.bookingForm.patchValue({ busId: busId, seatId: null });
+
+    if (!busId) {
+      this.busSeats.set([]);
+      return;
+    }
+
+    // Auto-select trip if current trip doesn't belong to this bus
+    const availableTrips = this.trips().filter((t) => t.busId === busId);
+    const currentTripId = this.bookingForm.get('busTripId')?.value;
+    const isCurrentTripValid = availableTrips.some((t) => t.id === currentTripId);
+    if (!isCurrentTripValid) {
+      this.bookingForm.patchValue({
+        busTripId: availableTrips.length > 0 ? availableTrips[0].id : null,
+      });
+    }
+
+    this.loadSeatsForBus(busId);
+  }
+
+  loadSeatsForBus(busId: number, targetSeatId?: number): void {
+    this.loadingSeats.set(true);
+    this.busSeatService
+      .getBusSeatsByBusId(busId)
+      .pipe(
+        catchError(() => of([] as BusSeatDTO[])),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((seats) => {
+        this.loadingSeats.set(false);
+        const list = Array.isArray(seats) ? seats : [];
+        this.busSeats.set(list);
+        list.forEach((s) => {
+          if (s && s.id) this.seatCache.set(s.id, s);
+        });
+        this.enrichmentTrigger.update((n) => n + 1);
+
+        if (targetSeatId && list.some((s) => s.id === targetSeatId)) {
+          this.bookingForm.patchValue({ seatId: targetSeatId });
+        } else if (!this.isEditMode() && list.length > 0 && !this.bookingForm.get('seatId')?.value) {
+          this.bookingForm.patchValue({ seatId: list[0].id });
+        }
+      });
+  }
+
+  determineSeatType(seatNum: number, capacity: number): seatType {
+    if (seatNum <= Math.min(4, capacity)) {
+      return 'PREMIUM';
+    }
+    const posInRow = (seatNum - 1) % 4;
+    if (posInRow === 0 || posInRow === 3) {
+      return 'WINDOW';
+    }
+    if (posInRow === 1) {
+      return 'AISLE';
+    }
+    return 'REGULAR';
+  }
+
+  generateSeatsForChosenBus(): void {
+    if (this.generatingSeats()) return;
+    const busId = this.selectedBusIdForForm();
+    if (!busId) return;
+
+    const bus = this.buses().find((b) => b.id === busId) || this.busCache.get(busId);
+    if (!bus) return;
+
+    this.generatingSeats.set(true);
+    const targetCapacity = bus.capacity || 40;
+
+    this.busSeatService
+      .getBusSeatsByBusId(bus.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (existing) => {
+          const existingNums = new Set(existing.map((s) => s.seatNumber));
+          const toCreate: BusSeatRequestDTO[] = [];
+
+          for (let i = 1; i <= targetCapacity; i++) {
+            const sNum = String(i);
+            if (!existingNums.has(sNum)) {
+              toCreate.push({
+                seatNumber: sNum,
+                seatType: this.determineSeatType(i, targetCapacity),
+                busId: bus.id,
+              });
+            }
+          }
+
+          if (toCreate.length === 0) {
+            this.generatingSeats.set(false);
+            this.loadSeatsForBus(bus.id);
+            return;
+          }
+
+          const requests = toCreate.map((req) => this.busSeatService.createBusSeat(req));
+          forkJoin(requests)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (created) => {
+                this.generatingSeats.set(false);
+                this.loadSeatsForBus(bus.id);
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Seats Generated',
+                  detail: `Successfully generated ${created.length} seats for bus "${bus.busNumber}".`,
+                  life: 4000,
+                });
+              },
+              error: (err) => {
+                this.generatingSeats.set(false);
+                this.loadSeatsForBus(bus.id);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Seat Generation Error',
+                  detail: err?.message || 'Failed to generate seats for bus.',
+                  life: 5000,
+                });
+              },
+            });
+        },
+        error: (err) => {
+          this.generatingSeats.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Seat Generation Error',
+            detail: err?.message || 'Failed to verify existing seats.',
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  getBusForBooking(b: BusBookingDTO): BusDTO | null {
+    this.enrichmentTrigger();
+    const trip = this.tripCache.get(b.busTripId);
+    if (trip?.busId && this.busCache.has(trip.busId)) {
+      return this.busCache.get(trip.busId)!;
+    }
+    const seat = this.seatCache.get(b.seatId);
+    if (seat?.busId && this.busCache.has(seat.busId)) {
+      return this.busCache.get(seat.busId)!;
+    }
+    return null;
+  }
+
+  getBusNumberForBooking(b: BusBookingDTO): string {
+    const bus = this.getBusForBooking(b);
+    if (bus?.busNumber) return bus.busNumber;
+    const trip = this.tripCache.get(b.busTripId);
+    if (trip?.busId) return `Bus #${trip.busId}`;
+    return '—';
+  }
+
+  getBusCompanyForBooking(b: BusBookingDTO): string {
+    const bus = this.getBusForBooking(b);
+    return bus?.company || '';
   }
 
   /**
@@ -611,16 +855,33 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
 
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 16);
-    const defaultTrip = this.trips().length > 0 ? this.trips()[0].id : null;
+
+    const firstBus = this.buses().length > 0 ? this.buses()[0] : null;
+    const defaultBusId = firstBus?.id ?? null;
+    this.selectedBusIdForForm.set(defaultBusId);
+
+    const availableTrips = defaultBusId
+      ? this.trips().filter((t) => t.busId === defaultBusId)
+      : this.trips();
+    const defaultTrip = availableTrips.length > 0 ? availableTrips[0].id : null;
+    const defaultUser = this.usersList().length > 0 ? this.usersList()[0].id : null;
 
     this.bookingForm.reset({
+      busId: defaultBusId,
       busTripId: defaultTrip,
-      userId: 1,
-      seatId: 1,
+      userId: defaultUser,
+      seatId: null,
       price: 250,
       status: 'CONFIRMED',
       bookingDate: dateStr,
     });
+
+    if (defaultBusId) {
+      this.loadSeatsForBus(defaultBusId);
+    } else {
+      this.busSeats.set([]);
+    }
+
     this.dialogVisible.set(true);
   }
 
@@ -629,9 +890,33 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
     this.editingBookingId.set(b.id);
     this.initialEditingStatus.set(b.status);
 
-    const dateStr = b.bookingDate ? b.bookingDate.slice(0, 16) : '';
+    let dateStr = '';
+    if (b.bookingDate) {
+      if (b.bookingDate.includes('T')) {
+        dateStr = b.bookingDate.slice(0, 16);
+      } else {
+        dateStr = `${b.bookingDate.slice(0, 10)}T00:00`;
+      }
+    } else {
+      dateStr = new Date().toISOString().slice(0, 16);
+    }
+
+    // Resolve busId from trip or seat
+    let busId: number | null = null;
+    const trip = this.tripCache.get(b.busTripId);
+    if (trip?.busId) {
+      busId = trip.busId;
+    } else {
+      const seat = this.seatCache.get(b.seatId);
+      if (seat?.busId) {
+        busId = seat.busId;
+      }
+    }
+
+    this.selectedBusIdForForm.set(busId);
 
     this.bookingForm.patchValue({
+      busId: busId,
       busTripId: b.busTripId,
       userId: b.userId,
       seatId: b.seatId,
@@ -639,6 +924,26 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
       status: b.status,
       bookingDate: dateStr,
     });
+
+    if (busId) {
+      this.loadSeatsForBus(busId, b.seatId);
+    } else if (b.busTripId) {
+      this.busTripService
+        .getBusTripById(b.busTripId)
+        .pipe(
+          catchError(() => of(null)),
+          takeUntil(this.destroy$)
+        )
+        .subscribe((freshTrip) => {
+          if (freshTrip?.busId) {
+            this.tripCache.set(freshTrip.id, freshTrip);
+            this.selectedBusIdForForm.set(freshTrip.busId);
+            this.bookingForm.patchValue({ busId: freshTrip.busId });
+            this.loadSeatsForBus(freshTrip.busId, b.seatId);
+          }
+        });
+    }
+
     this.dialogVisible.set(true);
   }
 
@@ -662,13 +967,20 @@ export class BusBookingsManagement implements OnInit, OnDestroy {
     this.saving.set(true);
     const formVal = this.bookingForm.getRawValue();
 
+    const formatBookingDate = (val: string): string => {
+      if (!val) return new Date().toISOString().slice(0, 10);
+      const str = String(val).trim();
+      if (str.includes('T')) return str.split('T')[0];
+      return str.slice(0, 10);
+    };
+
     const payload: BusBookingRequestDTO = {
       busTripId: Number(formVal.busTripId),
       userId: Number(formVal.userId),
       seatId: Number(formVal.seatId),
       price: Number(formVal.price),
       status: formVal.status as Status,
-      bookingDate: String(formVal.bookingDate),
+      bookingDate: formatBookingDate(formVal.bookingDate),
     };
 
     if (this.isEditMode()) {

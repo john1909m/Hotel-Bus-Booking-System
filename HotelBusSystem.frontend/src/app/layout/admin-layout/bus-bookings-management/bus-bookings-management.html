@@ -31,30 +31,6 @@
         </svg>
         <span>{{ 'admin.busBookings.newBooking' | translate }}</span>
       </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="loadBookings()"
-        [disabled]="loading()"
-        id="admin-bus-bookings-refresh-btn"
-        aria-label="Refresh bus bookings"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
     </div>
   </header>
 
@@ -95,10 +71,10 @@
             aria-label="Filter by booking status"
           >
             <option value="ALL">{{ 'admin.busBookings.allStatuses' | translate }}</option>
-            <option value="CONFIRMED">{{ 'admin.dashboard.confirmed' | translate }}</option>
-            <option value="PENDING">{{ 'admin.dashboard.pending' | translate }}</option>
-            <option value="COMPLETED">{{ 'admin.dashboard.completed' | translate }}</option>
-            <option value="CANCELLED">{{ 'admin.dashboard.cancelled' | translate }}</option>
+            <option value="CONFIRMED">{{ 'enums.bookingStatus.CONFIRMED' | translate }}</option>
+            <option value="PENDING">{{ 'enums.bookingStatus.PENDING' | translate }}</option>
+            <option value="COMPLETED">{{ 'enums.bookingStatus.COMPLETED' | translate }}</option>
+            <option value="CANCELLED">{{ 'enums.bookingStatus.CANCELLED' | translate }}</option>
           </select>
         </div>
       </div>
@@ -166,14 +142,15 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 75px">ID</th>
-          <th>Customer</th>
-          <th>Route &amp; Journey</th>
-          <th>Seat Assigned</th>
+          <th style="width: 75px">{{ 'admin.busBookings.thId' | translate }}</th>
+          <th>{{ 'admin.busBookings.thCustomer' | translate }}</th>
+          <th>{{ 'admin.busBookings.thRouteJourney' | translate }}</th>
+          <th style="min-width: 130px">{{ 'admin.busBookings.thBus' | translate }}</th>
+          <th>{{ 'admin.busBookings.thSeatAssigned' | translate }}</th>
           <th>{{ 'admin.busBookings.colBookingDate' | translate }}</th>
-          <th>Fare Price</th>
+          <th>{{ 'admin.busBookings.thFarePrice' | translate }}</th>
           <th>{{ 'admin.common.status' | translate }}</th>
-          <th style="width: 175px; text-align: right">Actions</th>
+          <th style="width: 175px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -202,11 +179,21 @@
             </div>
           </td>
 
+          <!-- Assigned Bus -->
+          <td>
+            <div class="bus-cell">
+              <span class="pill-badge">🚌 {{ getBusNumberForBooking(b) }}</span>
+              @if (getBusCompanyForBooking(b)) {
+                <span class="table-cell-subtitle">{{ getBusCompanyForBooking(b) }}</span>
+              }
+            </div>
+          </td>
+
           <!-- Seat Assigned -->
           <td>
             <div class="seat-cell">
               <span class="pill-badge">💺 Seat {{ getSeatNumber(b.seatId) }}</span>
-              <span class="seat-type-sub">{{ getSeatType(b.seatId) }}</span>
+              <span class="seat-type-sub">{{ ('enums.seatType.' + getSeatType(b.seatId)) | translate }}</span>
             </div>
           </td>
 
@@ -225,7 +212,7 @@
           <!-- Status Tag -->
           <td>
             <p-tag
-              [value]="b.status"
+              [value]="('enums.bookingStatus.' + b.status) | translate"
               [severity]="getStatusSeverity(b.status)"
               styleClass="booking-status-tag"
             />
@@ -347,7 +334,7 @@
   <p-dialog
     [(visible)]="detailsDialogVisible"
     [modal]="true"
-    [header]="'Bus Booking Details — #' + selectedBookingForDetails()?.id"
+    [header]="('admin.busBookings.detailsTitle' | translate) + ' #' + selectedBookingForDetails()?.id"
     [style]="{ width: '92vw', maxWidth: '640px' }"
     [draggable]="false"
     [resizable]="false"
@@ -359,11 +346,11 @@
         <!-- Status & Reference Header Banner -->
         <div class="details-header-card">
           <div class="reference-box">
-            <span class="ref-sub">Booking Reference</span>
+            <span class="ref-sub">{{ 'admin.busBookings.bookingReference' | translate }}</span>
             <span class="ref-main">#{{ b.id }}</span>
           </div>
           <div class="status-box">
-            <p-tag [value]="b.status" [severity]="getStatusSeverity(b.status)" styleClass="details-status-tag" />
+            <p-tag [value]="('enums.bookingStatus.' + b.status) | translate" [severity]="getStatusSeverity(b.status)" styleClass="details-status-tag" />
           </div>
         </div>
 
@@ -511,7 +498,7 @@
   <p-dialog
     [(visible)]="statusDialogVisible"
     [modal]="true"
-    header="Update Booking Status"
+    [header]="'admin.busBookings.statusDialogTitle' | translate"
     [style]="{ width: '90vw', maxWidth: '480px' }"
     [draggable]="false"
     [resizable]="false"
@@ -524,12 +511,12 @@
         </p>
 
         <div class="current-status-strip">
-          <span>Current Status:</span>
-          <p-tag [value]="b.status" [severity]="getStatusSeverity(b.status)" />
+          <span>{{ 'admin.busBookings.currentStatus' | translate }}:</span>
+          <p-tag [value]="('enums.bookingStatus.' + b.status) | translate" [severity]="getStatusSeverity(b.status)" />
         </div>
 
         <div class="transition-selector-group">
-          <label class="group-label">Permitted Target Status:</label>
+          <label class="group-label">{{ 'admin.busBookings.permittedTargetStatus' | translate }}:</label>
           <div class="options-radio-list">
             @for (st of getAllowedTransitions(b.status); track st) {
               <label class="radio-option-card" [class.selected]="selectedNewStatus() === st">
@@ -542,8 +529,8 @@
                 />
                 <div class="option-info">
                   <div class="option-title-row">
-                    <p-tag [value]="st" [severity]="getStatusSeverity(st)" />
-                    <span class="transition-arrow">&larr; {{ b.status }} to {{ st }}</span>
+                    <p-tag [value]="('enums.bookingStatus.' + st) | translate" [severity]="getStatusSeverity(st)" />
+                    <span class="transition-arrow">&larr; {{ ('enums.bookingStatus.' + b.status) | translate }} to {{ ('enums.bookingStatus.' + st) | translate }}</span>
                   </div>
                   @if (st === 'CONFIRMED') {
                     <small class="option-desc">Secures and confirms the customer reservation.</small>
@@ -576,7 +563,7 @@
           (click)="closeStatusChangeDialog()"
           [disabled]="statusChanging()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="button"
@@ -606,67 +593,122 @@
     <form [formGroup]="bookingForm" (ngSubmit)="saveBooking()" class="dialog-form" id="admin-bus-booking-form">
       <div class="form-grid">
 
+        <!-- Customer User -->
+        <div class="form-group full-width">
+          <label for="bookingUserId" class="form-label">
+            {{ 'admin.busBookings.customerUser' | translate }} <span class="required-star">*</span>
+          </label>
+          <p-select
+            id="bookingUserId"
+            formControlName="userId"
+            [options]="userOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [placeholder]="'admin.busBookings.selectCustomer' | translate"
+            styleClass="w-full"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+          />
+          @if (bookingForm.get('userId')?.touched && bookingForm.get('userId')?.errors) {
+            <span class="form-error">{{ 'admin.busBookings.errUserRequired' | translate }}</span>
+          }
+        </div>
+
+        <!-- Assigned Bus -->
+        <div class="form-group full-width">
+          <label for="bookingBusId" class="form-label">
+            {{ 'admin.busBookings.assignedBus' | translate }} <span class="required-star">*</span>
+          </label>
+          <p-select
+            id="bookingBusId"
+            formControlName="busId"
+            [options]="busOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [placeholder]="'admin.busBookings.selectBus' | translate"
+            styleClass="w-full"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+            (onChange)="onBusSelect($event.value)"
+          />
+          @if (bookingForm.get('busId')?.touched && bookingForm.get('busId')?.errors) {
+            <span class="form-error">{{ 'admin.busBookings.errBusRequired' | translate }}</span>
+          }
+        </div>
+
         <!-- Bus Trip Assignment -->
         <div class="form-group full-width">
           <label for="bookingBusTripId" class="form-label">
-            Assigned Bus Trip <span class="required-star">*</span>
+            {{ 'admin.busBookings.colTrip' | translate }} <span class="required-star">*</span>
           </label>
-          @if (trips().length > 0) {
+          @if (tripsForSelectedBus().length > 0) {
             <select id="bookingBusTripId" class="form-select" formControlName="busTripId">
-              <option [ngValue]="null" disabled>Select Bus Trip</option>
-              @for (t of trips(); track t.id) {
+              <option [ngValue]="null" disabled>{{ 'admin.busBookings.selectTrip' | translate }}</option>
+              @for (t of tripsForSelectedBus(); track t.id) {
                 <option [ngValue]="t.id">
                   Trip #{{ t.id }} — {{ getTripRouteLabel(t.id) }} ({{ (t.departureTime || t.departure) | date:'short' }})
                 </option>
               }
             </select>
+          } @else if (selectedBusIdForForm()) {
+            <div class="empty-trips-hint">
+              <span>{{ 'admin.busBookings.noTripsForBus' | translate }}</span>
+            </div>
           } @else {
-            <input
-              id="bookingBusTripId"
-              type="number"
-              class="form-input"
-              formControlName="busTripId"
-              placeholder="Enter Trip ID"
-            />
+            <div class="select-bus-first-hint">
+              <span>{{ 'admin.busBookings.selectBus' | translate }}</span>
+            </div>
           }
           @if (bookingForm.get('busTripId')?.touched && bookingForm.get('busTripId')?.errors?.['required']) {
-            <span class="form-error">Bus Trip assignment is required.</span>
-          }
-        </div>
-
-        <!-- User ID -->
-        <div class="form-group">
-          <label for="bookingUserId" class="form-label">
-            Customer User ID <span class="required-star">*</span>
-          </label>
-          <input
-            id="bookingUserId"
-            type="number"
-            class="form-input"
-            formControlName="userId"
-            min="1"
-            placeholder="e.g. 1"
-          />
-          @if (bookingForm.get('userId')?.touched && bookingForm.get('userId')?.errors) {
-            <span class="form-error">Valid user ID is required.</span>
+            <span class="form-error">{{ 'admin.busBookings.errTripRequired' | translate }}</span>
           }
         </div>
 
         <!-- Seat ID -->
-        <div class="form-group">
+        <div class="form-group full-width">
           <label for="bookingSeatId" class="form-label">
-            Seat ID <span class="required-star">*</span>
+            {{ 'admin.busBookings.colSeat' | translate }} <span class="required-star">*</span>
           </label>
-          <input
-            id="bookingSeatId"
-            type="number"
-            class="form-input"
-            formControlName="seatId"
-            min="1"
-            placeholder="e.g. 1"
-          />
+          @if (busSeats().length > 0) {
+            <p-select
+              id="bookingSeatId"
+              formControlName="seatId"
+              [options]="seatOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'admin.busBookings.selectSeat' | translate"
+              styleClass="w-full"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+            />
+          } @else if (selectedBusIdForForm()) {
+            <div class="no-seats-container">
+              <span class="no-seats-msg">{{ 'admin.busBookings.noSeatsForBus' | translate }}</span>
+              <button
+                type="button"
+                class="btn-generate-inline"
+                [disabled]="generatingSeats()"
+                (click)="generateSeatsForChosenBus()"
+                id="admin-generate-seats-modal-btn"
+              >
+                @if (generatingSeats()) {
+                  <span class="spin-icon">⏳</span> {{ 'admin.busBookings.generatingSeats' | translate }}
+                } @else {
+                  ⚡ {{ 'admin.busBookings.generateSeats' | translate }}
+                }
+              </button>
+            </div>
+          } @else {
+            <div class="select-bus-first-hint">
+              <span>{{ 'admin.busBookings.selectBus' | translate }}</span>
+            </div>
+          }
           @if (bookingForm.get('seatId')?.touched && bookingForm.get('seatId')?.errors) {
-            <span class="form-error">Valid seat ID is required.</span>
+            <span class="form-error">{{ 'admin.busBookings.errSeatRequired' | translate }}</span>
           }
         </div>
 
@@ -682,10 +724,10 @@
             formControlName="price"
             min="0"
             step="0.01"
-            placeholder="e.g. 250.00"
+            [placeholder]="'admin.busBookings.phFarePrice' | translate"
           />
           @if (bookingForm.get('price')?.touched && bookingForm.get('price')?.errors) {
-            <span class="form-error">Valid fare price is required.</span>
+            <span class="form-error">{{ 'admin.busBookings.errPriceRequired' | translate }}</span>
           }
         </div>
 
@@ -696,17 +738,17 @@
           </label>
           <select id="bookingStatus" class="form-select" formControlName="status">
             @if (isEditMode()) {
-              <option [value]="initialEditingStatus()">{{ initialEditingStatus() }} (Current)</option>
+              <option [value]="initialEditingStatus()">{{ ('enums.bookingStatus.' + initialEditingStatus()) | translate }} (Current)</option>
               @for (st of getAllowedTransitions(initialEditingStatus()); track st) {
-                <option [value]="st">{{ st }}</option>
+                <option [value]="st">{{ ('enums.bookingStatus.' + st) | translate }}</option>
               }
             } @else {
-              <option value="CONFIRMED">CONFIRMED</option>
-              <option value="PENDING">PENDING</option>
+              <option value="CONFIRMED">{{ 'enums.bookingStatus.CONFIRMED' | translate }}</option>
+              <option value="PENDING">{{ 'enums.bookingStatus.PENDING' | translate }}</option>
             }
           </select>
           @if (bookingForm.get('status')?.touched && bookingForm.get('status')?.errors?.['required']) {
-            <span class="form-error">Booking status is required.</span>
+            <span class="form-error">{{ 'admin.busBookings.errStatusRequired' | translate }}</span>
           }
         </div>
 
@@ -722,7 +764,7 @@
             formControlName="bookingDate"
           />
           @if (bookingForm.get('bookingDate')?.touched && bookingForm.get('bookingDate')?.errors?.['required']) {
-            <span class="form-error">Booking timestamp is required.</span>
+            <span class="form-error">{{ 'admin.busBookings.errTimestampRequired' | translate }}</span>
           }
         </div>
 
@@ -735,7 +777,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -743,7 +785,7 @@
           [disabled]="saving() || bookingForm.invalid"
           id="admin-save-bus-booking-btn"
         >
-          {{ saving() ? 'Saving…' : (isEditMode() ? 'Update Booking' : 'Create Booking') }}
+          {{ (saving() ? 'admin.busBookings.saving' : (isEditMode() ? 'admin.busBookings.updateTicket' : 'admin.busBookings.confirmTicket')) | translate }}
         </button>
       </div>
     </form>
@@ -755,7 +797,7 @@
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
-    header="Permanent Record Deletion"
+    [header]="'admin.busBookings.deleteDialogHeader' | translate"
     [style]="{ width: '90vw', maxWidth: '460px' }"
     [draggable]="false"
     [resizable]="false"
@@ -769,7 +811,7 @@
           <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-      <h3 class="delete-title">Permanently Delete Record?</h3>
+      <h3 class="delete-title">{{ 'admin.busBookings.deleteConfirmTitle' | translate }}</h3>
       <p class="delete-desc">
         Are you sure you want to permanently delete booking record
         <strong class="delete-entity-name">
@@ -789,7 +831,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"

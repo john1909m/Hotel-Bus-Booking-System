@@ -31,9 +31,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { RoomService } from '../../../core/services/room.service';
 import { HotelService } from '../../../core/services/hotel.service';
+import { UserService } from '../../../core/services/user.service';
 import { HotelBookingDTO, HotelBookingRequestDTO, status } from '../../../core/models/Hotel/hotel-booking.model';
 import { RoomDTO } from '../../../core/models/Room/room.model';
 import { HotelDTO } from '../../../core/models/Hotel/hotel.model';
+import { UserDto } from '../../../core/models/User/user.model';
 import { PageHotelBookingDTO, HotelBookingListParams } from '../../../core/models/Pagination/hotelBookingPage.model';
 import { calculateGuestBreakdown } from '../../../core/utils/guest-rules.util';
 
@@ -63,10 +65,21 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
   private readonly bookingService = inject(HotelBookingService);
   private readonly roomService = inject(RoomService);
   private readonly hotelService = inject(HotelService);
+  private readonly userService = inject(UserService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService, { optional: true });
   private readonly destroy$ = new Subject<void>();
+
+  readonly userCache = new Map<number, UserDto>();
+  readonly detailsDialogVisible = signal<boolean>(false);
+  readonly selectedBookingForDetails = signal<HotelBookingDTO | null>(null);
+  readonly loadingDetails = signal<boolean>(false);
+
+  readonly statusDialogVisible = signal<boolean>(false);
+  readonly bookingForStatusChange = signal<HotelBookingDTO | null>(null);
+  readonly selectedNewStatus = signal<status | null>(null);
+  readonly statusChanging = signal<boolean>(false);
 
   readonly bookings = signal<HotelBookingDTO[]>([]);
   readonly rooms = signal<RoomDTO[]>([]);
@@ -440,6 +453,161 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
     this.dialogVisible.set(true);
   }
 
+  // ── Details Dialog Methods ─────────────────────────────────
+  getCustomerName(userId?: number): string {
+    if (!userId) return 'Unknown Guest';
+    const u = this.userCache.get(userId);
+    return u?.name || `Customer #${userId}`;
+  }
+
+  getCustomerEmail(userId?: number): string {
+    if (!userId) return '';
+    const u = this.userCache.get(userId);
+    return u?.email || '';
+  }
+
+  openDetailsDialog(booking: HotelBookingDTO): void {
+    this.selectedBookingForDetails.set(booking);
+    this.detailsDialogVisible.set(true);
+    this.loadingDetails.set(true);
+
+    if (booking.userId && !this.userCache.has(booking.userId)) {
+      this.userService
+        .getUserById(booking.userId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (user) => {
+            if (user && user.id) this.userCache.set(user.id, user);
+          },
+          error: () => {},
+        });
+    }
+
+    this.bookingService
+      .getHotelBookingById(booking.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (fresh) => {
+          this.selectedBookingForDetails.set(fresh);
+          this.loadingDetails.set(false);
+          if (fresh.userId && !this.userCache.has(fresh.userId)) {
+            this.userService
+              .getUserById(fresh.userId)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: (user) => {
+                  if (user && user.id) this.userCache.set(user.id, user);
+                },
+                error: () => {},
+              });
+          }
+        },
+        error: () => {
+          this.loadingDetails.set(false);
+        },
+      });
+  }
+
+  closeDetailsDialog(): void {
+    this.detailsDialogVisible.set(false);
+    this.selectedBookingForDetails.set(null);
+  }
+
+  // ── Status Transition Logic (Backend Lifecycle Compliant) ───
+  getAllowedTransitions(currentStatus?: status | string): readonly status[] {
+    switch (currentStatus) {
+      case 'PENDING':
+        return ['CONFIRMED', 'CANCELLED'];
+      case 'CONFIRMED':
+        return ['COMPLETED', 'CANCELLED'];
+      case 'COMPLETED':
+      case 'CANCELLED':
+      default:
+        return [];
+    }
+  }
+
+  isTerminalStatus(s?: status | string): boolean {
+    return s === 'COMPLETED' || s === 'CANCELLED';
+  }
+
+  openStatusChangeDialog(booking: HotelBookingDTO, preselected?: status): void {
+    if (this.isTerminalStatus(booking.status)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Terminal State',
+        detail: `Booking #${booking.id} is in terminal state '${booking.status}' and cannot transition to any other status.`,
+        life: 4000,
+      });
+      return;
+    }
+
+    this.bookingForStatusChange.set(booking);
+    const allowed = this.getAllowedTransitions(booking.status);
+    const defaultTarget = preselected && allowed.includes(preselected) ? preselected : allowed[0];
+    this.selectedNewStatus.set(defaultTarget || null);
+    this.statusDialogVisible.set(true);
+  }
+
+  closeStatusChangeDialog(): void {
+    this.statusDialogVisible.set(false);
+    this.bookingForStatusChange.set(null);
+    this.selectedNewStatus.set(null);
+  }
+
+  submitStatusChange(): void {
+    const booking = this.bookingForStatusChange();
+    const newStatus = this.selectedNewStatus();
+    if (!booking || !newStatus) return;
+
+    this.executeStatusUpdate(booking.id, newStatus);
+  }
+
+  executeStatusUpdate(bookingId: number, targetStatus: status): void {
+    this.updatingStatusId.set(bookingId);
+    this.statusChanging.set(true);
+
+    this.bookingService
+      .updateHotelBookingStatus(bookingId, targetStatus)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedBooking) => {
+          this.updatingStatusId.set(null);
+          this.statusChanging.set(false);
+          this.statusDialogVisible.set(false);
+
+          const finalStatus = updatedBooking.status || targetStatus;
+
+          this.bookings.update((list) =>
+            list.map((item) => (item.id === bookingId ? { ...item, status: finalStatus } : item))
+          );
+
+          const currentDetails = this.selectedBookingForDetails();
+          if (currentDetails && currentDetails.id === bookingId) {
+            this.selectedBookingForDetails.set({ ...currentDetails, status: finalStatus });
+          }
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Status Updated',
+            detail: `Hotel booking #${bookingId} has been successfully transitioned to ${finalStatus}.`,
+            life: 4500,
+          });
+        },
+        error: (err) => {
+          this.updatingStatusId.set(null);
+          this.statusChanging.set(false);
+          const msg = err?.message || 'Failed to update hotel booking status.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Status Update Failed',
+            detail: msg,
+            life: 5000,
+          });
+        },
+      });
+  }
+
   openEditDialog(b: HotelBookingDTO): void {
     this.isEditMode.set(true);
     this.editingBookingId.set(b.id);
@@ -448,12 +616,16 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
     this.capacityError.set(null);
 
     // Resolve hotelId and hotelName
-    const hotelId = b.hotelId || (this.rooms().find((r) => r.id === b.roomId)?.hotelId ?? null);
+    const hotelId =
+      b.hotelId ||
+      (b.rooms && b.rooms.length > 0 ? (b.rooms[0] as any).hotelId : null) ||
+      (this.rooms().find((r) => r.id === b.roomId)?.hotelId ?? null);
     this.selectedHotelId.set(hotelId);
 
+    const foundHotel = hotelId ? this.hotels().find((h) => h.id === hotelId) : null;
     const resolvedName =
       b.hotelName ||
-      (hotelId ? `Hotel #${hotelId}` : 'Hotel Property');
+      (foundHotel ? `${foundHotel.name} (${foundHotel.city})` : (hotelId ? `Hotel #${hotelId}` : 'Hotel Property'));
     this.selectedHotelName.set(resolvedName);
 
     const breakdown = calculateGuestBreakdown({
@@ -488,6 +660,7 @@ export class HotelBookingsManagement implements OnInit, OnDestroy {
             this.loadingRooms.set(false);
             const foundRoom = list.find((r) => r.id === b.roomId);
             this.selectedRoom.set(foundRoom || null);
+            this.bookingForm.patchValue({ roomId: b.roomId });
             if (foundRoom) {
               const cap = foundRoom.capacity ?? 20;
               this.maxGuests.set(cap);

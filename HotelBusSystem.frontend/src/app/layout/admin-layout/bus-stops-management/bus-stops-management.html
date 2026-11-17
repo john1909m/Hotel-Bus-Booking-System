@@ -31,30 +31,6 @@
         </svg>
         <span>{{ 'admin.busStops.addNew' | translate }}</span>
       </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="loadBusStops()"
-        [disabled]="loading()"
-        id="admin-bus-stops-refresh-btn"
-        aria-label="Refresh bus stops"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
     </div>
   </header>
 
@@ -92,11 +68,11 @@
             id="admin-stop-city"
             type="text"
             class="filter-input"
-            placeholder="Filter by city…"
+            [placeholder]="'admin.busStops.colCity' | translate"
             [value]="cityFilter()"
             (input)="onCityInput($any($event.target).value)"
             (keydown.enter)="$event.preventDefault()"
-            aria-label="Filter bus stops by city"
+            [attr.aria-label]="'admin.busStops.colCity' | translate"
           />
         </div>
       </div>
@@ -265,10 +241,10 @@
             type="text"
             class="form-input"
             formControlName="name"
-            placeholder="e.g. Cairo Gateway Station, Ramses Terminal"
+            [placeholder]="'admin.busStops.phName' | translate"
           />
           @if (stopForm.get('name')?.touched && stopForm.get('name')?.errors?.['required']) {
-            <span class="form-error">Stop name is required.</span>
+            <span class="form-error">{{ 'admin.busStops.errNameRequired' | translate }}</span>
           }
         </div>
 
@@ -282,10 +258,10 @@
             type="text"
             class="form-input"
             formControlName="city"
-            placeholder="e.g. Cairo"
+            [placeholder]="'admin.busStops.phCity' | translate"
           />
           @if (stopForm.get('city')?.touched && stopForm.get('city')?.errors?.['required']) {
-            <span class="form-error">City is required.</span>
+            <span class="form-error">{{ 'admin.busStops.errCityRequired' | translate }}</span>
           }
         </div>
 
@@ -299,10 +275,10 @@
             type="text"
             class="form-input"
             formControlName="address"
-            placeholder="e.g. Ramses Square, Downtown"
+            [placeholder]="'admin.busStops.phAddress' | translate"
           />
           @if (stopForm.get('address')?.touched && stopForm.get('address')?.errors?.['required']) {
-            <span class="form-error">Address is required.</span>
+            <span class="form-error">{{ 'admin.busStops.errAddressRequired' | translate }}</span>
           }
         </div>
 
@@ -317,10 +293,10 @@
             step="0.0001"
             class="form-input"
             formControlName="latitude"
-            placeholder="e.g. 30.0444"
+            [placeholder]="'admin.busStops.phLatitude' | translate"
           />
           @if (stopForm.get('latitude')?.touched && stopForm.get('latitude')?.errors) {
-            <span class="form-error">Valid latitude required (-90 to 90).</span>
+            <span class="form-error">{{ 'admin.busStops.errLatitudeRange' | translate }}</span>
           }
         </div>
 
@@ -335,10 +311,10 @@
             step="0.0001"
             class="form-input"
             formControlName="longitude"
-            placeholder="e.g. 31.2357"
+            [placeholder]="'admin.busStops.phLongitude' | translate"
           />
           @if (stopForm.get('longitude')?.touched && stopForm.get('longitude')?.errors) {
-            <span class="form-error">Valid longitude required (-180 to 180).</span>
+            <span class="form-error">{{ 'admin.busStops.errLongitudeRange' | translate }}</span>
           }
         </div>
 
@@ -351,7 +327,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -400,7 +376,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"

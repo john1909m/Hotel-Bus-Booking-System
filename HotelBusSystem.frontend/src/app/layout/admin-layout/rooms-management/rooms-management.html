@@ -93,7 +93,7 @@
           >
             <option value="">{{ 'admin.rooms.allTypes' | translate }}</option>
             @for (t of availableRoomTypes(); track t) {
-              <option [value]="t">{{ t }}</option>
+              <option [value]="t">{{ ('enums.roomType.' + t) | translate }}</option>
             }
           </select>
         </div>
@@ -120,19 +120,6 @@
             <span>{{ 'admin.rooms.clearFilters' | translate }}</span>
           </button>
         }
-
-        <button
-          type="button"
-          class="btn-secondary"
-          (click)="loadRooms()"
-          title="Reload rooms dataset"
-          id="admin-refresh-rooms-btn"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span>{{ 'admin.common.refresh' | translate }}</span>
-        </button>
       </div>
     </div>
   </section>
@@ -198,7 +185,7 @@
           </td>
           <td>
             <p-tag
-              [value]="room.roomType"
+              [value]="('enums.roomType.' + room.roomType) | translate"
               [severity]="getRoomTypeSeverity(room.roomType)"
               styleClass="room-type-tag"
             />
@@ -286,10 +273,10 @@
             type="text"
             class="form-input"
             formControlName="roomNumber"
-            placeholder="e.g. 101, 302-A"
+            [placeholder]="'admin.rooms.phRoomNumber' | translate"
           />
           @if (roomForm.get('roomNumber')?.touched && roomForm.get('roomNumber')?.errors?.['required']) {
-            <span class="form-error">Room number is required.</span>
+            <span class="form-error">{{ 'admin.rooms.errRoomNumberRequired' | translate }}</span>
           }
         </div>
 
@@ -305,7 +292,7 @@
             }
           </select>
           @if (roomForm.get('hotelId')?.touched && roomForm.get('hotelId')?.errors?.['required']) {
-            <span class="form-error">Hotel selection is required.</span>
+            <span class="form-error">{{ 'admin.rooms.errHotelRequired' | translate }}</span>
           }
         </div>
 
@@ -319,11 +306,11 @@
             type="text"
             class="form-input"
             formControlName="hotelName"
-            placeholder="Hotel name (synced with selected property)"
+            [placeholder]="'admin.rooms.phHotelName' | translate"
             readonly
           />
           @if (roomForm.get('hotelName')?.touched && roomForm.get('hotelName')?.errors?.['required']) {
-            <span class="form-error">Hotel name is required.</span>
+            <span class="form-error">{{ 'admin.rooms.errHotelNameRequired' | translate }}</span>
           }
         </div>
 
@@ -333,13 +320,13 @@
             {{ 'admin.rooms.fieldType' | translate }} <span class="required-star">*</span>
           </label>
           <select id="roomType" class="form-select" formControlName="roomType">
-            <option value="SINGLE">Single</option>
-            <option value="DOUBLE">Double</option>
-            <option value="SUITE">Suite</option>
-            <option value="DELUXE">Deluxe</option>
+            <option value="SINGLE">{{ 'enums.roomType.SINGLE' | translate }}</option>
+            <option value="DOUBLE">{{ 'enums.roomType.DOUBLE' | translate }}</option>
+            <option value="SUITE">{{ 'enums.roomType.SUITE' | translate }}</option>
+            <option value="DELUXE">{{ 'enums.roomType.DELUXE' | translate }}</option>
           </select>
           @if (roomForm.get('roomType')?.touched && roomForm.get('roomType')?.errors?.['required']) {
-            <span class="form-error">Room type is required.</span>
+            <span class="form-error">{{ 'admin.rooms.errRoomTypeRequired' | translate }}</span>
           }
         </div>
 
@@ -357,7 +344,7 @@
             max="20"
           />
           @if (roomForm.get('capacity')?.touched && roomForm.get('capacity')?.errors) {
-            <span class="form-error">Capacity must be between 1 and 20.</span>
+            <span class="form-error">{{ 'admin.rooms.errCapacityRange' | translate }}</span>
           }
         </div>
 
@@ -373,10 +360,10 @@
             formControlName="pricePerNight"
             min="1"
             step="0.01"
-            placeholder="e.g. 150.00"
+            [placeholder]="'admin.rooms.phPrice' | translate"
           />
           @if (roomForm.get('pricePerNight')?.touched && roomForm.get('pricePerNight')?.errors) {
-            <span class="form-error">Valid positive price is required.</span>
+            <span class="form-error">{{ 'admin.rooms.errPricePositive' | translate }}</span>
           }
         </div>
 
@@ -389,7 +376,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -438,7 +425,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"

@@ -29,7 +29,7 @@ describe('authInterceptor & isBackendApiRequest', () => {
   });
 
   it('should identify non-backend / external URLs and reject them', () => {
-    // Cloudflare R2 direct URL
+    //  R2 direct URL
     expect(isBackendApiRequest('https://pub-e3f67119581e41a09e34c0a920c52720.r2.dev/hotels/1/pic.webp')).toBe(false);
     // Malicious or third-party domains
     expect(isBackendApiRequest('https://evil.com/api/hotels')).toBe(false);

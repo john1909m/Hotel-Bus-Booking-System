@@ -69,10 +69,10 @@
             aria-label="Filter by booking status"
           >
             <option value="ALL">{{ 'admin.trips.allStatuses' | translate }}</option>
-            <option value="PENDING">{{ 'admin.dashboard.pending' | translate }}</option>
-            <option value="CONFIRMED">{{ 'admin.dashboard.confirmed' | translate }}</option>
-            <option value="COMPLETED">{{ 'admin.dashboard.completed' | translate }}</option>
-            <option value="CANCELLED">{{ 'admin.dashboard.cancelled' | translate }}</option>
+            <option value="PENDING">{{ 'enums.bookingStatus.PENDING' | translate }}</option>
+            <option value="CONFIRMED">{{ 'enums.bookingStatus.CONFIRMED' | translate }}</option>
+            <option value="COMPLETED">{{ 'enums.bookingStatus.COMPLETED' | translate }}</option>
+            <option value="CANCELLED">{{ 'enums.bookingStatus.CANCELLED' | translate }}</option>
           </select>
         </div>
       </div>
@@ -90,10 +90,10 @@
             aria-label="Filter by payment method"
           >
             <option value="ALL">{{ 'admin.userBookings.allPaymentMethods' | translate }}</option>
-            <option value="CREDIT_CARD">Credit Card</option>
-            <option value="DEBIT_CARD">Debit Card</option>
-            <option value="PAYPAL">PayPal</option>
-            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CREDIT_CARD">{{ 'enums.paymentMethod.CREDIT_CARD' | translate }}</option>
+            <option value="DEBIT_CARD">{{ 'enums.paymentMethod.DEBIT_CARD' | translate }}</option>
+            <option value="PAYPAL">{{ 'enums.paymentMethod.PAYPAL' | translate }}</option>
+            <option value="BANK_TRANSFER">{{ 'enums.paymentMethod.BANK_TRANSFER' | translate }}</option>
             <option value="No payment">{{ 'admin.userBookings.noPayment' | translate }}</option>
           </select>
         </div>
@@ -184,7 +184,7 @@
                 </td>
                 <td>
                   <p-tag
-                    [value]="item.status"
+                    [value]="('enums.bookingStatus.' + item.status) | translate"
                     [severity]="getStatusSeverity(item.status)"
                     styleClass="booking-status-tag"
                   />
@@ -204,7 +204,7 @@
                     [class.badge-unpaid]="item.paymentMethod === 'No payment'"
                     [class.badge-paid]="item.paymentMethod !== 'No payment'"
                   >
-                    {{ item.paymentMethod }}
+                    {{ item.paymentMethod === 'No payment' ? ('admin.userBookings.noPayment' | translate) : (('enums.paymentMethod.' + item.paymentMethod) | translate) }}
                   </span>
                 </td>
               </tr>
@@ -263,13 +263,13 @@
           >
             <ng-template pTemplate="header">
               <tr>
-                <th style="width: 90px">ID</th>
-                <th style="width: 100px">Type</th>
-                <th style="width: 130px">Status</th>
+                <th style="width: 90px">{{ 'admin.common.id' | translate }}</th>
+                <th style="width: 100px">{{ 'admin.userBookings.bookingType' | translate }}</th>
+                <th style="width: 130px">{{ 'admin.common.status' | translate }}</th>
                 <th>{{ 'admin.userBookings.tripSeatAssignment' | translate }}</th>
-                <th style="width: 100px; text-align: center">Guests</th>
-                <th style="width: 130px">Price</th>
-                <th style="width: 160px">Payment</th>
+                <th style="width: 100px; text-align: center">{{ 'admin.userBookings.guests' | translate }}</th>
+                <th style="width: 130px">{{ 'admin.userBookings.price' | translate }}</th>
+                <th style="width: 160px">{{ 'admin.userBookings.payment' | translate }}</th>
               </tr>
             </ng-template>
 
@@ -283,7 +283,7 @@
                 </td>
                 <td>
                   <p-tag
-                    [value]="item.status"
+                    [value]="('enums.bookingStatus.' + item.status) | translate"
                     [severity]="getStatusSeverity(item.status)"
                     styleClass="booking-status-tag"
                   />
@@ -303,7 +303,7 @@
                     [class.badge-unpaid]="item.paymentMethod === 'No payment'"
                     [class.badge-paid]="item.paymentMethod !== 'No payment'"
                   >
-                    {{ item.paymentMethod }}
+                    {{ item.paymentMethod === 'No payment' ? ('admin.userBookings.noPayment' | translate) : (('enums.paymentMethod.' + item.paymentMethod) | translate) }}
                   </span>
                 </td>
               </tr>

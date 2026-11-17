@@ -31,30 +31,6 @@
         </svg>
         <span>{{ 'admin.routes.addNew' | translate }}</span>
       </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="loadBusRoutes()"
-        [disabled]="loading()"
-        id="admin-bus-routes-refresh-btn"
-        aria-label="Refresh bus routes"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
     </div>
   </header>
 
@@ -250,42 +226,42 @@
             type="text"
             class="form-input"
             formControlName="name"
-            placeholder="e.g. Cairo to Alexandria Express"
+            [placeholder]="'admin.routes.phName' | translate"
           />
           @if (routeForm.get('name')?.touched && routeForm.get('name')?.errors?.['required']) {
-            <span class="form-error">Route name is required.</span>
+            <span class="form-error">{{ 'admin.routes.errNameRequired' | translate }}</span>
           }
         </div>
 
         <!-- Origin Stop -->
         <div class="form-group">
           <label for="originStopId" class="form-label">
-            Origin Terminal <span class="required-star">*</span>
+            {{ 'admin.routes.originTerminal' | translate }} <span class="required-star">*</span>
           </label>
           <select id="originStopId" class="form-select" formControlName="originStopId">
-            <option [ngValue]="null" disabled>Select Origin Stop</option>
+            <option [ngValue]="null" disabled>{{ 'admin.routes.selectOrigin' | translate }}</option>
             @for (s of stops(); track s.id) {
               <option [ngValue]="s.id">{{ s.name }} ({{ s.city }})</option>
             }
           </select>
           @if (routeForm.get('originStopId')?.touched && routeForm.get('originStopId')?.errors?.['required']) {
-            <span class="form-error">Origin stop is required.</span>
+            <span class="form-error">{{ 'admin.routes.errOriginRequired' | translate }}</span>
           }
         </div>
 
         <!-- Destination Stop -->
         <div class="form-group">
           <label for="destinationStopId" class="form-label">
-            Destination Terminal <span class="required-star">*</span>
+            {{ 'admin.routes.destinationTerminal' | translate }} <span class="required-star">*</span>
           </label>
           <select id="destinationStopId" class="form-select" formControlName="destinationStopId">
-            <option [ngValue]="null" disabled>Select Destination Stop</option>
+            <option [ngValue]="null" disabled>{{ 'admin.routes.selectDestination' | translate }}</option>
             @for (s of stops(); track s.id) {
               <option [ngValue]="s.id">{{ s.name }} ({{ s.city }})</option>
             }
           </select>
           @if (routeForm.get('destinationStopId')?.touched && routeForm.get('destinationStopId')?.errors?.['required']) {
-            <span class="form-error">Destination stop is required.</span>
+            <span class="form-error">{{ 'admin.routes.errDestinationRequired' | translate }}</span>
           }
         </div>
 
@@ -300,10 +276,10 @@
             class="form-input"
             formControlName="duration"
             min="1"
-            placeholder="e.g. 180"
+            [placeholder]="'admin.routes.phDuration' | translate"
           />
           @if (routeForm.get('duration')?.touched && routeForm.get('duration')?.errors) {
-            <span class="form-error">Valid duration in minutes is required.</span>
+            <span class="form-error">{{ 'admin.routes.errDurationRequired' | translate }}</span>
           }
         </div>
 
@@ -316,7 +292,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -365,7 +341,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"

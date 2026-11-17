@@ -95,6 +95,11 @@ export class BusesManagement implements OnInit, OnDestroy {
   readonly loadingSeats = signal<boolean>(false);
   readonly generatingSeats = signal<boolean>(false);
   readonly generatingBusId = signal<number | null>(null);
+  readonly busSeatCountMap = signal<Map<number, number>>(new Map());
+
+  hasSeats(bus: BusDTO): boolean {
+    return (this.busSeatCountMap().get(bus.id) ?? 0) > 0;
+  }
 
   readonly coachTypes = computed<string[]>(() => {
     const set = new Set<string>();
@@ -168,6 +173,32 @@ export class BusesManagement implements OnInit, OnDestroy {
       });
 
     this.loadBuses();
+    this.loadSeatCounts();
+  }
+
+  loadSeatCounts(): void {
+    if (typeof this.busSeatService?.getAllBusSeats !== 'function') {
+      return;
+    }
+    this.busSeatService
+      .getAllBusSeats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (seats) => {
+          const map = new Map<number, number>();
+          if (Array.isArray(seats)) {
+            for (const s of seats) {
+              if (s && s.busId != null) {
+                map.set(s.busId, (map.get(s.busId) ?? 0) + 1);
+              }
+            }
+          }
+          this.busSeatCountMap.set(map);
+        },
+        error: () => {
+          // Graceful non-blocking fallback
+        },
+      });
   }
 
   ngOnDestroy(): void {
@@ -199,6 +230,7 @@ export class BusesManagement implements OnInit, OnDestroy {
           this.pageData.set(page);
           this.buses.set(page.content || []);
           this.loading.set(false);
+          this.loadSeatCounts();
         },
         error: (err) => {
           this.loading.set(false);
@@ -325,6 +357,7 @@ export class BusesManagement implements OnInit, OnDestroy {
               next: (created) => {
                 this.generatingSeats.set(false);
                 this.generatingBusId.set(null);
+                this.loadSeatCounts();
                 if (this.selectedBusForSeats()?.id === bus.id) {
                   this.loadSeatsForBus(bus);
                 }
@@ -333,6 +366,7 @@ export class BusesManagement implements OnInit, OnDestroy {
               error: (err) => {
                 this.generatingSeats.set(false);
                 this.generatingBusId.set(null);
+                this.loadSeatCounts();
                 this.messageService.add({
                   severity: 'error',
                   summary: 'Seat Generation Error',

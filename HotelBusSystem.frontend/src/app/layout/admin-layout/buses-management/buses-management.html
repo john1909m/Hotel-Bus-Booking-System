@@ -31,30 +31,6 @@
         </svg>
         <span>{{ 'admin.buses.addNew' | translate }}</span>
       </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="loadBuses()"
-        [disabled]="loading()"
-        id="admin-buses-refresh-btn"
-        aria-label="Refresh buses list"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>{{ 'admin.common.refresh' | translate }}</span>
-      </button>
     </div>
   </header>
 
@@ -224,7 +200,7 @@
           </td>
           <td>
             <p-tag
-              [value]="getCoachTypeDisplay(bus.busType)"
+              [value]="('enums.coachType.' + getCoachTypeDisplay(bus.busType)) | translate"
               severity="info"
               styleClass="bus-type-tag"
             />
@@ -261,9 +237,9 @@
                 type="button"
                 class="btn-action btn-action-generate-seats"
                 (click)="generateSeatsFromAction(bus, $event)"
-                [disabled]="generatingSeats()"
-                [attr.aria-label]="'Generate missing seats for ' + bus.busNumber"
-                title="Auto-Generate Missing Seats"
+                [disabled]="generatingSeats() || hasSeats(bus)"
+                [attr.aria-label]="hasSeats(bus) ? ('admin.buses.seatsAlreadyGenerated' | translate) : ('admin.buses.autoGenerateSeats' | translate)"
+                [title]="hasSeats(bus) ? ('admin.buses.seatsAlreadyGenerated' | translate) : ('admin.buses.autoGenerateSeats' | translate)"
               >
                 @if (generatingBusId() === bus.id) {
                   <p-progressSpinner styleClass="btn-inline-spinner" strokeWidth="4" />
@@ -346,10 +322,10 @@
             type="text"
             class="form-input"
             formControlName="busNumber"
-            placeholder="e.g. BUS-101, CAI-702"
+            [placeholder]="'admin.buses.phBusNumber' | translate"
           />
           @if (busForm.get('busNumber')?.touched && busForm.get('busNumber')?.errors?.['required']) {
-            <span class="form-error">Bus number is required.</span>
+            <span class="form-error">{{ 'admin.buses.errBusNumberRequired' | translate }}</span>
           }
         </div>
 
@@ -363,10 +339,10 @@
             type="text"
             class="form-input"
             formControlName="company"
-            placeholder="e.g. SuperJet, GoBus"
+            [placeholder]="'admin.buses.phCompany' | translate"
           />
           @if (busForm.get('company')?.touched && busForm.get('company')?.errors?.['required']) {
-            <span class="form-error">Company / Carrier name is required.</span>
+            <span class="form-error">{{ 'admin.buses.errCompanyRequired' | translate }}</span>
           }
         </div>
 
@@ -382,10 +358,10 @@
             formControlName="capacity"
             min="1"
             max="120"
-            placeholder="e.g. 45"
+            [placeholder]="'admin.buses.phCapacity' | translate"
           />
           @if (busForm.get('capacity')?.touched && busForm.get('capacity')?.errors) {
-            <span class="form-error">Capacity must be between 1 and 120 seats.</span>
+            <span class="form-error">{{ 'admin.buses.errCapacityRange' | translate }}</span>
           }
         </div>
 
@@ -396,11 +372,11 @@
           </label>
           <select id="busType" class="form-select" formControlName="busType">
             @for (type of coachTypes(); track type) {
-              <option [value]="type">{{ type }}</option>
+              <option [value]="type">{{ ('enums.coachType.' + type) | translate }}</option>
             }
           </select>
           @if (busForm.get('busType')?.touched && busForm.get('busType')?.errors?.['required']) {
-            <span class="form-error">Coach type is required.</span>
+            <span class="form-error">{{ 'admin.buses.errCoachTypeRequired' | translate }}</span>
           }
         </div>
 
@@ -413,7 +389,7 @@
           (click)="closeDialog()"
           [disabled]="saving()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="submit"
@@ -462,7 +438,7 @@
         (click)="closeDeleteDialog()"
         [disabled]="deleting()"
       >
-        Cancel
+        {{ 'admin.common.cancel' | translate }}
       </button>
       <button
         type="button"
@@ -508,7 +484,7 @@
 
           <div class="metric-item">
             <span>{{ 'admin.buses.coach' | translate }}</span>
-            <span class="metric-value">{{ selectedBusForSeats()?.busType || 'STANDARD' }}</span>
+            <span class="metric-value">{{ ( (selectedBusForSeats()?.busType || 'STANDARD')) | translate }}</span>
           </div>
         </div>
 
@@ -517,7 +493,9 @@
             type="button"
             class="btn-auto-generate"
             (click)="autoGenerateSeatsForCurrentBus()"
-            [disabled]="generatingSeats() || loadingSeats()"
+            [disabled]="generatingSeats() || loadingSeats() || currentBusSeats().length > 0"
+            [attr.title]="currentBusSeats().length > 0 ? ('admin.buses.seatsAlreadyGenerated' | translate) : ('admin.buses.autoGenerateSeats' | translate)"
+            [attr.aria-label]="currentBusSeats().length > 0 ? ('admin.buses.seatsAlreadyGenerated' | translate) : ('admin.buses.autoGenerateSeats' | translate)"
             id="admin-auto-generate-seats-btn"
           >
             @if (generatingSeats()) {
@@ -577,7 +555,7 @@
                 </div>
                 <div class="seat-card-footer">
                   <p-tag
-                    [value]="seat.seatType"
+                    [value]="( seat.seatType) | translate"
                     [severity]="getSeatTypeSeverity(seat.seatType)"
                     styleClass="seat-type-tag"
                   />
@@ -596,7 +574,7 @@
           (click)="closeSeatsDialog()"
           id="admin-seats-dialog-done-btn"
         >
-          Done
+          {{ 'admin.buses.done' | translate }}
         </button>
       </div>
 

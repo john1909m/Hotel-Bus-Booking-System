@@ -99,7 +99,7 @@
         </svg>
         <span>{{ errorMessage() }}</span>
       </div>
-      <button type="button" class="btn-retry" (click)="loadHotels()">{{ 'admin.common.refresh' | translate }}</button>
+      <button type="button" class="btn-retry" (click)="loadHotels()">{{ 'admin.hotelImages.retry' | translate }}</button>
     </div>
   }
 
@@ -200,7 +200,7 @@
         </p>
         <div class="empty-actions">
           @if (categoryFilter() !== 'ALL') {
-            <button type="button" class="btn-secondary" (click)="setFilter('ALL')">View All Images</button>
+            <button type="button" class="btn-secondary" (click)="setFilter('ALL')">{{ 'admin.hotelImages.viewAllImages' | translate }}</button>
           }
           <button type="button" class="btn-primary-action" (click)="openUploadDialog()">
             Upload First Image
@@ -278,14 +278,14 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '92vw', maxWidth: '580px' }"
-    [header]="'Upload Image — ' + (selectedHotel()?.name || 'Hotel')"
+    [header]="('admin.hotelImages.uploadImageFor' | translate) + ' — ' + (selectedHotel()?.name || ('admin.hotels.title' | translate))"
     (onHide)="closeUploadDialog()"
   >
     <form [formGroup]="uploadForm" (ngSubmit)="submitUpload()" class="upload-dialog-form" novalidate>
 
       <!-- 1. File Picker / Dropzone -->
       <div class="form-group full-width">
-        <label class="form-label required">Select Image File</label>
+        <label class="form-label required">{{ 'admin.hotelImages.selectImageFile' | translate }}</label>
 
         @if (!previewUrl()) {
           <label class="file-dropzone" for="image-file-input">
@@ -305,8 +305,8 @@
                   <line x1="12" y1="3" x2="12" y2="15"></line>
                 </svg>
               </div>
-              <span class="dropzone-prompt">Click or drag an image here</span>
-              <span class="dropzone-hint">Supported: JPEG, PNG, WebP (Max 5 MB)</span>
+              <span class="dropzone-prompt">{{ 'admin.hotelImages.dragDropPrompt' | translate }}</span>
+              <span class="dropzone-hint">{{ 'admin.hotelImages.supportedFormats' | translate }}</span>
             </div>
           </label>
         } @else {
@@ -333,7 +333,7 @@
 
       <!-- 2. Image Category Choice -->
       <div class="form-group full-width">
-        <label class="form-label required">Image Category</label>
+        <label class="form-label required">{{ 'admin.hotelImages.imageCategory' | translate }}</label>
         <div class="category-radio-group">
           <label class="radio-card" [class.selected]="uploadForm.get('categoryType')?.value === 'HOTEL'">
             <input
@@ -344,8 +344,8 @@
               [disabled]="uploading()"
             />
             <div class="radio-card-body">
-              <span class="radio-title">🏨 Hotel Gallery</span>
-              <span class="radio-sub">Lobby, exterior, pool, facade, amenities</span>
+              <span class="radio-title">🏨 {{ 'admin.hotelImages.gallery' | translate }}</span>
+              <span class="radio-sub">{{ 'admin.hotelImages.galleryCategoryDesc' | translate }}</span>
             </div>
           </label>
 
@@ -358,8 +358,8 @@
               [disabled]="uploading()"
             />
             <div class="radio-card-body">
-              <span class="radio-title">🛏️ Room Type</span>
-              <span class="radio-sub">Specific room interior, bathroom, view</span>
+              <span class="radio-title">🛏️ {{ 'admin.hotelImages.roomType' | translate }}</span>
+              <span class="radio-sub">{{ 'admin.hotelImages.roomCategoryDesc' | translate }}</span>
             </div>
           </label>
         </div>
@@ -368,7 +368,7 @@
       <!-- 3. Room Type Selector (conditional) -->
       @if (uploadForm.get('categoryType')?.value === 'ROOM') {
         <div class="form-group full-width">
-          <label for="upload-form-roomtype" class="form-label required">Select Room Type</label>
+          <label for="upload-form-roomtype" class="form-label required">{{ 'admin.hotelImages.selectRoomType' | translate }}</label>
 
           @if (availableRoomTypes().length > 0) {
             <select
@@ -377,7 +377,7 @@
               class="form-select w-full"
               [disabled]="uploading()"
             >
-              <option value="" disabled>-- Select a Room Type --</option>
+              <option value="" disabled>{{ 'admin.hotelImages.selectRoomType' | translate }}</option>
               @for (rtype of availableRoomTypes(); track rtype) {
                 <option [value]="rtype">{{ rtype }}</option>
               }
@@ -386,20 +386,20 @@
             <div class="warning-banner" role="status">
               <span class="warning-icon" aria-hidden="true">⚠️</span>
               <div class="warning-text">
-                <strong>No rooms found for this hotel!</strong>
-                <span>Please configure rooms in the Rooms Management module before uploading room-specific photography.</span>
+                <strong>{{ 'admin.hotelImages.noRoomsFound' | translate }}</strong>
+                <span>{{ 'admin.hotelImages.noRoomsDesc' | translate }}</span>
               </div>
             </div>
           }
           @if (uploadForm.get('roomType')?.invalid && uploadForm.get('roomType')?.touched) {
-            <small class="field-error">Please select a valid room type.</small>
+            <small class="field-error">{{ 'admin.hotelImages.errRoomTypeRequired' | translate }}</small>
           }
         </div>
       }
 
       <!-- 4. Display Sort Order -->
       <div class="form-group full-width">
-        <label for="upload-form-sort" class="form-label required">Sort Order</label>
+        <label for="upload-form-sort" class="form-label required">{{ 'admin.hotelImages.sortOrderLabel' | translate }}</label>
         <p-inputNumber
           id="upload-form-sort"
           formControlName="sortOrder"
@@ -407,9 +407,9 @@
           [max]="9999"
           class="w-full"
           [disabled]="uploading()"
-          placeholder="0 (lower numbers appear first)"
+          [placeholder]="'admin.hotelImages.phDisplayOrder' | translate"
         />
-        <small class="field-hint">Images are ordered by sort order ascending (0 appears first).</small>
+        <small class="field-hint">{{ 'admin.hotelImages.sortOrderDesc' | translate }}</small>
       </div>
 
       <!-- 5. Upload Progress State Banner -->
@@ -443,7 +443,7 @@
           (click)="closeUploadDialog()"
           [disabled]="uploading()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
 
         <button
@@ -453,9 +453,9 @@
         >
           @if (uploading()) {
             <span class="spinner-inline" aria-hidden="true"></span>
-            <span>Uploading…</span>
+            <span>{{ 'admin.hotelImages.uploading' | translate }}</span>
           } @else {
-            <span>Upload &amp; Save Image</span>
+            <span>{{ 'admin.hotelImages.uploadAndSave' | translate }}</span>
           }
         </button>
       </div>
@@ -470,7 +470,7 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '92vw', maxWidth: '440px' }"
-    [header]="'admin.hotelImages.confirmDeleteTitle' | translate"
+    [header]="'admin.hotelImages.deleteConfirmHeader' | translate"
     (onHide)="cancelDelete()"
   >
     <div class="delete-confirmation-body">
@@ -483,12 +483,12 @@
       </div>
 
       <p class="delete-confirmation-text">
-        Are you sure you want to permanently delete image
+        {{ 'admin.hotelImages.deletePrompt' | translate }}
         <strong>#{{ imageToDelete()?.id }}</strong>
         @if (imageToDelete()?.roomType) {
           (Room: {{ imageToDelete()?.roomType }})
         } @else {
-          (Hotel Gallery)
+          ({{ 'admin.hotelImages.gallery' | translate }})
         }?
       </p>
 
@@ -509,7 +509,7 @@
           (click)="cancelDelete()"
           [disabled]="deleting()"
         >
-          Cancel
+          {{ 'admin.common.cancel' | translate }}
         </button>
         <button
           type="button"
@@ -519,9 +519,9 @@
         >
           @if (deleting()) {
             <span class="spinner-inline" aria-hidden="true"></span>
-            <span>Deleting…</span>
+            <span>{{ 'admin.hotelImages.deleting' | translate }}</span>
           } @else {
-            <span>Delete Image</span>
+            <span>{{ 'admin.hotelImages.deleteImage' | translate }}</span>
           }
         </button>
       </div>
