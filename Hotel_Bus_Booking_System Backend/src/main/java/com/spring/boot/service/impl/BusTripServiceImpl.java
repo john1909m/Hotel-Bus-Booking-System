@@ -179,6 +179,7 @@ public class BusTripServiceImpl implements BusTripService {
         existingBusTrip.setDepartureTime(departureTime);
         existingBusTrip.setArrivalTime(arrivalTime);
         existingBusTrip.setPrice(busTripRequestDto.getPrice());
+        existingBusTrip.setStatus(busTripRequestDto.getStatus());
 
         // Save bus trip
         BusTrip updatedBusTrip = busTripRepository.save(existingBusTrip);

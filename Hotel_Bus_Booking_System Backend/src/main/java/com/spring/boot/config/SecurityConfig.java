@@ -108,8 +108,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/payments/bus-booking/**").permitAll()
 
                         // Customer endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/hotel-bookings").hasRole("USER")
-                        .requestMatchers(HttpMethod.POST, "/api/bus-bookings").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/api/hotel-bookings").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/bus-bookings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/api/hotel-bookings/user/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/bus-bookings/user/**").authenticated()
