@@ -79,6 +79,7 @@ export class BookingStateService {
   readonly hideTriggerOnPayment = signal<boolean>(false);
   readonly resumeSummaryAfterLogin = signal<boolean>(false);
   readonly editingBookingId = signal<number | null>(null);
+  readonly originalBookingTotalPrice = signal<number | null>(null);
 
   // Single Source of Truth for stay dates and guest party
   readonly checkIn = signal<string>('');
@@ -103,6 +104,22 @@ export class BookingStateService {
 
   // Backward-compatibility alias
   readonly isSummaryPopupOpen = this.summaryOpen;
+
+  /**
+   * Evaluates whether stay dates are fully valid: both present, check-out after check-in, check-in not in past.
+   */
+  readonly hasValidStayDates = computed<boolean>(() => {
+    const inStr = (this.checkIn() || this.hotelBooking()?.checkIn || '').trim();
+    const outStr = (this.checkOut() || this.hotelBooking()?.checkOut || '').trim();
+    if (!inStr || !outStr) return false;
+    const dIn = this.parseLocalDate(inStr);
+    const dOut = this.parseLocalDate(outStr);
+    const today = this.parseLocalDate(this.getTodayString());
+    if (!dIn || isNaN(dIn.getTime()) || !dOut || isNaN(dOut.getTime())) return false;
+    if (today && dIn.getTime() < today.getTime()) return false;
+    if (dOut.getTime() <= dIn.getTime()) return false;
+    return true;
+  });
 
   // Computed properties
   readonly hasHotel = computed<boolean>(() => {
@@ -133,6 +150,9 @@ export class BookingStateService {
   });
 
   readonly canContinueToPayment = computed<boolean>(() => {
+    if (this.hasHotel() && !this.hasValidStayDates()) {
+      return false;
+    }
     return this.hasHotel() || this.hasTransportation();
   });
 
@@ -163,6 +183,26 @@ export class BookingStateService {
 
   readonly totalCombinedPrice = computed<number>(() => {
     return this.hotelPrice() + this.transportationPrice();
+  });
+
+  readonly priceDelta = computed<number>(() => {
+    const orig = this.originalBookingTotalPrice();
+    if (orig === null || orig === undefined || !this.editingBookingId()) {
+      return 0;
+    }
+    const currentTotal = this.totalCombinedPrice();
+    return Math.round((currentTotal - orig) * 100) / 100;
+  });
+
+  readonly additionalAmountDue = computed<number>(() => {
+    return Math.max(0, this.priceDelta());
+  });
+
+  readonly effectivePayableAmount = computed<number>(() => {
+    if (this.editingBookingId() && this.originalBookingTotalPrice() !== null) {
+      return this.additionalAmountDue();
+    }
+    return this.totalCombinedPrice();
   });
 
   readonly selectedRoomsCount = computed<number>(() => {
@@ -643,6 +683,7 @@ export class BookingStateService {
     this.hideTriggerOnPayment.set(false);
     this.resumeSummaryAfterLogin.set(false);
     this.editingBookingId.set(null);
+    this.originalBookingTotalPrice.set(null);
     this.clearStorage();
     this.stayDatesChanged$.next({ checkIn: '', checkOut: '' });
     this.guestsChanged$.next({ adults: 2, children: [] });
@@ -653,6 +694,21 @@ export class BookingStateService {
    */
   setEditingBookingId(id: number | null): void {
     this.editingBookingId.set(id);
+    if (!id) {
+      this.originalBookingTotalPrice.set(null);
+    }
+  }
+
+  /**
+   * Sets the active editing booking ID and its stored original total price.
+   */
+  setEditingBooking(id: number | null, originalTotalPrice: number | null = null): void {
+    this.editingBookingId.set(id);
+    this.originalBookingTotalPrice.set(originalTotalPrice);
+  }
+
+  setOriginalBookingTotalPrice(price: number | null): void {
+    this.originalBookingTotalPrice.set(price);
   }
 
   /**

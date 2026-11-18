@@ -320,7 +320,11 @@ export class PaymentCheckoutComponent {
     booking$.subscribe({
       next: (createdOrUpdatedHotel) => {
         if (editId) {
-          this.state.setEditingBookingId(null);
+          this.hotelBookingService.saveGuestBreakdown(editId, {
+            adults: hb.adultsCount,
+            childAges,
+          });
+          this.state.setEditingBooking(null, null);
         }
         this.finalizeSuccess(createdOrUpdatedHotel, createdBuses);
       },

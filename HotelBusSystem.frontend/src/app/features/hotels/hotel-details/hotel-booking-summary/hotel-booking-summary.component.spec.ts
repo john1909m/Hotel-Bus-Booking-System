@@ -11,6 +11,7 @@ import { BusTripService } from '../../../../core/services/bus-trip.service';
 import { BusService } from '../../../../core/services/bus.service';
 import { BusBookingService } from '../../../../core/services/bus-booking.service';
 import { HotelBusStopService } from '../../../../core/services/hotel-bus-stop.service';
+import { HotelBookingService } from '../../../../core/services/hotel-booking.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
@@ -23,6 +24,7 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
   let mockBusService: any;
   let mockBusBookingService: any;
   let mockHotelBusStopService: any;
+  let mockHotelBookingService: any;
   let mockAuthService: any;
 
   const mockHotel = {
@@ -120,6 +122,11 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
       isAuthenticated: vi.fn().mockReturnValue(true),
     };
 
+    mockHotelBookingService = {
+      updateHotelBooking: vi.fn().mockReturnValue(of({ id: 999 })),
+      saveGuestBreakdown: vi.fn(),
+    };
+
     const injector = Injector.create({
       providers: [
         { provide: Router, useValue: mockRouter },
@@ -129,6 +136,7 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
         { provide: BusService, useValue: mockBusService },
         { provide: BusBookingService, useValue: mockBusBookingService },
         { provide: HotelBusStopService, useValue: mockHotelBusStopService },
+        { provide: HotelBookingService, useValue: mockHotelBookingService },
         { provide: AuthService, useValue: mockAuthService },
         BookingStateService,
         HotelBookingSummaryComponent,
@@ -275,5 +283,59 @@ describe('HotelBookingSummaryComponent - Date Picker & Bus Suggestions', () => {
     expect(component.canContinueToPayment()).toBe(true);
     expect(bookingState.transportationPrice()).toBe(350);
     expect(bookingState.totalCombinedPrice()).toBe(350);
+  });
+
+  describe('Group 3: Edit Mode Price Delta & Save Changes', () => {
+    it('calculates positive price delta and requires payment when revised total exceeds original total', () => {
+      // Set editing booking with original price 3600
+      bookingState.setEditingBooking(999, 3600);
+      component.editingBookingId = 999;
+      component.isEditMode = true;
+
+      // Current stay cost in bookingState is 3600
+      expect(component.effectiveOriginalTotalPrice()).toBe(3600);
+      expect(component.priceDelta()).toBe(0);
+      expect(component.isNoPaymentDue()).toBe(true);
+
+      // Add a second room to bookingState to increase stay cost to 5000 (3 nights * (1200 + 466.67))
+      bookingState.hotelBooking.set({
+        ...bookingState.hotelBooking()!,
+        selectedRooms: [
+          { id: 101, roomNumber: '101', roomType: 'DELUXE', capacity: 2, pricePerNight: 1200 } as any,
+          { id: 102, roomNumber: '102', roomType: 'STANDARD', capacity: 2, pricePerNight: 500 } as any,
+        ],
+        totalHotelPrice: 5100,
+      });
+
+      expect(component.priceDelta()).toBe(1500);
+      expect(component.additionalAmountDue()).toBe(1500);
+      expect(component.isNoPaymentDue()).toBe(false);
+    });
+
+    it('identifies no additional payment due and allows saving changes when price does not increase', () => {
+      // Set editing booking with original price 3600
+      bookingState.setEditingBooking(999, 3600);
+      component.editingBookingId = 999;
+      component.isEditMode = true;
+      component.totalStayCost = 3600;
+
+      expect(component.priceDelta()).toBe(0);
+      expect(component.additionalAmountDue()).toBe(0);
+      expect(component.isNoPaymentDue()).toBe(true);
+
+      // Invoke onSaveChanges
+      component.onSaveChanges();
+
+      expect(mockHotelBookingService.updateHotelBooking).toHaveBeenCalledWith(999, expect.objectContaining({
+        checkIn: '2026-11-05',
+        checkOut: '2026-11-08',
+      }));
+      expect(mockHotelBookingService.saveGuestBreakdown).toHaveBeenCalledWith(999, expect.objectContaining({
+        adults: 2,
+      }));
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/user/hotel-bookings'], {
+        queryParams: { updatedBookingId: 999 },
+      });
+    });
   });
 });

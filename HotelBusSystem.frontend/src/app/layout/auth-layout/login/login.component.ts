@@ -75,6 +75,7 @@ export class LoginComponent {
       next: (response) => {
         this.isSubmitting.set(false);
         const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        console.log(returnUrl);
         if (returnUrl) {
           this.router.navigateByUrl(returnUrl);
         } else if (response.role === 'ADMIN') {

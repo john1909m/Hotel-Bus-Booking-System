@@ -329,6 +329,24 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       expect(service.hasTransportation()).toBe(false);
       expect(service.canContinueToPayment()).toBe(false);
 
+      // Hotel without dates should have hasValidStayDates = false and canContinueToPayment = false
+      service.hotelBooking.set({
+        hotel: { id: 1, name: 'Hotel Cairo' } as any,
+        selectedRooms: [{ id: 201, roomNumber: '201', pricePerNight: 500 } as any],
+        checkIn: '',
+        checkOut: '',
+        stayNights: 0,
+        adultsCount: 2,
+        children: [],
+        totalHotelPrice: 0,
+      });
+      expect(service.hasHotel()).toBe(true);
+      expect(service.hasValidStayDates()).toBe(false);
+      expect(service.canContinueToPayment()).toBe(false);
+
+      // Valid stay dates set
+      service.checkIn.set('2026-12-01');
+      service.checkOut.set('2026-12-03');
       service.hotelBooking.set({
         hotel: { id: 1, name: 'Hotel Cairo' } as any,
         selectedRooms: [{ id: 201, roomNumber: '201', pricePerNight: 500 } as any],
@@ -340,9 +358,24 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
         totalHotelPrice: 1000,
       });
       expect(service.hasHotel()).toBe(true);
+      expect(service.hasValidStayDates()).toBe(true);
       expect(service.canContinueToPayment()).toBe(true);
       expect(service.hotelPrice()).toBe(1000);
       expect(service.totalCombinedPrice()).toBe(1000);
+    });
+
+    it('hasValidStayDates rejects invalid stay dates order or past check-in', () => {
+      service.checkIn.set('2020-01-01');
+      service.checkOut.set('2020-01-05');
+      expect(service.hasValidStayDates()).toBe(false);
+
+      service.checkIn.set('2026-12-05');
+      service.checkOut.set('2026-12-01');
+      expect(service.hasValidStayDates()).toBe(false);
+
+      service.checkIn.set('2026-12-01');
+      service.checkOut.set('2026-12-05');
+      expect(service.hasValidStayDates()).toBe(true);
     });
 
     it('setting transport does not modify hotel stay dates or hotel total', () => {

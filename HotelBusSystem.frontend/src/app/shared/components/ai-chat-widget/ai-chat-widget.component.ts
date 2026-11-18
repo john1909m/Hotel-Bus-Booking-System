@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, NavigationStart } from '@angular/router';
 import { firstValueFrom, of, catchError, forkJoin, Subscription, filter } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AiChatService } from '../../../core/services/ai-chat.service';
@@ -28,6 +29,7 @@ import { BusTripService } from '../../../core/services/bus-trip.service';
 import { HotelBusStopService } from '../../../core/services/hotel-bus-stop.service';
 import { BookingStateService } from '../../../core/services/booking-state.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { SpeechInputService } from '../../../core/services/speech-input.service';
 
 import {
@@ -84,7 +86,7 @@ export interface InChatBusBooking {
 @Component({
   selector: 'app-ai-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, BusSeatSelectionComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, BusSeatSelectionComponent, TranslatePipe],
   templateUrl: './ai-chat-widget.component.html',
   styleUrl: './ai-chat-widget.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +103,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
   protected readonly hotelBusStopService = inject(HotelBusStopService);
   protected readonly bookingState = inject(BookingStateService);
   protected readonly authService = inject(AuthService);
+  protected readonly hotelBookingService = inject(HotelBookingService);
   protected readonly speechService = inject(SpeechInputService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService, { optional: true });
@@ -185,12 +188,44 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
     });
   }
 
-  async confirmDraft(draft: BookingDraftResponse): Promise<void> {
+  // Payment Method Selection Modal State (Group 2)
+  readonly paymentModalVisible = signal<boolean>(false);
+  readonly selectedPaymentMethod = signal<'CREDIT_CARD' | 'DEBIT_CARD' | 'PAYPAL' | 'BANK_TRANSFER' | null>(null);
+  readonly pendingDraftToConfirm = signal<BookingDraftResponse | null>(null);
+
+  readonly paymentMethodOptions = [
+    { value: 'CREDIT_CARD', labelKey: 'enums.paymentMethod.CREDIT_CARD', icon: '💳' },
+    { value: 'DEBIT_CARD', labelKey: 'enums.paymentMethod.DEBIT_CARD', icon: '💳' },
+    { value: 'PAYPAL', labelKey: 'enums.paymentMethod.PAYPAL', icon: '🅿️' },
+    { value: 'BANK_TRANSFER', labelKey: 'enums.paymentMethod.BANK_TRANSFER', icon: '🏦' },
+  ] as const;
+
+  confirmDraft(draft: BookingDraftResponse): void {
     if (!this.authService.isAuthenticated()) {
       this.redirectToLogin();
       return;
     }
+    this.pendingDraftToConfirm.set(draft);
+    this.selectedPaymentMethod.set(null);
+    this.paymentModalVisible.set(true);
+  }
 
+  onCancelPaymentMethod(): void {
+    this.paymentModalVisible.set(false);
+    this.pendingDraftToConfirm.set(null);
+    this.selectedPaymentMethod.set(null);
+  }
+
+  async onConfirmPaymentMethod(): Promise<void> {
+    const method = this.selectedPaymentMethod();
+    const draft = this.pendingDraftToConfirm();
+    if (!method || !draft) return;
+
+    this.paymentModalVisible.set(false);
+    await this.executeDraftConfirmation(draft, method);
+  }
+
+  async executeDraftConfirmation(draft: BookingDraftResponse, _selectedMethod: string): Promise<void> {
     const draftId = draft.id;
     const key = this.getIdempotencyKey(draftId);
     this.clearDraftError(draftId);
@@ -201,12 +236,19 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
       draft.bookingId = draft.bookingId || Math.floor(Math.random() * 8000) + 1000;
       this.confirmingDraftId.set(null);
 
+      const bookingId = draft.bookingId;
+      if (bookingId) {
+        const adults = draft.adults || 1;
+        const childAges = draft.childAges || [];
+        this.hotelBookingService.saveGuestBreakdown(bookingId, { adults, childAges });
+      }
+
       this.aiChatService.messages.update((list) => [
         ...list,
         {
           id: this.generateUUID(),
           sender: 'assistant',
-          text: `✅ Booking submitted successfully! Hotel Reference: #${draft.bookingId}. Your reservation is currently under administrative review (PENDING). An administrator will review and confirm your booking.`,
+          text: `✅ ${this.tr('aiChat.hotelWizard.bookingConfirmed', {}, 'Booking submitted successfully!')} ${this.tr('aiChat.draftCard.hotelBookingRef', { id: draft.bookingId }, 'Hotel Reference: #' + draft.bookingId)}. ${this.tr('aiChat.draftCard.pendingNotice', {}, 'Your reservation is currently under administrative review (PENDING).')}`,
           timestamp: new Date(),
           isMock: true,
         }
@@ -225,6 +267,14 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
       draft.busBookingIds = response.busBookingIds;
       this.confirmingDraftId.set(null);
 
+      const bookingId = response.bookingId || draft.bookingId;
+      if (bookingId) {
+        const s = this.hotelBookingState();
+        const adults = response.adults || draft.adults || (s?.adults ?? 1);
+        const childAges = response.childAges || draft.childAges || (s?.childAges ?? []);
+        this.hotelBookingService.saveGuestBreakdown(bookingId, { adults, childAges });
+      }
+
       const busRefText = response.busBookingIds && response.busBookingIds.length > 0
         ? ` | Bus Reference(s): #${response.busBookingIds.join(', #')}`
         : '';
@@ -234,7 +284,7 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
         {
           id: this.generateUUID(),
           sender: 'assistant',
-          text: `✅ Booking submitted successfully! Hotel Reference: #${response.bookingId || response.id}${busRefText}. Your reservation is currently under administrative review (PENDING). An administrator will review and confirm your booking.`,
+          text: `✅ ${this.tr('aiChat.hotelWizard.bookingConfirmed', {}, 'Booking submitted successfully!')} ${this.tr('aiChat.draftCard.hotelBookingRef', { id: response.bookingId || response.id }, 'Hotel Reference: #' + (response.bookingId || response.id))}${busRefText}. ${this.tr('aiChat.draftCard.pendingNotice', {}, 'Your reservation is currently under administrative review (PENDING).')}`,
           timestamp: new Date(),
           isMock: false,
         }
@@ -1225,10 +1275,10 @@ export class AiChatWidgetComponent implements OnInit, AfterViewChecked, OnDestro
     }
   }
 
-  async confirmHotelBooking(): Promise<void> {
+  confirmHotelBooking(): void {
     const s = this.hotelBookingState();
     if (!s || !s.draft) return;
-    await this.confirmDraft(s.draft);
+    this.confirmDraft(s.draft);
   }
 
   editHotelBookingDates(): void {

@@ -832,19 +832,56 @@
           </div>
         }
 
+        <!-- Edit Mode Price Delta Display (shows only the difference for changes) -->
+        @if (activeIsEditMode && effectiveOriginalTotalPrice() !== null) {
+          <div class="edit-mode-delta-card" [class.delta-due]="priceDelta() > 0" [class.no-delta]="priceDelta() <= 0">
+            <div class="delta-header">
+              <span class="delta-header-title">{{ 'summary.editModeHeading' | translate }}</span>
+              <span class="delta-badge" [class.badge-warning]="priceDelta() > 0" [class.badge-success]="priceDelta() <= 0">
+                {{ priceDelta() > 0 ? ('summary.additionalPaymentRequired' | translate) : ('summary.noAdditionalPaymentDue' | translate) }}
+              </span>
+            </div>
+            <div class="delta-rows">
+              <div class="delta-row">
+                <span>{{ 'summary.originalBookingTotal' | translate }}</span>
+                <strong>{{ effectiveOriginalTotalPrice() | number:'1.2-2' }} EGP</strong>
+              </div>
+              <div class="delta-row">
+                <span>{{ 'summary.revisedBookingTotal' | translate }}</span>
+                <strong>{{ ((effectiveTotalStayCost() || 0) + bookingState.transportationPrice()) | number:'1.2-2' }} EGP</strong>
+              </div>
+              <div class="delta-row delta-highlight-row">
+                <span>{{ priceDelta() > 0 ? ('summary.additionalAmountDue' | translate) : ('summary.noPaymentDueLabel' | translate) }}</span>
+                <strong class="delta-final-amount">{{ additionalAmountDue() | number:'1.2-2' }} EGP</strong>
+              </div>
+            </div>
+          </div>
+        }
+
         <div class="price-separator"></div>
 
         <div class="grand-total-block">
           <div class="grand-total-labels">
             <span class="total-label">
-              {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotal' | translate) : ('summary.totalEstimatedStay' | translate)) : ('summary.transportationTotal' | translate) }}
+              @if (activeIsEditMode && effectiveOriginalTotalPrice() !== null) {
+                {{ priceDelta() > 0 ? ('summary.additionalAmountDue' | translate) : ('summary.amountDueNow' | translate) }}
+              } @else {
+                {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotal' | translate) : ('summary.totalEstimatedStay' | translate)) : ('summary.transportationTotal' | translate) }}
+              }
             </span>
             <small class="total-note">
-              {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotalNote' | translate) : ('summary.totalEstimatedStayNote' | translate)) : ('summary.transportationTotalNote' | translate) }}
+              @if (activeIsEditMode && effectiveOriginalTotalPrice() !== null) {
+                {{ priceDelta() > 0 ? ('summary.additionalAmountDueNote' | translate) : ('summary.noAdditionalPaymentNote' | translate) }}
+              } @else {
+                {{ hasHotel() ? (bookingState.hasTransportation() ? ('summary.grandTotalNote' | translate) : ('summary.totalEstimatedStayNote' | translate)) : ('summary.transportationTotalNote' | translate) }}
+              }
             </small>
           </div>
           <div class="grand-total-amount">
-            @if (hasHotel()) {
+            @if (activeIsEditMode && effectiveOriginalTotalPrice() !== null) {
+              <span class="total-number">{{ additionalAmountDue() | number:'1.2-2' }}</span>
+              <span class="total-currency">EGP</span>
+            } @else if (hasHotel()) {
               @if (effectiveStayNights() !== null && (effectiveStayNights() || 0) > 0 && effectiveTotalStayCost() !== null) {
                 <span class="total-number">{{ (effectiveTotalStayCost()! + bookingState.transportationPrice()) | number:'1.2-2' }}</span>
                 <span class="total-currency">EGP</span>
@@ -912,21 +949,50 @@
 
       <!-- Action Buttons -->
       <div class="drawer-actions-stack">
-        <button
-          pButton
-          type="button"
-          id="btn-drawer-continue-payment"
-          class="btn-drawer-submit"
-          severity="primary"
-          [disabled]="!canContinueToPayment() || isSubmitting || (hasHotel() && (!canSubmit || validationErrors.length > 0))"
-          (click)="onContinueToPayment()"
-          [attr.aria-label]="'summary.continueToPaymentAria' | translate">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-            <line x1="1" y1="10" x2="23" y2="10"></line>
-          </svg>
-          <span>{{ 'summary.continueToPayment' | translate }}</span>
-        </button>
+        @if (activeIsEditMode && isNoPaymentDue()) {
+          <button
+            pButton
+            type="button"
+            id="btn-drawer-save-changes"
+            class="btn-drawer-submit btn-save-changes"
+            severity="success"
+            [disabled]="(hasHotel() && !hasValidStayDates()) || isSubmitting || (hasHotel() && (!canSubmit || validationErrors.length > 0))"
+            (click)="onSaveChanges()"
+            [attr.aria-label]="'summary.saveChangesAria' | translate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            @if (isSubmitting) {
+              <span>{{ 'summary.savingChanges' | translate }}</span>
+            } @else {
+              <span>{{ 'summary.saveChanges' | translate }}</span>
+            }
+          </button>
+        } @else {
+          <button
+            pButton
+            type="button"
+            id="btn-drawer-continue-payment"
+            class="btn-drawer-submit"
+            severity="primary"
+            [disabled]="!canContinueToPayment() || (hasHotel() && !hasValidStayDates()) || isSubmitting || (hasHotel() && (!canSubmit || validationErrors.length > 0))"
+            (click)="onContinueToPayment()"
+            [attr.aria-label]="'summary.continueToPaymentAria' | translate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span>{{ 'summary.continueToPayment' | translate }}</span>
+          </button>
+        }
+
+        @if (hasHotel() && !hasValidStayDates()) {
+          <p class="dates-required-hint" role="status">
+            {{ 'summary.selectDatesToContinueHint' | translate }}
+          </p>
+        }
 
         <button
           pButton

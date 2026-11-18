@@ -54,7 +54,7 @@ export class RegisterComponent {
   private static validatePhone(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
     const clean = String(control.value).replace(/\s+/g, '');
-    const valid = /^\+?[0-9]{10,15}$/.test(clean);
+    const valid = /^\+?[0-9]{11,15}$/.test(clean);
     return valid ? null : { pattern: true };
   }
 
@@ -85,9 +85,9 @@ export class RegisterComponent {
       next: () => {
         this.isSubmitting.set(false);
         // Backend /signup does NOT set HttpOnly session cookie, so user must log in.
-        this.router.navigate(['/login'], {
-          queryParams: { registered: 'true' },
-        });
+        // this.router.navigate(['/login'], {
+        //   queryParams: { registered: 'true' },
+        // });
       },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting.set(false);

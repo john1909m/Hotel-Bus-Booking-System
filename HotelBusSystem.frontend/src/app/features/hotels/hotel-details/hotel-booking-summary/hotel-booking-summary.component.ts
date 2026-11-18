@@ -11,12 +11,13 @@ import {
   untracked,
   OnInit,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom, of, catchError, forkJoin } from 'rxjs';
+import { firstValueFrom, of, catchError, forkJoin, Subject, takeUntil } from 'rxjs';
 
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
@@ -33,10 +34,12 @@ import { BusTripService } from '../../../../core/services/bus-trip.service';
 import { BusService } from '../../../../core/services/bus.service';
 import { BusBookingService } from '../../../../core/services/bus-booking.service';
 import { HotelBusStopService } from '../../../../core/services/hotel-bus-stop.service';
+import { HotelBookingService } from '../../../../core/services/hotel-booking.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BookingStateService } from '../../../../core/services/booking-state.service';
 
 import { HotelDTO } from '../../../../core/models/Hotel/hotel.model';
+import { HotelBookingRequestDTO } from '../../../../core/models/Hotel/hotel-booking.model';
 import { RoomDTO, roomType } from '../../../../core/models/Room/room.model';
 import { BusStopDto } from '../../../../core/models/Bus/bus-stop.model';
 import { BusRouteDTO } from '../../../../core/models/Bus/bus-route';
@@ -93,11 +96,13 @@ export interface BusStopOption {
   styleUrl: './hotel-booking-summary.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HotelBookingSummaryComponent implements OnInit, OnChanges {
+export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestroy {
   readonly bookingState = inject(BookingStateService);
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService, { optional: true });
+  private readonly hotelBookingService = inject(HotelBookingService);
+  private readonly destroy$ = new Subject<void>();
 
   private readonly busStopService = inject(BusStopService);
   private readonly busRouteService = inject(BusRouteService);
@@ -134,6 +139,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
   @Input() isAdultsIncreaseDisabled = false;
   @Input() isEditMode = false;
   @Input() editingBookingId: number | null = null;
+  @Input() originalTotalPrice: number | null = null;
 
   get activeEditingBookingId(): number | null {
     return this.editingBookingId ?? this.bookingState.editingBookingId();
@@ -256,8 +262,36 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
     return this.bookingState.hasHotel();
   });
 
+  readonly hasValidStayDates = computed<boolean>(() => {
+    return this.bookingState.hasValidStayDates();
+  });
+
   readonly canContinueToPayment = computed<boolean>(() => {
     return this.bookingState.canContinueToPayment();
+  });
+
+  readonly effectiveOriginalTotalPrice = computed<number | null>(() => {
+    if (this.originalTotalPrice !== null && this.originalTotalPrice !== undefined) {
+      return this.originalTotalPrice;
+    }
+    return this.bookingState.originalBookingTotalPrice();
+  });
+
+  readonly priceDelta = computed<number>(() => {
+    const orig = this.effectiveOriginalTotalPrice();
+    if (orig === null || orig === undefined || !this.activeIsEditMode) {
+      return 0;
+    }
+    const currentTotal = (this.effectiveTotalStayCost() || 0) + this.bookingState.transportationPrice();
+    return Math.round((currentTotal - orig) * 100) / 100;
+  });
+
+  readonly additionalAmountDue = computed<number>(() => {
+    return Math.max(0, this.priceDelta());
+  });
+
+  readonly isNoPaymentDue = computed<boolean>(() => {
+    return this.activeIsEditMode && this.effectiveOriginalTotalPrice() !== null && this.priceDelta() <= 0;
   });
 
   // ── Transportation State ────────────────────────────────────
@@ -330,6 +364,11 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
     if ((changes['checkIn'] || changes['checkOut']) && this.selectedOriginStopId()) {
       this.fetchRecommendations();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onDrawerVisibleChange(val: boolean): void {
@@ -924,6 +963,55 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
   // ── Stage D Actions ─────────────────────────────────────────
   onSubmit(): void {
     this.submitBooking.emit();
+  }
+
+  onSaveChanges(): void {
+    const editId = this.activeEditingBookingId;
+    if (!editId) return;
+
+    const rooms = this.effectiveRooms();
+    const roomIds = rooms.map((r) => r.id);
+    const children = this.effectiveChildren();
+    const childAges: number[] = children
+      .map((c) => c.age)
+      .filter((a): a is number => typeof a === 'number');
+    const adults = this.effectiveAdultsCount();
+    const checkIn = this.effectiveCheckIn();
+    const checkOut = this.effectiveCheckOut();
+
+    const payload: HotelBookingRequestDTO = {
+      checkIn,
+      checkOut,
+      guests: adults + childAges.length,
+      adults,
+      childAges,
+      roomId: roomIds[0],
+      roomIds,
+    };
+
+    this.isSubmitting = true;
+    this.errorMessage = null;
+
+    this.hotelBookingService
+      .updateHotelBooking(editId, payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.hotelBookingService.saveGuestBreakdown(editId, { adults, childAges });
+          this.bookingState.setEditingBooking(null, null);
+          this.bookingState.clearSummary();
+          this.closeDrawer();
+          this.submitBooking.emit();
+          this.router.navigate(['/user/hotel-bookings'], {
+            queryParams: { updatedBookingId: editId },
+          });
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.errorMessage = err?.message || 'Failed to update booking. Please verify availability and try again.';
+        },
+      });
   }
 
   onContinueToPayment(): void {

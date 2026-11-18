@@ -1996,3 +1996,223 @@
     max-height: none;
   }
 }
+
+/* ─── AI Payment Method Selection Dialog ────────────────── */
+:host ::ng-deep .ai-payment-dialog .p-dialog {
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+:host ::ng-deep .ai-payment-dialog .p-dialog-header {
+  padding: 16px 20px;
+  background: var(--bg-surface, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+:host ::ng-deep .ai-payment-dialog .p-dialog-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-main, #0f172a);
+}
+
+:host ::ng-deep .ai-payment-dialog .p-dialog-content {
+  padding: 18px 20px;
+  background: var(--bg-surface, #ffffff);
+}
+
+:host ::ng-deep .ai-payment-dialog .p-dialog-footer {
+  padding: 14px 20px;
+  background: var(--bg-subtle, #f8fafc);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.ai-payment-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payment-modal-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.45;
+}
+
+.payment-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-method-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.payment-method-option:hover {
+  border-color: var(--color-primary, #009B77);
+  background: rgba(0, 155, 119, 0.04);
+}
+
+.payment-method-option.selected {
+  border-color: var(--color-primary, #009B77);
+  background: rgba(0, 155, 119, 0.08);
+  box-shadow: 0 0 0 1px var(--color-primary, #009B77);
+}
+
+.payment-radio-input {
+  accent-color: var(--color-primary, #009B77);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.payment-method-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-method-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
+}
+
+.payment-modal-notice {
+  margin: 0;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.payment-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-modal-cancel {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: transparent;
+  color: var(--text-main, #475569);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.btn-modal-confirm {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary, #009B77);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-confirm:hover:not(:disabled) {
+  background: #008767;
+}
+
+.btn-modal-confirm:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Dark mode overrides for payment dialog */
+[data-theme="dark"] :host ::ng-deep .ai-payment-dialog .p-dialog {
+  background: var(--bg-surface, #1e293b);
+  border-color: #334155;
+}
+
+[data-theme="dark"] :host ::ng-deep .ai-payment-dialog .p-dialog-header {
+  background: var(--bg-surface, #1e293b);
+  border-color: #334155;
+}
+
+[data-theme="dark"] :host ::ng-deep .ai-payment-dialog .p-dialog-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] :host ::ng-deep .ai-payment-dialog .p-dialog-content {
+  background: var(--bg-surface, #1e293b);
+}
+
+[data-theme="dark"] :host ::ng-deep .ai-payment-dialog .p-dialog-footer {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .payment-modal-desc {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .payment-method-option {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+[data-theme="dark"] .payment-method-option:hover {
+  background: rgba(0, 155, 119, 0.15);
+}
+
+[data-theme="dark"] .payment-method-option.selected {
+  border-color: var(--color-primary, #009B77);
+  background: rgba(0, 155, 119, 0.2);
+}
+
+[data-theme="dark"] .payment-method-label {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .payment-modal-notice {
+  background: rgba(22, 101, 52, 0.2);
+  border-color: rgba(22, 101, 52, 0.4);
+  color: #86efac;
+}
+
+[data-theme="dark"] .btn-modal-cancel {
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .btn-modal-cancel:hover {
+  background: #334155;
+  color: #ffffff;
+}

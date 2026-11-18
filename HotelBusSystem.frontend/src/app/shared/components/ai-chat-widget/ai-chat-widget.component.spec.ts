@@ -15,6 +15,7 @@ import { BusRouteService } from '../../../core/services/bus-route.service';
 import { BusTripService } from '../../../core/services/bus-trip.service';
 import { HotelBusStopService } from '../../../core/services/hotel-bus-stop.service';
 import { BookingStateService } from '../../../core/services/booking-state.service';
+import { HotelBookingService } from '../../../core/services/hotel-booking.service';
 import { SpeechInputService } from '../../../core/services/speech-input.service';
 import { SpeechLanguage } from '../../../core/models/speech-recognition.model';
 import { BookingDraftResponse } from '../../../core/models/AI Assistant/BookingDraft.model';
@@ -33,6 +34,7 @@ describe('AiChatWidgetComponent', () => {
   let mockBusTripService: any;
   let mockHotelBusStopService: any;
   let mockBookingStateService: any;
+  let mockHotelBookingService: any;
   let mockSpeechInputService: any;
 
   beforeEach(() => {
@@ -162,6 +164,11 @@ describe('AiChatWidgetComponent', () => {
       mapErrorCodeToMessage: vi.fn().mockReturnValue('Mock error'),
     };
 
+    mockHotelBookingService = {
+      saveGuestBreakdown: vi.fn(),
+      getGuestBreakdown: vi.fn().mockReturnValue(null),
+    };
+
     const injector = Injector.create({
       providers: [
         { provide: Router, useValue: mockRouter },
@@ -176,6 +183,7 @@ describe('AiChatWidgetComponent', () => {
         { provide: BusTripService, useValue: mockBusTripService },
         { provide: HotelBusStopService, useValue: mockHotelBusStopService },
         { provide: BookingStateService, useValue: mockBookingStateService },
+        { provide: HotelBookingService, useValue: mockHotelBookingService },
         { provide: SpeechInputService, useValue: mockSpeechInputService },
         AiChatWidgetComponent,
       ],
@@ -211,7 +219,7 @@ describe('AiChatWidgetComponent', () => {
       expect(draft.status).toBe('CREATED');
     });
 
-    it('authenticated user clicking confirmDraft should send idempotency key and update status to CONFIRMED with PENDING notice', async () => {
+    it('authenticated user clicking confirmDraft should open payment method modal and then confirm with selected method', async () => {
       mockAuthService.isAuthenticated.mockReturnValue(true);
 
       const draft: BookingDraftResponse = {
@@ -220,6 +228,8 @@ describe('AiChatWidgetComponent', () => {
         expiresAt: '2026-12-01T12:00:00',
         hotelName: 'Grand Nile Tower',
         totalPrice: 3500,
+        adults: 2,
+        childAges: [5, 8],
       };
 
       const mockConfirmedResponse: BookingDraftResponse = {
@@ -230,11 +240,23 @@ describe('AiChatWidgetComponent', () => {
         totalPrice: 3500,
         bookingId: 777,
         busBookingIds: [881],
+        adults: 2,
+        childAges: [5, 8],
       };
 
       mockAiService.confirmBookingDraft.mockReturnValue(of(mockConfirmedResponse));
 
       await component.confirmDraft(draft);
+
+      // ConfirmDraft should open payment modal and store pending draft
+      expect(component.paymentModalVisible()).toBe(true);
+      expect(component.pendingDraftToConfirm()).toBe(draft);
+      expect(component.selectedPaymentMethod()).toBeNull();
+      expect(mockAiService.confirmBookingDraft).not.toHaveBeenCalled();
+
+      // User selects payment method and confirms
+      component.selectedPaymentMethod.set('CREDIT_CARD');
+      await component.onConfirmPaymentMethod();
 
       expect(mockAiService.confirmBookingDraft).toHaveBeenCalledTimes(1);
       const callDraftId = mockAiService.confirmBookingDraft.mock.calls[0][0];
@@ -247,6 +269,12 @@ describe('AiChatWidgetComponent', () => {
       expect(draft.status).toBe('CONFIRMED');
       expect(draft.bookingId).toBe(777);
       expect(draft.busBookingIds).toEqual([881]);
+
+      // Verify guest breakdown was saved to localStorage helper service
+      expect(mockHotelBookingService.saveGuestBreakdown).toHaveBeenCalledWith(777, {
+        adults: 2,
+        childAges: [5, 8],
+      });
 
       // Verify the chat message does NOT say payment is completed and confirms PENDING review
       const messages = mockAiChatService._messagesSignal.list;
@@ -278,6 +306,8 @@ describe('AiChatWidgetComponent', () => {
       );
 
       await component.confirmDraft(draft);
+      component.selectedPaymentMethod.set('PAYPAL');
+      await component.onConfirmPaymentMethod();
 
       expect(draft.status).toBe('CREATED');
       expect(component.getDraftError(303)).toContain('Selected room is fully booked');
@@ -294,6 +324,8 @@ describe('AiChatWidgetComponent', () => {
       mockAiService.confirmBookingDraft.mockReturnValueOnce(of(mockSuccess));
 
       await component.confirmDraft(draft);
+      component.selectedPaymentMethod.set('PAYPAL');
+      await component.onConfirmPaymentMethod();
 
       expect(mockAiService.confirmBookingDraft).toHaveBeenCalledTimes(2);
       const secondKey = mockAiService.confirmBookingDraft.mock.calls[1][1];

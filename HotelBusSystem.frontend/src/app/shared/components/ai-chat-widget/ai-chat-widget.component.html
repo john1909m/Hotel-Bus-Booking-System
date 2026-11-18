@@ -1109,3 +1109,73 @@
     [hotelBusStopId]="selectedHotelBusStopId()"
   />
 }
+
+<!-- AI Chat Payment Method Selection Dialog -->
+<p-dialog
+  [visible]="paymentModalVisible()"
+  (visibleChange)="paymentModalVisible.set($event)"
+  [header]="'aiChat.paymentModal.title' | translate"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="ai-payment-dialog"
+  [style]="{ width: '92vw', maxWidth: '440px' }"
+  (onHide)="onCancelPaymentMethod()"
+>
+  <div class="ai-payment-dialog-content">
+    <p class="payment-modal-desc">{{ 'aiChat.paymentModal.desc' | translate }}</p>
+
+    <div class="payment-methods-list" role="radiogroup" [attr.aria-label]="'aiChat.paymentModal.title' | translate">
+      @for (opt of paymentMethodOptions; track opt.value) {
+        <label
+          class="payment-method-option"
+          [class.selected]="selectedPaymentMethod() === opt.value"
+          [attr.data-method]="opt.value"
+        >
+          <input
+            type="radio"
+            name="aiChatPaymentMethod"
+            [value]="opt.value"
+            [checked]="selectedPaymentMethod() === opt.value"
+            (change)="selectedPaymentMethod.set(opt.value)"
+            class="payment-radio-input"
+          />
+          <span class="payment-method-icon">{{ opt.icon }}</span>
+          <span class="payment-method-label">{{ opt.labelKey | translate }}</span>
+        </label>
+      }
+    </div>
+
+    <p class="payment-modal-notice">
+      <span class="notice-icon">ℹ️</span>
+      <span>{{ 'aiChat.paymentModal.notice' | translate }}</span>
+    </p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="payment-modal-actions">
+      <button
+        type="button"
+        class="btn-modal-cancel"
+        (click)="onCancelPaymentMethod()"
+      >
+        {{ 'aiChat.paymentModal.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        id="btn-confirm-payment-method"
+        class="btn-modal-confirm"
+        [disabled]="!selectedPaymentMethod() || (pendingDraftToConfirm() && confirmingDraftId() === pendingDraftToConfirm()?.id)"
+        (click)="onConfirmPaymentMethod()"
+      >
+        @if (pendingDraftToConfirm() && confirmingDraftId() === pendingDraftToConfirm()?.id) {
+          <span class="btn-spinner"></span> {{ 'aiChat.draftCard.confirming' | translate }}
+        } @else {
+          {{ 'aiChat.paymentModal.confirm' | translate }}
+        }
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

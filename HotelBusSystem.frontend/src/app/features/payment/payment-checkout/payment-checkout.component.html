@@ -371,7 +371,7 @@
                 <small class="total-tax-note">{{ 'payment.summary.allTaxesIncluded' | translate }}</small>
               </div>
               <div class="total-figure">
-                <span class="total-amount">{{ state.totalCombinedPrice() | number:'1.2-2' }}</span>
+                <span class="total-amount">{{ state.effectivePayableAmount() | number:'1.2-2' }}</span>
                 <span class="total-currency">EGP</span>
               </div>
             </div>
@@ -415,7 +415,7 @@
                 @if (isProcessing()) {
                   <span>{{ 'payment.summary.submitting' | translate }}</span>
                 } @else {
-                  <span>{{ 'payment.summary.payAmount' | translate:{ amount: (state.totalCombinedPrice() | number:'1.2-2') } }}</span>
+                  <span>{{ 'payment.summary.payAmount' | translate:{ amount: (state.effectivePayableAmount() | number:'1.2-2') } }}</span>
                 }
               </button>
 

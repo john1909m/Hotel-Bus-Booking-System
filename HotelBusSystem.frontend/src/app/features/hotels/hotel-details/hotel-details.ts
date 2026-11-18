@@ -1726,7 +1726,7 @@ export class HotelDetails implements OnInit, OnDestroy {
         next: (booking: HotelBookingDTO) => {
           this.editingBookingId.set(booking.id);
           this.editingBooking.set(booking);
-          this.bookingStateService.setEditingBookingId(booking.id);
+          this.bookingStateService.setEditingBooking(booking.id, booking.totalPrice ?? null);
 
           const breakdown = calculateGuestBreakdown(booking);
 
