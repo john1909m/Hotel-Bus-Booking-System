@@ -106,6 +106,15 @@ export class BusFeaturesManagement implements OnInit, OnDestroy {
     return list;
   });
 
+  readonly hasActiveFilters = computed(() => {
+    return this.searchQuery().trim().length > 0 || this.statusFilter() !== 'ALL';
+  });
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.statusFilter.set('ALL');
+  }
+
   ngOnInit(): void {
     this.searchSubject$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))

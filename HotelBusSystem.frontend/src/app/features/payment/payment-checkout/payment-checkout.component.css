@@ -783,25 +783,36 @@
 /* ─── Confirmation Dialog Styling ────────────────────────────── */
 :host ::ng-deep .confirmation-dialog .p-dialog {
   border-radius: var(--radius-lg);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow-lg);
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--shadow-lg) !important;
   overflow: hidden;
   max-width: 480px;
   width: 90vw;
 }
 
 :host ::ng-deep .confirmation-dialog .p-dialog-header {
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--card-bg) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
   padding: 1.25rem 1.5rem;
 }
 
 :host ::ng-deep .confirmation-dialog .p-dialog-content {
-  background: var(--card-bg);
-  color: var(--text-primary);
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
   padding: 1.5rem;
+}
+
+:host ::ng-deep .confirmation-dialog .p-dialog-header-actions button,
+:host ::ng-deep .confirmation-dialog .p-dialog-close-button {
+  color: var(--text-secondary) !important;
+}
+
+:host ::ng-deep .confirmation-dialog .p-dialog-header-actions button:hover,
+:host ::ng-deep .confirmation-dialog .p-dialog-close-button:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-surface) !important;
 }
 
 .dialog-success-body {
@@ -857,6 +868,44 @@
   font-weight: 800;
   color: var(--color-primary);
   letter-spacing: 0.05em;
+}
+
+.booking-ids-list {
+  margin: 1rem 0;
+  text-align: start;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.booking-id-item {
+  margin-bottom: 0.5rem;
+}
+
+.booking-id-item:last-child {
+  margin-bottom: 0;
+}
+
+.booking-bus-list {
+  margin: 0.25rem 0 0 1.25rem;
+  padding: 0;
+}
+
+.status-pending-tag {
+  color: #d97706;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .status-pending-tag {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .booking-ids-list {
+  background: var(--bg-elevated);
+  border-color: var(--border-color);
 }
 
 .dialog-sub {

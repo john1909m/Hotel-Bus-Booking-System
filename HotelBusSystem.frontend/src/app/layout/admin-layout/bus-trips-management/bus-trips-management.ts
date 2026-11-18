@@ -334,8 +334,11 @@ export class BusTripsManagement implements OnInit, OnDestroy {
   }
 
   getBusLabel(busId?: number | null, trip?: any): string {
-    if (trip?.bus?.company || trip?.bus?.busNumber) {
-      return `${trip.bus.busNumber || ''} (${trip.bus.company || ''})`.trim();
+    if (trip?.bus?.busNumber && trip?.bus?.company) {
+      return `${trip.bus.busNumber} (${trip.bus.company})`;
+    }
+    if (trip?.busNumber && trip?.company) {
+      return `${trip.busNumber} (${trip.company})`;
     }
     const resolvedId = busId ?? trip?.busId ?? trip?.bus?.id;
     if (!resolvedId) {

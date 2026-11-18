@@ -77,6 +77,7 @@ describe('RoomsManagement Component', () => {
 
     mockHotelService = {
       lookupHotels: vi.fn().mockReturnValue(of([])),
+      getAllHotels: vi.fn().mockReturnValue(of([])),
     };
 
     mockMessageService = {
@@ -272,6 +273,24 @@ describe('RoomsManagement Component', () => {
 
     expect(mockRoomService.deleteRoom).toHaveBeenCalledWith(1);
     expect(component.allRoomsCache()).toBeNull();
+  });
+
+  it('loads full hotel catalog on init so filter and dialog display all hotels', () => {
+    const fullHotels = [
+      { id: 99, name: 'Zanzibar Inn', city: 'Alexandria' },
+      { id: 10, name: 'Alex Resort', city: 'Alexandria' },
+    ];
+    mockHotelService.getAllHotels.mockReturnValue(of(fullHotels));
+
+    component.ngOnInit();
+
+    expect(mockHotelService.getAllHotels).toHaveBeenCalled();
+    expect(component.hotels()).toEqual(fullHotels);
+    // availableHotels is sorted alphabetically
+    expect(component.availableHotels()).toEqual([
+      { id: 10, name: 'Alex Resort' },
+      { id: 99, name: 'Zanzibar Inn' },
+    ]);
   });
 });
 

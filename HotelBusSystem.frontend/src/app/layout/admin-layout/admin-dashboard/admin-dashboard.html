@@ -3,7 +3,7 @@
   <!-- ─── Page Header ──────────────────────────────────────── -->
   <header class="dashboard-header">
     <div class="header-text">
-      <nav class="breadcrumb" aria-label="Breadcrumb">
+      <nav class="breadcrumb" [attr.aria-label]="'admin.dashboard.portal' | translate">
         <span>{{ 'admin.dashboard.portal' | translate }}</span>
         <span class="sep">/</span>
         <span class="current">{{ 'admin.dashboard.analytics' | translate }}</span>
@@ -41,7 +41,7 @@
   </header>
 
   <!-- ─── Global Date Range Filter Toolbar ─────────────────── -->
-  <section class="filter-toolbar-card" aria-label="Date Range Filters">
+  <section class="filter-toolbar-card" [attr.aria-label]="'admin.dashboard.startDate' | translate">
     <div class="toolbar-content">
       <div class="date-pickers-group">
         <div class="picker-field">
@@ -56,7 +56,7 @@
             appendTo="body"
             styleClass="admin-datepicker"
             placeholder="YYYY-MM-DD"
-            ariaLabel="Analytics Start Date"
+            [ariaLabel]="'admin.dashboard.startDate' | translate"
           />
         </div>
 
@@ -72,7 +72,7 @@
             appendTo="body"
             styleClass="admin-datepicker"
             placeholder="YYYY-MM-DD"
-            ariaLabel="Analytics End Date"
+            [ariaLabel]="'admin.dashboard.endDate' | translate"
           />
         </div>
 
@@ -83,7 +83,7 @@
             (click)="applyDateFilter()"
             id="admin-apply-filter-btn"
           >
-            Apply Range
+            {{ 'admin.dashboard.applyRange' | translate }}
           </button>
           <button
             type="button"
@@ -91,7 +91,7 @@
             (click)="clearDateFilter()"
             id="admin-clear-filter-btn"
           >
-            Reset
+            {{ 'admin.common.reset' | translate }}
           </button>
         </div>
       </div>
@@ -103,21 +103,21 @@
           class="btn-preset"
           (click)="setPreset(7)"
         >
-          Last 7 Days
+          {{ 'admin.dashboard.last7Days' | translate }}
         </button>
         <button
           type="button"
           class="btn-preset"
           (click)="setPreset(30)"
         >
-          Last 30 Days
+          {{ 'admin.dashboard.last30Days' | translate }}
         </button>
         <button
           type="button"
           class="btn-preset"
           (click)="setPreset(90)"
         >
-          Last 90 Days
+          {{ 'admin.dashboard.last90Days' | translate }}
         </button>
       </div>
     </div>
@@ -148,7 +148,7 @@
   </section>
 
   <!-- ─── CARD 1: Executive Summary KPIs (Tiles Only, No Chart) ─── -->
-  <section class="analytics-card" aria-label="Executive Summary KPIs">
+  <section class="analytics-card" [attr.aria-label]="'admin.dashboard.kpisTitle' | translate">
     <div class="card-header">
       <div>
         <h2 class="card-title">{{ 'admin.dashboard.kpisTitle' | translate }}</h2>
@@ -159,8 +159,8 @@
         class="card-refresh-btn"
         (click)="loadSummary()"
         [disabled]="summaryLoading()"
-        title="Reload Summary KPIs"
-        aria-label="Reload Summary KPIs"
+        [attr.title]="'admin.common.refresh' | translate"
+        [attr.aria-label]="'admin.common.refresh' | translate"
       >
         ↻
       </button>
@@ -255,7 +255,7 @@
   <div class="analytics-row-2col">
 
     <!-- ─── CARD 2: Revenue Trends (Line Chart) ────────────── -->
-    <section class="analytics-card" aria-label="Revenue Trends">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.revenueTrends' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.revenueTrends' | translate }}</h2>
@@ -287,7 +287,8 @@
             class="card-refresh-btn"
             (click)="loadRevenue()"
             [disabled]="revenueLoading()"
-            title="Reload Revenue"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -325,7 +326,7 @@
     </section>
 
     <!-- ─── CARD 3: Booking Volume Trends (Bar Chart) ──────── -->
-    <section class="analytics-card" aria-label="Booking Volume Trends">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.bookingVolumeTrends' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.bookingVolumeTrends' | translate }}</h2>
@@ -357,7 +358,8 @@
             class="card-refresh-btn"
             (click)="loadBookingsTrends()"
             [disabled]="bookingsLoading()"
-            title="Reload Bookings Trends"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -459,7 +461,7 @@
   <div class="analytics-row-2col">
 
     <!-- ─── CARD 4: Bookings by Status (Doughnut Chart) ────── -->
-    <section class="analytics-card" aria-label="Bookings by Status">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.bookingsByStatus' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.bookingsByStatus' | translate }}</h2>
@@ -491,7 +493,8 @@
             class="card-refresh-btn"
             (click)="loadBookingsByStatus()"
             [disabled]="statusLoading()"
-            title="Reload Status Breakdown"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -529,7 +532,7 @@
     </section>
 
     <!-- ─── CARD 5: Top Performing Hotels (Horizontal Bar) ─── -->
-    <section class="analytics-card" aria-label="Top Performing Hotels">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.topHotels' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.topHotels' | translate }}</h2>
@@ -555,7 +558,8 @@
             class="card-refresh-btn"
             (click)="loadTopHotels()"
             [disabled]="topHotelsLoading()"
-            title="Reload Top Hotels"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -622,7 +626,7 @@
   <div class="analytics-row-2col">
 
     <!-- ─── CARD 6: Hotel Room Occupancy (Horizontal Bar) ──── -->
-    <section class="analytics-card" aria-label="Hotel Room Occupancy">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.roomOccupancy' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.roomOccupancy' | translate }}</h2>
@@ -634,7 +638,8 @@
             class="card-refresh-btn"
             (click)="loadOccupancy()"
             [disabled]="occupancyLoading()"
-            title="Reload Occupancy"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -649,7 +654,7 @@
             id="occupancy-hotel-id"
             type="text"
             #hotelInput
-            placeholder="e.g. 1 (blank = all)"
+            [placeholder]="'admin.dashboard.hotelIdPlaceholder' | translate"
             class="inline-input"
             (keyup.enter)="setOccupancyHotelId(hotelInput.value)"
           />
@@ -699,7 +704,7 @@
     </section>
 
     <!-- ─── CARD 7: Bus Trips Utilization (Bar Chart) ──────── -->
-    <section class="analytics-card" aria-label="Bus Trips Utilization">
+    <section class="analytics-card" [attr.aria-label]="'admin.dashboard.busTripsUtilization' | translate">
       <div class="card-header">
         <div>
           <h2 class="card-title">{{ 'admin.dashboard.busTripsUtilization' | translate }}</h2>
@@ -711,7 +716,8 @@
             class="card-refresh-btn"
             (click)="loadBusTrips()"
             [disabled]="busTripsLoading()"
-            title="Reload Bus Trips Utilization"
+            [attr.title]="'admin.common.refresh' | translate"
+            [attr.aria-label]="'admin.common.refresh' | translate"
           >
             ↻
           </button>
@@ -726,7 +732,7 @@
             id="bus-route-id"
             type="text"
             #routeInput
-            placeholder="e.g. 5 (blank = all)"
+            [placeholder]="'admin.dashboard.routeIdPlaceholder' | translate"
             class="inline-input"
             (keyup.enter)="setBusTripsRouteId(routeInput.value)"
           />
@@ -806,7 +812,7 @@
   </div>
 
   <!-- ─── CARD 8: Payments Breakdown (Doughnut + Bar) ──────── -->
-  <section class="analytics-card" aria-label="Payments Breakdown">
+  <section class="analytics-card" [attr.aria-label]="'admin.dashboard.paymentsBreakdown' | translate">
     <div class="card-header">
       <div>
         <h2 class="card-title">{{ 'admin.dashboard.paymentsBreakdown' | translate }}</h2>
@@ -818,7 +824,8 @@
           class="card-refresh-btn"
           (click)="loadPayments()"
           [disabled]="paymentsLoading()"
-          title="Reload Payments Breakdown"
+          [attr.title]="'admin.common.refresh' | translate"
+          [attr.aria-label]="'admin.common.refresh' | translate"
         >
           ↻
         </button>
@@ -873,7 +880,7 @@
   </section>
 
   <!-- ─── Quick Access Hub ──────────────────────────────────── -->
-  <section class="section-card" aria-label="Quick management access">
+  <section class="section-card" [attr.aria-label]="'admin.dashboard.managementModules' | translate">
     <h2 class="section-title">{{ 'admin.dashboard.managementModules' | translate }}</h2>
 
     <div class="modules-grid">

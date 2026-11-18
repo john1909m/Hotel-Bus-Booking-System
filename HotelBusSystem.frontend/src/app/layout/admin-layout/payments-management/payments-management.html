@@ -192,9 +192,9 @@
           </td>
           <td>
             @if (p.hotelBookingId) {
-              <span class="pill-badge">🏨 Hotel Booking #{{ p.hotelBookingId }}</span>
+              <span class="pill-badge">🏨 {{ 'admin.payments.hotelBookingBadge' | translate:{ id: p.hotelBookingId } }}</span>
             } @else if (p.busBookingId) {
-              <span class="pill-badge">🚌 Bus Booking #{{ p.busBookingId }}</span>
+              <span class="pill-badge">🚌 {{ 'admin.payments.busBookingBadge' | translate:{ id: p.busBookingId } }}</span>
             } @else {
               <span class="table-cell-subtitle">—</span>
             }
@@ -212,8 +212,8 @@
                 type="button"
                 class="btn-action btn-action-edit"
                 (click)="openEditDialog(p)"
-                [attr.aria-label]="'Edit payment #' + p.id"
-                title="Edit payment"
+                [attr.aria-label]="'admin.common.edit' | translate"
+                [attr.title]="'admin.common.edit' | translate"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -224,8 +224,8 @@
                 type="button"
                 class="btn-action btn-action-delete"
                 (click)="openDeleteDialog(p)"
-                [attr.aria-label]="'Delete payment #' + p.id"
-                title="Delete payment"
+                [attr.aria-label]="'admin.common.delete' | translate"
+                [attr.title]="'admin.common.delete' | translate"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"></polyline>
@@ -243,12 +243,12 @@
           <td colspan="7">
             <div class="empty-state">
               <div class="empty-icon" aria-hidden="true">💳</div>
-              <h3 class="empty-title">No payment records found</h3>
+              <h3 class="empty-title">{{ 'admin.payments.noPaymentsFound' | translate }}</h3>
               <p class="empty-desc">
                 @if (hasActiveFilters()) {
-                  No transactions match the selected filter criteria.
+                  {{ 'admin.payments.noPaymentsDesc' | translate }}
                 } @else {
-                  No payment settlements have been recorded yet. Click "Record Payment" to add one.
+                  {{ 'admin.payments.noPaymentsRecorded' | translate }}
                 }
               </p>
             </div>
@@ -409,7 +409,7 @@
       </div>
       <h3 class="delete-title">{{ 'admin.payments.deleteConfirmTitle' | translate }}</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete transaction record
+        {{ 'admin.payments.deletePrompt' | translate }}
         <strong class="delete-entity-name">
           #{{ paymentToDelete()?.id }} (${{ paymentToDelete()?.amount | number:'1.2-2' }})
         </strong>?
@@ -433,7 +433,7 @@
         [disabled]="deleting()"
         id="admin-confirm-delete-payment-btn"
       >
-        {{ (deleting() ? 'admin.rooms.deleting' : 'admin.common.delete') | translate }}
+        {{ (deleting() ? 'admin.payments.deleting' : 'admin.common.delete') | translate }}
       </button>
     </div>
   </p-dialog>

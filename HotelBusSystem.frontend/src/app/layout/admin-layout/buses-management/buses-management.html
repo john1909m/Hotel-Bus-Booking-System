@@ -201,7 +201,7 @@
           </td>
           <td>
             <p-tag
-              [value]="('enums.coachType.' + getCoachTypeDisplay(bus.busType)) | translate"
+              [value]="( getCoachTypeDisplay(bus.busType)) | translate"
               severity="info"
               styleClass="bus-type-tag"
             />
@@ -214,8 +214,7 @@
               [attr.aria-label]="'View seats for ' + bus.busNumber"
               title="Click to view and inspect bus seats"
             >
-              <span>💺 {{ 'admin.buses.seatsCount' | translate:{ count: bus.capacity } }}</span>
-              <span class="seats-link-hint">{{ 'admin.nav.busSeats' | translate }}</span>
+              <span class="seats-link-hint">💺 {{ 'admin.buses.seatsCount' | translate:{ count: bus.capacity } }}</span>
             </button>
           </td>
           <td>
@@ -384,7 +383,7 @@
           </label>
           <select id="busType" class="form-select" formControlName="busType">
             @for (type of coachTypes(); track type) {
-              <option [value]="type">{{ ('enums.coachType.' + type) | translate }}</option>
+              <option [value]="type">{{ ( type) | translate }}</option>
             }
           </select>
           @if (busForm.get('busType')?.touched && busForm.get('busType')?.errors?.['required']) {

@@ -101,9 +101,9 @@ export class UserBookings implements OnInit, OnDestroy {
     'No payment',
   ];
   readonly availableTypes = [
-    { label: 'All Bookings', value: 'ALL' },
-    { label: 'Hotel Bookings', value: 'HOTEL' },
-    { label: 'Bus Bookings', value: 'BUS' },
+    { labelKey: 'admin.userBookings.allBookings', value: 'ALL' },
+    { labelKey: 'admin.userBookings.hotelBookingsSection', value: 'HOTEL' },
+    { labelKey: 'admin.userBookings.busBookingsSection', value: 'BUS' },
   ];
 
   // ── Computed Options & Filtered Lists ──────────────────────

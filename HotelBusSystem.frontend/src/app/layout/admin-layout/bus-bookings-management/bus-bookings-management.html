@@ -81,7 +81,7 @@
 
       <!-- Sort Direction -->
       <div class="filter-field">
-        <label for="admin-bus-booking-dir" class="filter-label">Sort Order</label>
+        <label for="admin-bus-booking-dir" class="filter-label">{{ 'admin.busBookings.sortOrder' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon" aria-hidden="true">↕</span>
           <select
@@ -91,8 +91,8 @@
             (change)="onDirChange($any($event.target).value)"
             aria-label="Sort direction"
           >
-            <option value="desc">Newest First (Desc)</option>
-            <option value="asc">Oldest First (Asc)</option>
+            <option value="desc">{{ 'admin.busBookings.newestFirst' | translate }}</option>
+            <option value="asc">{{ 'admin.busBookings.oldestFirst' | translate }}</option>
           </select>
         </div>
       </div>
@@ -357,23 +357,23 @@
         <!-- Section 1: Customer Information -->
         <div class="details-section">
           <h4 class="section-title">
-            <span class="section-icon">👤</span> Customer Information
+            <span class="section-icon">👤</span> {{ 'admin.busBookings.customerInfo' | translate }}
           </h4>
           <div class="details-grid-2col">
             <div class="detail-field">
-              <span class="field-label">Customer Name:</span>
+              <span class="field-label">{{ 'admin.busBookings.customerName' | translate }}:</span>
               <span class="field-value">{{ getCustomerName(b.userId) }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Account ID:</span>
+              <span class="field-label">{{ 'admin.busBookings.accountId' | translate }}:</span>
               <span class="field-value font-mono">User #{{ b.userId }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Email Address:</span>
+              <span class="field-label">{{ 'admin.busBookings.emailAddress' | translate }}:</span>
               <span class="field-value">{{ getCustomerEmail(b.userId) }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Phone Contact:</span>
+              <span class="field-label">{{ 'admin.busBookings.phoneContact' | translate }}:</span>
               <span class="field-value">{{ getCustomerPhone(b.userId) }}</span>
             </div>
           </div>
@@ -382,27 +382,27 @@
         <!-- Section 2: Trip & Route Journey -->
         <div class="details-section">
           <h4 class="section-title">
-            <span class="section-icon">🛣</span> Journey &amp; Trip Details
+            <span class="section-icon">🛣</span> {{ 'admin.busBookings.journeyDetails' | translate }}
           </h4>
           <div class="details-grid-2col">
             <div class="detail-field full-row">
-              <span class="field-label">Route:</span>
+              <span class="field-label">{{ 'admin.busBookings.route' | translate }}:</span>
               <span class="field-value route-highlight">{{ getTripRouteLabel(b.busTripId) }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Departure Terminal:</span>
+              <span class="field-label">{{ 'admin.busBookings.departureTerminal' | translate }}:</span>
               <span class="field-value">{{ getOriginStop(b.busTripId)?.name || getOriginStop(b.busTripId)?.city || 'Origin Terminal' }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Arrival Terminal:</span>
+              <span class="field-label">{{ 'admin.busBookings.arrivalTerminal' | translate }}:</span>
               <span class="field-value">{{ getDestinationStop(b.busTripId)?.name || getDestinationStop(b.busTripId)?.city || 'Destination Terminal' }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Departure Time:</span>
+              <span class="field-label">{{ 'admin.busBookings.departureTime' | translate }}:</span>
               <span class="field-value">{{ getTripDeparture(b.busTripId) | date:'mediumDate' }} at {{ getTripDeparture(b.busTripId) | date:'shortTime' }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Carrier &amp; Coach:</span>
+              <span class="field-label">{{ 'admin.busBookings.carrierCoach' | translate }}:</span>
               <span class="field-value">{{ getBusCarrier(b.busTripId) }}</span>
             </div>
           </div>
@@ -411,23 +411,23 @@
         <!-- Section 3: Seat Assignment & Fare -->
         <div class="details-section">
           <h4 class="section-title">
-            <span class="section-icon">💺</span> Seat &amp; Fare Information
+            <span class="section-icon">💺</span> {{ 'admin.busBookings.seatFareInfo' | translate }}
           </h4>
           <div class="details-grid-2col">
             <div class="detail-field">
-              <span class="field-label">Seat Number:</span>
+              <span class="field-label">{{ 'admin.busBookings.seatNumber' | translate }}:</span>
               <span class="field-value seat-highlight">Seat {{ getSeatNumber(b.seatId) }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Seat Category:</span>
+              <span class="field-label">{{ 'admin.busBookings.seatCategory' | translate }}:</span>
               <span class="field-value">{{ getSeatType(b.seatId) }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Reservation Date:</span>
+              <span class="field-label">{{ 'admin.busBookings.reservationDate' | translate }}:</span>
               <span class="field-value">{{ b.bookingDate | date:'mediumDate' }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Ticket Fare:</span>
+              <span class="field-label">{{ 'admin.busBookings.ticketFare' | translate }}:</span>
               <span class="field-value fare-highlight">{{ b.price | number:'1.2-2' }} EGP</span>
             </div>
           </div>
@@ -436,7 +436,7 @@
         <!-- Section 4: Lifecycle Status Actions -->
         <div class="details-actions-banner">
           <div class="actions-header">
-            <span class="actions-label">Lifecycle Status Transitions:</span>
+            <span class="actions-label">{{ 'admin.busBookings.lifecycleTransitions' | translate }}:</span>
           </div>
 
           <div class="actions-buttons-row">
@@ -447,7 +447,7 @@
                 (click)="executeStatusUpdate(b.id, 'CONFIRMED')"
                 [disabled]="updatingStatusId() === b.id"
               >
-                Confirm Booking (PENDING &rarr; CONFIRMED)
+                {{ 'admin.busBookings.confirmPendingToConfirmed' | translate }}
               </button>
               <button
                 type="button"
@@ -455,7 +455,7 @@
                 (click)="openStatusChangeDialog(b, 'CANCELLED')"
                 [disabled]="updatingStatusId() === b.id"
               >
-                Cancel Booking (PENDING &rarr; CANCELLED)
+                {{ 'admin.busBookings.cancelPendingToCancelled' | translate }}
               </button>
             } @else if (b.status === 'CONFIRMED') {
               <button
@@ -464,7 +464,7 @@
                 (click)="executeStatusUpdate(b.id, 'COMPLETED')"
                 [disabled]="updatingStatusId() === b.id"
               >
-                Mark Completed (CONFIRMED &rarr; COMPLETED)
+                {{ 'admin.busBookings.markConfirmedToCompleted' | translate }}
               </button>
               <button
                 type="button"
@@ -472,11 +472,11 @@
                 (click)="openStatusChangeDialog(b, 'CANCELLED')"
                 [disabled]="updatingStatusId() === b.id"
               >
-                Cancel Booking (CONFIRMED &rarr; CANCELLED)
+                {{ 'admin.busBookings.cancelConfirmedToCancelled' | translate }}
               </button>
             } @else {
               <div class="terminal-state-note">
-                🔒 Booking is in terminal state <strong>{{ b.status }}</strong>. No further status transitions are permitted.
+                🔒 {{ 'admin.busBookings.terminalStateNote' | translate:{ status: b.status } }}
               </div>
             }
           </div>
@@ -486,7 +486,7 @@
 
       <div class="dialog-footer">
         <button type="button" class="btn btn-secondary" (click)="closeDetailsDialog()">
-          Close
+          {{ 'admin.common.cancel' | translate }}
         </button>
       </div>
     }
@@ -507,7 +507,7 @@
     @if (bookingForStatusChange(); as b) {
       <div class="status-change-dialog-content">
         <p class="dialog-intro">
-          Select an allowed target status for bus booking <strong>#{{ b.id }}</strong> (Customer: {{ getCustomerName(b.userId) }}).
+          {{ 'admin.busBookings.selectAllowedStatus' | translate:{ id: b.id, customer: getCustomerName(b.userId) } }}
         </p>
 
         <div class="current-status-strip">
@@ -533,11 +533,11 @@
                     <span class="transition-arrow">&larr; {{ ('enums.bookingStatus.' + b.status) | translate }} to {{ ('enums.bookingStatus.' + st) | translate }}</span>
                   </div>
                   @if (st === 'CONFIRMED') {
-                    <small class="option-desc">Secures and confirms the customer reservation.</small>
+                    <small class="option-desc">{{ 'admin.busBookings.securesConfirmed' | translate }}</small>
                   } @else if (st === 'COMPLETED') {
-                    <small class="option-desc">Finalizes the journey after departure has finished.</small>
+                    <small class="option-desc">{{ 'admin.busBookings.finalizesCompleted' | translate }}</small>
                   } @else if (st === 'CANCELLED') {
-                    <small class="option-desc text-danger">Releases the assigned seat back to inventory.</small>
+                    <small class="option-desc text-danger">{{ 'admin.busBookings.releasesSeatCancelled' | translate }}</small>
                   }
                 </div>
               </label>
@@ -549,8 +549,8 @@
           <div class="cancellation-warning-card" role="alert">
             <span class="warning-icon">⚠️</span>
             <div class="warning-text">
-              <strong>Seat Release Notice:</strong>
-              <p>Cancelling this booking will immediately release Seat {{ getSeatNumber(b.seatId) }} on Trip #{{ b.busTripId }}, allowing other passengers to book it. This status transition is terminal.</p>
+              <strong>{{ 'admin.busBookings.seatReleaseNotice' | translate }}:</strong>
+              <p>{{ 'admin.busBookings.seatReleaseNoticeDesc' | translate:{ seat: getSeatNumber(b.seatId), trip: b.busTripId } }}</p>
             </div>
           </div>
         }
@@ -572,7 +572,7 @@
           (click)="submitStatusChange()"
           id="admin-confirm-status-change-btn"
         >
-          {{ statusChanging() ? 'Updating Status…' : 'Apply Status Change' }}
+          {{ (statusChanging() ? 'admin.busBookings.updatingStatus' : 'admin.busBookings.applyStatusChange') | translate }}
         </button>
       </div>
     }
@@ -715,7 +715,7 @@
         <!-- Ticket Price in EGP -->
         <div class="form-group">
           <label for="bookingPrice" class="form-label">
-            Ticket Price (EGP) <span class="required-star">*</span>
+            {{ 'admin.busBookings.ticketPrice' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="bookingPrice"
@@ -738,7 +738,7 @@
           </label>
           <select id="bookingStatus" class="form-select" formControlName="status">
             @if (isEditMode()) {
-              <option [value]="initialEditingStatus()">{{ ('enums.bookingStatus.' + initialEditingStatus()) | translate }} (Current)</option>
+              <option [value]="initialEditingStatus()">{{ ('enums.bookingStatus.' + initialEditingStatus()) | translate }} {{ 'admin.busBookings.currentLabel' | translate }}</option>
               @for (st of getAllowedTransitions(initialEditingStatus()); track st) {
                 <option [value]="st">{{ ('enums.bookingStatus.' + st) | translate }}</option>
               }
@@ -755,7 +755,7 @@
         <!-- Booking Date -->
         <div class="form-group full-width">
           <label for="bookingDate" class="form-label">
-            Booking Timestamp <span class="required-star">*</span>
+            {{ 'admin.busBookings.bookingTimestamp' | translate }} <span class="required-star">*</span>
           </label>
           <input
             id="bookingDate"
@@ -813,14 +813,14 @@
       </div>
       <h3 class="delete-title">{{ 'admin.busBookings.deleteConfirmTitle' | translate }}</h3>
       <p class="delete-desc">
-        Are you sure you want to permanently delete booking record
+        {{ 'admin.busBookings.deletePromptRecord' | translate }}
         <strong class="delete-entity-name">
           #{{ bookingToDelete()?.id }} ({{ getTripRouteLabel(bookingToDelete()?.busTripId || 0) }}, Seat #{{ bookingToDelete()?.seatId }})
         </strong>?
       </p>
       <div class="permanent-purge-notice">
-        <strong>⚠️ Administrative Notice:</strong>
-        To cancel a customer's booking according to standard business rules, close this dialog and use <em>Change Status &rarr; CANCELLED</em>. Direct deletion permanently purges the record from the database.
+        <strong>{{ 'admin.busBookings.adminNoticeTitle' | translate }}</strong>
+        {{ 'admin.busBookings.adminNoticeDesc' | translate }}
       </div>
     </div>
 
@@ -840,7 +840,7 @@
         [disabled]="deleting()"
         id="admin-confirm-delete-bus-booking-btn"
       >
-        {{ deleting() ? 'Deleting…' : 'Permanently Delete' }}
+        {{ (deleting() ? 'admin.busBookings.deleting' : 'admin.busBookings.permanentlyDelete') | translate }}
       </button>
     </div>
   </p-dialog>

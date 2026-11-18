@@ -484,18 +484,18 @@
         <strong class="ref-code">{{ confirmedReference() }}</strong>
       </div>
 
-      <div class="booking-ids-list" style="margin: 1rem 0; text-align: start; background: var(--bg-surface-subtle, #f8fafc); padding: 0.85rem 1rem; border-radius: 8px;">
+      <div class="booking-ids-list">
         @if (createdHotelBooking(); as hb) {
-          <div style="margin-bottom: 0.5rem;">
-            🏨 <strong>{{ 'payment.dialog.hotelReservation' | translate }}</strong> {{ 'payment.dialog.bookingHash' | translate:{ id: hb.id } }} &bull; {{ 'payment.dialog.status' | translate }} <span style="color: #d97706; font-weight: 700;">PENDING</span>
+          <div class="booking-id-item">
+            🏨 <strong>{{ 'payment.dialog.hotelReservation' | translate }}</strong> {{ 'payment.dialog.bookingHash' | translate:{ id: hb.id } }} &bull; {{ 'payment.dialog.status' | translate }} <span class="status-pending-tag">PENDING</span>
           </div>
         }
         @if (createdBusBookings().length > 0) {
-          <div>
+          <div class="booking-id-item">
             🚌 <strong>{{ 'payment.dialog.busReservations' | translate }}</strong>
-            <ul style="margin: 0.25rem 0 0 1.25rem; padding: 0;">
+            <ul class="booking-bus-list">
               @for (bb of createdBusBookings(); track bb.id) {
-                <li>{{ 'payment.dialog.bookingHash' | translate:{ id: bb.id } }} ({{ 'payment.dialog.tripHash' | translate:{ tripId: bb.busTripId, seatId: bb.seatId } }}) &bull; {{ 'payment.dialog.status' | translate }} <span style="color: #d97706; font-weight: 700;">PENDING</span></li>
+                <li>{{ 'payment.dialog.bookingHash' | translate:{ id: bb.id } }} ({{ 'payment.dialog.tripHash' | translate:{ tripId: bb.busTripId, seatId: bb.seatId } }}) &bull; {{ 'payment.dialog.status' | translate }} <span class="status-pending-tag">PENDING</span></li>
               }
             </ul>
           </div>

@@ -77,6 +77,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Filter Actions Bar -->
+    <div class="filter-toolbar">
+      <div class="results-badge">
+        {{ 'admin.busFeatures.totalFeatures' | translate }} <strong>{{ features().length }}</strong>
+      </div>
+
+      <div class="filter-actions-right">
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="clearFilters()"
+            id="admin-clear-feature-filters-btn"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+            <span>{{ 'admin.rooms.clearFilters' | translate }}</span>
+          </button>
+        }
+      </div>
+    </div>
   </section>
 
   <!-- ─── Error State ──────────────────────────────────────── -->

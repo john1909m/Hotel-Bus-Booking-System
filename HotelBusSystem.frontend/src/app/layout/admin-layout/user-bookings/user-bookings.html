@@ -12,7 +12,7 @@
   </header>
 
   <!-- ─── Filter & Selection Card ───────────────────────────── -->
-  <section class="filter-card" aria-label="User bookings filters and selection">
+  <section class="filters-card filter-card" aria-label="User bookings filters and selection">
     <div class="filter-grid user-bookings-grid">
 
       <!-- User Selector -->
@@ -50,7 +50,7 @@
             aria-label="Filter by booking type"
           >
             @for (t of availableTypes; track t.value) {
-              <option [value]="t.value">{{ t.label }}</option>
+              <option [value]="t.value">{{ t.labelKey | translate }}</option>
             }
           </select>
         </div>
@@ -148,7 +148,7 @@
                 <span>{{ errorHotel() }}</span>
               </div>
               <button type="button" class="btn-retry" (click)="loadHotelBookings()">
-                Retry
+                {{ 'admin.dashboard.retry' | translate }}
               </button>
             </div>
           }
@@ -180,7 +180,7 @@
                   <span class="booking-id-tag">#{{ item.id }}</span>
                 </td>
                 <td>
-                  <span class="badge-type badge-hotel">Hotel</span>
+                  <span class="badge-type badge-hotel">{{ 'admin.payments.hotelBookingBadge' | translate }}</span>
                 </td>
                 <td>
                   <p-tag
@@ -247,7 +247,7 @@
                 <span>{{ errorBus() }}</span>
               </div>
               <button type="button" class="btn-retry" (click)="loadBusBookings()">
-                Retry
+                {{ 'admin.dashboard.retry' | translate }}
               </button>
             </div>
           }
@@ -279,7 +279,7 @@
                   <span class="booking-id-tag">#{{ item.id }}</span>
                 </td>
                 <td>
-                  <span class="badge-type badge-bus">Bus</span>
+                  <span class="badge-type badge-bus">{{ 'admin.payments.busBookingBadge' | translate }}</span>
                 </td>
                 <td>
                   <p-tag

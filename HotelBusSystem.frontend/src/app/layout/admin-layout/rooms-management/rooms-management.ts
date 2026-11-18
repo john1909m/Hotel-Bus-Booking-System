@@ -103,17 +103,17 @@ export class RoomsManagement implements OnInit, OnDestroy {
 
   // ── Dynamic Filter Options from Loaded Data ────────────────
   readonly availableHotels = computed(() => {
-    const list = this.allRoomsCache() || this.rooms();
+    const catalog = this.hotels();
+    if (catalog && catalog.length > 0) {
+      return catalog
+        .map((h) => ({ id: h.id, name: h.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    const list = this.rooms();
     const mapHotels = new Map<number, string>();
     for (const r of list) {
       if (r.hotelId && r.hotelName) {
         mapHotels.set(r.hotelId, r.hotelName);
-      }
-    }
-    // If cache not loaded yet and hotels() loaded for dialog, merge them
-    if (mapHotels.size === 0 && this.hotels().length > 0) {
-      for (const h of this.hotels()) {
-        mapHotels.set(h.id, h.name);
       }
     }
     return Array.from(mapHotels.entries())
@@ -241,6 +241,31 @@ export class RoomsManagement implements OnInit, OnDestroy {
     this.roomTypeFilter.set('');
     this.currentPage.set(0);
     this.loadRooms();
+    this.loadHotelsLookup();
+  }
+
+  loadHotelsLookup(): void {
+    this.hotelService
+      .getAllHotels()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (list) => {
+          this.hotels.set(Array.isArray(list) ? list : []);
+        },
+        error: () => {
+          // Fallback to lookupHotels if getAllHotels encounters an error
+          this.hotelService
+            .lookupHotels({ size: 100 })
+            .pipe(
+              map((res: any) => (Array.isArray(res) ? res : res?.content || [])),
+              takeUntil(this.destroy$)
+            )
+            .subscribe({
+              next: (fallback: HotelDTO[]) => this.hotels.set(fallback || []),
+              error: () => this.hotels.set([]),
+            });
+        },
+      });
   }
 
   loadRooms(): void {
@@ -302,20 +327,9 @@ export class RoomsManagement implements OnInit, OnDestroy {
   }
 
   loadHotelsForDialog(): void {
-    this.hotelService
-      .lookupHotels({ size: 100 })
-      .pipe(
-        map((res: any) => (Array.isArray(res) ? res : res?.content || [])),
-        takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: (list: HotelDTO[]) => {
-          this.hotels.set(list);
-        },
-        error: () => {
-          this.hotels.set([]);
-        },
-      });
+    if (this.hotels().length === 0) {
+      this.loadHotelsLookup();
+    }
   }
 
   // ── Filter Handlers ────────────────────────────────────────
