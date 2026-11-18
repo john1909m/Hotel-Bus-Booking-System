@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusRouteDTO, BusRouteRequestDTO } from '../models/Bus/bus-route';
 import { BusRouteListParams, BusRouteLookupParams, PageBusRouteDTO } from '../models/Pagination/busRoutePage.model';
@@ -49,6 +49,36 @@ export class BusRouteService {
 
     return this.http.get<PageBusRouteDTO>(this.apiUrl, { params: httpParams }).pipe(
       catchError(handleError)
+    );
+  }
+
+  /**
+   * Fetches the complete catalog of bus routes by paginating through all pages
+   * (page size 100, backend max-page-size).
+   */
+  getAllBusRoutesCatalog(): Observable<BusRouteDTO[]> {
+    return this.getAllBusRoutes({ page: 0, size: 100 }).pipe(
+      switchMap((firstPage) => {
+        const total = firstPage.totalElements ?? firstPage.content?.length ?? 0;
+        const firstBatch = firstPage.content ?? [];
+        if (firstBatch.length >= total || firstPage.last) {
+          return of(firstBatch);
+        }
+        const totalPages = Math.ceil(total / 100);
+        const pageRequests: Observable<PageBusRouteDTO>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          pageRequests.push(this.getAllBusRoutes({ page: p, size: 100 }));
+        }
+        return forkJoin(pageRequests).pipe(
+          map((pages) => {
+            const all = [...firstBatch];
+            for (const pg of pages) {
+              if (pg.content) all.push(...pg.content);
+            }
+            return all;
+          })
+        );
+      })
     );
   }
 

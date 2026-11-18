@@ -111,11 +111,11 @@
     "phoneLabel": "رقم الهاتف",
     "phonePlaceholder": "+20 123 456 7890",
     "phoneRequired": "رقم الهاتف مطلوب.",
-    "phoneInvalid": "يرجى إدخال رقم هاتف صحيح.",
+    "phoneInvalid": "يرجى إدخال رقم هاتف صحيح (مثل: +201000000000).",
     "passwordLabel": "كلمة المرور",
     "passwordPlaceholder": "••••••••",
     "passwordRequired": "كلمة المرور مطلوبة.",
-    "passwordMinLength": "يجب ألا تقل كلمة المرور عن 6 أحرف.",
+    "passwordMinLength": "يجب ألا تقل كلمة المرور عن 8 أحرف.",
     "signInBtn": "تسجيل الدخول",
     "createAccountBtn": "إنشاء الحساب",
     "noAccount": "ليس لديك حساب؟",
@@ -126,7 +126,9 @@
     "networkError": "تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.",
     "genericAuthError": "فشلت المصادقة. يرجى المحاولة مرة أخرى لاحقاً.",
     "emailAlreadyRegistered": "هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد آخر.",
-    "registrationFailed": "فشل إنشاء الحساب. يرجى مراجعة بياناتك والمحاولة مرة أخرى."
+    "registrationFailed": "فشل إنشاء الحساب. يرجى مراجعة بياناتك والمحاولة مرة أخرى.",
+    "phoneHint": "من 10 إلى 15 رقماً، مع إمكانية البدء بـ +، على سبيل المثال: +20 100 000 0000.",
+    "passwordHint": "8 أحرف على الأقل."
   },
   "enums": {
     "roomType": {
@@ -411,7 +413,9 @@
       "adultPlural": "{{count}} بالغين",
       "childAgedSingular": "، طفل واحد (12–17 عامًا)",
       "childAgedPlural": "، {{count}} أطفال (12–17 عامًا)",
-      "selectDatesHint": "يرجى تحديد تواريخ الوصول والمغادرة لعرض أسعار الإقامة الكاملة."
+      "selectDatesHint": "يرجى تحديد تواريخ الوصول والمغادرة لعرض أسعار الإقامة الكاملة.",
+      "under12Limit": "الحد الأقصى لطفلين أقل من 12 عاماً لكل حجز.",
+      "maxReached": "(تم الوصول للحد الأقصى: 2)"
     },
     "rooms": {
       "title": "خيارات الإقامة والغرف المتاحة",
@@ -604,7 +608,13 @@
     "totalEstimatedStayNote": "جميع الغرف المحددة لكامل فترة الإقامة",
     "transportationTotalNote": "حجوزات تذاكر الحافلة",
     "signInAccount": "تسجيل الدخول إلى حسابك",
-    "returnToRoomsAria": "العودة لتصفح الغرف"
+    "returnToRoomsAria": "العودة لتصفح الغرف",
+    "under12Limit": "الحد الأقصى لطفلين أقل من 12 عاماً لكل حجز.",
+    "maxReached": "تم الوصول للحد الأقصى (2)",
+    "years": "سنة",
+    "free": "مجانًا",
+    "capacityFull": "السعة مكتملة",
+    "capacityPlusOne": "السعة +1"
   },
   "recommendations": {
     "sectionAria": "توصيات وسائل النقل الاختيارية",

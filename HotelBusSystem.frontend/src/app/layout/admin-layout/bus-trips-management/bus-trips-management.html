@@ -114,7 +114,7 @@
           >
             <option value="">{{ 'admin.trips.allRoutes' | translate }}</option>
             @for (route of routes(); track route.id) {
-              <option [value]="route.id">{{ route.name }}</option>
+              <option [value]="route.id">{{ getRouteLabel(route.id) }}</option>
             }
           </select>
         </div>
@@ -318,7 +318,7 @@
           <select id="tripRouteId" class="form-select" formControlName="routeId">
             <option [ngValue]="null" disabled>{{ 'admin.trips.selectRoute' | translate }}</option>
             @for (r of routes(); track r.id) {
-              <option [ngValue]="r.id">{{ r.name }}</option>
+              <option [ngValue]="r.id">{{ getRouteLabel(r.id) }}</option>
             }
           </select>
           @if (tripForm.get('routeId')?.touched && tripForm.get('routeId')?.errors?.['required']) {

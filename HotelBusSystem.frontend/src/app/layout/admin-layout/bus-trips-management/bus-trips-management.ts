@@ -30,9 +30,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BusTripService} from '../../../core/services/bus-trip.service';
 import { BusService } from '../../../core/services/bus.service';
 import { BusRouteService } from '../../../core/services/bus-route.service';
+import { BusStopService } from '../../../core/services/bus-stop.service';
 import { BusTripDTO, BusTripRequestDTO, status , BusTripListParams } from '../../../core/models/Bus/bus-trip.model';
 import { BusDTO } from '../../../core/models/Bus/bus.model';
 import { BusRouteDTO } from '../../../core/models/Bus/bus-route';
+import { BusStopDto } from '../../../core/models/Bus/bus-stop.model';
 import { PageBusTripDTO } from '../../../core/models/Pagination/busTripPage.model';
 
 @Component({
@@ -60,6 +62,7 @@ export class BusTripsManagement implements OnInit, OnDestroy {
   private readonly busTripService = inject(BusTripService);
   private readonly busService = inject(BusService);
   private readonly busRouteService = inject(BusRouteService);
+  private readonly busStopService = inject(BusStopService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly translate = inject(TranslateService, { optional: true });
@@ -69,6 +72,7 @@ export class BusTripsManagement implements OnInit, OnDestroy {
   readonly trips = signal<BusTripDTO[]>([]);
   readonly buses = signal<BusDTO[]>([]);
   readonly routes = signal<BusRouteDTO[]>([]);
+  readonly stops = signal<BusStopDto[]>([]);
   readonly pageData = signal<PageBusTripDTO | null>(null);
   readonly allBusTripsCache = signal<BusTripDTO[] | null>(null);
   readonly loading = signal<boolean>(false);
@@ -221,7 +225,7 @@ export class BusTripsManagement implements OnInit, OnDestroy {
 
   loadLookups(): void {
     this.busService
-      .lookupBuses()
+      .getAllBusesCatalog()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (list) => this.buses.set(Array.isArray(list) ? list : []),
@@ -229,11 +233,19 @@ export class BusTripsManagement implements OnInit, OnDestroy {
       });
 
     this.busRouteService
-      .lookupBusRoutes()
+      .getAllBusRoutesCatalog()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (list) => this.routes.set(Array.isArray(list) ? list : []),
         error: () => this.routes.set([]),
+      });
+
+    this.busStopService
+      .getAllBusStopsCatalog()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (list) => this.stops.set(Array.isArray(list) ? list : []),
+        error: () => this.stops.set([]),
       });
   }
 
@@ -333,9 +345,20 @@ export class BusTripsManagement implements OnInit, OnDestroy {
     return found ? `${found.busNumber} (${found.company})` : `Bus #${resolvedId}`;
   }
 
+  getStopTerminal(stopId: number): string | null {
+    const found = this.stops().find((s) => s.id === stopId);
+    return found ? found.name : null;
+  }
+
   getRouteLabel(routeId: number): string {
     const found = this.routes().find((r) => r.id === routeId);
-    return found?.name || `Route #${routeId}`;
+    if (!found) return `Route #${routeId}`;
+    const origin = this.getStopTerminal(found.originStopId);
+    const dest = this.getStopTerminal(found.destinationStopId);
+    if (origin && dest) {
+      return `${origin} → ${dest}`;
+    }
+    return found.name || `Route #${routeId}`;
   }
 
   getStatusSeverity(s: status | string): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
@@ -434,9 +457,25 @@ export class BusTripsManagement implements OnInit, OnDestroy {
       return str.length === 16 ? `${str}:00` : str;
     };
 
+    const rawBusId = formVal.busId;
+    const rawRouteId = formVal.routeId;
+    const busId = rawBusId !== null && rawBusId !== undefined && rawBusId !== '' ? Number(rawBusId) : null;
+    const routeId = rawRouteId !== null && rawRouteId !== undefined && rawRouteId !== '' ? Number(rawRouteId) : null;
+
+    if (!busId || isNaN(busId) || busId <= 0 || !routeId || isNaN(routeId) || routeId <= 0) {
+      this.saving.set(false);
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Assigned Bus and Assigned Route must be selected.',
+        life: 4000,
+      });
+      return;
+    }
+
     const payload: BusTripRequestDTO = {
-      busId: Number(formVal.busId),
-      routeId: Number(formVal.routeId),
+      busId: busId,
+      routeId: routeId,
       departureTime: formatLocalDateTime(formVal.departure),
       arrivalTime: formatLocalDateTime(formVal.arrivalTime),
       price: Number(formVal.price),

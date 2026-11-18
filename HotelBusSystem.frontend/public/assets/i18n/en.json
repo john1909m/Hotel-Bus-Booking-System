@@ -111,11 +111,11 @@
     "phoneLabel": "Phone Number",
     "phonePlaceholder": "+20 123 456 7890",
     "phoneRequired": "Phone number is required.",
-    "phoneInvalid": "Please enter a valid phone number.",
+    "phoneInvalid": "Please enter a valid phone number ( e.g. +201000000000).",
     "passwordLabel": "Password",
     "passwordPlaceholder": "••••••••",
     "passwordRequired": "Password is required.",
-    "passwordMinLength": "Password must be at least 6 characters.",
+    "passwordMinLength": "Password must be at least 8 characters.",
     "signInBtn": "Sign In",
     "createAccountBtn": "Create Account",
     "noAccount": "Don't have an account?",
@@ -126,7 +126,9 @@
     "networkError": "Cannot connect to server. Please check your network connection.",
     "genericAuthError": "Authentication failed. Please try again later.",
     "emailAlreadyRegistered": "This email address is already registered. Please sign in or use another email.",
-    "registrationFailed": "Registration failed. Please check your details and try again."
+    "registrationFailed": "Registration failed. Please check your details and try again.",
+    "phoneHint": "10 to 15 digits, with optional leading +, for example +20 100 000 0000.",
+    "passwordHint": "At least 8 characters."
   },
   "enums": {
     "roomType": {
@@ -411,7 +413,9 @@
       "adultPlural": "{{count}} Adults",
       "childAgedSingular": ", 1 Child aged 12–17",
       "childAgedPlural": ", {{count}} Children aged 12–17",
-      "selectDatesHint": "Please select arrival and departure dates to view complete stay rates."
+      "selectDatesHint": "Please select arrival and departure dates to view complete stay rates.",
+      "under12Limit": "A maximum of 2 children under 12 can be added per booking.",
+      "maxReached": "(Max 2 reached)"
     },
     "rooms": {
       "title": "Accommodations & Available Rooms",
@@ -604,7 +608,13 @@
     "totalEstimatedStayNote": "All selected rooms for full stay",
     "transportationTotalNote": "Bus ticket reservations",
     "signInAccount": "Sign In to Your Account",
-    "returnToRoomsAria": "Return to browsing rooms"
+    "returnToRoomsAria": "Return to browsing rooms",
+    "under12Limit": "A maximum of 2 children under 12 can be added per booking.",
+    "maxReached": "Max 2 reached",
+    "years": "yrs",
+    "free": "Free",
+    "capacityFull": "Capacity Full",
+    "capacityPlusOne": "Capacity +1"
   },
   "recommendations": {
     "sectionAria": "Optional Transportation Recommendations",

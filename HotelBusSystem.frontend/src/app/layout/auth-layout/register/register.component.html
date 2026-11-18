@@ -127,6 +127,7 @@
             class="w-full"
           />
         </div>
+        <small class="field-hint">{{ 'auth.phoneHint' | translate }}</small>
         @if (registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched) {
           <small class="field-error">
             @if (registerForm.get('phoneNumber')?.errors?.['required']) { {{ 'auth.phoneRequired' | translate }} }
@@ -148,6 +149,7 @@
             class="w-full"
           ></p-password>
         </div>
+        <small class="field-hint">{{ 'auth.passwordHint' | translate }}</small>
         @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
           <small class="field-error">
             @if (registerForm.get('password')?.errors?.['required']) { {{ 'auth.passwordRequired' | translate }} }

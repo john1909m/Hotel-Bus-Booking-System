@@ -110,7 +110,7 @@ export class BusRoutesManagement implements OnInit, OnDestroy {
 
   loadStopsLookup(): void {
     this.busStopService
-      .lookupBusStops({ size: 100 })
+      .getAllBusStopsCatalog()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
@@ -178,6 +178,18 @@ export class BusRoutesManagement implements OnInit, OnDestroy {
     return found ? `${found.name} (${found.city})` : `Stop #${stopId}`;
   }
 
+  getStopTerminal(stopId: number): string {
+    const found = this.stops().find((s) => s.id === stopId);
+    return found ? found.name : `Terminal #${stopId}`;
+  }
+
+  getRouteDisplay(route: BusRouteDTO): string {
+    if (!route) return '';
+    const origin = this.getStopTerminal(route.originStopId);
+    const dest = this.getStopTerminal(route.destinationStopId);
+    return `${origin} → ${dest}`;
+  }
+
   formatDuration(minutes: number): string {
     if (!minutes && minutes !== 0) return '—';
     if (minutes < 60) return `${minutes}m`;
@@ -192,8 +204,11 @@ export class BusRoutesManagement implements OnInit, OnDestroy {
     this.editingRouteId.set(null);
     const defaultOrigin = this.stops().length > 0 ? this.stops()[0].id : null;
     const defaultDest = this.stops().length > 1 ? this.stops()[1].id : null;
+    const defaultName = (defaultOrigin && defaultDest)
+      ? `${this.getStopTerminal(defaultOrigin)} → ${this.getStopTerminal(defaultDest)}`
+      : '';
     this.routeForm.reset({
-      name: '',
+      name: defaultName,
       duration: 120,
       originStopId: defaultOrigin,
       destinationStopId: defaultDest,
@@ -219,6 +234,12 @@ export class BusRoutesManagement implements OnInit, OnDestroy {
   }
 
   saveRoute(): void {
+    const originTerminal = this.getStopTerminal(Number(this.routeForm.get('originStopId')?.value));
+    const destTerminal = this.getStopTerminal(Number(this.routeForm.get('destinationStopId')?.value));
+    if (!this.routeForm.get('name')?.value?.trim() && originTerminal && destTerminal) {
+      this.routeForm.patchValue({ name: `${originTerminal} → ${destTerminal}` });
+    }
+
     if (this.routeForm.invalid) {
       this.routeForm.markAllAsTouched();
       this.messageService.add({
@@ -244,8 +265,10 @@ export class BusRoutesManagement implements OnInit, OnDestroy {
 
     this.saving.set(true);
 
+    const routeName = String(formVal.name).trim() || `${originTerminal} → ${destTerminal}`;
+
     const payload: BusRouteRequestDTO = {
-      name: String(formVal.name).trim(),
+      name: routeName,
       duration: Number(formVal.duration),
       originStopId: Number(formVal.originStopId),
       destinationStopId: Number(formVal.destinationStopId),

@@ -66,4 +66,39 @@ describe('RegisterComponent', () => {
     component.toggleLanguage();
     expect(mockLanguageService.toggleLanguage).toHaveBeenCalledTimes(1);
   });
+
+  it('should enforce password minimum length of 8 characters', () => {
+    component.registerForm.controls['password'].setValue('1234567');
+    expect(component.registerForm.controls['password'].invalid).toBe(true);
+    expect(component.registerForm.controls['password'].errors?.['minlength']).toBeDefined();
+
+    component.registerForm.controls['password'].setValue('12345678');
+    expect(component.registerForm.controls['password'].valid).toBe(true);
+  });
+
+  it('should validate phone numbers accepting spaces and enforcing 10 to 15 digits', () => {
+    component.registerForm.controls['phoneNumber'].setValue('12345');
+    expect(component.registerForm.controls['phoneNumber'].invalid).toBe(true);
+
+    component.registerForm.controls['phoneNumber'].setValue('+20 100 000 0000');
+    expect(component.registerForm.controls['phoneNumber'].valid).toBe(true);
+  });
+
+  it('should strip whitespace from phone number when submitting', () => {
+    const { of } = require('rxjs');
+    mockAuthService.signup.mockReturnValue(of({}));
+    component.registerForm.controls['name'].setValue('John Doe');
+    component.registerForm.controls['email'].setValue('john@example.com');
+    component.registerForm.controls['phoneNumber'].setValue('+20 100 000 0000');
+    component.registerForm.controls['password'].setValue('password123');
+
+    component.onSubmit();
+
+    expect(mockAuthService.signup).toHaveBeenCalledWith({
+      name: 'John Doe',
+      email: 'john@example.com',
+      phoneNumber: '+201000000000',
+      password: 'password123',
+    });
+  });
 });

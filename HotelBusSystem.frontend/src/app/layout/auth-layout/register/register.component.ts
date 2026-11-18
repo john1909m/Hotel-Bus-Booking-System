@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InputTextModule } from 'primeng/inputtext';
@@ -51,11 +51,18 @@ export class RegisterComponent {
     this.languageService.toggleLanguage();
   }
 
+  private static validatePhone(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    const clean = String(control.value).replace(/\s+/g, '');
+    const valid = /^\+?[0-9]{10,15}$/.test(clean);
+    return valid ? null : { pattern: true };
+  }
+
   registerForm: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9+ ]{8,15}$/)]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    phoneNumber: ['', [Validators.required, RegisterComponent.validatePhone]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   onSubmit(): void {
@@ -70,7 +77,7 @@ export class RegisterComponent {
     const payload: RegisterRequest = {
       name: this.registerForm.value.name.trim(),
       email: this.registerForm.value.email.trim(),
-      phoneNumber: this.registerForm.value.phoneNumber.trim(),
+      phoneNumber: String(this.registerForm.value.phoneNumber).trim().replace(/\s+/g, ''),
       password: this.registerForm.value.password,
     };
 
@@ -84,12 +91,17 @@ export class RegisterComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting.set(false);
-        if (err.status === 400 && err.error?.message?.includes('Email.already.exists')) {
+        const rawMsg = err.error?.message || (typeof err.error === 'string' ? err.error : '') || '';
+        if (err.status === 400 && (rawMsg.includes('Email.already.exists') || rawMsg.includes('already registered'))) {
           this.errorMessage.set(this.translate.instant('auth.emailAlreadyRegistered'));
+        } else if (err.status === 400 && rawMsg.includes('Size.password')) {
+          this.errorMessage.set(this.translate.instant('auth.passwordMinLength'));
+        } else if (err.status === 400 && rawMsg.includes('Pattern.phoneNumber')) {
+          this.errorMessage.set(this.translate.instant('auth.phoneInvalid'));
         } else if (err.status === 0) {
           this.errorMessage.set(this.translate.instant('auth.networkError'));
         } else {
-          this.errorMessage.set(err.error?.message || this.translate.instant('auth.registrationFailed'));
+          this.errorMessage.set(rawMsg || this.translate.instant('auth.registrationFailed'));
         }
       },
     });

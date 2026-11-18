@@ -138,7 +138,7 @@
             <span class="entity-id-badge">#{{ route.id }}</span>
           </td>
           <td>
-            <span class="table-cell-title">🗺 {{ route.name }}</span>
+            <span class="table-cell-title">🗺 {{ getRouteDisplay(route) }}</span>
           </td>
           <td>
             <span class="pill-badge">
@@ -328,7 +328,7 @@
       <p class="delete-desc">
         {{ 'admin.routes.deletePrompt' | translate }}
         <strong class="delete-entity-name">
-          {{ routeToDelete()?.name }}
+          {{ routeToDelete() ? getRouteDisplay(routeToDelete()!) : '' }}
         </strong>?
         {{ 'admin.rooms.cannotBeUndone' | translate }}
       </p>

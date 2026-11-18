@@ -8,7 +8,7 @@ import { BusStopDto } from '../models/Bus/bus-stop.model';
 import { BusSeatDTO } from '../models/Bus/bus-seat.model';
 import { EnrichedBusTrip } from '../../features/buses/bus-search-results/bus-search-results';
 
-import { isChildChargeable } from '../utils/guest-rules.util';
+import { isChildChargeable, isChildFree, MAX_FREE_CHILDREN_PER_BOOKING } from '../utils/guest-rules.util';
 
 export interface ChildGuestState {
   id: number;
@@ -186,6 +186,18 @@ export class BookingStateService {
     return count;
   });
 
+  /**
+   * Children aged under 12 (0–11) across the entire booking.
+   * Business rule: maximum of 2 children under 12 per booking.
+   */
+  readonly freeChildrenCount = computed<number>(() => {
+    return this.children().filter((c) => isChildFree(c.age)).length;
+  });
+
+  readonly isUnder12LimitReached = computed<boolean>(() => {
+    return this.freeChildrenCount() >= MAX_FREE_CHILDREN_PER_BOOKING;
+  });
+
   constructor() {
     this.restoreFromStorage();
   }
@@ -332,9 +344,13 @@ export class BookingStateService {
    * Adds a new child guest. Returns assigned child id.
    */
   addChild(age: number | null = null): number {
+    let sanitizedAge = age;
+    if (sanitizedAge !== null && isChildFree(sanitizedAge) && this.freeChildrenCount() >= MAX_FREE_CHILDREN_PER_BOOKING) {
+      sanitizedAge = null;
+    }
     const list = this.children();
     const nextId = list.length > 0 ? Math.max(...list.map((c) => c.id)) + 1 : 1;
-    const updated: ChildGuestState[] = [...list, { id: nextId, age }];
+    const updated: ChildGuestState[] = [...list, { id: nextId, age: sanitizedAge }];
     this.children.set(updated);
     const current = this.hotelBooking();
     if (current) {
@@ -367,8 +383,16 @@ export class BookingStateService {
 
   /**
    * Sets age for a specific child guest.
+   * Returns true if applied, or false if blocked by the under-12 limit (max 2 per booking).
    */
-  setChildAge(id: number, age: number | null): void {
+  setChildAge(id: number, age: number | null): boolean {
+    if (age !== null && isChildFree(age)) {
+      const currentChild = this.children().find((c) => c.id === id);
+      const wasAlreadyFree = currentChild?.age !== null && currentChild?.age !== undefined && isChildFree(currentChild.age);
+      if (!wasAlreadyFree && this.freeChildrenCount() >= MAX_FREE_CHILDREN_PER_BOOKING) {
+        return false;
+      }
+    }
     const updated = this.children().map((c) => (c.id === id ? { ...c, age } : c));
     this.children.set(updated);
     const current = this.hotelBooking();
@@ -377,6 +401,7 @@ export class BookingStateService {
     }
     this.persistToStorage();
     this.guestsChanged$.next({ adults: this.adults(), children: updated });
+    return true;
   }
 
   /**
@@ -770,8 +795,8 @@ export class BookingStateService {
     this.removeChild(childId);
   }
 
-  updateChildAge(childId: number, age: number | null): void {
-    this.setChildAge(childId, age);
+  updateChildAge(childId: number, age: number | null): boolean {
+    return this.setChildAge(childId, age);
   }
 
   autoDistributeGuests(): void {

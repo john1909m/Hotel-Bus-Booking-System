@@ -219,6 +219,40 @@ describe('BookingStateService - Drawer Open/Close & Lifecycle State', () => {
       expect(service.children()[0].id).toBe(child1Id);
     });
 
+    it('should limit children aged under 12 to a maximum of 2 per booking', () => {
+      // Add 2 children under 12
+      const c1 = service.addChild(5);
+      const c2 = service.addChild(8);
+      expect(service.freeChildrenCount()).toBe(2);
+      expect(service.isUnder12LimitReached()).toBe(true);
+
+      // Adding 3rd child with age under 12 should sanitize age to null
+      const c3 = service.addChild(10);
+      expect(service.children().find((c) => c.id === c3)?.age).toBeNull();
+
+      // Setting age to under 12 on c3 when 2 already exist should be blocked
+      const result = service.setChildAge(c3, 7);
+      expect(result).toBe(false);
+      expect(service.children().find((c) => c.id === c3)?.age).toBeNull();
+      expect(service.freeChildrenCount()).toBe(2);
+
+      // Setting age to 12-17 on c3 should succeed
+      const allowedResult = service.setChildAge(c3, 14);
+      expect(allowedResult).toBe(true);
+      expect(service.children().find((c) => c.id === c3)?.age).toBe(14);
+      expect(service.freeChildrenCount()).toBe(2);
+
+      // Attempting to lower c3 from 14 to 9 should be blocked
+      const lowerResult = service.setChildAge(c3, 9);
+      expect(lowerResult).toBe(false);
+      expect(service.children().find((c) => c.id === c3)?.age).toBe(14);
+
+      // Changing c1 from 5 to 7 (both < 12) should succeed as it does not increase count
+      const c1Update = service.setChildAge(c1, 7);
+      expect(c1Update).toBe(true);
+      expect(service.children().find((c) => c.id === c1)?.age).toBe(7);
+    });
+
     it('clearAll should reset standalone stay dates, guest counts, and resumeSummaryAfterLogin', () => {
       service.checkIn.set('2026-11-20');
       service.checkOut.set('2026-11-25');

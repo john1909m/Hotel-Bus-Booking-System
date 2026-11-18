@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BusDTO, BusRequestDTO } from '../models/Bus/bus.model';
 import { BusPricingUpdateRequestDto } from '../models/Bus/bus-feature.model';
@@ -70,6 +70,36 @@ export class BusService {
         } as PageBusDTO;
       }),
       catchError(handleError)
+    );
+  }
+
+  /**
+   * Fetches the complete catalog of buses by paginating through all pages
+   * (page size 100, backend max-page-size).
+   */
+  getAllBusesCatalog(): Observable<BusDTO[]> {
+    return this.getAllBuses({ page: 0, size: 100 }).pipe(
+      switchMap((firstPage) => {
+        const total = firstPage.totalElements ?? firstPage.content?.length ?? 0;
+        const firstBatch = firstPage.content ?? [];
+        if (firstBatch.length >= total || firstPage.last) {
+          return of(firstBatch);
+        }
+        const totalPages = Math.ceil(total / 100);
+        const pageRequests: Observable<PageBusDTO>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          pageRequests.push(this.getAllBuses({ page: p, size: 100 }));
+        }
+        return forkJoin(pageRequests).pipe(
+          map((pages) => {
+            const all = [...firstBatch];
+            for (const pg of pages) {
+              if (pg.content) all.push(...pg.content);
+            }
+            return all;
+          })
+        );
+      })
     );
   }
 

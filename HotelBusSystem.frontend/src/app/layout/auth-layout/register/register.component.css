@@ -258,6 +258,15 @@
   margin-top: 0.25rem;
 }
 
+.field-hint {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 400;
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
 :host ::ng-deep .btn-auth-submit {
   width: 100%;
   background: var(--color-primary) !important;

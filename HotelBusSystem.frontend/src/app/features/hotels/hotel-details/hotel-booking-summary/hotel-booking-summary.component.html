@@ -691,6 +691,17 @@
                   </button>
                 </div>
 
+                @if (freeChildrenCount() >= 2 || under12LimitWarning()) {
+                  <div class="under-12-limit-notice" role="alert">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>{{ 'summary.under12Limit' | translate }}</span>
+                  </div>
+                }
+
                 @if (getRoomChildren(room.id).length === 0) {
                   <p class="no-children-note">{{ 'summary.noChildrenInRoom' | translate }}</p>
                 } @else {
@@ -707,8 +718,8 @@
                             <option value="" disabled [selected]="child.age === null">{{ 'summary.selectAgePlaceholder' | translate }}</option>
                             @for (age of availableChildAges; track age) {
                               <option [value]="age" [selected]="child.age === age" [disabled]="isChildAgeDisabled(child, age, room)">
-                                {{ age === 0 ? 'Under 1 (0 yrs)' : age + ' yrs' }}
-                                {{ age <= 11 ? '— Free' : (isChildAgeDisabled(child, age, room) ? '— Capacity Full' : '— Capacity +1') }}
+                                {{ age === 0 ? ('hotelDetails.stayDates.underOne' | translate) : (age + ' ' + ('summary.years' | translate)) }}
+                                {{ isChildAgeDisabled(child, age, room) && age < 12 ? ('— ' + ('summary.maxReached' | translate)) : (age <= 11 ? ('— ' + ('summary.free' | translate)) : (isChildAgeDisabled(child, age, room) ? ('— ' + ('summary.capacityFull' | translate)) : ('— ' + ('summary.capacityPlusOne' | translate)))) }}
                               </option>
                             }
                           </select>

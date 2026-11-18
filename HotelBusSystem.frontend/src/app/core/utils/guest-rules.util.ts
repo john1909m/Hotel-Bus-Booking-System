@@ -2,9 +2,12 @@
  * Single source of truth for hotel guest capacity and child age classification rules.
  * Business Rules:
  * - Children aged 0–11 stay free and do not count toward room capacity.
+ * - Limit of children aged 0-11 is a maximum of 2 per booking across all selected rooms.
  * - Children aged 12–17 are chargeable and count toward room capacity.
  * - Adults (age 18+) always count toward room capacity.
  */
+
+export const MAX_FREE_CHILDREN_PER_BOOKING = 2;
 
 export interface GuestChildItem {
   age: number;

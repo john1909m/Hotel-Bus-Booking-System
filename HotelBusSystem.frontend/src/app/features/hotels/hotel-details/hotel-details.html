@@ -700,6 +700,7 @@
                 type="button"
                 class="btn-guest-counter"
                 (click)="addChild()"
+                [disabled]="isChildIncreaseDisabled()"
                 [attr.aria-label]="'hotelDetails.stayDates.increaseChildren' | translate">
                 &plus;
               </button>
@@ -726,13 +727,24 @@
                     <option value="" disabled [selected]="child.age === null">{{ 'hotelDetails.stayDates.agePlaceholder' | translate }}</option>
                     @for (age of availableChildAges; track age) {
                       <option [value]="age" [selected]="child.age === age" [disabled]="isChildAgeDisabled(child, age)">
-                        {{ age === 0 ? ('hotelDetails.stayDates.underOne' | translate) : ('hotelDetails.stayDates.yearsOld' | translate:{ age: age }) }} {{ age < 12 ? ('hotelDetails.stayDates.free' | translate) : (isChildAgeDisabled(child, age) ? ('hotelDetails.stayDates.exceedsCapacity' | translate) : ('hotelDetails.stayDates.chargeable' | translate)) }}
+                        {{ age === 0 ? ('hotelDetails.stayDates.underOne' | translate) : ('hotelDetails.stayDates.yearsOld' | translate:{ age: age }) }} {{ isChildAgeDisabled(child, age) && age < 12 ? ('hotelDetails.stayDates.maxReached' | translate) : (age < 12 ? ('hotelDetails.stayDates.free' | translate) : (isChildAgeDisabled(child, age) ? ('hotelDetails.stayDates.exceedsCapacity' | translate) : ('hotelDetails.stayDates.chargeable' | translate))) }}
                       </option>
                     }
                   </select>
                 </div>
               }
             </div>
+
+            @if (freeChildrenCount() >= 2 || under12LimitWarning()) {
+              <div class="under-12-limit-notice" role="alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>{{ 'hotelDetails.stayDates.under12Limit' | translate }}</span>
+              </div>
+            }
           </div>
         }
 

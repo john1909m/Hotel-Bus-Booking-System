@@ -7,6 +7,7 @@ import { BusTripsManagement } from './bus-trips-management';
 import { BusTripService } from '../../../core/services/bus-trip.service';
 import { BusService } from '../../../core/services/bus.service';
 import { BusRouteService } from '../../../core/services/bus-route.service';
+import { BusStopService } from '../../../core/services/bus-stop.service';
 import { MessageService } from 'primeng/api';
 import { BusTripDTO } from '../../../core/models/Bus/bus-trip.model';
 import { PageBusTripDTO } from '../../../core/models/Pagination/busTripPage.model';
@@ -71,12 +72,21 @@ describe('BusTripsManagement Component', () => {
 
     mockBusService = {
       getAllBuses: vi.fn().mockReturnValue(of({ content: mockBuses })),
+      getAllBusesCatalog: vi.fn().mockReturnValue(of(mockBuses)),
       lookupBuses: vi.fn().mockReturnValue(of(mockBuses)),
     };
 
     mockBusRouteService = {
       getAllRoutes: vi.fn().mockReturnValue(of({ content: mockRoutes })),
+      getAllBusRoutesCatalog: vi.fn().mockReturnValue(of(mockRoutes)),
       lookupBusRoutes: vi.fn().mockReturnValue(of(mockRoutes)),
+    };
+
+    const mockBusStopService = {
+      getAllBusStopsCatalog: vi.fn().mockReturnValue(of([
+        { id: 1, name: 'Cairo Gateway Terminal', city: 'Cairo' },
+        { id: 2, name: 'Alexandria Central', city: 'Alexandria' },
+      ])),
     };
 
     mockMessageService = {
@@ -88,6 +98,7 @@ describe('BusTripsManagement Component', () => {
         { provide: BusTripService, useValue: mockBusTripService },
         { provide: BusService, useValue: mockBusService },
         { provide: BusRouteService, useValue: mockBusRouteService },
+        { provide: BusStopService, useValue: mockBusStopService },
         { provide: MessageService, useValue: mockMessageService },
         { provide: FormBuilder, useClass: FormBuilder },
       ],
@@ -108,11 +119,36 @@ describe('BusTripsManagement Component', () => {
       page: 0,
       size: 10,
     });
-    expect(mockBusService.lookupBuses).toHaveBeenCalled();
-    expect(mockBusRouteService.lookupBusRoutes).toHaveBeenCalled();
+    expect(mockBusService.getAllBusesCatalog).toHaveBeenCalled();
+    expect(mockBusRouteService.getAllBusRoutesCatalog).toHaveBeenCalled();
     expect(component.trips().length).toBe(2);
     expect(component.totalElements()).toBe(2);
     expect(component.isSearchFilterActive()).toBe(false);
+  });
+
+  it('should ensure numeric busId and routeId are sent in POST body when creating a trip', () => {
+    component.ngOnInit();
+    component.openCreateDialog();
+
+    component.tripForm.patchValue({
+      busId: 10,
+      routeId: 20,
+      departure: '2026-12-05T10:00',
+      arrivalTime: '2026-12-05T14:00',
+      price: 200,
+      status: 'SCHEDULED',
+    });
+
+    component.saveTrip();
+
+    expect(mockBusTripService.createBusTrip).toHaveBeenCalledWith({
+      busId: 10,
+      routeId: 20,
+      departureTime: '2026-12-05T10:00:00',
+      arrivalTime: '2026-12-05T14:00:00',
+      price: 200,
+      status: 'SCHEDULED',
+    });
   });
 
   it('should debounce search input by 300ms, fetch catalog, and perform partial matching across displayed fields', () => {

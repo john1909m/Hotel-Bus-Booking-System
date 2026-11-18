@@ -47,6 +47,7 @@ import { HotelBusStopDTO } from '../../../../core/models/Hotel/hotel-bus-stop.mo
 import { EnrichedBusTrip } from '../../../buses/bus-search-results/bus-search-results';
 import { BusSeatSelectionComponent } from '../../../buses/bus-seat-selection/bus-seat-selection.component';
 import { ChildGuest } from '../hotel-details';
+import { isChildFree, MAX_FREE_CHILDREN_PER_BOOKING } from '../../../../core/utils/guest-rules.util';
 import {
   isOutgoingEligible,
   isReturnEligible,
@@ -800,12 +801,25 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
     return this.getRoomAdults(room.id) > 1;
   }
 
+  readonly under12LimitWarning = signal<boolean>(false);
+
+  readonly freeChildrenCount = computed<number>(() => {
+    return this.bookingState.children().filter((c) => isChildFree(c.age)).length;
+  });
+
   canAddChild(room: RoomDTO): boolean {
-    return true; // 0-11 stay free
+    if (this.freeChildrenCount() < MAX_FREE_CHILDREN_PER_BOOKING) return true;
+    return this.getRoomRequiredCapacity(room.id) < (room.capacity || 2);
   }
 
   isChildAgeDisabled(child: ChildGuest, age: number, room: RoomDTO): boolean {
-    if (age < 12) return false;
+    if (age < 12) {
+      const isCurrentChildFree = child.age !== null && child.age !== undefined && isChildFree(child.age);
+      if (!isCurrentChildFree && this.freeChildrenCount() >= MAX_FREE_CHILDREN_PER_BOOKING) {
+        return true;
+      }
+      return false;
+    }
     if (child.age !== null && child.age >= 12 && child.age === age) return false;
     const currentTakes = child.age !== null && child.age >= 12;
     const delta = currentTakes ? 0 : 1;
@@ -863,6 +877,16 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges {
     const val = target.value;
     const age = val === '' ? null : parseInt(val, 10);
     const parsedAge = age !== null && !isNaN(age) ? age : null;
+    const child = this.bookingState.children().find((c) => c.id === childId);
+    const isCurrentChildFree = child?.age !== null && child?.age !== undefined && isChildFree(child.age);
+
+    if (parsedAge !== null && isChildFree(parsedAge) && !isCurrentChildFree && this.freeChildrenCount() >= MAX_FREE_CHILDREN_PER_BOOKING) {
+      target.value = child?.age !== null && child?.age !== undefined ? String(child.age) : '';
+      this.under12LimitWarning.set(true);
+      return;
+    }
+
+    this.under12LimitWarning.set(false);
     this.childAgeChange.emit({ childId, age: parsedAge });
     this.bookingState.updateChildAge(childId, parsedAge);
   }

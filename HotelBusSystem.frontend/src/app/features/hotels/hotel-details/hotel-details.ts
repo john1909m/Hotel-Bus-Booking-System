@@ -430,13 +430,26 @@ export class HotelDetails implements OnInit, OnDestroy {
     return this.selectedRooms().length > 0 && this.requiredCapacity() > this.totalRoomCapacity();
   });
 
+  readonly under12LimitWarning = signal<boolean>(false);
+
   isAdultsIncreaseDisabled(): boolean {
     if (this.selectedRooms().length === 0) return false;
     return this.requiredCapacity() >= this.totalRoomCapacity();
   }
 
+  isChildIncreaseDisabled(): boolean {
+    if (this.selectedRooms().length === 0) return false;
+    return this.freeChildrenCount() >= 2 && this.remainingCapacity() <= 0;
+  }
+
   isChildAgeDisabled(child: ChildGuest, age: number): boolean {
-    if (isChildFree(age)) return false; // Ages 0-11 free, never restricted
+    if (isChildFree(age)) {
+      const isCurrentChildFree = child.age !== null && child.age !== undefined && isChildFree(child.age);
+      if (!isCurrentChildFree && this.freeChildrenCount() >= 2) {
+        return true;
+      }
+      return false;
+    }
     if (this.selectedRooms().length === 0) return false;
     if (child.age !== null && isChildChargeable(child.age) && child.age === age) return false;
     const currentTakesCapacity = child.age !== null && isChildChargeable(child.age);
@@ -1193,16 +1206,35 @@ export class HotelDetails implements OnInit, OnDestroy {
     this.saveBookingDraft();
   }
 
-  updateChildAge(childId: number, age: number | null): void {
-    this.bookingStateService.setChildAge(childId, age);
-    this.saveBookingDraft();
+  updateChildAge(childId: number, age: number | null): boolean {
+    const success = this.bookingStateService.setChildAge(childId, age);
+    if (success) {
+      this.under12LimitWarning.set(false);
+      this.saveBookingDraft();
+    } else {
+      this.under12LimitWarning.set(true);
+    }
+    return success;
   }
 
   onChildAgeSelect(childId: number, event: Event): void {
     const target = event.target as HTMLSelectElement;
     const val = target.value;
     const age = val === '' ? null : parseInt(val, 10);
-    this.updateChildAge(childId, age !== null && !isNaN(age) ? age : null);
+    const parsedAge = age !== null && !isNaN(age) ? age : null;
+    const child = this.children().find((c) => c.id === childId);
+    const isCurrentChildFree = child?.age !== null && child?.age !== undefined && isChildFree(child.age);
+
+    if (parsedAge !== null && isChildFree(parsedAge) && !isCurrentChildFree && this.freeChildrenCount() >= 2) {
+      target.value = child?.age !== null && child?.age !== undefined ? String(child.age) : '';
+      this.under12LimitWarning.set(true);
+      return;
+    }
+
+    const applied = this.updateChildAge(childId, parsedAge);
+    if (!applied) {
+      target.value = child?.age !== null && child?.age !== undefined ? String(child.age) : '';
+    }
   }
 
   // ── Per-Room Guest Assignment Logic ─────────────────────────
