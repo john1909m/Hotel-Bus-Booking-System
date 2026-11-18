@@ -34,7 +34,7 @@ public class HotelBusStopController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HotelBusStopDto> getHotelBusStopById(@PathVariable Long id) {
         HotelBusStopDto hotelBusStop = hotelBusStopService.getHotelBusStopById(id);
         return new ResponseEntity<>(hotelBusStop, HttpStatus.OK);
@@ -73,7 +73,7 @@ public class HotelBusStopController {
     }
 
     @GetMapping("/hotel/{hotelId}")
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<HotelBusStopDto>> getHotelBusStopsByHotelId(@PathVariable Long hotelId) {
         List<HotelBusStopDto> hotelBusStops = hotelBusStopService.getHotelBusStopsByHotelId(hotelId);
         return new ResponseEntity<>(hotelBusStops, HttpStatus.OK);

@@ -149,7 +149,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/bus-trips/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/hotel-bus-stops").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/hotel-bus-stops/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/hotel-bus-stops/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/hotel-bus-stops/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/hotel-bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bus-bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/payments").hasRole("ADMIN")

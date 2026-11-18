@@ -87,6 +87,7 @@ describe('UserBookings Component', () => {
           totalElements: 2,
         } as PageUserDto)
       ),
+      getAllUsersList: vi.fn().mockReturnValue(of(mockUsers)),
     };
 
     mockHotelBookingService = {
@@ -139,7 +140,7 @@ describe('UserBookings Component', () => {
   it('should initialize and load user options', () => {
     component.ngOnInit();
 
-    expect(mockUserService.getAllUsers).toHaveBeenCalledWith({ page: 0, size: 100 });
+    expect(mockUserService.getAllUsersList).toHaveBeenCalled();
     expect(component.users().length).toBe(2);
     expect(component.userOptions().length).toBe(2);
     expect(component.userOptions()[0].label).toBe('Alice Smith (alice@example.com)');

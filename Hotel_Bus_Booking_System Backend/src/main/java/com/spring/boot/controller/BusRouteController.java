@@ -40,7 +40,7 @@ public class BusRouteController {
     @GetMapping
     public ResponseEntity<PageResponse<BusRouteDto>> getAllBusRoutes(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "1000") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection,
             @RequestParam(required = false) Long originStopId,

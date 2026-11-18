@@ -98,7 +98,7 @@ export class UserBookings implements OnInit, OnDestroy {
     'DEBIT_CARD',
     'PAYPAL',
     'BANK_TRANSFER',
-    'No payment',
+    'No payment', 
   ];
   readonly availableTypes = [
     { labelKey: 'admin.userBookings.allBookings', value: 'ALL' },
@@ -208,11 +208,11 @@ export class UserBookings implements OnInit, OnDestroy {
   loadUsers(): void {
     this.loadingUsers.set(true);
     this.userService
-      .getAllUsers({ page: 0, size: 100 })
+      .getAllUsersList()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (page) => {
-          this.users.set(page.content || []);
+        next: (users) => {
+          this.users.set(Array.isArray(users) ? users : ((users as any)?.content || []));
           this.loadingUsers.set(false);
         },
         error: (err) => {

@@ -47,7 +47,22 @@ export class BusRouteService {
     if (params.originStopId !== undefined) httpParams = httpParams.set('originStopId', params.originStopId);
     if (params.destinationStopId !== undefined) httpParams = httpParams.set('destinationStopId', params.destinationStopId);
 
-    return this.http.get<PageBusRouteDTO>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl, { params: httpParams }).pipe(
+      map((res) => {
+        const rawContent = res?.content || res?._embedded?.busRouteDtoList || res?._embedded?.busRoutes || (Array.isArray(res) ? res : []);
+        const totalElements = res?.page?.totalElements ?? res?.totalElements ?? rawContent.length;
+        const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
+        const size = res?.page?.size ?? res?.size ?? 20;
+        const number = res?.page?.number ?? res?.page ?? res?.number ?? 0;
+        return {
+          ...res,
+          content: rawContent,
+          totalElements,
+          totalPages,
+          size,
+          number,
+        } as PageBusRouteDTO;
+      }),
       catchError(handleError)
     );
   }
@@ -57,17 +72,19 @@ export class BusRouteService {
    * (page size 100, backend max-page-size).
    */
   getAllBusRoutesCatalog(): Observable<BusRouteDTO[]> {
-    return this.getAllBusRoutes({ page: 0, size: 100 }).pipe(
+    const pageSize = 100;
+    return this.getAllBusRoutes({ page: 0, size: pageSize }).pipe(
       switchMap((firstPage) => {
         const total = firstPage.totalElements ?? firstPage.content?.length ?? 0;
         const firstBatch = firstPage.content ?? [];
         if (firstBatch.length >= total || firstPage.last) {
           return of(firstBatch);
         }
-        const totalPages = Math.ceil(total / 100);
+        const effectivePageSize = firstBatch.length > 0 ? firstBatch.length : pageSize;
+        const totalPages = Math.ceil(total / effectivePageSize);
         const pageRequests: Observable<PageBusRouteDTO>[] = [];
         for (let p = 1; p < totalPages; p++) {
-          pageRequests.push(this.getAllBusRoutes({ page: p, size: 100 }));
+          pageRequests.push(this.getAllBusRoutes({ page: p, size: effectivePageSize }));
         }
         return forkJoin(pageRequests).pipe(
           map((pages) => {

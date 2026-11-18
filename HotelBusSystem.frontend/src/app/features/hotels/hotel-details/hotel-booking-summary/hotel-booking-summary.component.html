@@ -319,7 +319,7 @@
       }
 
       <!-- Direction Switcher Tabs -->
-      @if (selectedOriginStopId() && hotelBusStop()) {
+      @if (selectedOriginStopId()) {
         <div class="direction-tabs-row" role="tablist">
           <button
             type="button"
@@ -1031,6 +1031,6 @@
   [trip]="activeTripForSeats()"
   [(visible)]="seatDialogVisible"
   [direction]="activeTripDirection()"
-  [hotelBusStopId]="hotelBusStop()?.id || null"
+  [hotelBusStopId]="activeTripDirection() === 'outgoing' ? (activeTripForSeats()?.destinationStop?.id || hotelBusStop()?.id || null) : (activeTripForSeats()?.originStop?.id || hotelBusStop()?.id || null)"
   (bookingComplete)="onSeatsConfirmed($event)">
 </app-bus-seat-selection>

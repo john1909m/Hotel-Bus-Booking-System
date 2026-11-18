@@ -96,4 +96,21 @@ describe('UserService', () => {
     expect(res?.totalElements).toBe(1);
     expect(res?.totalPages).toBe(1);
   });
+
+  it('getAllUsersList should fetch from /users/all and return user array', () => {
+    const rawUsers = [
+      { id: 1, name: 'Alice', email: 'alice@test.com', role: 'ADMIN' },
+      { id: 2, name: 'Bob', email: 'bob@test.com', role: 'USER' },
+    ];
+    mockHttp.get.mockReturnValue(of(rawUsers));
+
+    let res: UserDto[] | undefined;
+    service.getAllUsersList().subscribe(data => {
+      res = data;
+    });
+
+    expect(mockHttp.get).toHaveBeenCalledWith(`${baseUrl}/all`);
+    expect(res?.length).toBe(2);
+    expect(res?.[0].name).toBe('Alice');
+  });
 });

@@ -54,6 +54,18 @@ export class UserService {
   }
 
   /**
+   * GET /users/all
+   * Get all users without pagination (Admin only).
+   * Response: UserDto[]
+   */
+  getAllUsersList(): Observable<UserDto[]> {
+    return this.http.get<UserDto[]>(`${this.apiUrl}/all`).pipe(
+      map((res) => (Array.isArray(res) ? res : (res as any)?.content || [])),
+      catchError(handleError)
+    );
+  }
+
+  /**
    * GET /users/{id}
    * Get specific user by ID (Self or Admin).
    * Response: UserDto

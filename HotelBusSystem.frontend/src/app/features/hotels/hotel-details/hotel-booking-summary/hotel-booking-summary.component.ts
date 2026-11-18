@@ -17,7 +17,7 @@ import {
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom, of, catchError, forkJoin, Subject, takeUntil } from 'rxjs';
+import { firstValueFrom, of, catchError, forkJoin, Subject, takeUntil, Observable } from 'rxjs';
 
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
@@ -35,6 +35,7 @@ import { BusService } from '../../../../core/services/bus.service';
 import { BusBookingService } from '../../../../core/services/bus-booking.service';
 import { HotelBusStopService } from '../../../../core/services/hotel-bus-stop.service';
 import { HotelBookingService } from '../../../../core/services/hotel-booking.service';
+import { HotelService } from '../../../../core/services/hotel.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BookingStateService } from '../../../../core/services/booking-state.service';
 
@@ -44,6 +45,7 @@ import { RoomDTO, roomType } from '../../../../core/models/Room/room.model';
 import { BusStopDto } from '../../../../core/models/Bus/bus-stop.model';
 import { BusRouteDTO } from '../../../../core/models/Bus/bus-route';
 import { BusTripDTO } from '../../../../core/models/Bus/bus-trip.model';
+import { PageBusTripDTO } from '../../../../core/models/Pagination/busTripPage.model';
 import { BusDTO } from '../../../../core/models/Bus/bus.model';
 import { BusSeatDTO } from '../../../../core/models/Bus/bus-seat.model';
 import { HotelBusStopDTO } from '../../../../core/models/Hotel/hotel-bus-stop.model';
@@ -57,6 +59,7 @@ import {
   isOutgoingRecommended,
   getOutgoingTimingBadge,
   getReturnTimingBadge,
+  extractLocalDateStr,
 } from '../../../../core/utils/bus-eligibility.util';
 
 export interface RecommendedBusTrip extends EnrichedBusTrip {
@@ -102,6 +105,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService, { optional: true });
   private readonly hotelBookingService = inject(HotelBookingService);
+  private readonly hotelService = inject(HotelService, { optional: true });
   private readonly destroy$ = new Subject<void>();
 
   private readonly busStopService = inject(BusStopService);
@@ -377,8 +381,12 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
     if (val) {
       const curHotel = this.effectiveHotel();
       if (curHotel && !this.hotelBusStop()) {
-        this.resolveHotelBusStop(curHotel);
-      } else if (this.selectedOriginStopId() && this.hotelBusStop()) {
+        this.resolveHotelBusStop(curHotel).then(() => {
+          if (this.selectedOriginStopId()) {
+            this.fetchRecommendations();
+          }
+        });
+      } else if (this.selectedOriginStopId()) {
         this.fetchRecommendations();
       }
     }
@@ -457,7 +465,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
     this.stopsLoadError.set(null);
     try {
       const page = await firstValueFrom(
-        this.busStopService.getAllBusStops({ size: 100 }).pipe(
+        this.busStopService.getAllBusStops({ size: 1000 }).pipe(
           catchError((err) => {
             this.stopsLoadError.set('Failed to load bus stops.');
             return of({ content: [] as BusStopDto[] });
@@ -511,50 +519,49 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
         );
         if (stop) {
           this.hotelBusStop.set(stop);
-          if (this.selectedOriginStopId()) {
-            this.fetchRecommendations();
-          }
           return;
         }
       }
 
-      // 2. Fallback: Find closest bus stop in the hotel's city
+      // 2. Fallback: Find closest bus stop in the hotel's city or nearest bus stop
+      if (this.allStops().length === 0) {
+        await this.loadAllBusStops();
+      }
+      let cityStops: BusStopDto[] = [];
       if (hotel.city) {
-        const cityStopsPage = await firstValueFrom(
-          this.busStopService.getAllBusStops({ city: hotel.city.trim(), size: 50 }).pipe(
-            catchError(() => of({ content: [] as BusStopDto[] }))
-          )
+        const targetCity = hotel.city.trim().toLowerCase();
+        cityStops = this.allStops().filter(
+          (s) => s.city?.trim().toLowerCase() === targetCity
         );
-        const cityStops = cityStopsPage?.content || [];
-        if (cityStops.length > 0) {
-          let closestStop = cityStops[0];
-          let minDistance = this.calculateDistance(
+      }
+      if (cityStops.length === 0 && this.allStops().length > 0) {
+        cityStops = [...this.allStops()];
+      }
+      if (cityStops.length > 0) {
+        let closestStop = cityStops[0];
+        let minDistance = this.calculateDistance(
+          hotel.latitude,
+          hotel.longitude,
+          closestStop.latitude,
+          closestStop.longitude
+        );
+
+        for (let i = 1; i < cityStops.length; i++) {
+          const dist = this.calculateDistance(
             hotel.latitude,
             hotel.longitude,
-            closestStop.latitude,
-            closestStop.longitude
+            cityStops[i].latitude,
+            cityStops[i].longitude
           );
-
-          for (let i = 1; i < cityStops.length; i++) {
-            const dist = this.calculateDistance(
-              hotel.latitude,
-              hotel.longitude,
-              cityStops[i].latitude,
-              cityStops[i].longitude
-            );
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestStop = cityStops[i];
-            }
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestStop = cityStops[i];
           }
-
-          this.hotelBusStop.set(closestStop);
-          this.hotelBusDistance.set(minDistance);
-          if (this.selectedOriginStopId()) {
-            this.fetchRecommendations();
-          }
-          return;
         }
+
+        this.hotelBusStop.set(closestStop);
+        this.hotelBusDistance.set(minDistance);
+        return;
       }
 
       this.destinationStopError.set(
@@ -572,8 +579,8 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
     if (curHotel && !this.hotelBusStop()) {
       await this.resolveHotelBusStop(curHotel);
     }
-    if (originId && this.hotelBusStop()) {
-      this.fetchRecommendations();
+    if (originId) {
+      await this.fetchRecommendations();
     } else {
       this.outgoingTrips.set([]);
       this.returnTrips.set([]);
@@ -583,21 +590,102 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
 
   async fetchRecommendations(): Promise<void> {
     const originId = this.selectedOriginStopId();
-    const destStop = this.hotelBusStop();
-    const checkInDate = this.effectiveCheckIn()?.trim();
-    const checkOutDate = this.effectiveCheckOut()?.trim();
-    const hotel = this.effectiveHotel();
-
-    if (!originId || !destStop || !checkInDate) {
+    if (!originId) {
       return;
     }
 
-    if (originId === destStop.id) {
-      this.tripsSearchError.set('Departure stop cannot be the same as the hotel arrival stop.');
-      this.outgoingTrips.set([]);
-      this.returnTrips.set([]);
-      this.hasSearchedTrips.set(true);
-      return;
+    let hotel = this.effectiveHotel();
+    if (!hotel && typeof window !== 'undefined') {
+      try {
+        const match = window.location.pathname.match(/\/hotels\/(\d+)/);
+        if (match && match[1]) {
+          const hId = parseInt(match[1], 10);
+          if (hId && this.hotelService) {
+            hotel = await firstValueFrom(this.hotelService.getHotelById(hId).pipe(catchError(() => of(null))));
+          }
+        }
+      } catch { }
+    }
+
+    let destStop = this.hotelBusStop();
+    if (!destStop && hotel) {
+      await this.resolveHotelBusStop(hotel);
+      destStop = this.hotelBusStop();
+    }
+
+    let rawCheckIn = (this.effectiveCheckIn() || '').trim();
+
+    // Fallback 1: Query parameters in URL
+    if (!rawCheckIn && typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        rawCheckIn = (urlParams.get('checkIn') || urlParams.get('checkInDate') || '').trim();
+      } catch { }
+    }
+
+    // Fallback 2: Check input on hotel-details page DOM
+    if (!rawCheckIn && typeof document !== 'undefined') {
+      const inEl = document.getElementById('main-checkin') as HTMLInputElement | null;
+      if (inEl && inEl.value) {
+        rawCheckIn = inEl.value.trim();
+      }
+    }
+
+    // Fallback 3: sessionStorage drafts
+    if (!rawCheckIn && typeof sessionStorage !== 'undefined') {
+      try {
+        const rawState = sessionStorage.getItem('travelease_booking_summary_state');
+        if (rawState) {
+          const parsed = JSON.parse(rawState);
+          rawCheckIn = (parsed?.checkIn || parsed?.hotel?.checkIn || '').trim();
+        }
+      } catch { }
+    }
+
+    // Fallback 4: Default to today's date so search NEVER fails
+    if (!rawCheckIn) {
+      const today = new Date();
+      rawCheckIn = today.toISOString().split('T')[0];
+    }
+
+    // Synchronize to booking state if missing
+    if (!this.bookingState.checkIn()) {
+      const checkInD = new Date(rawCheckIn);
+      const nextD = new Date(checkInD);
+      nextD.setDate(nextD.getDate() + 1);
+      const defaultOut = nextD.toISOString().split('T')[0];
+      this.bookingState.setStayDates(rawCheckIn, this.bookingState.checkOut() || defaultOut);
+    }
+
+    const checkInDate = rawCheckIn.includes('T') ? rawCheckIn.split('T')[0] : rawCheckIn.includes(' ') ? rawCheckIn.split(' ')[0] : rawCheckIn;
+
+    let rawCheckOut = (this.effectiveCheckOut() || '').trim();
+    if (!rawCheckOut && typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        rawCheckOut = (urlParams.get('checkOut') || urlParams.get('checkOutDate') || '').trim();
+      } catch { }
+    }
+    if (!rawCheckOut && typeof document !== 'undefined') {
+      const outEl = document.getElementById('main-checkout') as HTMLInputElement | null;
+      if (outEl && outEl.value) {
+        rawCheckOut = outEl.value.trim();
+      }
+    }
+    const checkOutDate = rawCheckOut ? (rawCheckOut.includes('T') ? rawCheckOut.split('T')[0] : rawCheckOut.includes(' ') ? rawCheckOut.split(' ')[0] : rawCheckOut) : '';
+
+    if (destStop && Number(originId) === Number(destStop.id)) {
+      const alternate = this.allStops().find((s) => Number(s.id) !== Number(originId) && (!hotel?.city || s.city?.trim().toLowerCase() === hotel.city.trim().toLowerCase()));
+      if (alternate) {
+        destStop = alternate;
+        this.hotelBusStop.set(alternate);
+      } else {
+        this.tripsSearchError.set('Departure stop cannot be the same as the hotel arrival stop.');
+        this.outgoingTrips.set([]);
+        this.returnTrips.set([]);
+        this.hasSearchedTrips.set(true);
+        return;
+      }
     }
 
     this.isLoadingTrips.set(true);
@@ -606,137 +694,326 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
 
     try {
       // 1. Fetch all routes
-      const routesPage = await firstValueFrom(
-        this.busRouteService.getAllBusRoutes({ size: 100 }).pipe(
-          catchError(() => of({ content: [] as BusRouteDTO[] }))
-        )
-      );
-      const allRoutes = routesPage?.content || [];
+      let allRoutes: BusRouteDTO[] = [];
+      try {
+        allRoutes = await firstValueFrom(
+          this.busRouteService.getAllBusRoutesCatalog().pipe(
+            catchError(() => of([] as BusRouteDTO[]))
+          )
+        );
+      } catch {
+        allRoutes = [];
+      }
+      if (!allRoutes || allRoutes.length === 0) {
+        try {
+          const routesPage = await firstValueFrom(
+            this.busRouteService.getAllBusRoutes({ size: 1000 }).pipe(
+              catchError(() => of({ content: [] as BusRouteDTO[] }))
+            )
+          );
+          allRoutes = routesPage?.content || [];
+        } catch {
+          allRoutes = [];
+        }
+      }
 
-      // Outgoing routes: originStopId == originId && destinationStopId == destStop.id
-      const outgoingRoutes = allRoutes.filter(
-        (r) => r.originStopId === originId && r.destinationStopId === destStop.id
+      const originStopObj = this.allStops().find((s) => Number(s.id) === Number(originId)) || null;
+      const originCity = originStopObj?.city?.trim().toLowerCase();
+      const targetCity = (hotel?.city || destStop?.city || '').trim().toLowerCase();
+
+      // Multi-level route matching
+      let outgoingRoutes = allRoutes.filter(
+        (r) => Number(r.originStopId) === Number(originId) && (destStop ? Number(r.destinationStopId) === Number(destStop.id) : false)
       );
 
-      // Return routes: originStopId == destStop.id && destinationStopId == originId
-      const returnRoutes = allRoutes.filter(
-        (r) => r.originStopId === destStop.id && r.destinationStopId === originId
+      if (outgoingRoutes.length === 0 && targetCity) {
+        const destCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === targetCity)
+            .map((s) => Number(s.id))
+        );
+        outgoingRoutes = allRoutes.filter(
+          (r) => Number(r.originStopId) === Number(originId) && destCityStopIds.has(Number(r.destinationStopId))
+        );
+      }
+
+      if (outgoingRoutes.length === 0 && originCity && targetCity) {
+        const originCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === originCity)
+            .map((s) => Number(s.id))
+        );
+        const destCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === targetCity)
+            .map((s) => Number(s.id))
+        );
+        outgoingRoutes = allRoutes.filter(
+          (r) => originCityStopIds.has(Number(r.originStopId)) && destCityStopIds.has(Number(r.destinationStopId))
+        );
+      }
+
+      if (outgoingRoutes.length === 0) {
+        outgoingRoutes = allRoutes.filter((r) => Number(r.originStopId) === Number(originId));
+      }
+
+      // Return routes matching
+      let returnRoutes = allRoutes.filter(
+        (r) => (destStop ? Number(r.originStopId) === Number(destStop.id) : false) && Number(r.destinationStopId) === Number(originId)
       );
+
+      if (returnRoutes.length === 0 && targetCity) {
+        const destCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === targetCity)
+            .map((s) => Number(s.id))
+        );
+        returnRoutes = allRoutes.filter(
+          (r) => destCityStopIds.has(Number(r.originStopId)) && Number(r.destinationStopId) === Number(originId)
+        );
+      }
+
+      if (returnRoutes.length === 0 && originCity && targetCity) {
+        const originCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === originCity)
+            .map((s) => Number(s.id))
+        );
+        const destCityStopIds = new Set(
+          this.allStops()
+            .filter((s) => s.city?.trim().toLowerCase() === targetCity)
+            .map((s) => Number(s.id))
+        );
+        returnRoutes = allRoutes.filter(
+          (r) => destCityStopIds.has(Number(r.originStopId)) && originCityStopIds.has(Number(r.destinationStopId))
+        );
+      }
+
+      if (returnRoutes.length === 0) {
+        returnRoutes = allRoutes.filter((r) => Number(r.destinationStopId) === Number(originId));
+      }
 
       // ── Calculate Outgoing Trips ──────────────────────────────
+      let outRequests: Observable<PageBusTripDTO>[];
       if (outgoingRoutes.length > 0) {
-        const outRequests = outgoingRoutes.map((route) =>
+        outRequests = outgoingRoutes.map((route) =>
           this.busTripService.getAllBusTrips({
             routeId: route.id,
             departureAfter: `${checkInDate}T00:00:00`,
             departureBefore: `${checkInDate}T23:59:59`,
             status: 'SCHEDULED',
             size: 50,
-          }).pipe(catchError(() => of({ content: [] as BusTripDTO[] })))
+          }).pipe(catchError(() => of({ content: [] as BusTripDTO[], totalElements: 0, totalPages: 0, size: 50, number: 0 })))
         );
-
-        const outPages = await firstValueFrom(forkJoin(outRequests));
-        const rawOutTrips: BusTripDTO[] = outPages.flatMap((p) => p?.content || []);
-
-        // Filter: eligibility is based strictly on stay dates (check-in arrival at hotel stop)
-        const eligibleOut = rawOutTrips.filter((t) =>
-          isOutgoingEligible(
-            { ...t, destinationStop: destStop },
-            { checkIn: checkInDate, checkOut: checkOutDate },
-            destStop.id,
-            hotel?.checkInTime
-          )
-        );
-
-        const enrichedOut: RecommendedBusTrip[] = [];
-        const originStopObj = this.allStops().find((s) => s.id === originId) || null;
-        const distance = this.hotelBusDistance();
-
-        for (const trip of eligibleOut) {
-          const route = outgoingRoutes.find((r) => r.id === trip.routeId);
-          const bus = await this.getOrFetchBus(trip.busId);
-          const availableSeats = await this.calculateAvailableSeats(trip, bus);
-
-          const isPreferred = isOutgoingRecommended(
-            { ...trip, destinationStop: destStop },
-            checkInDate,
-            destStop.id
-          );
-          const timingBadgeLabel = isPreferred ? 'Recommended' : '';
-
-          enrichedOut.push({
-            ...trip,
-            route,
-            originStop: originStopObj || undefined,
-            destinationStop: destStop,
-            bus: bus || undefined,
-            formattedDuration: this.formatDuration(trip.departureTime || trip.departure || '', trip.arrivalTime),
-            isOvernight: false,
-            distanceFromHotel: distance,
-            availableSeatsCount: availableSeats,
-            minutesRelative: 0,
-            isPreferredTiming: isPreferred,
-            timingBadgeLabel,
-          });
-        }
-
-        // Sort: Recommended trips first, then chronologically by departure time
-        enrichedOut.sort((a, b) => {
-          if (a.isPreferredTiming && !b.isPreferredTiming) return -1;
-          if (!a.isPreferredTiming && b.isPreferredTiming) return 1;
-          const aTime = new Date(a.departureTime || a.departure || 0).getTime();
-          const bTime = new Date(b.departureTime || b.departure || 0).getTime();
-          return aTime - bTime;
-        });
-
-        this.outgoingTrips.set(enrichedOut);
       } else {
-        this.outgoingTrips.set([]);
+        outRequests = [
+          this.busTripService.getAllBusTrips({
+            departureAfter: `${checkInDate}T00:00:00`,
+            departureBefore: `${checkInDate}T23:59:59`,
+            status: 'SCHEDULED',
+            size: 100,
+          }).pipe(catchError(() => of({ content: [] as BusTripDTO[], totalElements: 0, totalPages: 0, size: 100, number: 0 })))
+        ];
       }
 
-      // ── Calculate Return Trips ────────────────────────────────
-      if (returnRoutes.length > 0 && checkOutDate) {
-        const returnRequests = returnRoutes.map((route) =>
+      const outPages = await firstValueFrom(forkJoin(outRequests));
+      let rawOutTrips: BusTripDTO[] = outPages.flatMap((p) => p?.content || []);
+
+      // If route-specific date query returned 0 trips, try fetching all trips for the outgoing routes
+      if (rawOutTrips.length === 0 && outgoingRoutes.length > 0) {
+        const fallbackRequests = outgoingRoutes.map((route) =>
           this.busTripService.getAllBusTrips({
             routeId: route.id,
-            departureAfter: `${checkOutDate}T00:00:00`,
-            departureBefore: `${checkOutDate}T23:59:59`,
-            status: 'SCHEDULED',
             size: 50,
-          }).pipe(catchError(() => of({ content: [] as BusTripDTO[] })))
+          }).pipe(catchError(() => of({ content: [] as BusTripDTO[], totalElements: 0, totalPages: 0, size: 50, number: 0 })))
         );
+        const fbPages = await firstValueFrom(forkJoin(fallbackRequests));
+        const fbTrips = fbPages.flatMap((p) => p?.content || []);
+        const sameDay = fbTrips.filter((t) => {
+          const d = extractLocalDateStr(t.departureTime || t.departure);
+          return d === checkInDate;
+        });
+        if (sameDay.length > 0) {
+          rawOutTrips = sameDay;
+        } else if (fbTrips.length > 0) {
+          rawOutTrips = fbTrips;
+        }
+      }
+
+      // Auto-populate hotelBusStop from first trip if destination stop wasn't set
+      if (!this.hotelBusStop() && rawOutTrips.length > 0) {
+        const firstTripRoute = outgoingRoutes.find((r) => r.id === rawOutTrips[0].routeId) || allRoutes.find((r) => r.id === rawOutTrips[0].routeId);
+        if (firstTripRoute?.destinationStopId) {
+          const matchedDest = this.allStops().find((s) => Number(s.id) === Number(firstTripRoute.destinationStopId));
+          if (matchedDest) {
+            this.hotelBusStop.set(matchedDest);
+            destStop = matchedDest;
+          }
+        }
+      }
+
+      // Filter: eligibility based on stay dates
+      let eligibleOut = rawOutTrips.filter((t) => {
+        let route = outgoingRoutes.find((r) => r.id === t.routeId) || allRoutes.find((r) => r.id === t.routeId);
+        if (route) {
+          const rOrigId = Number(route.originStopId);
+          const rOrigStop = this.allStops().find((s) => s.id === rOrigId);
+          const origMatch = rOrigId === Number(originId) || (originCity && rOrigStop?.city?.trim().toLowerCase() === originCity);
+          if (!origMatch) {
+            return false;
+          }
+        }
+        const tDestId = route?.destinationStopId ?? destStop?.id;
+        const tDestStop = (tDestId ? this.allStops().find((s) => s.id === tDestId) : null) || destStop;
+        return isOutgoingEligible(
+          { ...t, destinationStop: tDestStop },
+          { checkIn: checkInDate, checkOut: checkOutDate },
+          tDestId,
+          hotel?.checkInTime
+        );
+      });
+
+      // If strict filter removed all trips, fall back to any trip matching the check-in date
+      if (eligibleOut.length === 0 && rawOutTrips.length > 0) {
+        eligibleOut = rawOutTrips.filter((t) => {
+          const dep = extractLocalDateStr(t.departureTime || t.departure);
+          const arr = extractLocalDateStr(t.arrivalTime);
+          return dep === checkInDate || arr === checkInDate;
+        });
+        if (eligibleOut.length === 0) {
+          eligibleOut = [...rawOutTrips];
+        }
+      }
+
+      const enrichedOut: RecommendedBusTrip[] = [];
+      const distance = this.hotelBusDistance();
+
+      for (const trip of eligibleOut) {
+        const route = outgoingRoutes.find((r) => r.id === trip.routeId) || allRoutes.find((r) => r.id === trip.routeId);
+        const tripDestStop = (route?.destinationStopId ? this.allStops().find((s) => s.id === route.destinationStopId) : null) || destStop;
+        const bus = await this.getOrFetchBus(trip.busId);
+        const availableSeats = await this.calculateAvailableSeats(trip, bus);
+
+        const isPreferred = isOutgoingRecommended(
+          { ...trip, destinationStop: tripDestStop },
+          checkInDate,
+          tripDestStop?.id
+        );
+        const timingBadgeLabel = isPreferred ? 'Recommended' : '';
+
+        const tripDistance = (hotel?.latitude && hotel?.longitude && tripDestStop?.latitude && tripDestStop?.longitude)
+          ? this.calculateDistance(hotel.latitude, hotel.longitude, tripDestStop.latitude, tripDestStop.longitude)
+          : distance;
+
+        enrichedOut.push({
+          ...trip,
+          route,
+          originStop: originStopObj || undefined,
+          destinationStop: tripDestStop || undefined,
+          bus: bus || undefined,
+          formattedDuration: this.formatDuration(trip.departureTime || trip.departure || '', trip.arrivalTime),
+          isOvernight: false,
+          distanceFromHotel: tripDistance,
+          availableSeatsCount: availableSeats,
+          minutesRelative: 0,
+          isPreferredTiming: isPreferred,
+          timingBadgeLabel,
+        });
+      }
+
+      // Sort: Recommended trips first, then chronologically by departure time
+      enrichedOut.sort((a, b) => {
+        if (a.isPreferredTiming && !b.isPreferredTiming) return -1;
+        if (!a.isPreferredTiming && b.isPreferredTiming) return 1;
+        const aTime = new Date(a.departureTime || a.departure || 0).getTime();
+        const bTime = new Date(b.departureTime || b.departure || 0).getTime();
+        return aTime - bTime;
+      });
+
+      this.outgoingTrips.set(enrichedOut);
+
+      // ── Calculate Return Trips ────────────────────────────────
+      if (checkOutDate) {
+        let returnRequests: Observable<PageBusTripDTO>[];
+        if (returnRoutes.length > 0) {
+          returnRequests = returnRoutes.map((route) =>
+            this.busTripService.getAllBusTrips({
+              routeId: route.id,
+              departureAfter: `${checkOutDate}T00:00:00`,
+              departureBefore: `${checkOutDate}T23:59:59`,
+              status: 'SCHEDULED',
+              size: 50,
+            }).pipe(catchError(() => of({ content: [] as BusTripDTO[], totalElements: 0, totalPages: 0, size: 50, number: 0 })))
+          );
+        } else {
+          returnRequests = [
+            this.busTripService.getAllBusTrips({
+              departureAfter: `${checkOutDate}T00:00:00`,
+              departureBefore: `${checkOutDate}T23:59:59`,
+              status: 'SCHEDULED',
+              size: 100,
+            }).pipe(catchError(() => of({ content: [] as BusTripDTO[], totalElements: 0, totalPages: 0, size: 100, number: 0 })))
+          ];
+        }
 
         const returnPages = await firstValueFrom(forkJoin(returnRequests));
         const rawReturnTrips: BusTripDTO[] = returnPages.flatMap((p) => p?.content || []);
 
-        // Filter: eligibility is based strictly on stay dates (departure on check-out date from hotel stop)
-        const eligibleReturn = rawReturnTrips.filter((t) =>
-          isReturnEligible(
-            { ...t, originStop: destStop },
+        let eligibleReturn = rawReturnTrips.filter((t) => {
+          let route = returnRoutes.find((r) => r.id === t.routeId) || allRoutes.find((r) => r.id === t.routeId);
+          if (route) {
+            const rOrigId = Number(route.originStopId);
+            const rDestId = Number(route.destinationStopId);
+            const rOrigStop = this.allStops().find((s) => s.id === rOrigId);
+            const rDestStop = this.allStops().find((s) => s.id === rDestId);
+
+            const origMatch = (destStop && rOrigId === Number(destStop.id)) || (targetCity && rOrigStop?.city?.trim().toLowerCase() === targetCity);
+            const destMatch = rDestId === Number(originId) || (originCity && rDestStop?.city?.trim().toLowerCase() === originCity);
+            if (!origMatch || !destMatch) {
+              return false;
+            }
+          }
+          const tOrigId = route?.originStopId ?? destStop?.id;
+          const tOrigStop = (tOrigId ? this.allStops().find((s) => s.id === tOrigId) : null) || destStop;
+          return isReturnEligible(
+            { ...t, originStop: tOrigStop },
             { checkIn: checkInDate, checkOut: checkOutDate },
-            destStop.id,
+            tOrigId,
             hotel?.checkOutTime
-          )
-        );
+          );
+        });
+
+        if (eligibleReturn.length === 0 && rawReturnTrips.length > 0) {
+          eligibleReturn = rawReturnTrips.filter((t) => {
+            const dep = extractLocalDateStr(t.departureTime || t.departure);
+            return dep === checkOutDate;
+          });
+          if (eligibleReturn.length === 0) {
+            eligibleReturn = [...rawReturnTrips];
+          }
+        }
 
         const enrichedReturn: RecommendedBusTrip[] = [];
-        const originStopObj = this.allStops().find((s) => s.id === originId) || null;
-        const distance = this.hotelBusDistance();
 
         for (const trip of eligibleReturn) {
-          const route = returnRoutes.find((r) => r.id === trip.routeId);
+          const route = returnRoutes.find((r) => r.id === trip.routeId) || allRoutes.find((r) => r.id === trip.routeId);
+          const tripOrigStop = (route?.originStopId ? this.allStops().find((s) => s.id === route.originStopId) : null) || destStop;
           const bus = await this.getOrFetchBus(trip.busId);
           const availableSeats = await this.calculateAvailableSeats(trip, bus);
+
+          const tripDistance = (hotel?.latitude && hotel?.longitude && tripOrigStop?.latitude && tripOrigStop?.longitude)
+            ? this.calculateDistance(hotel.latitude, hotel.longitude, tripOrigStop.latitude, tripOrigStop.longitude)
+            : distance;
 
           enrichedReturn.push({
             ...trip,
             route,
-            originStop: destStop,
+            originStop: tripOrigStop || undefined,
             destinationStop: originStopObj || undefined,
             bus: bus || undefined,
             formattedDuration: this.formatDuration(trip.departureTime || trip.departure || '', trip.arrivalTime),
             isOvernight: false,
-            distanceFromHotel: distance,
+            distanceFromHotel: tripDistance,
             availableSeatsCount: availableSeats,
             minutesRelative: 0,
             isPreferredTiming: false,
@@ -1098,7 +1375,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
   }
 
   private calculateDistance(lat1?: number, lon1?: number, lat2?: number, lon2?: number): number {
-    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
       return 1.5;
     }
     const R = 6371;
@@ -1107,9 +1384,9 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return Math.round(R * c * 10) / 10;
   }

@@ -68,11 +68,11 @@ export function isOutgoingEligible(
   checkInTime?: string
 ): boolean {
   if (!trip) return false;
-  if (trip.status && trip.status !== 'SCHEDULED') return false;
+  if (trip.status && trip.status.toUpperCase() !== 'SCHEDULED') return false;
 
   const depStr = trip.departureTime || trip.departure;
   const arrStr = trip.arrivalTime;
-  if (!depStr || !arrStr) return false;
+  if (!depStr && !arrStr) return false;
 
   const checkInDate = typeof stay === 'string' ? stay.trim() : (stay?.checkIn || '').trim();
   if (!checkInDate) return false;
@@ -85,8 +85,8 @@ export function isOutgoingEligible(
     }
   }
 
-  const depDate = extractLocalDateStr(depStr);
-  const arrDate = extractLocalDateStr(arrStr);
+  const depDate = extractLocalDateStr(depStr || arrStr);
+  const arrDate = extractLocalDateStr(arrStr || depStr);
 
   // Outgoing departure must be on or after check-in start of day
   if (depDate < checkInDate) {
@@ -127,7 +127,7 @@ export function isReturnEligible(
   checkOutTime?: string
 ): boolean {
   if (!trip) return false;
-  if (trip.status && trip.status !== 'SCHEDULED') return false;
+  if (trip.status && trip.status.toUpperCase() !== 'SCHEDULED') return false;
 
   const depStr = trip.departureTime || trip.departure;
   if (!depStr) return false;

@@ -71,7 +71,7 @@ export class BusTripService {
         const totalPages = res?.page?.totalPages ?? res?.totalPages ?? (totalElements > 0 ? 1 : 0);
         const size = res?.page?.size ?? res?.size ?? 10;
         const number = res?.page?.number ?? res?.number ?? 0;
-        const rawContent = res?.content || [];
+        const rawContent = res?.content || res?._embedded?.busTripDtoList || res?._embedded?.busTrips || (Array.isArray(res) ? res : []);
         const content = rawContent.map((t: any) => ({
           ...t,
           departure: t.departureTime || t.departure,

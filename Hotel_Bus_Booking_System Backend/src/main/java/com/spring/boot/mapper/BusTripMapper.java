@@ -15,6 +15,8 @@ public interface BusTripMapper {
 
     BusTripMapper INSTANCE = Mappers.getMapper(BusTripMapper.class);
 
+    @Mapping(source = "busId", target = "bus.id")
+    @Mapping(source = "routeId", target = "route.id")
     BusTrip busTripRequestDtoToBusTrip(BusTripRequestDto busTripRequestDto);
 
     @Mapping(source = "bus.id", target = "busId")

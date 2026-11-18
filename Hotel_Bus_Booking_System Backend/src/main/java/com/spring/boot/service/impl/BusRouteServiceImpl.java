@@ -94,7 +94,7 @@ public class BusRouteServiceImpl implements BusRouteService {
             size = 20; // default size
         }
         if (size > 100) {
-            size = 100; // max size
+            size = 1000; // max size
         }
 
         // Validate sortBy field to prevent SQL injection and unauthorized sorting

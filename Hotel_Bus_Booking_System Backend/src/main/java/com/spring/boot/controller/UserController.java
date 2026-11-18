@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import  org.springframework.security.access.prepost.PreAuthorize;
 import  org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 /**
  * REST controller for User entity.
@@ -51,6 +53,11 @@ public class UserController {
                                                      @RequestParam(required = false) String role) {
         Page<UserDto> users = userService.getAllUsersPaginated(pageable, q, role);
         return new ResponseEntity<>(new org.springframework.data.web.PagedModel<>(users), HttpStatus.OK);
+    }
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserDto>> getAllUsersAll(){
+        return ResponseEntity.ok().body(userService.getAllUsers());
     }
 
     @PutMapping("/{id}")

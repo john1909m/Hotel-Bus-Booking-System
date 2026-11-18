@@ -26,7 +26,7 @@ import { BusSeatService } from '../../../core/services/bus-seat.service';
 import { BusBookingService } from '../../../core/services/bus-booking.service';
 import { BookingStateService } from '../../../core/services/booking-state.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { isOutgoingEligible, isReturnEligible } from '../../../core/utils/bus-eligibility.util';
+import { isOutgoingEligible, isReturnEligible, extractLocalDateStr } from '../../../core/utils/bus-eligibility.util';
 
 import { BusSeatDTO } from '../../../core/models/Bus/bus-seat.model';
 import { BusBookingDTO, BusBookingRequestDTO } from '../../../core/models/Bus/bus-booking.model';
@@ -446,10 +446,23 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
     if (this.bookingState.hasHotel()) {
       const hb = this.bookingState.hotelBooking();
       const stayDates = { checkIn: hb?.checkIn || '', checkOut: hb?.checkOut || '' };
-      const stopId = this.hotelBusStopId ?? (this.direction === 'outgoing' ? this.trip.destinationStop?.id : this.trip.originStop?.id);
+      const tripDestStopId = this.trip.destinationStop?.id ?? (this.trip as any).route?.destinationStopId;
+      const tripOrigStopId = this.trip.originStop?.id ?? (this.trip as any).route?.originStopId;
+      const stopId = this.direction === 'outgoing'
+        ? (tripDestStopId ?? this.hotelBusStopId)
+        : (tripOrigStopId ?? this.hotelBusStopId);
 
       if (this.direction === 'outgoing') {
-        const eligible = isOutgoingEligible(this.trip, stayDates, stopId);
+        let eligible = isOutgoingEligible(this.trip, stayDates, stopId);
+        // Fallback: If trip departs on check-in date or arrives on check-in date, it is eligible
+        if (!eligible) {
+          const depDate = extractLocalDateStr(this.trip.departureTime || this.trip.departure);
+          const arrDate = extractLocalDateStr(this.trip.arrivalTime || this.trip.departureTime || this.trip.departure);
+          const checkIn = (stayDates.checkIn || '').trim();
+          if (checkIn && (depDate === checkIn || arrDate === checkIn)) {
+            eligible = true;
+          }
+        }
         if (!eligible) {
           const reason = this.tr('busSeat.messages.outgoingIneligibleDetail', { date: stayDates.checkIn }, `This outgoing trip is not eligible for your hotel check-in date (${stayDates.checkIn}).`);
           this.error.set(reason);
@@ -462,7 +475,15 @@ export class BusSeatSelectionComponent implements OnChanges, OnDestroy {
           return;
         }
       } else {
-        const eligible = isReturnEligible(this.trip, stayDates, stopId);
+        let eligible = isReturnEligible(this.trip, stayDates, stopId);
+        // Fallback: If trip departs on check-out date, it is eligible
+        if (!eligible) {
+          const depDate = extractLocalDateStr(this.trip.departureTime || this.trip.departure);
+          const checkOut = (stayDates.checkOut || '').trim();
+          if (checkOut && depDate === checkOut) {
+            eligible = true;
+          }
+        }
         if (!eligible) {
           const reason = this.tr('busSeat.messages.returnIneligibleDetail', { date: stayDates.checkOut }, `This return trip is not eligible for your hotel check-out date (${stayDates.checkOut}).`);
           this.error.set(reason);
