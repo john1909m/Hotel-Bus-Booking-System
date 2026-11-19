@@ -538,6 +538,11 @@
   width: 140px;
 }
 
+.inline-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 .inline-input:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -773,5 +778,10 @@
 [data-theme="dark"] .inline-input {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .inline-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
 }

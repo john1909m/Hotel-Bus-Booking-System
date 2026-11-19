@@ -175,6 +175,11 @@
   line-height: normal;
 }
 
+.filter-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 .filter-select {
   cursor: pointer;
   -webkit-appearance: none;
@@ -205,6 +210,14 @@
   max-height: 42px !important;
   font-size: 0.875rem !important;
   box-sizing: border-box !important;
+}
+
+:host ::ng-deep .filter-field .p-select .p-select-label {
+  color: var(--text-primary);
+}
+
+:host ::ng-deep .filter-field .p-select .p-select-label.p-placeholder {
+  color: var(--text-muted);
 }
 
 .filter-toolbar {

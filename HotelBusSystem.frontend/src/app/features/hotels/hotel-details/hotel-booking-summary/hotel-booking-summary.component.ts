@@ -441,7 +441,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
     const validation = this.bookingState.setStayDates(inIso, outIso);
 
     if (!validation.isValid) {
-      this.dateErrorMessage.set(validation.error || 'Invalid date range selected.');
+      this.dateErrorMessage.set(validation.error || this.translate?.instant('summary.invalidDateRange') || 'Invalid date range selected.');
       return;
     }
 
@@ -467,7 +467,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
       const page = await firstValueFrom(
         this.busStopService.getAllBusStops({ size: 1000 }).pipe(
           catchError((err) => {
-            this.stopsLoadError.set('Failed to load bus stops.');
+            this.stopsLoadError.set(this.translate?.instant('summary.failedToLoadBusStops') || 'Failed to load bus stops.');
             return of({ content: [] as BusStopDto[] });
           })
         )
@@ -485,7 +485,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
 
       this.busStopOptions.set(options);
     } catch (err) {
-      this.stopsLoadError.set('Failed to load bus stops.');
+      this.stopsLoadError.set(this.translate?.instant('summary.failedToLoadBusStops') || 'Failed to load bus stops.');
     } finally {
       this.isLoadingStops.set(false);
     }
@@ -565,7 +565,10 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
       }
 
       this.destinationStopError.set(
-        `No bus stop is currently associated with ${hotel.name} in ${hotel.city || 'this area'}.`
+        this.translate?.instant('summary.noBusStopAssociated', {
+          hotel: hotel.name,
+          area: hotel.city || this.translate?.instant('summary.thisArea') || 'this area'
+        }) || `No bus stop is currently associated with ${hotel.name} in ${hotel.city || 'this area'}.`
       );
     } catch (e) {
       console.warn('Could not resolve hotel bus stop:', e);
@@ -680,7 +683,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
         destStop = alternate;
         this.hotelBusStop.set(alternate);
       } else {
-        this.tripsSearchError.set('Departure stop cannot be the same as the hotel arrival stop.');
+        this.tripsSearchError.set(this.translate?.instant('summary.sameStopError') || 'Departure stop cannot be the same as the hotel arrival stop.');
         this.outgoingTrips.set([]);
         this.returnTrips.set([]);
         this.hasSearchedTrips.set(true);
@@ -899,7 +902,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
           checkInDate,
           tripDestStop?.id
         );
-        const timingBadgeLabel = isPreferred ? 'Recommended' : '';
+        const timingBadgeLabel = isPreferred ? (this.translate?.instant('summary.recommended') || 'Recommended') : '';
 
         const tripDistance = (hotel?.latitude && hotel?.longitude && tripDestStop?.latitude && tripDestStop?.longitude)
           ? this.calculateDistance(hotel.latitude, hotel.longitude, tripDestStop.latitude, tripDestStop.longitude)
@@ -1034,7 +1037,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
       }
     } catch (err) {
       console.error('Recommendations calculation error:', err);
-      this.tripsSearchError.set('Failed to calculate bus recommendations. Please try again.');
+      this.tripsSearchError.set(this.translate?.instant('summary.failedBusRecs') || 'Failed to calculate bus recommendations. Please try again.');
       this.outgoingTrips.set([]);
       this.returnTrips.set([]);
     } finally {
@@ -1286,7 +1289,7 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
         },
         error: (err) => {
           this.isSubmitting = false;
-          this.errorMessage = err?.message || 'Failed to update booking. Please verify availability and try again.';
+          this.errorMessage = err?.message || this.translate?.instant('summary.failedToUpdateBooking') || 'Failed to update booking. Please verify availability and try again.';
         },
       });
   }
@@ -1319,11 +1322,11 @@ export class HotelBookingSummaryComponent implements OnInit, OnChanges, OnDestro
       return translated;
     }
     switch (type) {
-      case 'SINGLE': return 'Single Room';
-      case 'DOUBLE': return 'Double Room';
-      case 'SUITE': return 'Executive Suite';
-      case 'DELUXE': return 'Deluxe Room';
-      default: return type || 'Standard Room';
+      case 'SINGLE': return this.translate?.instant('enums.roomType.SINGLE') || 'Single Room';
+      case 'DOUBLE': return this.translate?.instant('enums.roomType.DOUBLE') || 'Double Room';
+      case 'SUITE': return this.translate?.instant('enums.roomType.SUITE') || 'Suite';
+      case 'DELUXE': return this.translate?.instant('enums.roomType.DELUXE') || 'Deluxe Room';
+      default: return type ? (this.translate?.instant(`enums.roomType.${type}`) || type) : (this.translate?.instant('summary.standardRoom') || 'Standard Room');
     }
   }
 

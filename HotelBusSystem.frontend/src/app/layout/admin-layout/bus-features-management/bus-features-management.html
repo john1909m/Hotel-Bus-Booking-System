@@ -102,57 +102,58 @@
     </div>
   </section>
 
-  <!-- ─── Error State ──────────────────────────────────────── -->
+  <!-- ─── Error Notification Banner ────────────────────────── -->
   @if (errorMessage()) {
     <div class="error-banner" role="alert">
       <div class="error-banner-content">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <span>{{ errorMessage() }}</span>
       </div>
-      <button type="button" class="btn-retry" (click)="loadFeatures()">{{ 'admin.common.retry' | translate }}</button>
+      <button type="button" class="btn-retry" (click)="loadFeatures()">
+        {{ 'admin.common.retry' | translate }}
+      </button>
     </div>
   }
 
   <!-- ─── Features Table Card ──────────────────────────────── -->
-  <section class="admin-table-card" aria-label="Bus Features table">
+  <section class="table-card" aria-label="Bus features data table">
     <p-table
       [value]="filteredFeatures()"
       [loading]="loading()"
       [paginator]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 25, 50]"
+      responsiveLayout="scroll"
       styleClass="p-datatable-striped"
-      [tableStyle]="{ 'min-width': '50rem' }"
     >
-      <ng-template #header>
+      <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px">{{ 'admin.busFeatures.colId' | translate }}</th>
+          <th style="width: 80px">{{ 'admin.common.id' | translate }}</th>
           <th>{{ 'admin.busFeatures.colCode' | translate }}</th>
           <th>{{ 'admin.busFeatures.colNameKey' | translate }}</th>
           <th>{{ 'admin.busFeatures.colSurcharge' | translate }}</th>
           <th style="width: 140px">{{ 'admin.busFeatures.colStatus' | translate }}</th>
-          <th style="width: 130px; text-align: center">{{ 'admin.common.actions' | translate }}</th>
+          <th style="width: 110px; text-align: right">{{ 'admin.common.actions' | translate }}</th>
         </tr>
       </ng-template>
 
-      <ng-template #body let-feature>
+      <ng-template pTemplate="body" let-feature>
         <tr>
-          <td><span class="mono-badge">#{{ feature.id }}</span></td>
           <td>
-            <div class="feature-code-cell">
-              <span class="feature-code-text">{{ feature.code }}</span>
-            </div>
+            <span class="entity-id-badge">#{{ feature.id }}</span>
           </td>
           <td>
-            <span class="name-key-cell">{{ feature.nameKey }}</span>
-            <small class="name-translated">({{ feature.nameKey | translate }})</small>
+            <span class="table-cell-title"> {{ feature.code }}</span>
           </td>
           <td>
-            <span class="surcharge-val">{{ feature.surcharge | number:'1.2-2' }} <small>EGP</small></span>
+            <span class="table-cell-subtitle">{{ feature.nameKey }}</span>
+          </td>
+          <td>
+            <span class="table-cell-title">{{ feature.surcharge | number:'1.2-2' }} EGP</span>
           </td>
           <td>
             @if (feature.active) {
@@ -161,28 +162,28 @@
               <p-tag [value]="'admin.busFeatures.inactive' | translate" severity="warn" />
             }
           </td>
-          <td style="text-align: center">
-            <div class="row-actions">
+          <td>
+            <div class="table-actions">
               <button
                 type="button"
-                class="btn-icon-edit"
+                class="btn-action btn-action-edit"
                 (click)="openEditDialog(feature)"
-                [title]="'admin.busFeatures.editFeature' | translate"
                 [attr.aria-label]="'Edit feature ' + feature.code"
+                [title]="'admin.busFeatures.editFeature' | translate"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </button>
               <button
                 type="button"
-                class="btn-icon-delete"
+                class="btn-action btn-action-delete"
                 (click)="confirmDelete(feature)"
-                [title]="'admin.common.delete' | translate"
                 [attr.aria-label]="'Delete feature ' + feature.code"
+                [title]="'admin.common.delete' | translate"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
@@ -192,13 +193,15 @@
         </tr>
       </ng-template>
 
-      <ng-template #emptymessage>
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="table-empty-cell">
+          <td colspan="6">
             <div class="empty-state">
-              <span class="empty-icon">✨</span>
-              <p class="empty-text">
-                @if (searchQuery() || statusFilter() !== 'ALL') {
+              <div class="empty-icon" aria-hidden="true">✨</div>
+              <h3 class="empty-title">{{ 'admin.busFeatures.noFeaturesFound' | translate }}</h3>
+              <p class="empty-desc">
+                @if (hasActiveFilters()) {
                   {{ 'admin.busFeatures.noFeaturesFilterMatch' | translate }}
                 } @else {
                   {{ 'admin.busFeatures.noFeaturesConfigured' | translate }}
@@ -211,79 +214,88 @@
     </p-table>
   </section>
 
-  <!-- ─── Create / Edit Feature Dialog ─────────────────────── -->
+  <!-- ─── Create / Edit Bus Feature Modal Dialog ─────────────── -->
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
+    [header]="(isEditMode() ? 'admin.busFeatures.editFeature' : 'admin.busFeatures.addNew') | translate"
+    [style]="{ width: '90vw', maxWidth: '560px' }"
     [draggable]="false"
     [resizable]="false"
-    [style]="{ width: '92vw', maxWidth: '520px' }"
-    [header]="(isEditMode() ? 'admin.busFeatures.editFeature' : 'admin.busFeatures.addNew') | translate"
     (onHide)="closeDialog()"
   >
-    <form [formGroup]="featureForm" (ngSubmit)="saveFeature()" class="dialog-form" novalidate>
+    <form [formGroup]="featureForm" (ngSubmit)="saveFeature()" class="dialog-form" id="admin-feature-form">
+      <div class="form-grid">
 
-      <!-- Code -->
-      <div class="form-group">
-        <label for="feature-code" class="form-label required">{{ 'admin.busFeatures.fieldCode' | translate }}</label>
-        <input
-          id="feature-code"
-          type="text"
-          class="form-control"
-          formControlName="code"
-          placeholder="e.g. WIFI, AC, CHARGER"
-          style="text-transform: uppercase"
-          autocomplete="off"
-        />
-        @if (featureForm.get('code')?.invalid && featureForm.get('code')?.touched) {
-          <small class="form-error">{{ 'admin.busFeatures.codeRequired' | translate }}</small>
-        }
+        <!-- Feature Code -->
+        <div class="form-group">
+          <label for="feature-code" class="form-label">
+            {{ 'admin.busFeatures.fieldCode' | translate }} <span class="required-star">*</span>
+          </label>
+          <input
+            id="feature-code"
+            type="text"
+            class="form-input"
+            formControlName="code"
+            [placeholder]="'admin.busFeatures.phCode' | translate"
+            style="text-transform: uppercase"
+            autocomplete="off"
+          />
+          @if (featureForm.get('code')?.touched && featureForm.get('code')?.errors) {
+            <span class="form-error">{{ 'admin.busFeatures.codeRequired' | translate }}</span>
+          }
+        </div>
+
+        <!-- Surcharge -->
+        <div class="form-group">
+          <label for="feature-surcharge" class="form-label">
+            {{ 'admin.busFeatures.fieldSurcharge' | translate }} <span class="required-star">*</span>
+          </label>
+          <input
+            id="feature-surcharge"
+            type="number"
+            step="0.5"
+            min="0"
+            class="form-input"
+            formControlName="surcharge"
+            [placeholder]="'admin.busFeatures.phSurcharge' | translate"
+          />
+          @if (featureForm.get('surcharge')?.touched && featureForm.get('surcharge')?.errors) {
+            <span class="form-error">{{ 'admin.busFeatures.surchargeMin' | translate }}</span>
+          }
+        </div>
+
+        <!-- Name Key -->
+        <div class="form-group full-width">
+          <label for="feature-name-key" class="form-label">
+            {{ 'admin.busFeatures.fieldNameKey' | translate }} <span class="required-star">*</span>
+          </label>
+          <input
+            id="feature-name-key"
+            type="text"
+            class="form-input"
+            formControlName="nameKey"
+            [placeholder]="'admin.busFeatures.phNameKey' | translate"
+            autocomplete="off"
+          />
+          @if (featureForm.get('nameKey')?.touched && featureForm.get('nameKey')?.errors) {
+            <span class="form-error">{{ 'admin.busFeatures.nameKeyRequired' | translate }}</span>
+          }
+        </div>
+
+        <!-- Active Checkbox -->
+        <div class="form-group full-width">
+          <div class="form-group-checkbox">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="active" id="feature-active-cb" />
+              <span class="checkbox-label">{{ 'admin.busFeatures.fieldActive' | translate }}</span>
+            </label>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Name Key -->
-      <div class="form-group">
-        <label for="feature-name-key" class="form-label required">{{ 'admin.busFeatures.fieldNameKey' | translate }}</label>
-        <input
-          id="feature-name-key"
-          type="text"
-          class="form-control"
-          formControlName="nameKey"
-          placeholder="e.g. bus.feature.wifi"
-          autocomplete="off"
-        />
-        @if (featureForm.get('nameKey')?.invalid && featureForm.get('nameKey')?.touched) {
-          <small class="form-error">{{ 'admin.busFeatures.nameKeyRequired' | translate }}</small>
-        }
-      </div>
-
-      <!-- Surcharge -->
-      <div class="form-group">
-        <label for="feature-surcharge" class="form-label required">{{ 'admin.busFeatures.fieldSurcharge' | translate }}</label>
-        <input
-          id="feature-surcharge"
-          type="number"
-          step="0.50"
-          min="0"
-          class="form-control"
-          formControlName="surcharge"
-          placeholder="0.00"
-        />
-        @if (featureForm.get('surcharge')?.invalid && featureForm.get('surcharge')?.touched) {
-          <small class="form-error">{{ 'admin.busFeatures.surchargeMin' | translate }}</small>
-        }
-      </div>
-
-      <!-- Active Checkbox -->
-      <div class="form-group-checkbox">
-        <label class="checkbox-container">
-          <input type="checkbox" formControlName="active" id="feature-active-cb" />
-          <span class="checkmark"></span>
-          <span class="checkbox-label">{{ 'admin.busFeatures.fieldActive' | translate }}</span>
-        </label>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="dialog-actions">
+      <div class="dialog-footer">
         <button
           type="button"
           class="btn-dialog-cancel"
@@ -294,71 +306,62 @@
         </button>
         <button
           type="submit"
-          class="btn-dialog-submit"
+          class="btn-dialog-save"
           [disabled]="saving() || featureForm.invalid"
+          id="admin-save-feature-btn"
         >
-          @if (saving()) {
-            <span class="spinner-inline" aria-hidden="true"></span>
-            <span>{{ 'admin.common.saving' | translate }}</span>
-          } @else {
-            <span>{{ 'admin.common.save' | translate }}</span>
-          }
+          {{ (saving() ? 'admin.busFeatures.saving' : (isEditMode() ? 'admin.busFeatures.updateFeature' : 'admin.busFeatures.createFeature')) | translate }}
         </button>
       </div>
     </form>
   </p-dialog>
 
-  <!-- ─── Delete Confirmation Dialog ───────────────────────── -->
+  <!-- ─── Delete Confirmation Modal Dialog ─────────────────── -->
   <p-dialog
     [(visible)]="deleteDialogVisible"
     [modal]="true"
+    [header]="'admin.busFeatures.confirmDeleteTitle' | translate"
+    [style]="{ width: '90vw', maxWidth: '440px' }"
     [draggable]="false"
     [resizable]="false"
-    [style]="{ width: '92vw', maxWidth: '440px' }"
-    [header]="'admin.common.delete' | translate"
     (onHide)="cancelDelete()"
   >
-    <div class="delete-confirmation-body">
+    <div class="delete-dialog-content">
       <div class="delete-warning-icon" aria-hidden="true">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
       </div>
-
-      <p class="delete-confirmation-text">
-        {{ 'admin.busFeatures.deleteConfirm' | translate }}
-        <strong>{{ featureToDelete()?.code }}</strong> (#{{ featureToDelete()?.id }})?
+      <h3 class="delete-title">{{ 'admin.busFeatures.deleteTitle' | translate }}</h3>
+      <p class="delete-desc">
+        {{ 'admin.busFeatures.deletePrompt' | translate }}
+        <strong class="delete-entity-name">
+          {{ featureToDelete()?.code }}
+        </strong>?
+        {{ 'admin.rooms.cannotBeUndone' | translate }}
       </p>
+    </div>
 
-      <p class="delete-subtext">
-        {{ 'admin.busFeatures.deleteWarning' | translate }}
-      </p>
-
-      <div class="dialog-actions">
-        <button
-          type="button"
-          class="btn-dialog-cancel"
-          (click)="cancelDelete()"
-          [disabled]="deleting()"
-        >
-          {{ 'admin.common.cancel' | translate }}
-        </button>
-        <button
-          type="button"
-          class="btn-dialog-danger"
-          (click)="executeDelete()"
-          [disabled]="deleting()"
-        >
-          @if (deleting()) {
-            <span class="spinner-inline" aria-hidden="true"></span>
-            <span>{{ 'admin.common.deleting' | translate }}</span>
-          } @else {
-            <span>{{ 'admin.common.delete' | translate }}</span>
-          }
-        </button>
-      </div>
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="btn-dialog-cancel"
+        (click)="cancelDelete()"
+        [disabled]="deleting()"
+      >
+        {{ 'admin.common.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn-dialog-delete"
+        (click)="executeDelete()"
+        [disabled]="deleting()"
+        id="admin-confirm-delete-feature-btn"
+      >
+        {{ (deleting() ? 'admin.busFeatures.deleting' : 'admin.busFeatures.deleteFeature') | translate }}
+      </button>
     </div>
   </p-dialog>
 

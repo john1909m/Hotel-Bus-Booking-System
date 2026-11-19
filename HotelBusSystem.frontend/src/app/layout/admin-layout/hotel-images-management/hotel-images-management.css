@@ -151,6 +151,11 @@
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
+.hotel-dropdown option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
 .hotel-stats-strip {
   display: flex;
   align-items: center;
